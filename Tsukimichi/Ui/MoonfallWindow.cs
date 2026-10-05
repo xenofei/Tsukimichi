@@ -9,39 +9,40 @@ using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Interface.ManagedFontAtlas;
 using Dalamud.Interface.Textures.TextureWraps;
-using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Moonfall;
 using Tsukimichi.Core.Moonfall.Art;
+using Tsukimichi.Core.Ui;
 
 namespace Tsukimichi.Ui;
 
 /// <summary>
-/// Moonfall's window (feature plan v9, 1.23.0, stage 1): the first playable board over the pure engine
-/// (<see cref="MoonfallGame"/>). A bar on top (the level, balls, orange pegs left, the multiplier, the score, Pause and
-/// Restart), the 800×600 board scaled to the window below it, letterboxed, and the end-of-level tally over the board.
-/// Aim with the mouse, click the board to shoot; the aim guide shows the first stretch of the path.
+/// Moonfall's window (feature plan v9, 1.23.0): the game as a whole, from its title through Adventure's map, level
+/// select, the companions, Quick Play, the challenges, the duel and the options to the board, its pause menu and its
+/// tally. Which screen shows is <see cref="MoonfallScreenFlow"/>'s (Core, tested); what each screen offers comes from
+/// <see cref="MoonfallModes"/>, and a finished level is recorded there. The screens are drawn from the game's own UI art
+/// and fonts at the approved 1280 × 800 design, and at its 640 × 480 one in a small window (spec-rich2.md §4).
 /// <para>
 /// The board runs on the engine's fixed 100 Hz clock, fed the frame's time (<see cref="MoonfallGame.Advance"/>), so the
-/// frame rate never changes the game. It pauses itself in combat, in duties, in cutscenes, when the window loses focus
-/// and when it is opened (<see cref="MoonfallPauseState"/>); a click on the board resumes it without shooting. Reduce
-/// motion keeps the camera still (no Full Moon zoom) and drops the clearing rings; the glows are Full's only.
+/// frame rate never changes the game. It pauses itself in combat, in duties, in cutscenes, when the window loses focus,
+/// when it is collapsed and when it is opened (<see cref="MoonfallPauseState"/>); the pause menu then shows over it, and
+/// neither a click that resumes nor one that starts a level ever shoots.
 /// </para>
 /// <para>
-/// Everything is drawn as placeholder shapes in Tsukimichi's palette (circles for pegs, bars for bricks, a box for the
-/// bucket); the art track replaces them (plan v9 G8). Powers, style shots and modes come in later stages and hook into
-/// the engine's events.
+/// Mouse first. The menus also move their focus with the keyboard and, through Dalamud's gamepad navigation, the
+/// gamepad, with a visible focus; Esc (or the gamepad's back) goes back, and in play pauses. Every key Moonfall answers
+/// is claimed from the game (<see cref="GameKeyClaim"/>), so it never also reaches the game.
 /// </para>
 /// </summary>
 public sealed partial class MoonfallWindow : Window
 {
     private const string Id = "###TsukimichiMoonfall";
-    private const float MinWidthLogical = 440f;
-    private const float MinHeightLogical = 400f;
 
-    /// <summary>The score's size against the body text.</summary>
-    private const float ScoreScale = 1.35f;
+    /// <summary>The window's least size: the 640 × 480 design (spec-rich2.md §1, the text floors hold there).</summary>
+    private const float MinWidthLogical = 640f;
+
+    private const float MinHeightLogical = 480f;
 
     private readonly MoonfallCampaigns campaigns;
     private readonly Func<MoonfallPauseReason> causes;
@@ -49,22 +50,24 @@ public sealed partial class MoonfallWindow : Window
     private readonly IPluginLog? log;
     private readonly MoonfallPauseState pause = new();
     private readonly MoonfallProgress progress;
-    private readonly MoonfallCampaignKind campaign = MoonfallCampaignKind.Base;
+    private readonly MoonfallModes modes;
+    private readonly MoonfallScreenFlow flow = new();
 
+    /// <summary>The board's level: its campaign and index (its code "3-3" and its place in Adventure).</summary>
+    private MoonfallCampaignKind campaign = MoonfallCampaignKind.Base;
+
+    private int levelIndex;
     private MoonfallGame? game;
     private volatile bool unsaved;
     private int saving;
     private MoonfallProgress? mergedFromDisk;
-    private int levelIndex;
     private double aim;
     private Theme.StyleScope chrome;
     private int titleFor = -1;
+    private MoonfallDrawWatch drawWatch;
 
-    /// <summary>A question waiting over the board (Restart, or leaving for another level): <see cref="NoChoice"/> for none.</summary>
-    private int pendingLevel = NoChoice;
-
-    private const int NoChoice = -2;
-    private const int RestartChoice = -1;
+    /// <summary>Moonfall's Decoration this frame (<see cref="IMoonfallOptions.Decoration"/>; Full without options).</summary>
+    private Flair decoration = Flair.Full;
 
     /// <param name="campaigns">The shipped levels.</param>
     /// <param name="progress">The account's progress as loaded; the window moves it forward as levels are won.</param>
@@ -75,21 +78,24 @@ public sealed partial class MoonfallWindow : Window
     /// <param name="pluginDirectory">The plugin's folder, holding <c>assets/moonfall/</c>; null draws the primitives.</param>
     /// <param name="data">Dalamud's game data: the game's own UI art, cards and paintings are read from it at runtime (<see cref="MoonfallGameArtTextures"/>); null keeps the interim art.</param>
     /// <param name="fontAtlas">The plugin's font atlas, for the game's own fonts (<see cref="MoonfallFonts"/>); null sets the chrome in the window's font.</param>
-    /// <param name="options">Moonfall's options (Peg marks and its hint).</param>
+    /// <param name="options">Moonfall's options (Peg marks and its hint, Decoration, Reduce motion).</param>
+    /// <param name="story">Who the player's story has introduced (the spoiler shield, for the companions); null: everyone.</param>
     public MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log = null, ITextureProvider? textures = null,
-        string? pluginDirectory = null, IDataManager? data = null, IFontAtlas? fontAtlas = null, IMoonfallOptions? options = null)
+        string? pluginDirectory = null, IDataManager? data = null, IFontAtlas? fontAtlas = null, IMoonfallOptions? options = null, MoonfallStory? story = null)
         : this(campaigns, progress, progressPath, causes, log,
             textures is not null && pluginDirectory is not null ? new MoonfallArtTextures(textures, log) : null,
             pluginDirectory is not null ? MoonfallArtFiles.Folder(pluginDirectory) : null,
             textures is not null && data is not null && pluginDirectory is not null ? new MoonfallGameArtTextures(textures, data, pluginDirectory, log) : null,
             fontAtlas is not null ? new MoonfallFonts(fontAtlas, log) : null,
-            options)
+            options,
+            story)
     {
     }
 
     /// <summary>The window over hosts of its own (the offline renderer brings stand-ins for Dalamud's textures and fonts).</summary>
     internal MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log,
-        IMoonfallArtHost<IDalamudTextureWrap>? artHost, string? artFolder, IMoonfallGameArtHost<IDalamudTextureWrap>? gameHost, IMoonfallFonts? fontSource, IMoonfallOptions? options)
+        IMoonfallArtHost<IDalamudTextureWrap>? artHost, string? artFolder, IMoonfallGameArtHost<IDalamudTextureWrap>? gameHost, IMoonfallFonts? fontSource, IMoonfallOptions? options,
+        MoonfallStory? story = null, IReadOnlyList<MoonfallChallenge>? challenges = null, Func<string?, long?>? aces = null)
         : base(Strings.MoonfallTitle + Id, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         this.campaigns = campaigns ?? throw new ArgumentNullException(nameof(campaigns));
@@ -97,15 +103,27 @@ public sealed partial class MoonfallWindow : Window
         this.progressPath = progressPath ?? throw new ArgumentNullException(nameof(progressPath));
         this.causes = causes ?? throw new ArgumentNullException(nameof(causes));
         this.log = log;
-        Size = new Vector2(820f, 720f);
+        modes = new MoonfallModes(campaigns, progress, story ?? MoonfallStory.Everyone, challenges ?? LoadChallenges(log)) { AceOf = aces ?? MoonfallAces.For };
+        Size = new Vector2(1280f, 840f);
         SizeCondition = ImGuiCond.FirstUseEver;
         RespectCloseHotkey = true;
-
-        // The furthest level reached is the one waiting.
-        levelIndex = Math.Max(0, campaigns.Playable(campaign, progress) - 1);
         InitArt(artHost, artFolder);
         InitRich(gameHost, fontSource, options);
     }
+
+    private static IReadOnlyList<MoonfallChallenge> LoadChallenges(IPluginLog? log)
+    {
+        var load = MoonfallChallenges.LoadBuiltIn();
+        foreach (var error in load.Errors)
+        {
+            log?.Warning("Moonfall challenges not loaded: {Error}", error);
+        }
+
+        return load.Challenges;
+    }
+
+    /// <summary>The keys Moonfall answers, claimed from the game (set by the plugin; null claims nothing).</summary>
+    internal GameKeyClaim? Keys { get; set; }
 
     public override void OnOpen()
     {
@@ -156,48 +174,96 @@ public sealed partial class MoonfallWindow : Window
 
     private void DrawWindow()
     {
-        var levels = campaigns[campaign].Levels;
-        if (levels.Count == 0)
-        {
-            ImGui.TextWrapped(Strings.MoonfallNoLevels);
-            return;
-        }
-
         TakeMerged();
-        game ??= NewGame(levelIndex);
-        var focused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
-        pause.Update(causes() | (focused ? MoonfallPauseReason.None : MoonfallPauseReason.Unfocused));
-        SoundFrame();
+        ContentSizeForRender = ImGui.GetContentRegionAvail();
+        drawWatch.Drew(ImGui.GetFrameCount());
+        decoration = options?.Decoration ?? Flair.Full;
+        motion = MoonfallMotion.For(decoration, UiMetrics.ReduceMotion);
+        var dt = ImGui.GetIO().DeltaTime;
+        menuClock += Math.Clamp(dt, 0f, 0.25f);
 
-        DrawBar(game);
-        if (pendingLevel != NoChoice)
+        var inPlay = flow.Current == MoonfallScreen.Play && game is not null;
+        if (inPlay)
         {
-            DrawQuestion();
+            var focused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
+            pause.Update(causes() | (focused ? MoonfallPauseReason.None : MoonfallPauseReason.Unfocused));
         }
 
+        SoundFrame(inPlay && pause.Paused);
+        HandleKeys();
+        // Esc closes the window from the title alone (Dalamud's close key); everywhere else it goes back, or pauses.
+        RespectCloseHotkey = flow.Current == MoonfallScreen.Title;
+        if (flow.Version != screenVersion)
+        {
+            screenVersion = flow.Version;
+            EnteredScreen();
+        }
+
+        switch (flow.Current)
+        {
+            case MoonfallScreen.Play when game is { } g:
+                DrawPlay(g, dt);
+                break;
+
+            case MoonfallScreen.Play:
+                // The board went (the plugin reloaded its levels, say): back to the title.
+                flow.Home();
+                break;
+
+            default:
+                DrawMenu(flow.Current);
+                break;
+        }
+    }
+
+    /// <summary>The board this frame: its clock, its events, its end, the board itself, the pause menu and the tally.</summary>
+    private void DrawPlay(MoonfallGame g, float dt)
+    {
+        // Over the tally there is no pause menu: a pause that came while it showed (the window lost focus) lifts once
+        // its cause has, so the count-up goes on.
+        if (LevelOver(g) && pause.Paused)
+        {
+            pause.TryResume();
+        }
+
+        // The board's clock runs while it is not paused; after the level ends it runs on for the tally's count-up.
         if (!pause.Paused)
         {
-            FeedFlippers(game);
-            var dt = ImGui.GetIO().DeltaTime;
-            game.Advance(dt);
+            if (!LevelOver(g))
+            {
+                FeedFlippers(g);
+            }
+
+            if (duel is { } d)
+            {
+                d.Advance(dt);
+            }
+            else
+            {
+                g.Advance(dt);
+            }
+
             boardClock += Math.Clamp(dt, 0f, 0.25f);
         }
 
-        ReadEvents(game);
-        DrawBoard(game);
+        ReadEvents(g);
+        FinishIfOver(g);
+        if (!richHud)
+        {
+            // The plain board (Decoration Off, or while the game's art loads) has its numbers in one row above it.
+            DrawPlainBar(g);
+        }
+
+        DrawBoard(g);
+        if (pause.Paused && !LevelOver(g))
+        {
+            DrawPauseMenu(g);
+        }
     }
 
-    private MoonfallGame NewGame(int index)
-    {
-        var levels = campaigns[campaign].Levels;
-        levelIndex = Math.Clamp(index, 0, levels.Count - 1);
-        ClearEffects();
-        ClearPowerEffects();
-        ClearMoments();
-        SoundNewLevel();
-        // A fresh board each time: the seed only has to differ between plays, the engine does the rest.
-        return new MoonfallGame(levels[levelIndex], levelIndex + 1, SeedForRender ?? (ulong)Stopwatch.GetTimestamp(), power: PowerFor(levelIndex));
-    }
+    /// <summary>Whether the board's level (or duel) has ended: the tally shows.</summary>
+    private bool LevelOver(MoonfallGame g) =>
+        duel is { } d ? d.Outcome != MoonfallDuelOutcome.Undecided : g.Phase is MoonfallPhase.Won or MoonfallPhase.Lost;
 
     // ---- The offline renderer's hooks (tools/Tsukimichi.MoonfallRender: the board drawn by this code, without the game) ----
 
@@ -206,6 +272,18 @@ public sealed partial class MoonfallWindow : Window
 
     /// <summary>The game on the board.</summary>
     internal MoonfallGame? GameForRender => game;
+
+    /// <summary>The duel on the board, or null.</summary>
+    internal MoonfallDuel? DuelForRender => duel;
+
+    /// <summary>The screens' flow.</summary>
+    internal MoonfallScreenFlow FlowForRender => flow;
+
+    /// <summary>The modes the menus read.</summary>
+    internal MoonfallModes ModesForRender => modes;
+
+    /// <summary>The pause.</summary>
+    internal MoonfallPauseState PauseForRender => pause;
 
     /// <summary>The aim, set by the renderer where the mouse would set it.</summary>
     internal double AimForRender
@@ -217,9 +295,9 @@ public sealed partial class MoonfallWindow : Window
     /// <summary>The board's clock.</summary>
     internal double ClockForRender => boardClock;
 
-    /// <summary>Whether the board's art has settled: the chrome, and the level's scene built or failed (nothing still loading).</summary>
+    /// <summary>Whether the art has settled: the chrome, the level's scene at its tier (or failed), and the menus' backdrops.</summary>
     internal bool ArtSettledForRender => gameArt is null
-        || (gameArt.ChromeTexture is not null && gameArt.SceneState is not Core.Moonfall.Art.MoonfallSceneState.Building && art?.Atlas is not null);
+        || (gameArt.ChromeTexture is not null && art?.Atlas is not null && (flow.Current != MoonfallScreen.Play || gameArt.SceneSettled) && MenuArtSettled);
 
     /// <summary>A style shot's ribbon, as the event would place it.</summary>
     internal void RibbonForRender(string title, string value)
@@ -228,28 +306,6 @@ public sealed partial class MoonfallWindow : Window
         {
             AddRibbon(g, title, value);
         }
-    }
-
-    /// <summary>Whether leaving the level now would lose something: a shot taken or a ball in play, and the level not over.</summary>
-    private static bool UnderWay(MoonfallGame g) =>
-        g.Phase is not (MoonfallPhase.Won or MoonfallPhase.Lost) && (g.Phase != MoonfallPhase.Aiming || g.Score > 0 || g.BallsLeft != MoonfallRules.BallsPerLevel);
-
-    /// <summary>Restarts, or moves to <paramref name="index"/>; asks first while a level is under way (<see cref="DrawQuestion"/>).</summary>
-    private void Choose(int index)
-    {
-        if (game is { } g && UnderWay(g))
-        {
-            pendingLevel = index;
-            return;
-        }
-
-        Go(index);
-    }
-
-    private void Go(int index)
-    {
-        pendingLevel = NoChoice;
-        game = NewGame(index == RestartChoice ? levelIndex : index);
     }
 
     // ---- Events ----
@@ -275,43 +331,16 @@ public sealed partial class MoonfallWindow : Window
                 case MoonfallEventKind.FreeBall:
                     freeBallUntil = boardClock + FreeBallSeconds;
                     break;
-
-                case MoonfallEventKind.LevelWon:
-                    NoteWin(g);
-                    RecordWin();
-                    break;
             }
         }
 
         SoundFlush(g);
     }
 
-    /// <summary>The level just won moves the account's furthest level on: in memory now, on disk off the frame.</summary>
-    private void RecordWin()
-    {
-        var cleared = levelIndex + 1;
-        if (cleared > progress.Cleared(campaign))
-        {
-            if (campaign == MoonfallCampaignKind.Expansion)
-            {
-                progress.ExpansionCleared = cleared;
-            }
-            else
-            {
-                progress.BaseCleared = cleared;
-            }
-
-            unsaved = true;
-        }
-
-        // A save that failed before is tried again with this win.
-        SaveInBackground();
-    }
-
     /// <summary>
-    /// Saves unsaved progress on a worker, one save at a time. A failed save keeps it unsaved, so the next win, closing
-    /// the window or unloading the plugin (<see cref="SaveNow"/>) tries again. Another client's further progress, merged
-    /// in by the save, shows on the next frame.
+    /// Saves unsaved progress on a worker, one save at a time. A failed save keeps it unsaved, so the next level ended,
+    /// closing the window or unloading the plugin (<see cref="SaveNow"/>) tries again. Another client's further progress,
+    /// merged in by the save, shows on the next frame.
     /// </summary>
     private void SaveInBackground()
     {
@@ -370,23 +399,21 @@ public sealed partial class MoonfallWindow : Window
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             unsaved = true;
-            log?.Warning(ex, "Moonfall progress could not be saved; it is tried again with the next level won and when the window closes");
+            log?.Warning(ex, "Moonfall progress could not be saved; it is tried again with the next level ended and when the window closes");
         }
     }
 
     /// <summary>The progress a save merged with the file (another client may be further on), taken in on the draw thread.</summary>
     private void TakeMerged()
     {
-        if (Interlocked.Exchange(ref mergedFromDisk, null) is { } merged)
+        if (Interlocked.Exchange(ref mergedFromDisk, null) is { } merged && progress.Absorb(merged))
         {
-            progress.Absorb(merged);
+            progressEpoch++;
         }
     }
 
-    // ---- The bar ----
+    // ---- The plain board's bar (Decoration Off, or while the game's art loads): one row, never more ----
 
-    private string levelText = string.Empty;
-    private int levelTextFor = -1;
     private string ballsText = string.Empty;
     private int ballsFor = -1;
     private string orangesText = string.Empty;
@@ -402,13 +429,7 @@ public sealed partial class MoonfallWindow : Window
         if (languageFor != Localization.Loc.Version)
         {
             languageFor = Localization.Loc.Version;
-            levelTextFor = ballsFor = orangesFor = multiplierFor = -1;
-        }
-
-        if (levelTextFor != levelIndex)
-        {
-            levelTextFor = levelIndex;
-            levelText = LevelLabel(levelIndex);
+            ballsFor = orangesFor = multiplierFor = -1;
         }
 
         if (ballsFor != g.BallsLeft)
@@ -429,242 +450,75 @@ public sealed partial class MoonfallWindow : Window
             multiplierText = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallMultiplierFormat, multiplierFor);
         }
 
-        if (scoreFor != g.ShownScore)
+        var shown = duel?.ShownScore(MoonfallDuel.PlayerSide) ?? g.ShownScore;
+        if (scoreFor != shown)
         {
-            scoreFor = g.ShownScore;
+            scoreFor = shown;
             scoreText = scoreFor.ToString("N0", CultureInfo.CurrentCulture);
         }
     }
 
-    private string LevelLabel(int index)
-    {
-        var levels = campaigns[campaign].Levels;
-        return string.Format(CultureInfo.CurrentCulture, Strings.MoonfallLevelFormat, index + 1, levels[index].Name);
-    }
-
-    private void DrawBar(MoonfallGame g)
+    /// <summary>
+    /// The plain board's one-row bar (the rich chrome shows all of this on the board itself): the level, the balls, the
+    /// oranges left, the multiplier and the score, drawn as text over a strip above the board so it never wraps.
+    /// </summary>
+    private float DrawPlainBar(MoonfallGame g)
     {
         RefreshBarText(g);
+        RefreshHudText(g);
+        var dl = ImGui.GetWindowDrawList();
+        var at = ImGui.GetCursorScreenPos();
+        var width = ImGui.GetContentRegionAvail().X;
+        var height = ImGui.GetFrameHeight();
         var gap = UiMetrics.Px(14f);
-
-        // The level picker: every level won and the next one.
-        ImGui.SetNextItemWidth(MathF.Min(UiMetrics.Px(220f), ImGui.GetContentRegionAvail().X * 0.45f));
-        if (ImGui.BeginCombo("##moonfallLevel", levelText))
+        var y = at.Y + ((height - ImGui.GetTextLineHeight()) * 0.5f);
+        var x = at.X;
+        var right = at.X + width;
+        // Pause at the right (the mouse's way in; Esc too), then the score.
+        var pauseWidth = ImGui.CalcTextSize(Strings.MoonfallPause).X + (2f * ImGui.GetStyle().FramePadding.X);
+        ImGui.SetCursorScreenPos(new Vector2(right - pauseWidth, at.Y));
+        if (ImGui.Button(PauseButtonLabel, new Vector2(pauseWidth, height)))
         {
-            var playable = campaigns.Playable(campaign, progress);
-            for (var i = 0; i < playable; i++)
+            TogglePause(g);
+        }
+
+        right -= pauseWidth + gap;
+        var scoreWidth = ImGui.CalcTextSize(scoreText).X;
+        dl.AddText(new Vector2(right - scoreWidth, y), Theme.U32(Theme.Gold), scoreText);
+        right -= scoreWidth + gap;
+        dl.PushClipRect(at, new Vector2(right, at.Y + height), true);
+        foreach (var part in (ReadOnlySpan<string>)[stageText, playLevel?.Name ?? string.Empty, ballsText, orangesText, multiplierText])
+        {
+            if (part.Length == 0)
             {
-                if (ImGui.Selectable(LevelLabel(i), i == levelIndex) && i != levelIndex)
-                {
-                    SoundClick();
-                    Choose(i);
-                }
+                continue;
             }
 
-            ImGui.EndCombo();
+            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.Text), part);
+            x += ImGui.CalcTextSize(part).X + gap;
         }
 
-        // The rich chrome shows the balls, the oranges, the multiplier, the score and the power's turns on the board itself.
-        if (!richHud)
-        {
-            ImGui.SameLine(0f, gap);
-            ImGui.AlignTextToFramePadding();
-            ImGui.TextUnformatted(ballsText);
-            ImGui.SameLine(0f, gap);
-            Swatch(PegInk(PegColour.Orange));
-            ImGui.SameLine(0f, UiMetrics.Px(5f));
-            ImGui.TextUnformatted(orangesText);
-            ImGui.SameLine(0f, gap);
-            using (Theme.PushText(g.Multiplier > 1 ? Theme.Gold : Theme.Surface.TextSecondary))
-            {
-                ImGui.TextUnformatted(multiplierText);
-            }
-
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.MoonfallMultiplierTooltip);
-            }
-        }
-
-        DrawPowerBar(g, gap);
-        var leftEnd = ImGui.GetItemRectMax().X - ImGui.GetWindowPos().X;
-
-        // The score, then Pause and Restart, at the right.
-        var style = ImGui.GetStyle();
-        var pauseLabel = pause.Active.HasFlag(MoonfallPauseReason.Player) || pause.AwaitingResume ? Strings.MoonfallResume : Strings.MoonfallPause;
-        var pauseWidth = MathF.Max(ImGui.CalcTextSize(Strings.MoonfallPause).X, ImGui.CalcTextSize(Strings.MoonfallResume).X) + (2f * style.FramePadding.X);
-        var restartWidth = ImGui.CalcTextSize(Strings.MoonfallRestart).X + (2f * style.FramePadding.X);
-        var optionsWidth = options is null ? 0f : ImGui.CalcTextSize(Strings.MoonfallOptions).X + (2f * style.FramePadding.X) + style.ItemSpacing.X;
-        var scoreSize = ImGui.GetFontSize() * ScoreScale;
-        var scoreWidth = richHud ? 0f : ImGui.CalcTextSize(scoreText).X * ScoreScale;
-        var right = ImGui.GetWindowContentRegionMax().X;
-        var scoreX = right - restartWidth - style.ItemSpacing.X - pauseWidth - optionsWidth - gap - scoreWidth;
-        // On the same row while it fits; in a narrow window the score and the buttons take a row of their own.
-        if (scoreX >= leftEnd + gap)
-        {
-            ImGui.SameLine(scoreX);
-        }
-        else
-        {
-            ImGui.SetCursorPosX(MathF.Max(style.WindowPadding.X, scoreX));
-        }
-
-        var at = ImGui.GetCursorScreenPos();
-        var frame = ImGui.GetFrameHeight();
-        if (!richHud)
-        {
-            ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), scoreSize, new Vector2(at.X, at.Y + ((frame - scoreSize) * 0.5f)), Theme.U32(Theme.Gold), scoreText);
-        }
-
-        ImGui.Dummy(new Vector2(MathF.Max(1f, scoreWidth), frame));
-        ImGui.SameLine(0f, gap);
-        DrawOptions();
-        // While combat, a duty or a cutscene holds the pause, Resume is off and says why.
-        var held = (pause.Active & (MoonfallPauseReason.Combat | MoonfallPauseReason.Duty | MoonfallPauseReason.Cutscene)) != 0;
-        using (ImRaii.Disabled(held))
-        {
-            if (ImGui.Button($"{pauseLabel}##moonfallPause", new Vector2(pauseWidth, 0f)))
-            {
-                SoundClick();
-                if (pause.Paused)
-                {
-                    pause.TryResume();
-                }
-                else
-                {
-                    pause.Pause(MoonfallPauseReason.Player);
-                }
-            }
-        }
-
-        if (held && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
-        {
-            UiMetrics.Tooltip(PauseReasonText() ?? Strings.MoonfallPaused, Strings.MoonfallWaitsForIt);
-        }
-
-        ImGui.SameLine();
-        if (ImGui.Button($"{Strings.MoonfallRestart}##moonfallRestart", new Vector2(restartWidth, 0f)))
-        {
-            SoundClick();
-            Choose(RestartChoice);
-        }
-
-        DrawPegMarksHint();
-        ImGui.Spacing();
+        dl.PopClipRect();
+        ImGui.SetCursorScreenPos(at);
+        ImGui.Dummy(new Vector2(width, height));
+        return height;
     }
 
-    /// <summary>Moonfall's Options: a small menu with Peg marks, the colour-blind assist (decision 27: off by default).</summary>
-    private void DrawOptions()
+    private string pauseButtonLabel = string.Empty;
+    private int pauseButtonFor = -1;
+
+    /// <summary>The plain bar's Pause, with its id, made once per language.</summary>
+    private string PauseButtonLabel
     {
-        if (options is null)
+        get
         {
-            return;
-        }
-
-        if (ImGui.Button($"{Strings.MoonfallOptions}##moonfallOptions"))
-        {
-            ImGui.OpenPopup("##moonfallOptionsMenu");
-        }
-
-        if (ImGui.BeginPopup("##moonfallOptionsMenu"))
-        {
-            var marks = options.PegMarks;
-            if (ImGui.Checkbox($"{Strings.MoonfallPegMarks}##moonfallPegMarks", ref marks))
+            if (pauseButtonFor != Localization.Loc.Version)
             {
-                options.PegMarks = marks;
-                options.PegMarksHintSeen = true;
-                options.Save();
+                pauseButtonFor = Localization.Loc.Version;
+                pauseButtonLabel = Strings.MoonfallPause + "##moonfallPause";
             }
 
-            if (ImGui.IsItemHovered())
-            {
-                UiMetrics.Tooltip(Strings.MoonfallPegMarksTooltip);
-            }
-
-            ImGui.EndPopup();
+            return pauseButtonLabel;
         }
-
-        ImGui.SameLine();
-    }
-
-    /// <summary>The one-time hint about Peg marks (decision 27), under the bar until it is answered.</summary>
-    private void DrawPegMarksHint()
-    {
-        if (options is null || options.PegMarksHintSeen)
-        {
-            return;
-        }
-
-        // On one row when it fits; in a narrow window the words wrap and the two buttons follow under them.
-        var style = ImGui.GetStyle();
-        var buttons = ImGui.CalcTextSize(Strings.MoonfallTurnOn).X + ImGui.CalcTextSize(Strings.MoonfallNoThanks).X + (4f * style.FramePadding.X) + style.ItemSpacing.X;
-        var fits = ImGui.CalcTextSize(Strings.MoonfallPegMarksHint).X + UiMetrics.Px(10f) + buttons <= ImGui.GetContentRegionAvail().X;
-        ImGui.AlignTextToFramePadding();
-        using (Theme.PushText(Theme.Surface.TextSecondary))
-        {
-            if (fits)
-            {
-                ImGui.TextUnformatted(Strings.MoonfallPegMarksHint);
-            }
-            else
-            {
-                ImGui.TextWrapped(Strings.MoonfallPegMarksHint);
-            }
-        }
-
-        if (fits)
-        {
-            ImGui.SameLine(0f, UiMetrics.Px(10f));
-        }
-
-        if (ImGui.SmallButton($"{Strings.MoonfallTurnOn}##moonfallMarksOn"))
-        {
-            options.PegMarks = true;
-            options.PegMarksHintSeen = true;
-            options.Save();
-        }
-
-        ImGui.SameLine();
-        if (ImGui.SmallButton($"{Strings.MoonfallNoThanks}##moonfallMarksNo"))
-        {
-            options.PegMarksHintSeen = true;
-            options.Save();
-        }
-    }
-
-    /// <summary>"Start this level again?" or "Leave this level?", with the way on and Keep playing, until answered.</summary>
-    private void DrawQuestion()
-    {
-        ImGui.AlignTextToFramePadding();
-        using (Theme.PushText(Theme.Surface.Text))
-        {
-            ImGui.TextUnformatted(pendingLevel == RestartChoice ? Strings.MoonfallRestartQuestion : Strings.MoonfallLeaveQuestion);
-        }
-
-        ImGui.SameLine(0f, UiMetrics.Px(12f));
-        if (ImGui.Button((pendingLevel == RestartChoice ? Strings.MoonfallRestart : Strings.MoonfallLeave) + "##moonfallYes"))
-        {
-            SoundClick();
-            Go(pendingLevel);
-        }
-
-        ImGui.SameLine();
-        if (ImGui.Button(Strings.MoonfallKeepPlaying + "##moonfallNo"))
-        {
-            SoundClick();
-            pendingLevel = NoChoice;
-        }
-
-        ImGui.Spacing();
-    }
-
-    /// <summary>A small filled circle at the text's height, as a key for the counter beside it.</summary>
-    private static void Swatch(uint color)
-    {
-        var size = ImGui.GetFrameHeight();
-        var at = ImGui.GetCursorScreenPos();
-        var radius = MathF.Round(ImGui.GetFontSize() * 0.3f);
-        ImGui.GetWindowDrawList().AddCircleFilled(new Vector2(at.X + radius, at.Y + (size * 0.5f)), radius, color, 16);
-        ImGui.Dummy(new Vector2(radius * 2f, size));
     }
 }

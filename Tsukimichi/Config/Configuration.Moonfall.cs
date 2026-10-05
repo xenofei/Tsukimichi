@@ -1,3 +1,5 @@
+using Tsukimichi.Core.Ui;
+
 namespace Tsukimichi.Config;
 
 /// <summary>
@@ -25,4 +27,10 @@ public sealed partial class Configuration
 
     /// <summary>Whether the peg marks' first-run hint has been seen (it shows once, then never again).</summary>
     public bool MoonfallPegMarksHintSeen { get; set; }
+
+    /// <summary>
+    /// Moonfall's Decoration, apart from Tsukimichi's own (the owner's answer: Full by default): Full, Simple (Quiet) or
+    /// Off (Plain). Reduce motion, Tsukimichi's own setting, still means still whatever this is.
+    /// </summary>
+    public Flair MoonfallDecoration { get; set; } = Flair.Full;
 }

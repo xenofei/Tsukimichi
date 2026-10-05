@@ -58,6 +58,18 @@ public enum MoonfallChromePart
 
     /// <summary>The Triple Triad card back (a companion the story has not introduced).</summary>
     CardBack,
+
+    /// <summary>The pill in its focused state (r2kit._pill("focus")): a lighter lapis fill.</summary>
+    PillFocus,
+
+    /// <summary>The pill as a garnet "danger" button (Restart, Leave: held to confirm).</summary>
+    PillDanger,
+
+    /// <summary>The pill locked: a slate fill and a dimmed rim (a sealed entry).</summary>
+    PillLocked,
+
+    /// <summary>The window kit's tab plate (the map's campaign tabs).</summary>
+    Tab,
 }
 
 /// <summary>Where a part lies in the chrome sheet (pixels) and its size in hr pixels.</summary>
@@ -158,6 +170,10 @@ public static class MoonfallChromeArt
         new(MoonfallChromePart.Spire, "PVPRankEmblem3", 2, 233, 76, 342, 0.5f, 0.05f),
         new(MoonfallChromePart.Gems, "JobHudSCH0", 7, 7, 290, 139, 0.5f, 0f),
         new(MoonfallChromePart.CardBack, "TripleTriadBattle", 27, 729, 202, 254, 0.5f, 0f),
+        new(MoonfallChromePart.PillFocus, "LovmPalette", 14, 621, 252, 94, 0.6f, 0f),
+        new(MoonfallChromePart.PillDanger, "LovmPalette", 14, 621, 252, 94, 0.6f, 0f),
+        new(MoonfallChromePart.PillLocked, "LovmPalette", 14, 621, 252, 94, 0.6f, -0.2f),
+        new(MoonfallChromePart.Tab, "TabButtonA", 3, 2, 170, 48, 0.6f, 0f),
     ];
 
     /// <summary>The rings' geometry in their crops: centre x, y, hole radius, gilt's outer radius (hr px; r2lib.RING_GEOM).</summary>
@@ -212,9 +228,9 @@ public static class MoonfallChromeArt
             var crop = source.Crop(cut.X, cut.Y, cut.W, cut.H);
             crop = Prepare(cut.Part, crop);
             parts.Add((cut.Part, MoonfallGrade.Gild(crop, cut.Gild, cut.Warm)));
-            if (cut.Part == MoonfallChromePart.Pill)
+            if (cut.Part is MoonfallChromePart.Pill or MoonfallChromePart.PillFocus or MoonfallChromePart.PillDanger or MoonfallChromePart.PillLocked)
             {
-                parts[^1] = (cut.Part, PillFill(parts[^1].Image, crop));
+                parts[^1] = (cut.Part, PillFill(parts[^1].Image, crop, cut.Part));
             }
         }
 
@@ -380,12 +396,33 @@ public static class MoonfallChromeArt
         }
     }
 
-    /// <summary>r2kit._pill("normal"): the pill's leather fill recoloured as enamel (its grain kept faintly, a glaze along the top).</summary>
-    private static MoonfallImage PillFill(MoonfallImage gilded, MoonfallImage raw)
+    /// <summary>
+    /// r2kit._pill: the pill's leather fill recoloured as enamel (its grain kept faintly, a glaze along the top), in the
+    /// state's own colours: normal lapis, focus a lighter lapis, danger garnet, locked slate with its gilt dimmed.
+    /// </summary>
+    private static MoonfallImage PillFill(MoonfallImage gilded, MoonfallImage raw, MoonfallChromePart state = MoonfallChromePart.Pill)
     {
-        ReadOnlySpan<(float, Vector3)> stops = [(0f, MoonfallColor.Hex("#2C428C")), (0.5f, MoonfallColor.Hex("#1A2A66")), (1f, MoonfallColor.Hex("#0E1640"))];
+        ReadOnlySpan<(float, Vector3)> stops = state switch
+        {
+            MoonfallChromePart.PillFocus => [(0f, MoonfallColor.Hex("#4C6FD6")), (0.45f, MoonfallColor.Hex("#2A47A8")), (1f, MoonfallColor.Hex("#16245E"))],
+            MoonfallChromePart.PillDanger => [(0f, MoonfallColor.Hex("#8E2B4A")), (0.5f, MoonfallColor.Hex("#5E1A32")), (1f, MoonfallColor.Hex("#300C1A"))],
+            MoonfallChromePart.PillLocked => [(0f, MoonfallColor.Hex("#22283E")), (1f, MoonfallColor.Hex("#121628"))],
+            _ => [(0f, MoonfallColor.Hex("#2C428C")), (0.5f, MoonfallColor.Hex("#1A2A66")), (1f, MoonfallColor.Hex("#0E1640"))],
+        };
         var glaze = MoonfallColor.Hex("#BFD0FF");
         var out_ = gilded.Copy();
+        if (state == MoonfallChromePart.PillLocked)
+        {
+            // The locked rim: the gilt dimmed and drained a quarter (r2kit: g * 0.55 + its grey * 0.25).
+            for (var i = 0; i < out_.R.Data.Length; i++)
+            {
+                var grey = (out_.R.Data[i] + out_.G.Data[i] + out_.B.Data[i]) / 3f * 0.25f;
+                out_.R.Data[i] = (out_.R.Data[i] * 0.55f) + grey;
+                out_.G.Data[i] = (out_.G.Data[i] * 0.55f) + grey;
+                out_.B.Data[i] = (out_.B.Data[i] * 0.55f) + grey;
+            }
+        }
+
         for (var y = 0; y < raw.Height; y++)
         {
             for (var x = 0; x < raw.Width; x++)

@@ -113,6 +113,9 @@ public sealed class MoonfallModes
 
     public IReadOnlyList<MoonfallChallenge> Challenges { get; }
 
+    /// <summary>Each level's Ace score (the shipped table, <see cref="MoonfallAces.For"/>; the offline renderer stages its own).</summary>
+    public Func<string?, long?> AceOf { get; init; } = MoonfallAces.For;
+
     // ---- Adventure ----
 
     /// <summary>Whether the campaign can be played: The Moon Road always; The Far Shore once all 55 of The Moon Road are won.</summary>
@@ -128,7 +131,7 @@ public sealed class MoonfallModes
             : Progress.IsCleared(id) ? MoonfallLevelState.Cleared
             : CampaignOpen(campaign) && index <= Progress.Cleared(campaign) ? MoonfallLevelState.Open
             : MoonfallLevelState.Sealed;
-        return new MoonfallLevelSlot(id, new MoonfallLevelPlace(campaign, index), level, state, Progress.Best(id), Progress.IsAced(id), MoonfallAces.For(id));
+        return new MoonfallLevelSlot(id, new MoonfallLevelPlace(campaign, index), level, state, Progress.Best(id), Progress.IsAced(id), AceOf(id));
     }
 
     /// <summary>The campaign's stages as the map shows them.</summary>
@@ -270,12 +273,12 @@ public sealed class MoonfallModes
         }
 
         var won = game.Phase == MoonfallPhase.Won;
-        var bonus = MoonfallAces.Bonus(start.LevelId, won, game.Score);
+        var bonus = won && AceOf(start.LevelId) is { } ace && game.Score >= ace ? MoonfallRules.AceBonus : 0;
         var score = game.Score + bonus;
         var newBest = score > Progress.Best(start.LevelId);
         var wasAced = Progress.IsAced(start.LevelId);
         var before = (Progress.BaseCleared, Progress.ExpansionCleared, ChallengesOpen);
-        Progress.RecordLevel(start.LevelId, won, score, MoonfallAces.For(start.LevelId));
+        Progress.RecordLevel(start.LevelId, won, score, AceOf(start.LevelId));
         var unlocked = before != (Progress.BaseCleared, Progress.ExpansionCleared, ChallengesOpen);
         return new MoonfallLevelResult(won, score, bonus, bonus > 0 && !wasAced, newBest, unlocked);
     }

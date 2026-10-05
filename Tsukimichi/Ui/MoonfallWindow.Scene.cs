@@ -20,7 +20,7 @@ public sealed partial class MoonfallWindow
     private const double SceneFadeSeconds = 0.25;
 
     /// <summary>The scene's textures this frame, or null (the interim ground draws).</summary>
-    private MoonfallSceneTextures<IDalamudTextureWrap>? RichSceneNow() => Theme.Flair == Core.Ui.Flair.Plain ? null : gameArt?.Scene;
+    private MoonfallSceneTextures<IDalamudTextureWrap>? RichSceneNow() => decoration == Core.Ui.Flair.Plain ? null : gameArt?.Scene;
 
     /// <summary>
     /// The window's margins beside (or round) the board: the level's scene small and blurred, darkened, in the level's
@@ -203,7 +203,7 @@ public sealed partial class MoonfallWindow
         }
 
         var v = p.View;
-        var quick = UiMetrics.ReduceMotion || Theme.Flair == Flair.Plain;
+        var quick = UiMetrics.ReduceMotion || decoration == Flair.Plain;
         Span<Vector2> spots = stackalloc Vector2[64];
         var brickAlpha = MoonfallVeil.BrickAlpha(k);
         for (var i = 0; i < g.PegCount; i++)

@@ -12,8 +12,9 @@ using Tsukimichi.Ui;
 using LuminaGameData = Lumina.GameData;
 
 // Moonfall's offline renderer (see the project file):
-//   Tsukimichi.MoonfallRender <out.png> [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally]
-//                              [--marks] [--reduce-motion] [--no-game-art] [--seconds N]
+//   Tsukimichi.MoonfallRender <out.png> [--screen title|map|levels|characters|quickplay|challenges|duel|options|play|pause|tally|duelhud]
+//                              [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally]
+//                              [--marks] [--hint] [--reduce-motion] [--decoration full|simple|off] [--no-game-art] [--seconds N]
 // The board is the plugin's own window, drawn by its own code under a headless ImGui, rasterized to the PNG.
 var dalamud = Environment.GetEnvironmentVariable("DALAMUD_HOME") is { Length: > 0 } home ? home
     : typeof(Raster).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(static a => a.Key == "DalamudLibPath")?.Value;
@@ -107,21 +108,25 @@ internal static class Render
             typeof(UiMetrics).GetProperty(nameof(UiMetrics.ReduceMotion))!.SetValue(null, true);
         }
 
-        var (campaigns, index) = Campaign(repo, levelName);
-        var progress = new MoonfallProgress { BaseCleared = index };
-        // The tally's callout: an earlier best to beat and an Ace within reach of the staged win, so ACED and NEW BEST show.
-        progress.Levels[campaigns.Base.Levels[index].Id] = new MoonfallLevelRecord { Best = 60_000 };
+        // The screen to show (--screen): a menu, or the board ("play", the default) staged at --moment. With a screen,
+        // the progress is the mocks' one state (r2state.py): The Moon Road, stage 3, with Cid; stages 1 and 2 won; the
+        // twins face down (Alisaie not yet met). Without one, the board plays --level as before.
+        var screen = Arg(args, "--screen") ?? "play";
+        var (campaigns, progress, aces, story) = args.Contains("--legacy") || (screen == "play" && Arg(args, "--level") is not null)
+            ? Legacy(repo, levelName, moment)
+            : MockState(repo, screen, moment);
         var artHost = new ArtHost(store);
         var gameHost = new GameHost(store, args.Contains("--no-game-art") ? null : game, Path.Combine(repo, "Tsukimichi", "assets", "moonfall", "scenes"));
         var options = new Options { PegMarks = args.Contains("--marks"), PegMarksHintSeen = !args.Contains("--hint") };
+        if (Arg(args, "--decoration") is { } decoration)
+        {
+            options.Decoration = decoration switch { "simple" => Tsukimichi.Core.Ui.Flair.Quiet, "off" => Tsukimichi.Core.Ui.Flair.Plain, _ => Tsukimichi.Core.Ui.Flair.Full };
+        }
+
         var temp = Path.Combine(Path.GetTempPath(), "moonfall-render-progress.json");
         var window = new MoonfallWindow(campaigns, progress, temp, static () => MoonfallPauseReason.None, null, artHost,
-            Path.Combine(repo, "Tsukimichi", "assets", "moonfall"), gameHost, fonts, options)
+            Path.Combine(repo, "Tsukimichi", "assets", "moonfall"), gameHost, fonts, options, story, null, aces)
         { SeedForRender = 1 };
-        if (moment == "tally")
-        {
-            window.AceFor = static _ => 100_000;
-        }
 
         void Frame(float dt, bool draw = false)
         {
@@ -155,17 +160,55 @@ internal static class Render
         }
 
         // Let the art load (manifest, sheets, the game's UI art, the scene's build and its uploads): frames until it has.
-        for (var i = 0; i < 12 || (!window.ArtSettledForRender && i < 3000); i++)
+        void Settle()
         {
-            Frame(1f / 60f);
-            if (!window.ArtSettledForRender)
+            for (var i = 0; i < 12 || (!window.ArtSettledForRender && i < 3000); i++)
             {
-                Thread.Sleep(10);
+                Frame(1f / 60f);
+                if (!window.ArtSettledForRender)
+                {
+                    Thread.Sleep(10);
+                }
             }
         }
 
-        var g = window.GameForRender ?? throw new InvalidOperationException("no game");
-        Stage(moment, window, g, Frame);
+        Settle();
+        var board = screen is "play" or "pause" or "tally" or "duelhud";
+        if (!window.ShowForRender(screen is "pause" or "tally" ? "play" : screen))
+        {
+            Console.Error.WriteLine($"no screen \"{screen}\" (title, map, levels, characters, quickplay, challenges, duel, options, play, pause, tally, duelhud)");
+            return 2;
+        }
+
+        Settle();
+        if (board)
+        {
+            var g = window.GameForRender ?? throw new InvalidOperationException("no game");
+            if (screen == "duelhud")
+            {
+                StageDuel(window, Frame);
+            }
+            else
+            {
+                Stage(screen == "tally" ? "tally" : moment, window, g, Frame);
+            }
+
+            if (screen == "pause")
+            {
+                window.PauseForRender.Pause(MoonfallPauseReason.Player);
+                Frame(1f / 60f);
+            }
+
+            Settle();
+        }
+        else
+        {
+            // The menus' ambient motion a few seconds in (it is still under Reduce motion).
+            for (var i = 0; i < 90; i++)
+            {
+                Frame(1f / 60f);
+            }
+        }
         var seconds = Arg(args, "--seconds") is { } s ? double.Parse(s, CultureInfo.InvariantCulture) : 0;
         for (var t = 0.0; t < seconds; t += 1 / 60.0)
         {
@@ -309,6 +352,99 @@ internal static class Render
         }
     }
 
+    /// <summary>A duel staged at the opponent's turn: the player's first shot taken, the opponent thinking.</summary>
+    private static void StageDuel(MoonfallWindow window, Action<float, bool> frame)
+    {
+        var d = window.DuelForRender ?? throw new InvalidOperationException("no duel");
+        window.AimForRender = -0.32;
+        d.Shoot(-0.32);
+        for (var k = 0; k < 60 * 30 && (d.PlayersTurn || !d.Opponent.Thinking); k++)
+        {
+            frame(1f / 60f, false);
+            if (d.Outcome != MoonfallDuelOutcome.Undecided)
+            {
+                break;
+            }
+        }
+
+        // A few ticks into its thought.
+        for (var k = 0; k < 8 && d.Opponent.Thinking; k++)
+        {
+            frame(1f / 60f, false);
+        }
+    }
+
+    /// <summary>The board of the old renderer: --level (a shipped level, or a pilot on stage 3), its progress just short of it.</summary>
+    private static (MoonfallCampaigns, MoonfallProgress, Func<string?, long?>?, MoonfallStory?) Legacy(string repo, string levelName, string moment)
+    {
+        var (campaigns, index) = Campaign(repo, levelName);
+        var progress = new MoonfallProgress { BaseCleared = index };
+        // The tally's callout: an earlier best to beat and an Ace within reach of the staged win, so ACED and NEW BEST show.
+        progress.Levels[MoonfallStages.LevelId(MoonfallCampaignKind.Base, index)] = new MoonfallLevelRecord { Best = 60_000 };
+        Func<string?, long?>? aces = moment == "tally" ? static _ => 100_000 : null;
+        return (campaigns, progress, aces, null);
+    }
+
+    /// <summary>
+    /// The mocks' one state (docs/design/v9/rich2/src/r2state.py): The Moon Road, stage 3, with Cid Garlond; stages 1 and 2
+    /// won; 3-1 The Moonlit Post won (214,300), 3-2 The Holy See aced (251,880), 3-3 The Airship Road next (Ace 240,000);
+    /// the twins face down (Alisaie not yet met). Stage 3's levels are the three approved pilots; the rest are the shipped
+    /// levels standing in. The challenges' screen is staged with The Moon Road won, so its list is open.
+    /// </summary>
+    private static (MoonfallCampaigns, MoonfallProgress, Func<string?, long?>?, MoonfallStory?) MockState(string repo, string screen, string moment)
+    {
+        var builtIn = MoonfallCampaigns.LoadBuiltIn();
+        MoonfallLevel Pilot(string name)
+        {
+            var load = MoonfallLevelLoader.Parse(File.ReadAllText(Path.Combine(repo, "docs", "design", "v9", "rich", "levels", name + ".json")));
+            var level = load.Level ?? throw new InvalidOperationException(string.Join("; ", load.Errors));
+            return level with { Scene = name switch { "base-p1" => "airship-road", "base-p2" => "holy-see", _ => null } };
+        }
+
+        var levels = new List<MoonfallLevel>();
+        for (var i = 0; i < 15; i++)
+        {
+            var id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, i);
+            var level = i switch
+            {
+                10 => Pilot("base-p3") with { Name = "The Moonlit Post" },
+                11 => Pilot("base-p2") with { Name = "The Holy See" },
+                12 => Pilot("base-p1") with { Name = "The Airship Road" },
+                13 => builtIn.Base.Levels[0] with { Name = "Above the Clouds" },
+                14 => builtIn.Base.Levels[1] with { Name = "The Ironworks Dock" },
+                _ => builtIn.Base.Levels[i % builtIn.Base.Levels.Count],
+            };
+            levels.Add(level with { Id = id });
+        }
+
+        var campaigns = new MoonfallCampaigns(new MoonfallCampaign(MoonfallCampaignKind.Base, levels), builtIn.Expansion, []);
+        var progress = new MoonfallProgress { BaseCleared = 12 };
+        for (var i = 0; i < 12; i++)
+        {
+            progress.Levels[MoonfallStages.LevelId(MoonfallCampaignKind.Base, i)] = new MoonfallLevelRecord { Cleared = true, Best = 180_000 + (i * 7_130), Aced = i % 4 == 1 };
+        }
+
+        progress.Levels["base-11"] = new MoonfallLevelRecord { Cleared = true, Best = 214_300 };
+        progress.Levels["base-12"] = new MoonfallLevelRecord { Cleared = true, Best = 251_880, Aced = true };
+        var aces = new Dictionary<string, long>(StringComparer.Ordinal) { ["base-11"] = 200_000, ["base-12"] = 240_000, ["base-13"] = 240_000 };
+        if (screen == "tally" || moment == "tally")
+        {
+            // The staged win reaches an Ace and beats an earlier best, so ACED and NEW BEST show (the mock's callout).
+            aces["base-13"] = 100_000;
+            progress.Levels["base-13"] = new MoonfallLevelRecord { Best = 60_000 };
+        }
+
+        if (screen == "challenges")
+        {
+            progress.BaseCleared = MoonfallStages.BaseLevels;
+            progress.Challenges["ch-01"] = new MoonfallChallengeRecord { Done = true, Best = 168_000 };
+            progress.Challenges["ch-02"] = new MoonfallChallengeRecord { Best = 91_400 };
+        }
+
+        var story = new MoonfallStory(static name => name != "Alisaie");
+        return (campaigns, progress, id => id is not null && aces.TryGetValue(id, out var ace) ? ace : null, story);
+    }
+
     private static (MoonfallCampaigns Campaigns, int Index) Campaign(string repo, string name)
     {
         var builtIn = MoonfallCampaigns.LoadBuiltIn();
@@ -327,11 +463,11 @@ internal static class Render
         var levels = new List<MoonfallLevel>();
         for (var i = 0; i < 12; i++)
         {
-            levels.Add(builtIn.Base.Levels[i % builtIn.Base.Levels.Count]);
+            levels.Add(builtIn.Base.Levels[i % builtIn.Base.Levels.Count] with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, i) });
         }
 
-        levels.Add(pilot);
-        levels.Add(builtIn.Base.Levels[0]);
+        levels.Add(pilot with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, 12) });
+        levels.Add(builtIn.Base.Levels[0] with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, 13) });
         return (new MoonfallCampaigns(new MoonfallCampaign(MoonfallCampaignKind.Base, levels), builtIn.Expansion, []), 12);
     }
 

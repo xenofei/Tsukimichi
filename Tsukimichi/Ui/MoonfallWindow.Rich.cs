@@ -218,10 +218,19 @@ public sealed partial class MoonfallWindow
         return g.W * s;
     }
 
-    /// <summary>r2kit.pill: the Gold Saucer's pill, its body filling the rectangle (units) and its shadow spilling below.</summary>
-    private static void Pill(in ChromePen c, double x0, double y0, double x1, double y1, uint tint = uint.MaxValue)
+    /// <summary>
+    /// r2kit.pill: the Gold Saucer's pill, its body filling the rectangle (units) and its shadow spilling below, in its
+    /// state (<paramref name="state"/>: the normal pill, or its focus, danger or locked fill; the normal one stands in
+    /// when the state's part is missing).
+    /// </summary>
+    private static void Pill(in ChromePen c, double x0, double y0, double x1, double y1, uint tint = uint.MaxValue, MoonfallChromePart state = MoonfallChromePart.Pill)
     {
-        if (c.Sheet[MoonfallChromePart.Pill] is not { } r)
+        if (c.Sheet[state] is null)
+        {
+            state = MoonfallChromePart.Pill;
+        }
+
+        if (c.Sheet[state] is not { } r)
         {
             c.Dl.AddRectFilled(c.View.Map(x0, y0), c.View.Map(x1, y1), Ink(MoonfallColor.Hex("#1A2A66")), c.View.Size((y1 - y0) / 2));
             return;
@@ -235,9 +244,9 @@ public sealed partial class MoonfallWindow
         var foot = top + (r.H * s);
         var left = x0 - ox;
         var right = x1 + ox;
-        Part(c, MoonfallChromePart.Pill, left, top, left + (Cap * s), foot, tint, u0: 0, u1: Cap);
-        Part(c, MoonfallChromePart.Pill, left + (Cap * s), top, right - (Cap * s), foot, tint, u0: Cap + 0.5f, u1: Cap + 1.5f);
-        Part(c, MoonfallChromePart.Pill, right - (Cap * s), top, right, foot, tint, u0: r.W - Cap, u1: r.W);
+        Part(c, state, left, top, left + (Cap * s), foot, tint, u0: 0, u1: Cap);
+        Part(c, state, left + (Cap * s), top, right - (Cap * s), foot, tint, u0: Cap + 0.5f, u1: Cap + 1.5f);
+        Part(c, state, right - (Cap * s), top, right, foot, tint, u0: r.W - Cap, u1: r.W);
     }
 
     // ---- The frame: rails, walls, the outer frame ----
@@ -320,7 +329,7 @@ public sealed partial class MoonfallWindow
     /// r2lib.gilt_band: the frame's gilt triple rule round a box, its cross-section (one column of the rule) laid along
     /// each side and turned down the sides, joined by 45° mitres, so there are no corner blocks or seams.
     /// </summary>
-    private static void GiltBand(in ChromePen c, double x0, double y0, double x1, double y1, double scale)
+    private static void GiltBand(in ChromePen c, double x0, double y0, double x1, double y1, double scale, uint tint = uint.MaxValue)
     {
         if (c.Sheet[MoonfallChromePart.RuleTop] is not { } r)
         {
@@ -337,10 +346,10 @@ public sealed partial class MoonfallWindow
         var v = c.View;
         var dl = c.Dl;
         // Top, bottom (its outer edge below), left and right (outer edges outward); each a trapezoid to the mitres.
-        dl.AddImageQuad(c.Tex, v.Map(X0, Y0), v.Map(X1, Y0), v.Map(X1 - h, Y0 + h), v.Map(X0 + h, Y0 + h), outer, outer, inner, inner);
-        dl.AddImageQuad(c.Tex, v.Map(X0 + h, Y1 - h), v.Map(X1 - h, Y1 - h), v.Map(X1, Y1), v.Map(X0, Y1), inner, inner, outer, outer);
-        dl.AddImageQuad(c.Tex, v.Map(X0, Y0), v.Map(X0 + h, Y0 + h), v.Map(X0 + h, Y1 - h), v.Map(X0, Y1), outer, inner, inner, outer);
-        dl.AddImageQuad(c.Tex, v.Map(X1 - h, Y0 + h), v.Map(X1, Y0), v.Map(X1, Y1), v.Map(X1 - h, Y1 - h), inner, outer, outer, inner);
+        dl.AddImageQuad(c.Tex, v.Map(X0, Y0), v.Map(X1, Y0), v.Map(X1 - h, Y0 + h), v.Map(X0 + h, Y0 + h), outer, outer, inner, inner, tint);
+        dl.AddImageQuad(c.Tex, v.Map(X0 + h, Y1 - h), v.Map(X1 - h, Y1 - h), v.Map(X1, Y1), v.Map(X0, Y1), inner, inner, outer, outer, tint);
+        dl.AddImageQuad(c.Tex, v.Map(X0, Y0), v.Map(X0 + h, Y0 + h), v.Map(X0 + h, Y1 - h), v.Map(X0, Y1), outer, inner, inner, outer, tint);
+        dl.AddImageQuad(c.Tex, v.Map(X1 - h, Y0 + h), v.Map(X1, Y0), v.Map(X1, Y1), v.Map(X1 - h, Y1 - h), inner, outer, outer, inner, tint);
     }
 
     /// <summary>r2lib.gilt_frame: the journal's frame round a box (units), its rules stretched along the sides and its corner art at the corners.</summary>
@@ -427,10 +436,10 @@ public sealed partial class MoonfallWindow
             stageText = string.Create(CultureInfo.InvariantCulture, $"{MoonfallCharacters.Stage(levelIndex)}-{MoonfallCharacters.LevelInStage(levelIndex)}");
         }
 
-        if (countFor != g.BallsLeft)
+        if (countFor != TubeBalls(g))
         {
-            countFor = g.BallsLeft;
-            countText = g.BallsLeft.ToString(CultureInfo.CurrentCulture);
+            countFor = TubeBalls(g);
+            countText = countFor.ToString(CultureInfo.CurrentCulture);
         }
 
         if (orangesCountFor != g.OrangesLeft)
@@ -478,6 +487,35 @@ public sealed partial class MoonfallWindow
         var v = c.View;
         var still = motion == MoonfallMotionLevel.Still;
 
+        RefreshBarText(g);
+        if (duel is { } d)
+        {
+            DuelPlates(c, d);
+        }
+        else
+        {
+            LevelPlates(c, g);
+        }
+
+        BallTube(c, p, g);
+        Dial(c, g);
+        // The oranges left: an orange moon and its count.
+        Put(p, p.Atlas.Peg(PegColour.Orange, 1, false), MoonfallHud.RightRail - 12, MoonfallHud.OrangesY, 0.75f, uint.MaxValue);
+        DrawText(dl, MoonfallFace.Trump, NumberPx(v, 24, MoonfallFace.Trump), v.Map(MoonfallHud.RightRail - 2, MoonfallHud.OrangesY + 0.5), Anchor.Left, Ink(Cream), orangesCount, Ink(EdgeInk), v.Size(0.6));
+        var orangesLabel = LabelPx(v, 11, MoonfallFace.Axis);
+        if (orangesLabel > 0)
+        {
+            DrawText(dl, MoonfallFace.Axis, orangesLabel, v.Map(MoonfallHud.RightRail, 170), Anchor.Centre, Ink(LabelInk), Strings.MoonfallHudOranges, Ink(EdgeInk), v.Size(0.6));
+        }
+
+        Medallion(c, p, g, still);
+    }
+
+    /// <summary>The top rail's plates in a level: its code and name, and the score.</summary>
+    private void LevelPlates(in ChromePen c, MoonfallGame g)
+    {
+        var dl = c.Dl;
+        var v = c.View;
         // The level's name plate.
         var (nx0, ny0, nx1, ny1) = MoonfallHud.NamePlate;
         Pill(c, nx0, ny0, nx1, ny1);
@@ -486,7 +524,7 @@ public sealed partial class MoonfallWindow
         DrawText(dl, MoonfallFace.Trump, NumberPx(v, 16.5f, MoonfallFace.Trump), v.Map(103, 21.5), Anchor.Centre, Ink(GoldHiInk), stageText, Ink(EdgeInk), v.Size(0.6));
         var nameMax = v.Size(nx1 - 124 - 6);
         var namePx = NamePx(v, 27, MoonfallFace.Jupiter);
-        var levelName = campaigns[campaign].Levels[levelIndex].Name;
+        var levelName = g.Level.Name;
         var w = MeasureText(MoonfallFace.Jupiter, namePx, levelName);
         if (w > nameMax && w > 0)
         {
@@ -507,19 +545,6 @@ public sealed partial class MoonfallWindow
         }
 
         DrawText(dl, MoonfallFace.Trump, NumberPx(v, 26, MoonfallFace.Trump), v.Map(701, 21.5), Anchor.Right, Ink(GoldHiInk), scoreText, Ink(MoonfallColor.Hex("#120A02")), v.Size(0.8));
-
-        BallTube(c, p, g);
-        Dial(c, g);
-        // The oranges left: an orange moon and its count.
-        Put(p, p.Atlas.Peg(PegColour.Orange, 1, false), MoonfallHud.RightRail - 12, MoonfallHud.OrangesY, 0.75f, uint.MaxValue);
-        DrawText(dl, MoonfallFace.Trump, NumberPx(v, 24, MoonfallFace.Trump), v.Map(MoonfallHud.RightRail - 2, MoonfallHud.OrangesY + 0.5), Anchor.Left, Ink(Cream), orangesCount, Ink(EdgeInk), v.Size(0.6));
-        var orangesLabel = LabelPx(v, 11, MoonfallFace.Axis);
-        if (orangesLabel > 0)
-        {
-            DrawText(dl, MoonfallFace.Axis, orangesLabel, v.Map(MoonfallHud.RightRail, 170), Anchor.Centre, Ink(LabelInk), Strings.MoonfallHudOranges, Ink(EdgeInk), v.Size(0.6));
-        }
-
-        Medallion(c, p, g, still);
     }
 
     /// <summary>chrome2.ball_tube: the glass tube and its balls in a cage of the journal's rules, spire finials, and the count.</summary>
@@ -531,7 +556,7 @@ public sealed partial class MoonfallWindow
         const float X0 = Cx - MoonfallHud.TubeHalf, X1 = Cx + MoonfallHud.TubeHalf, Y0 = MoonfallHud.TubeTop, Y1 = MoonfallHud.TubeFoot;
         dl.AddRectFilled(v.Map(X0, Y0), v.Map(X1, Y1), Ink(MoonfallColor.Hex("#03040C"), 0.6f), v.Size(12));
         ref readonly var ball = ref p.Atlas[MoonfallSprite.Ball];
-        var balls = Math.Min(g.BallsLeft, 10);
+        var balls = Math.Min(TubeBalls(g), 10);
         for (var i = 0; i < balls; i++)
         {
             Put(p, ball, Cx, Y1 - 13 - (i * 25.5), 10.5f / 6f, uint.MaxValue);

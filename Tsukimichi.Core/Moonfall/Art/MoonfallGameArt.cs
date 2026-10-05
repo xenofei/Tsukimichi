@@ -152,6 +152,22 @@ public sealed class MoonfallGameArt<T> : IDisposable
     private T? veilTexture;
     private bool open;
 
+    // ---- The menus: their backdrops, and the next level's scene built ahead ----
+    private readonly Dictionary<MoonfallBackdrop, Task<MoonfallRgba?>> backdropBuilds = [];
+    private readonly Dictionary<MoonfallBackdrop, (Task<T>? Upload, T? Texture, int Asked)> backdrops = [];
+    private Task<MoonfallSceneLayers?>? warmBuild;
+    private string? warmKey;
+    private string? key1Text;
+    private string? uploadingKey;
+    private MoonfallLevel? warmAsked;
+    private Task<T>? menuEnamelUpload;
+    private T? menuEnamel;
+    private readonly Dictionary<string, (Task<T>? Upload, T? Texture, int Asked)> thumbs = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, Task<MoonfallRgba?>> thumbBuilds = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, MoonfallLevel> thumbLevels = new(StringComparer.Ordinal);
+    private Task<MoonfallRgba?>? thumbBuilding;
+    private bool warmAskedTwoX;
+
     /// <param name="host">The game's files, textures, frame counter and log.</param>
     /// <param name="recipes">The shipped scene recipes, by name (<see cref="MoonfallSceneRecipeLoader.LoadBuiltIn"/>).</param>
     public MoonfallGameArt(IMoonfallGameArtHost<T> host, IReadOnlyDictionary<string, MoonfallSceneRecipe> recipes)
@@ -180,6 +196,369 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
     /// <summary>The veil's sprite drawn under each live peg (<see cref="MoonfallVeil"/>), or null until uploaded.</summary>
     public T? Veil => veilTexture;
+
+    /// <summary>
+    /// Whether the scene asked for last is settled: on screen at the tier asked (not the 1x tier standing in while the
+    /// 2x one builds), failed, or not a recipe's at all. The offline renderer waits for this.
+    /// </summary>
+    public bool SceneSettled => sceneState is MoonfallSceneState.NoRecipe or MoonfallSceneState.Failed
+        || (sceneState == MoonfallSceneState.Ready && sceneBuild is null && sceneUploads is null && string.Equals(sceneReadyKey, sceneKey, StringComparison.Ordinal));
+
+    /// <summary>Frames a backdrop is kept on the GPU after its screen last asked for it (spec-rich2.md §6: released on leaving it).</summary>
+    public const int BackdropKeepFrames = 30;
+
+    /// <summary>
+    /// Once a frame while a menu draws (no board): lands what finished and starts what the menus need, the chrome, the
+    /// cards asked for, the backdrops asked for and a scene built ahead (<see cref="Warm"/>). Never blocks.
+    /// </summary>
+    public void Menu()
+    {
+        open = true;
+        Retire();
+        Chromes();
+        Cards();
+        Backdrops();
+        Thumbs();
+        Warmed();
+        if (Chrome?.Grain is { } grain && menuEnamel is null && menuEnamelUpload is null)
+        {
+            menuEnamelUpload = Upload(MoonfallChromeArt.EnamelTile(grain, MoonfallChromePalette.Medallion), "Moonfall menu enamel");
+        }
+
+        if (menuEnamelUpload is { IsCompleted: true } eu)
+        {
+            menuEnamelUpload = null;
+            menuEnamel = Landed(eu, "menu enamel");
+        }
+    }
+
+    /// <summary>The menus' panel ground: the journal's grain as enamel in the Medallion's lapis, or null until uploaded.</summary>
+    public T? MenuEnamel => menuEnamel;
+
+    /// <summary>A level thumbnail's width in pixels (its scene's opening, 650 × 553 units, at about half a pixel a unit).</summary>
+    public const int ThumbWidth = 320;
+
+    /// <summary>
+    /// <paramref name="level"/>'s scene for the menus' thumbnails (level select, the Continue card, Quick Play): its
+    /// recipe built at the 1x tier off the framework thread, one at a time, and scaled to <see cref="ThumbWidth"/>; the
+    /// texture once uploaded, else null (the caller draws the night in the scene's palette meanwhile, or for a level with
+    /// no recipe). <paramref name="board"/> is the board rectangle it covers. A scene built for play or built ahead is
+    /// used as it is; graded pixels are kept for the session, textures only while a menu asks for them.
+    /// </summary>
+    public T? Thumb(MoonfallLevel level, out Vector4 board)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        board = MoonfallSceneBuilder.OpeningRect;
+        if (!open)
+        {
+            return null;
+        }
+
+        if (thumbs.TryGetValue(level.Id, out var held))
+        {
+            if (held.Asked != host.Frame)
+            {
+                thumbs[level.Id] = held with { Asked = host.Frame };
+            }
+
+            return held.Texture;
+        }
+
+        thumbs[level.Id] = (null, null, host.Frame);
+        if (!thumbLevels.ContainsKey(level.Id))
+        {
+            thumbLevels[level.Id] = level;
+        }
+
+        return null;
+    }
+
+    private readonly Dictionary<string, MoonfallChromePalette> palettes = new(StringComparer.Ordinal);
+
+    /// <summary>The palette of <paramref name="level"/>'s scene (the Medallion's for a level with no recipe), picked once per level.</summary>
+    public MoonfallChromePalette PaletteFor(MoonfallLevel level)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        if (!palettes.TryGetValue(level.Id, out var palette))
+        {
+            palette = MoonfallSceneRecipeLoader.Pick(recipes, level)?.Chrome ?? MoonfallChromePalette.Medallion;
+            palettes[level.Id] = palette;
+        }
+
+        return palette;
+    }
+
+    /// <summary>Thumbnails waiting to be built, building, uploading or shown (for the renderer to wait on).</summary>
+    public int ThumbsPending
+    {
+        get
+        {
+            var pending = 0;
+            foreach (var (id, held) in thumbs)
+            {
+                if (held.Texture is null && (!thumbBuilds.TryGetValue(id, out var build) || !build.IsCompleted || build.Result is not null))
+                {
+                    pending++;
+                }
+            }
+
+            return pending;
+        }
+    }
+
+    private void Thumbs()
+    {
+        if (thumbs.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var id in thumbs.Keys.ToArray())
+        {
+            var (upload, texture, asked) = thumbs[id];
+            if (host.Frame - asked > BackdropKeepFrames)
+            {
+                if (texture is not null)
+                {
+                    released.Add(texture);
+                }
+                else if (upload is not null)
+                {
+                    abandoned.Add(upload);
+                }
+
+                thumbs.Remove(id);
+                continue;
+            }
+
+            if (texture is not null)
+            {
+                continue;
+            }
+
+            if (upload is null)
+            {
+                if (thumbBuilds.TryGetValue(id, out var build))
+                {
+                    if (build.IsCompletedSuccessfully && build.Result is { } pixels)
+                    {
+                        thumbs[id] = (Upload(pixels, "Moonfall thumbnail " + id), null, asked);
+                    }
+                }
+                else if (thumbBuilding is null && thumbLevels.TryGetValue(id, out var level))
+                {
+                    // One at a time: the menus' thumbnails never take more of the machine than one scene build.
+                    thumbBuilding = BuildThumb(level);
+                    thumbBuilds[id] = thumbBuilding;
+                }
+
+                continue;
+            }
+
+            if (upload.IsCompleted)
+            {
+                thumbs[id] = (null, Landed(upload, "thumbnail"), asked);
+            }
+        }
+
+        if (thumbBuilding is { IsCompleted: true })
+        {
+            thumbBuilding = null;
+        }
+    }
+
+    private Task<MoonfallRgba?> BuildThumb(MoonfallLevel level)
+    {
+        var recipe = MoonfallSceneRecipeLoader.Pick(recipes, level);
+        if (recipe is null)
+        {
+            return Task.FromResult<MoonfallRgba?>(null);
+        }
+
+        // A scene already built this session (for play, or ahead of it) is scaled down rather than built again.
+        var cached = CachedScene($"{recipe.Name}@1") ?? CachedScene($"{recipe.Name}@2");
+        return Task.Run(async () =>
+        {
+            var layers = cached?.Layers ?? await BuildScene(recipe, level, 1, false).ConfigureAwait(false);
+            if (layers is null)
+            {
+                return null;
+            }
+
+            var b = layers.Base;
+            var image = MoonfallImage.FromBytes(b.Pixels, b.Width, b.Height, b.Width * 4, bgra: false, keepAlpha: false);
+            var height = (int)MathF.Round(ThumbWidth * b.Height / (float)b.Width);
+            var small = MoonfallFilters.Resize(image, ThumbWidth, height);
+            return new MoonfallRgba(ThumbWidth, height, small.ToRgba(), b.Board);
+        });
+    }
+
+    /// <summary>A menu's backdrop once uploaded, or null while it builds or when its painting is missing; asks for it the first time.</summary>
+    public T? Backdrop(MoonfallBackdrop which)
+    {
+        if (!open)
+        {
+            return null;
+        }
+
+        if (backdrops.TryGetValue(which, out var held))
+        {
+            if (held.Asked != host.Frame)
+            {
+                backdrops[which] = held with { Asked = host.Frame };
+            }
+
+            return held.Texture;
+        }
+
+        if (!backdropBuilds.ContainsKey(which))
+        {
+            backdropBuilds[which] = Task.Run(async () =>
+            {
+                var painting = await host.ReadGameTexture(MoonfallBackdrops.PathOf(which)).ConfigureAwait(false);
+                return painting is null ? null : MoonfallBackdrops.Build(which, painting);
+            });
+        }
+
+        backdrops[which] = (null, null, host.Frame);
+        return null;
+    }
+
+    /// <summary>What the menus' backdrops hold on the GPU now.</summary>
+    public long BackdropBytes()
+    {
+        long bytes = 0;
+        foreach (var (which, held) in backdrops)
+        {
+            if (held.Texture is not null && backdropBuilds.TryGetValue(which, out var build) && build is { IsCompletedSuccessfully: true, Result: { } pixels })
+            {
+                bytes += pixels.Bytes;
+            }
+        }
+
+        return bytes;
+    }
+
+    private void Backdrops()
+    {
+        if (backdrops.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var which in backdrops.Keys.ToArray())
+        {
+            var (upload, texture, asked) = backdrops[which];
+            if (host.Frame - asked > BackdropKeepFrames)
+            {
+                // Its screen has closed: the texture goes (the graded pixels stay for the session).
+                if (texture is not null)
+                {
+                    released.Add(texture);
+                }
+                else if (upload is not null)
+                {
+                    abandoned.Add(upload);
+                }
+
+                backdrops.Remove(which);
+                continue;
+            }
+
+            if (texture is not null)
+            {
+                continue;
+            }
+
+            if (upload is null)
+            {
+                if (backdropBuilds.TryGetValue(which, out var build) && build.IsCompleted)
+                {
+                    if (build.IsCompletedSuccessfully && build.Result is { } pixels)
+                    {
+                        backdrops[which] = (Upload(pixels, $"Moonfall backdrop {which}"), null, asked);
+                    }
+                    else
+                    {
+                        Warn("backdrop" + which, $"Moonfall: {MoonfallBackdrops.PathOf(which)} is missing or could not be graded; its screens show the night sky");
+                    }
+                }
+
+                continue;
+            }
+
+            if (upload.IsCompleted)
+            {
+                backdrops[which] = (null, Landed(upload, "backdrop"), asked);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Builds <paramref name="level"/>'s scene ahead, off the framework thread, into the session's cache (nothing is
+    /// uploaded): level select and the tally ask for the level the player is about to start, so its board opens with
+    /// its scene already built. One at a time; a level with no recipe, or one already built, asks nothing.
+    /// </summary>
+    public void Warm(MoonfallLevel level, bool twoX)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        // Asked every frame while its screen shows: worked out once per level and tier (no string a frame).
+        if (warmBuild is not null || (ReferenceEquals(level, warmAsked) && twoX == warmAskedTwoX))
+        {
+            return;
+        }
+
+        warmAsked = level;
+        warmAskedTwoX = twoX;
+        if (MoonfallSceneRecipeLoader.Pick(recipes, level) is not { } recipe)
+        {
+            return;
+        }
+
+        var key = $"{recipe.Name}@{(twoX ? 2 : 1)}";
+        if (CachedScene(key) is not null || string.Equals(sceneBuildKey, key, StringComparison.Ordinal) || string.Equals(sceneReadyKey, key, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        warmKey = key;
+        warmBuild = BuildScene(recipe, level, twoX ? 2 : 1, CheckScenes);
+    }
+
+    /// <summary>Whether a scene is being built ahead (<see cref="Warm"/>).</summary>
+    public bool Warming => warmBuild is not null;
+
+    private void Warmed()
+    {
+        if (warmBuild is not { IsCompleted: true } done || warmKey is not { } key)
+        {
+            return;
+        }
+
+        warmBuild = null;
+        warmKey = null;
+        if (done.IsCompletedSuccessfully && done.Result is { } layers)
+        {
+            Cache(key, layers);
+        }
+    }
+
+    private void Cache(string key, MoonfallSceneLayers layers)
+    {
+        for (var i = sceneCache.Count - 1; i >= 0; i--)
+        {
+            if (string.Equals(sceneCache[i].Key, key, StringComparison.Ordinal))
+            {
+                sceneCache.RemoveAt(i);
+            }
+        }
+
+        sceneCache.Insert(0, (key, layers));
+        if (sceneCache.Count > SceneCache)
+        {
+            sceneCache.RemoveAt(sceneCache.Count - 1);
+        }
+    }
 
     /// <summary>The recipe <paramref name="level"/> names, or null.</summary>
     public MoonfallSceneRecipe? RecipeFor(MoonfallLevel level)
@@ -239,6 +618,8 @@ public sealed class MoonfallGameArt<T> : IDisposable
         Retire();
         Chromes();
         Cards();
+        Backdrops();
+        Warmed();
         Scenes(level, twoX);
         if (pegMarks)
         {
@@ -362,6 +743,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
             keyRecipe = recipe;
             keyTwoX = twoX;
             keyText = $"{recipe.Name}@{(twoX ? 2 : 1)}";
+            key1Text = $"{recipe.Name}@1";
         }
 
         return keyText;
@@ -413,21 +795,39 @@ public sealed class MoonfallGameArt<T> : IDisposable
             return;
         }
 
-        // Built this session already: only upload.
+        // Built this session already (or built ahead): only upload.
         if (sceneBuild is null && sceneUploading is null && CachedScene(key) is { Layers: { } cached })
         {
-            StartUploads(cached, recipe);
+            StartUploads(cached, recipe, key);
+            return;
+        }
+
+        // Being built ahead already (Warm): wait for it rather than build it twice.
+        if (sceneBuild is null && sceneUploading is null && string.Equals(warmKey, key, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        // The 2x tier is about four times the 1x tier's work: with nothing of this scene on screen yet, the 1x tier is
+        // built (or taken from the cache) and shown first, and the 2x tier replaces it when it is ready.
+        var key1 = key1Text!;
+        var oneFirst = twoX && scene is null;
+        if (sceneBuild is null && sceneUploading is null && oneFirst && CachedScene(key1) is { Layers: { } cached1 })
+        {
+            StartUploads(cached1, recipe, key1);
             return;
         }
 
         if (sceneBuild is null && sceneUploading is null)
         {
-            sceneBuildKey = key;
-            sceneBuild = BuildScene(recipe, level, twoX ? 2 : 1, CheckScenes);
+            var tier1 = oneFirst || !twoX;
+            sceneBuildKey = tier1 ? key1 : key;
+            sceneBuild = BuildScene(recipe, level, tier1 ? 1 : 2, CheckScenes);
         }
 
-        if (sceneBuild is { IsCompleted: true } done && string.Equals(sceneBuildKey, key, StringComparison.Ordinal))
+        if (sceneBuild is { IsCompleted: true } done && (string.Equals(sceneBuildKey, key, StringComparison.Ordinal) || string.Equals(sceneBuildKey, key1, StringComparison.Ordinal)))
         {
+            var builtKey = sceneBuildKey!;
             sceneBuild = null;
             if (!done.IsCompletedSuccessfully || done.Result is null)
             {
@@ -444,25 +844,12 @@ public sealed class MoonfallGameArt<T> : IDisposable
                 // The fuller-board rules (level-method.md F2-F5) hold for every shipped recipe (the scene tests build
                 // each at both tiers); a Debug build checks them again on the player's own textures.
                 var fails = string.Join(", ", report.Fails);
-                Warn("rules:" + key, $"Moonfall: scene {key} breaks the fuller-board rules ({fails})");
-                Debug.Assert(false, $"Moonfall scene {key} breaks the fuller-board rules: {fails}");
+                Warn("rules:" + builtKey, $"Moonfall: scene {builtKey} breaks the fuller-board rules ({fails})");
+                Debug.Assert(false, $"Moonfall scene {builtKey} breaks the fuller-board rules: {fails}");
             }
 
-            for (var i = sceneCache.Count - 1; i >= 0; i--)
-            {
-                if (string.Equals(sceneCache[i].Key, key, StringComparison.Ordinal))
-                {
-                    sceneCache.RemoveAt(i);
-                }
-            }
-
-            sceneCache.Insert(0, (key, layers));
-            if (sceneCache.Count > SceneCache)
-            {
-                sceneCache.RemoveAt(sceneCache.Count - 1);
-            }
-
-            StartUploads(layers, recipe);
+            Cache(builtKey, layers);
+            StartUploads(layers, recipe, builtKey);
         }
 
         if (sceneUploads is not null && sceneUploads.TrueForAll(static u => u.Upload.IsCompleted))
@@ -499,7 +886,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
                 Mist = landed.Where(static p => p.Key.StartsWith("mist", StringComparison.Ordinal) && p.Value is not null).OrderBy(static p => p.Key, StringComparer.Ordinal).Select(static p => p.Value!).ToList(),
             };
             sceneState = MoonfallSceneState.Ready;
-            sceneReadyKey = sceneKey;
+            sceneReadyKey = uploadingKey;
         }
     }
 
@@ -528,8 +915,9 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
     private static bool SameRecipe(string a, string b) => string.Equals(a[..a.LastIndexOf('@')], b[..b.LastIndexOf('@')], StringComparison.Ordinal);
 
-    private void StartUploads(MoonfallSceneLayers layers, MoonfallSceneRecipe recipe)
+    private void StartUploads(MoonfallSceneLayers layers, MoonfallSceneRecipe recipe, string key)
     {
+        uploadingKey = key;
         sceneUploading = layers;
         sceneUploads =
         [
@@ -650,6 +1038,44 @@ public sealed class MoonfallGameArt<T> : IDisposable
         }
 
         cards.Clear();
+        foreach (var (upload, texture, _) in backdrops.Values)
+        {
+            if (texture is not null)
+            {
+                released.Add(texture);
+            }
+            else if (upload is not null)
+            {
+                abandoned.Add(upload);
+            }
+        }
+
+        backdrops.Clear();
+        foreach (var (upload, texture, _) in thumbs.Values)
+        {
+            if (texture is not null)
+            {
+                released.Add(texture);
+            }
+            else if (upload is not null)
+            {
+                abandoned.Add(upload);
+            }
+        }
+
+        thumbs.Clear();
+        if (menuEnamel is not null)
+        {
+            released.Add(menuEnamel);
+            menuEnamel = null;
+        }
+
+        if (menuEnamelUpload is not null)
+        {
+            abandoned.Add(menuEnamelUpload);
+            menuEnamelUpload = null;
+        }
+
         if (marksTexture is not null)
         {
             released.Add(marksTexture);

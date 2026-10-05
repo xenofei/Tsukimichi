@@ -148,13 +148,25 @@ public sealed partial class MoonfallWindow
         var focus = BoardCentre + ((new Vector2((float)g.FocusX, (float)g.FocusY) - BoardCentre) * pull);
         var view = new View(origin, scale, zoom, focus);
 
-        // The board takes the clicks, except while the tally's buttons are over it.
-        var over = g.Phase is MoonfallPhase.Won or MoonfallPhase.Lost;
-        SoundSettingInput(origin, size, !over);
+        // Where the board is this frame, for the pause menu and the tally drawn over it.
+        boardOrigin = origin;
+        boardSize = size;
+        boardAreaMin = start;
+        boardAreaMax = start + avail;
+
+        // The board takes the clicks, except while the tally's or the pause menu's buttons are over it, and in the first
+        // moments after it appears (a double click on Play never shoots).
+        var over = LevelOver(g);
+        if (richHud && !over && !pause.Paused)
+        {
+            // The crest's moonstone pauses (mouse first): taken before the board's own button, so its click never shoots.
+            PauseCrest(new View(origin, scale, 1f, BoardCentre), g);
+        }
+
         ImGui.SetCursorScreenPos(origin);
         var clicked = false;
         var hovered = false;
-        if (over)
+        if (over || pause.Paused || !BoardArmed)
         {
             ImGui.Dummy(size);
         }
@@ -173,7 +185,12 @@ public sealed partial class MoonfallWindow
 
         boardHovered = hovered;
 
-        if (hovered && !pause.Paused && g.Phase == MoonfallPhase.Aiming)
+        if (duel is { PlayersTurn: false } rival)
+        {
+            // The opponent's turn: the barrel follows its own aim (the shot it chose, as it leaves).
+            aim = rival.Opponent.LastAngle;
+        }
+        else if (hovered && !pause.Paused && g.Phase == MoonfallPhase.Aiming)
         {
             var (x, y) = new View(origin, scale, 1f, BoardCentre).Unmap(ImGui.GetMousePos());
             aim = MoonfallGame.AimAt(x, y);
@@ -188,7 +205,8 @@ public sealed partial class MoonfallWindow
             }
             else if (shoot)
             {
-                if (g.Shoot(aim))
+                // The one shot in the window: the level's game, or the duel (which keeps its sides and turns).
+                if (Shooter(g).Shoot(aim))
                 {
                     SoundShot();
                 }
@@ -227,12 +245,6 @@ public sealed partial class MoonfallWindow
         if (!richHud)
         {
             DrawBanner(dl, origin, size, g);
-        }
-
-        if (pause.Paused)
-        {
-            DrawPaused(dl, origin, size);
-            DrawSoundSetting(dl);
         }
 
         dl.PopClipRect();
@@ -421,7 +433,7 @@ public sealed partial class MoonfallWindow
     {
         var pivot = view.Map(MoonfallRules.LauncherX, MoonfallRules.LauncherY);
         var (dx, dy) = MoonfallGame.Direction(aim);
-        var aiming = g.Phase == MoonfallPhase.Aiming && g.BallsLeft > 0;
+        var aiming = g.Phase == MoonfallPhase.Aiming && g.BallsLeft > 0 && PlayerAims;
 
         // The guide first, under the barrel: dots along the path to the first peg it would touch.
         if (aiming && !pause.Paused)
@@ -557,25 +569,6 @@ public sealed partial class MoonfallWindow
         dl.AddText(ImGui.GetFont(), fontSize, at, Theme.U32(Theme.GoldHigh), text);
     }
 
-    private void DrawPaused(ImDrawListPtr dl, Vector2 origin, Vector2 size)
-    {
-        dl.AddRectFilled(origin, origin + size, Theme.WithAlpha(Theme.Scene.Scrim, 0.75f));
-        var reason = PauseReasonText();
-        var hint = pause.Held ? Strings.MoonfallWaitsForIt
-            : pause.Shown == MoonfallPauseReason.Reopened && game is { Phase: MoonfallPhase.Aiming, Score: 0 } ? Strings.MoonfallClickToPlay
-            : Strings.MoonfallClickToResume;
-        var big = ImGui.GetFontSize() * 1.5f;
-        var y = origin.Y + (size.Y * 0.45f);
-        if (reason is not null)
-        {
-            var width = ImGui.CalcTextSize(reason).X * 1.5f;
-            dl.AddText(ImGui.GetFont(), big, new Vector2(origin.X + ((size.X - width) * 0.5f), y - big), Theme.U32(Theme.Surface.Text), reason);
-        }
-
-        var hintWidth = ImGui.CalcTextSize(hint).X;
-        dl.AddText(new Vector2(origin.X + ((size.X - hintWidth) * 0.5f), y + UiMetrics.Px(8f)), Theme.U32(Theme.Surface.TextSecondary), hint);
-    }
-
     /// <summary>What holds the pause, in words; null when only a click is awaited after opening.</summary>
     private string? PauseReasonText() => pause.Shown switch
     {
@@ -587,7 +580,7 @@ public sealed partial class MoonfallWindow
         _ => Strings.MoonfallPaused,
     };
 
-    // ---- The end of a level ----
+    // ---- The end of a level (the plain board's tally; the rich one is MoonfallWindow.Tally.cs) ----
 
     private string tallyKeyText = string.Empty;
     private MoonfallTally? tallyFor;
@@ -596,11 +589,10 @@ public sealed partial class MoonfallWindow
 
     private void DrawEnd(ImDrawListPtr dl, Vector2 origin, Vector2 size, MoonfallGame g)
     {
-        var won = g.Phase == MoonfallPhase.Won;
+        PrepareTally(g);
         var line = ImGui.GetTextLineHeightWithSpacing();
-        var next = levelIndex + 1;
-        var last = won && next >= campaigns[campaign].Levels.Count;
-        var panel = new Vector2(MathF.Min(size.X - UiMetrics.Px(24f), UiMetrics.Px(380f)), line * ((won ? 8.5f : 5.5f) + (last ? 1.2f : 0f)));
+        var rows = TallyRows(g);
+        var panel = new Vector2(MathF.Min(size.X - UiMetrics.Px(24f), UiMetrics.Px(420f)), line * (Math.Max(rows, 1) + 5.5f));
         var min = origin + ((size - panel) * 0.5f);
         var max = min + panel;
         dl.AddRectFilled(origin, origin + size, Theme.WithAlpha(Theme.Scene.Scrim, 0.55f));
@@ -610,69 +602,56 @@ public sealed partial class MoonfallWindow
         var x = min.X + pad;
         var y = min.Y + pad;
 
-        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize() * 1.3f, new Vector2(x, y), Theme.U32(Theme.GoldHigh), won ? Strings.MoonfallLevelClear : Strings.MoonfallOutOfBalls);
+        dl.AddText(ImGui.GetFont(), ImGui.GetFontSize() * 1.3f, new Vector2(x, y), Theme.U32(Theme.GoldHigh), tallyBanner);
         y += line * 1.6f;
-        if (won && g.Tally is { } tally)
+        if (rows > 0 && g.Tally is { } tally)
         {
-            if (tallyFor != tally || tallyKeyText != Strings.MoonfallTallyTotal)
-            {
-                tallyFor = tally;
-                tallyKeyText = Strings.MoonfallTallyTotal;
-                tallyShown = g.ShownScore;
-                tallyLines =
-                [
-                    Strings.MoonfallTallyLevel, tally.LevelScore.ToString("N0", CultureInfo.CurrentCulture),
-                    Strings.MoonfallTallyFullMoon, tally.FeverBonus.ToString("N0", CultureInfo.CurrentCulture),
-                    string.Format(CultureInfo.CurrentCulture, Strings.MoonfallTallyBallsFormat, tally.BallsLeft), tally.BallBonus.ToString("N0", CultureInfo.CurrentCulture),
-                    Strings.MoonfallTallyTotal, g.ShownScore.ToString("N0", CultureInfo.CurrentCulture),
-                ];
-            }
-
-            // The total counts up with the score counter.
-            if (tallyShown != g.ShownScore)
-            {
-                tallyShown = g.ShownScore;
-                tallyLines[7] = tallyShown.ToString("N0", CultureInfo.CurrentCulture);
-            }
-
+            RefreshTallyLines(g, tally);
             for (var k = 0; k < tallyLines.Length; k += 2)
             {
-                var total = k == 6;
-                var ink = Theme.U32(total ? Theme.Gold : Theme.Surface.Text);
+                var total = k == tallyLines.Length - 2;
                 dl.AddText(new Vector2(x, y), Theme.U32(total ? Theme.Surface.Text : Theme.Surface.TextSecondary), tallyLines[k]);
                 var valueWidth = ImGui.CalcTextSize(tallyLines[k + 1]).X;
-                dl.AddText(new Vector2(max.X - pad - valueWidth, y), ink, tallyLines[k + 1]);
+                dl.AddText(new Vector2(max.X - pad - valueWidth, y), Theme.U32(total ? Theme.Gold : Theme.Surface.Text), tallyLines[k + 1]);
                 y += line;
             }
         }
         else
         {
-            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.TextSecondary), string.Format(CultureInfo.CurrentCulture, Strings.MoonfallOrangesLeftFormat, g.OrangesLeft));
-            y += line;
+            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.TextSecondary), tallyNote);
         }
 
-        if (last)
-        {
-            dl.AddText(new Vector2(x, y + (line * 0.2f)), Theme.U32(Theme.Surface.TextSecondary), Strings.MoonfallLastLevel);
-        }
-
-        // The way on: the next level (when there is one), or this one again.
+        // The way on: the next level (when there is one), this one again, and the mode's own screen.
         ImGui.SetCursorScreenPos(new Vector2(x, max.Y - pad - ImGui.GetFrameHeight()));
-        if (won && !last)
+        if (tallyNext is { } next)
         {
-            if (ImGui.Button(Strings.MoonfallNextLevel + "##moonfallNext"))
+            if (ImGui.Button(tallyNextLabel ?? next))
             {
                 SoundClick();
-                Go(next);
+                Next();
+                return;
             }
 
             ImGui.SameLine();
         }
 
-        if (ImGui.Button((won ? Strings.MoonfallPlayAgain : Strings.MoonfallTryAgain) + "##moonfallAgain"))
+        if (tallyAgain is { } again)
+        {
+            if (ImGui.Button(tallyAgainLabel ?? again))
+            {
+                SoundClick();
+                Restart();
+                return;
+            }
+
+            ImGui.SameLine();
+        }
+
+        if (ImGui.Button(tallyHomeLabel))
         {
             SoundClick();
-            Go(RestartChoice);
+            LeaveBoard();
         }
     }
 }
+

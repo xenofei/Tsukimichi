@@ -120,6 +120,18 @@ internal sealed class Options : IMoonfallOptions
 
     public bool PegMarksHintSeen { get; set; } = true;
 
+    public Tsukimichi.Core.Ui.Flair Decoration { get; set; } = Tsukimichi.Core.Ui.Flair.Full;
+
+    public int SoundPercent { get; set; } = 70;
+
+    public bool ReduceMotion
+    {
+        get => UiMetrics.ReduceMotion;
+
+        // UiMetrics reads Reduce motion from the plugin's settings each frame in the game; offline it is set here.
+        set => typeof(UiMetrics).GetProperty(nameof(UiMetrics.ReduceMotion))!.SetValue(null, value);
+    }
+
     public void Save()
     {
     }

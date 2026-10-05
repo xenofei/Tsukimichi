@@ -33,7 +33,7 @@ public readonly record struct MoonfallDuelTurn(int Side, long Scored, long Kept,
 /// the same duel. Allocates nothing per tick.
 /// </para>
 /// </summary>
-public sealed class MoonfallDuel
+public sealed class MoonfallDuel : IMoonfallShooter
 {
     public const int PlayerSide = 0;
 

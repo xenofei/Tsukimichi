@@ -16487,4 +16487,652 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="MoonfallSoundTooltip" xml:space="preserve">
     <value>Moonfall's own volume, on top of the game's master volume. It is silent while Moonfall is paused.</value>
   </data>
+  <data name="MoonfallLogotype" xml:space="preserve">
+    <value>MOONFALL</value>
+    <comment>Moonfall title: the logotype, in capitals.</comment>
+  </data>
+  <data name="MoonfallSubtitle" xml:space="preserve">
+    <value>a peg game under Menphina's moon</value>
+    <comment>Moonfall title: the line under the logotype.</comment>
+  </data>
+  <data name="MoonfallScreenAdventure" xml:space="preserve">
+    <value>Adventure</value>
+    <comment>Moonfall title: the Adventure entry (opens the map).</comment>
+  </data>
+  <data name="MoonfallScreenQuickPlay" xml:space="preserve">
+    <value>Quick Play</value>
+    <comment>Moonfall title and screen: Quick Play.</comment>
+  </data>
+  <data name="MoonfallScreenChallenges" xml:space="preserve">
+    <value>Challenges</value>
+    <comment>Moonfall title and screen: the challenges.</comment>
+  </data>
+  <data name="MoonfallScreenDuel" xml:space="preserve">
+    <value>Duel</value>
+    <comment>Moonfall title and screen: the duel against a companion.</comment>
+  </data>
+  <data name="MoonfallScreenCompanions" xml:space="preserve">
+    <value>Companions</value>
+    <comment>Moonfall title and screen: the eleven companions.</comment>
+  </data>
+  <data name="MoonfallScreenOptions" xml:space="preserve">
+    <value>Options</value>
+    <comment>Moonfall title and screen: Moonfall's settings.</comment>
+  </data>
+  <data name="MoonfallScreenMap" xml:space="preserve">
+    <value>Adventure map</value>
+    <comment>Moonfall title: the Continue card's button when no next level is built yet (opens the map).</comment>
+  </data>
+  <data name="MoonfallTitleAdventureSubFormat" xml:space="preserve">
+    <value>{0} · stage {1} of {2}</value>
+    <comment>Moonfall title, under Adventure: {0} campaign name, {1} the stage the player is on, {2} stages in it.</comment>
+  </data>
+  <data name="MoonfallTitleQuickSub" xml:space="preserve">
+    <value>any level you have reached</value>
+    <comment>Moonfall title, under Quick Play.</comment>
+  </data>
+  <data name="MoonfallTitleChallengesSubFormat" xml:space="preserve">
+    <value>{0} of {1} won</value>
+    <comment>Moonfall title, under Challenges: {0} challenges won, {1} challenges in all.</comment>
+  </data>
+  <data name="MoonfallChallengesSealed" xml:space="preserve">
+    <value>opens when The Moon Road is won</value>
+    <comment>Moonfall: why the challenges are locked (short).</comment>
+  </data>
+  <data name="MoonfallChallengesSealedTooltip" xml:space="preserve">
+    <value>The challenges open once every level of The Moon Road is won.</value>
+    <comment>Moonfall: the locked Challenges entry's tooltip.</comment>
+  </data>
+  <data name="MoonfallTitleDuelSubFormat" xml:space="preserve">
+    <value>against {0}</value>
+    <comment>Moonfall title, under Duel: {0} the companion offered first.</comment>
+  </data>
+  <data name="MoonfallTitleDuelNone" xml:space="preserve">
+    <value>meet a companion first</value>
+    <comment>Moonfall title, under Duel, when the story has introduced no companion yet.</comment>
+  </data>
+  <data name="MoonfallQuickPlayLocked" xml:space="preserve">
+    <value>Win a level in Adventure first: Quick Play replays the levels you have reached.</value>
+    <comment>Moonfall: why Quick Play is locked.</comment>
+  </data>
+  <data name="MoonfallContinueCaps" xml:space="preserve">
+    <value>CONTINUE</value>
+    <comment>Moonfall title: the Continue card's caption, in capitals.</comment>
+  </data>
+  <data name="MoonfallContinueFormat" xml:space="preserve">
+    <value>Continue {0}</value>
+    <comment>Moonfall title: the Continue button; {0} the level's code (3-3).</comment>
+  </data>
+  <data name="MoonfallContinueSmallFormat" xml:space="preserve">
+    <value>{0} · with {1}</value>
+    <comment>Moonfall title at 640: under Continue; {0} the level's name, {1} the companion.</comment>
+  </data>
+  <data name="MoonfallNotYetWon" xml:space="preserve">
+    <value>not yet won</value>
+    <comment>Moonfall: a level never won.</comment>
+  </data>
+  <data name="MoonfallBestAceFormat" xml:space="preserve">
+    <value>{0} · ace {1}</value>
+    <comment>Moonfall: a level's best (or 'not yet won') and its Ace score; {0} best text, {1} the Ace score.</comment>
+  </data>
+  <data name="MoonfallTileBestFormat" xml:space="preserve">
+    <value>Best {0}</value>
+    <comment>Moonfall level select tile: {0} the level's best score.</comment>
+  </data>
+  <data name="MoonfallAceFormat" xml:space="preserve">
+    <value>Ace {0}</value>
+    <comment>Moonfall level select tile: {0} the level's Ace score.</comment>
+  </data>
+  <data name="MoonfallWithFormat" xml:space="preserve">
+    <value>with {0}</value>
+    <comment>Moonfall: the companion of a level; {0} their name.</comment>
+  </data>
+  <data name="MoonfallYourPick" xml:space="preserve">
+    <value>your pick of companion</value>
+    <comment>Moonfall: a level on the stage where the player picks the companion.</comment>
+  </data>
+  <data name="MoonfallRoadGoesOn" xml:space="preserve">
+    <value>The road goes on</value>
+    <comment>Moonfall title: the Continue card when every built level is won.</comment>
+  </data>
+  <data name="MoonfallRoadGoesOnLine" xml:space="preserve">
+    <value>Every level built so far is won. More of the road is on its way.</value>
+    <comment>Moonfall title: the Continue card's line when every built level is won.</comment>
+  </data>
+  <data name="MoonfallTheTwins" xml:space="preserve">
+    <value>the twins</value>
+    <comment>Moonfall: Alphinaud and Alisaie in a line ('with the twins').</comment>
+  </data>
+  <data name="MoonfallBack" xml:space="preserve">
+    <value>Back</value>
+    <comment>Moonfall: the Back button (Esc does the same).</comment>
+  </data>
+  <data name="MoonfallMap" xml:space="preserve">
+    <value>Map</value>
+    <comment>Moonfall: the button back to the Adventure map (level select, the tally).</comment>
+  </data>
+  <data name="MoonfallFarShoreSealed" xml:space="preserve">
+    <value>The Far Shore opens once every level of The Moon Road is won.</value>
+    <comment>Moonfall map: the locked campaign tab's tooltip.</comment>
+  </data>
+  <data name="MoonfallStagesCountFormat" xml:space="preserve">
+    <value>{0} of {1} stages</value>
+    <comment>Moonfall map: stages reached, of all; {0} reached, {1} in all.</comment>
+  </data>
+  <data name="MoonfallStageCapsFormat" xml:space="preserve">
+    <value>STAGE {0}</value>
+    <comment>Moonfall map: the selected stage's number, in capitals.</comment>
+  </data>
+  <data name="MoonfallCarrierFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Moonfall: a companion and their power; {0} name, {1} power.</comment>
+  </data>
+  <data name="MoonfallNotMetPowerFormat" xml:space="preserve">
+    <value>Not yet met · {0}</value>
+    <comment>Moonfall: a companion the story has not introduced, with their power; {0} the power.</comment>
+  </data>
+  <data name="MoonfallYourPickLine" xml:space="preserve">
+    <value>Your pick · any companion you have met</value>
+    <comment>Moonfall map: the free-choice stage's carrier line.</comment>
+  </data>
+  <data name="MoonfallNotReached" xml:space="preserve">
+    <value>Not reached</value>
+    <comment>Moonfall: a stage or level not reached yet (a locked button).</comment>
+  </data>
+  <data name="MoonfallChooseLevel" xml:space="preserve">
+    <value>Choose a level</value>
+    <comment>Moonfall map: the Play button of a stage whose levels are all won (opens level select).</comment>
+  </data>
+  <data name="MoonfallLevelComing" xml:space="preserve">
+    <value>On its way</value>
+    <comment>Moonfall: a level not built yet.</comment>
+  </data>
+  <data name="MoonfallLevelComingLine" xml:space="preserve">
+    <value>not built yet</value>
+    <comment>Moonfall level select: a level not built yet.</comment>
+  </data>
+  <data name="MoonfallNext" xml:space="preserve">
+    <value>next</value>
+    <comment>Moonfall map: the next level to play in the stage's list.</comment>
+  </data>
+  <data name="MoonfallPlayFormat" xml:space="preserve">
+    <value>Play {0}</value>
+    <comment>Moonfall: the Play button; {0} the level's code (3-3).</comment>
+  </data>
+  <data name="MoonfallPlay" xml:space="preserve">
+    <value>Play</value>
+    <comment>Moonfall: the Play button.</comment>
+  </data>
+  <data name="MoonfallStageSealedTooltip" xml:space="preserve">
+    <value>Win the stages before it to reach this one.</value>
+    <comment>Moonfall map: the locked Play button's tooltip.</comment>
+  </data>
+  <data name="MoonfallSeeLevelsTooltip" xml:space="preserve">
+    <value>See the stage's five levels</value>
+    <comment>Moonfall map at 640: the stage panel's tooltip.</comment>
+  </data>
+  <data name="MoonfallLegendWon" xml:space="preserve">
+    <value>won</value>
+    <comment>Moonfall map legend: a stage won.</comment>
+  </data>
+  <data name="MoonfallLegendHere" xml:space="preserve">
+    <value>you are here</value>
+    <comment>Moonfall map legend: the stage the player is on.</comment>
+  </data>
+  <data name="MoonfallLegendNotReached" xml:space="preserve">
+    <value>not reached</value>
+    <comment>Moonfall map legend: a stage not reached.</comment>
+  </data>
+  <data name="MoonfallLegendNotMet" xml:space="preserve">
+    <value>not yet met</value>
+    <comment>Moonfall map legend: a companion the story has not introduced.</comment>
+  </data>
+  <data name="MoonfallLegendPick" xml:space="preserve">
+    <value>your pick</value>
+    <comment>Moonfall map legend: the stage where the player picks the companion.</comment>
+  </data>
+  <data name="MoonfallStageWon" xml:space="preserve">
+    <value>won</value>
+    <comment>Moonfall map tooltip: a stage's state.</comment>
+  </data>
+  <data name="MoonfallStageHere" xml:space="preserve">
+    <value>you are here</value>
+    <comment>Moonfall map tooltip: a stage's state.</comment>
+  </data>
+  <data name="MoonfallStageOpen" xml:space="preserve">
+    <value>reached</value>
+    <comment>Moonfall map tooltip: a stage's state.</comment>
+  </data>
+  <data name="MoonfallStageNotReached" xml:space="preserve">
+    <value>not reached</value>
+    <comment>Moonfall map tooltip: a stage's state.</comment>
+  </data>
+  <data name="MoonfallStopTipFormat" xml:space="preserve">
+    <value>Stage {0} · {1} · {2} · {3}</value>
+    <comment>Moonfall map tooltip: {0} stage number, {1} stage name, {2} its state, {3} its power.</comment>
+  </data>
+  <data name="MoonfallStopNotMetLine" xml:space="preserve">
+    <value>Companion not yet met in your story</value>
+    <comment>Moonfall map tooltip: why a stop shows the card back.</comment>
+  </data>
+  <data name="MoonfallStopSealedLine" xml:space="preserve">
+    <value>Win the stages before it to reach it</value>
+    <comment>Moonfall map tooltip: why a stop is locked.</comment>
+  </data>
+  <data name="MoonfallLevelsHeaderFormat" xml:space="preserve">
+    <value>{0} · STAGE {1}</value>
+    <comment>Moonfall level select: {0} the campaign in capitals, {1} the stage number.</comment>
+  </data>
+  <data name="MoonfallLevelsLineFormat" xml:space="preserve">
+    <value>{0} carries {1} through these five.</value>
+    <comment>Moonfall level select: {0} the companion, {1} their power.</comment>
+  </data>
+  <data name="MoonfallLevelsNotMetLineFormat" xml:space="preserve">
+    <value>A companion not yet met in your story carries {0} through these five.</value>
+    <comment>Moonfall level select: {0} the power (the companion is hidden by the spoiler shield).</comment>
+  </data>
+  <data name="MoonfallLevelsPickLine" xml:space="preserve">
+    <value>Your pick: any companion you have met carries their power through these five.</value>
+    <comment>Moonfall level select: the free-choice stage's line.</comment>
+  </data>
+  <data name="MoonfallOpensAfterFormat" xml:space="preserve">
+    <value>opens after {0}</value>
+    <comment>Moonfall level select: a sealed level; {0} the level before it.</comment>
+  </data>
+  <data name="MoonfallClearTheOranges" xml:space="preserve">
+    <value>Clear the oranges to win the level.</value>
+    <comment>Moonfall level select: the line on how to win.</comment>
+  </data>
+  <data name="MoonfallNoAce" xml:space="preserve">
+    <value>none yet</value>
+    <comment>Moonfall level select: a level without an Ace score.</comment>
+  </data>
+  <data name="MoonfallNoCompanion" xml:space="preserve">
+    <value>No companion: no power</value>
+    <comment>Moonfall: no companion picked.</comment>
+  </data>
+  <data name="MoonfallAceCaps" xml:space="preserve">
+    <value>ACE</value>
+    <comment>Moonfall level select at 640: the Ace score's caption.</comment>
+  </data>
+  <data name="MoonfallAceScoreCaps" xml:space="preserve">
+    <value>ACE SCORE</value>
+    <comment>Moonfall level select: the Ace score's caption.</comment>
+  </data>
+  <data name="MoonfallNotYetMet" xml:space="preserve">
+    <value>Not yet met</value>
+    <comment>Moonfall: a companion the story has not introduced (the card back).</comment>
+  </data>
+  <data name="MoonfallNotMetShort" xml:space="preserve">
+    <value>Not met</value>
+    <comment>Moonfall companions grid at 640: a companion not yet met.</comment>
+  </data>
+  <data name="MoonfallCompanionsLine" xml:space="preserve">
+    <value>Eleven of Eorzea's own, one for each stage, each carrying a power. In Quick Play, choose any you have met.</value>
+    <comment>Moonfall companions: the line under the title.</comment>
+  </data>
+  <data name="MoonfallCompanionsFootnote" xml:space="preserve">
+    <value>Face down: someone your story has not introduced yet (the spoiler shield). Dimmed: met, not yet reached in Moonfall.</value>
+    <comment>Moonfall companions: the footnote on the three faces.</comment>
+  </data>
+  <data name="MoonfallPowerStageFormat" xml:space="preserve">
+    <value>{0} · stage {1}</value>
+    <comment>Moonfall companions: a companion met but not reached; {0} the power, {1} their stage.</comment>
+  </data>
+  <data name="MoonfallPowerStageShortFormat" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>Moonfall companions at 640: {0} the power (short), {1} their stage.</comment>
+  </data>
+  <data name="MoonfallPowerFarShoreFormat" xml:space="preserve">
+    <value>{0} · The Far Shore</value>
+    <comment>Moonfall companions: the moogle, met but not reached; {0} the power.</comment>
+  </data>
+  <data name="MoonfallPowerFarShoreShortFormat" xml:space="preserve">
+    <value>{0} · FS</value>
+    <comment>Moonfall companions at 640: the moogle, met but not reached; {0} the power (short); FS is The Far Shore.</comment>
+  </data>
+  <data name="MoonfallPowerShortDraw" xml:space="preserve">
+    <value>Draw</value>
+    <comment>Moonfall companions at 640: Moon-Viewing Draw, short.</comment>
+  </data>
+  <data name="MoonfallPowerShortBurst" xml:space="preserve">
+    <value>Burst</value>
+    <comment>Moonfall companions at 640: Lunar Burst, short.</comment>
+  </data>
+  <data name="MoonfallPowerShortWings" xml:space="preserve">
+    <value>Wings</value>
+    <comment>Moonfall companions at 640: Brass Wings, short.</comment>
+  </data>
+  <data name="MoonfallNotMetRole" xml:space="preserve">
+    <value>Someone your story has not introduced yet. Their power is theirs to show when you meet them.</value>
+    <comment>Moonfall companions: the detail of a companion not yet met.</comment>
+  </data>
+  <data name="MoonfallJoinsFormat" xml:space="preserve">
+    <value>Joins at stage {0} · {1}</value>
+    <comment>Moonfall companions: {0} the stage number, {1} its name.</comment>
+  </data>
+  <data name="MoonfallJoinsFarShoreFormat" xml:space="preserve">
+    <value>Joins on The Far Shore, stage {0} · {1}</value>
+    <comment>Moonfall companions: the moogle; {0} the stage number, {1} its name.</comment>
+  </data>
+  <data name="MoonfallSpoilersLine" xml:space="preserve">
+    <value>Spoilers: none past A Realm Reborn</value>
+    <comment>Moonfall companions: every companion is shown as met in A Realm Reborn.</comment>
+  </data>
+  <data name="MoonfallPowerInPlay" xml:space="preserve">
+    <value>in play, on a real board</value>
+    <comment>Moonfall companions: the caption under the power's picture.</comment>
+  </data>
+  <data name="MoonfallWonTogether" xml:space="preserve">
+    <value>Won together</value>
+    <comment>Moonfall companions: the levels of their stage won.</comment>
+  </data>
+  <data name="MoonfallPlayWithFormat" xml:space="preserve">
+    <value>Play with {0}</value>
+    <comment>Moonfall companions: opens Quick Play with them; {0} the companion.</comment>
+  </data>
+  <data name="MoonfallPlayWithNotMet" xml:space="preserve">
+    <value>Not yet met in your story</value>
+    <comment>Moonfall companions: the locked Play with button.</comment>
+  </data>
+  <data name="MoonfallPlayWithStageFormat" xml:space="preserve">
+    <value>Reach stage {0} to play</value>
+    <comment>Moonfall companions: the locked Play with button; {0} their stage.</comment>
+  </data>
+  <data name="MoonfallPlayWithFarShore" xml:space="preserve">
+    <value>Reach The Far Shore to play</value>
+    <comment>Moonfall companions: the moogle's locked Play with button.</comment>
+  </data>
+  <data name="MoonfallPausedTitle" xml:space="preserve">
+    <value>Paused</value>
+    <comment>Moonfall pause menu: its title.</comment>
+  </data>
+  <data name="MoonfallPauseLineFormat" xml:space="preserve">
+    <value>{0} {1} · {2} balls · {3} oranges left</value>
+    <comment>Moonfall pause menu: {0} the level's code, {1} its name, {2} balls left, {3} oranges left.</comment>
+  </data>
+  <data name="MoonfallPauseHeldFormat" xml:space="preserve">
+    <value>{0}. Moonfall waits for it.</value>
+    <comment>Moonfall pause menu: what holds the pause; {0} the reason (Paused · in combat).</comment>
+  </data>
+  <data name="MoonfallRestartLevel" xml:space="preserve">
+    <value>Restart level</value>
+    <comment>Moonfall pause menu: restart (held to confirm).</comment>
+  </data>
+  <data name="MoonfallHoldToRestart" xml:space="preserve">
+    <value>hold to restart: this level's score is lost</value>
+    <comment>Moonfall pause menu: under Restart.</comment>
+  </data>
+  <data name="MoonfallHoldToRestartShort" xml:space="preserve">
+    <value>hold to restart</value>
+    <comment>Moonfall pause menu at 640: under Restart.</comment>
+  </data>
+  <data name="MoonfallLeaveToMap" xml:space="preserve">
+    <value>Leave to the map</value>
+    <comment>Moonfall pause menu: leave the level (held to confirm), Adventure.</comment>
+  </data>
+  <data name="MoonfallLeaveToQuickPlay" xml:space="preserve">
+    <value>Leave to Quick Play</value>
+    <comment>Moonfall pause menu: leave the level (held to confirm), Quick Play.</comment>
+  </data>
+  <data name="MoonfallLeaveChallenge" xml:space="preserve">
+    <value>Leave the challenge</value>
+    <comment>Moonfall pause menu: leave the challenge (held to confirm).</comment>
+  </data>
+  <data name="MoonfallLeaveDuel" xml:space="preserve">
+    <value>Leave the duel</value>
+    <comment>Moonfall pause menu: leave the duel (held to confirm).</comment>
+  </data>
+  <data name="MoonfallHoldToLeave" xml:space="preserve">
+    <value>hold to leave: this level's progress is lost</value>
+    <comment>Moonfall pause menu: under Leave.</comment>
+  </data>
+  <data name="MoonfallHoldToLeaveShort" xml:space="preserve">
+    <value>hold to leave</value>
+    <comment>Moonfall pause menu at 640: under Leave.</comment>
+  </data>
+  <data name="MoonfallPausesItself" xml:space="preserve">
+    <value>Moonfall pauses itself in combat, duties and cutscenes.</value>
+    <comment>Moonfall pause menu: its note.</comment>
+  </data>
+  <data name="MoonfallPauseTooltip" xml:space="preserve">
+    <value>Pause (Esc)</value>
+    <comment>Moonfall board: the crest's moonstone pauses.</comment>
+  </data>
+  <data name="MoonfallReduceMotion" xml:space="preserve">
+    <value>Reduce motion</value>
+    <comment>Moonfall quick setting: Tsukimichi's Reduce motion.</comment>
+  </data>
+  <data name="MoonfallReduceMotionNote" xml:space="preserve">
+    <value>Tsukimichi's own setting: nothing moves but the game itself, and the Full Moon does not zoom.</value>
+    <comment>Moonfall options: under Reduce motion.</comment>
+  </data>
+  <data name="MoonfallDecoration" xml:space="preserve">
+    <value>Decoration</value>
+    <comment>Moonfall quick setting: Moonfall's decoration level.</comment>
+  </data>
+  <data name="MoonfallDecorationFull" xml:space="preserve">
+    <value>Full</value>
+    <comment>Moonfall decoration: everything (moondust, fireflies, stars, mist, glints).</comment>
+  </data>
+  <data name="MoonfallDecorationSimple" xml:space="preserve">
+    <value>Simple</value>
+    <comment>Moonfall decoration: the halos, the beams and the lantern only.</comment>
+  </data>
+  <data name="MoonfallDecorationOff" xml:space="preserve">
+    <value>Off</value>
+    <comment>Moonfall decoration: still, flat.</comment>
+  </data>
+  <data name="MoonfallDecorationNote" xml:space="preserve">
+    <value>Full: moondust, fireflies, stars and mist. Simple: the light only. Off: still and plain.</value>
+    <comment>Moonfall options: under Decoration.</comment>
+  </data>
+  <data name="MoonfallSoundNone" xml:space="preserve">
+    <value>none</value>
+    <comment>Moonfall quick setting: no audio output.</comment>
+  </data>
+  <data name="MoonfallSoundNote" xml:space="preserve">
+    <value>On top of the game's own master volume. Silent while Moonfall is paused.</value>
+    <comment>Moonfall options: under Sound.</comment>
+  </data>
+  <data name="MoonfallOn" xml:space="preserve">
+    <value>On</value>
+    <comment>Moonfall switch: on.</comment>
+  </data>
+  <data name="MoonfallOff" xml:space="preserve">
+    <value>Off</value>
+    <comment>Moonfall switch: off.</comment>
+  </data>
+  <data name="MoonfallOptionsLine" xml:space="preserve">
+    <value>Everything Moonfall keeps for you. The pause menu has the same quick settings.</value>
+    <comment>Moonfall options: the line under the title.</comment>
+  </data>
+  <data name="MoonfallPegMarksHintShort" xml:space="preserve">
+    <value>New: Peg marks, for colour-blind play.</value>
+    <comment>Moonfall title at 640: the Peg marks hint.</comment>
+  </data>
+  <data name="MoonfallReplay" xml:space="preserve">
+    <value>Replay</value>
+    <comment>Moonfall tally: play the level again.</comment>
+  </data>
+  <data name="MoonfallNextCodeFormat" xml:space="preserve">
+    <value>Next: {0}</value>
+    <comment>Moonfall tally: the next level; {0} its code (3-3).</comment>
+  </data>
+  <data name="MoonfallTallyAceBonus" xml:space="preserve">
+    <value>Ace bonus</value>
+    <comment>Moonfall tally: the row for the Ace bonus.</comment>
+  </data>
+  <data name="MoonfallBannerDuelWon" xml:space="preserve">
+    <value>YOU WIN</value>
+    <comment>Moonfall tally: a duel won, in capitals.</comment>
+  </data>
+  <data name="MoonfallBannerDuelLost" xml:space="preserve">
+    <value>DUEL LOST</value>
+    <comment>Moonfall tally: a duel lost, in capitals.</comment>
+  </data>
+  <data name="MoonfallBannerDuelDrawn" xml:space="preserve">
+    <value>A DRAW</value>
+    <comment>Moonfall tally: a duel drawn, in capitals.</comment>
+  </data>
+  <data name="MoonfallBannerChallengeMet" xml:space="preserve">
+    <value>CHALLENGE MET</value>
+    <comment>Moonfall tally: a challenge met, in capitals.</comment>
+  </data>
+  <data name="MoonfallBannerChallengeFailed" xml:space="preserve">
+    <value>CHALLENGE FAILED</value>
+    <comment>Moonfall tally: a challenge failed, in capitals.</comment>
+  </data>
+  <data name="MoonfallDuelAgainstFormat" xml:space="preserve">
+    <value>against {0} · {1}</value>
+    <comment>Moonfall tally: a duel; {0} the opponent, {1} the difficulty.</comment>
+  </data>
+  <data name="MoonfallRematch" xml:space="preserve">
+    <value>Rematch</value>
+    <comment>Moonfall tally: the duel again.</comment>
+  </data>
+  <data name="MoonfallDuelYou" xml:space="preserve">
+    <value>You</value>
+    <comment>Moonfall duel: the player's side.</comment>
+  </data>
+  <data name="MoonfallDuelYouCaps" xml:space="preserve">
+    <value>YOU</value>
+    <comment>Moonfall duel HUD: the player's side, in capitals.</comment>
+  </data>
+  <data name="MoonfallRunScoreFormat" xml:space="preserve">
+    <value>{0} · run total {1} of {2}</value>
+    <comment>Moonfall tally: a score challenge; {0} its name, {1} the run's total, {2} its target.</comment>
+  </data>
+  <data name="MoonfallRunLevelFormat" xml:space="preserve">
+    <value>{0} · level {1} of {2}</value>
+    <comment>Moonfall tally: a challenge; {0} its name, {1} the level played, {2} levels in the run.</comment>
+  </data>
+  <data name="MoonfallRunNextFormat" xml:space="preserve">
+    <value>Next: level {0} of {1}</value>
+    <comment>Moonfall tally: the challenge's next level; {0} its number, {1} levels in the run.</comment>
+  </data>
+  <data name="MoonfallQuickPlayLine" xml:space="preserve">
+    <value>Replay any level you have reached, with any companion you have met, or none.</value>
+    <comment>Moonfall Quick Play: the line under the title.</comment>
+  </data>
+  <data name="MoonfallCompanionCaps" xml:space="preserve">
+    <value>COMPANION</value>
+    <comment>Moonfall: the companion picker's caption.</comment>
+  </data>
+  <data name="MoonfallNoPowerShort" xml:space="preserve">
+    <value>none</value>
+    <comment>Moonfall companion picker: no companion (inside a ring).</comment>
+  </data>
+  <data name="MoonfallNoPowerTip" xml:space="preserve">
+    <value>No companion: the level plays with no power</value>
+    <comment>Moonfall companion picker: the 'none' ring's tooltip.</comment>
+  </data>
+  <data name="MoonfallPickerNotMetFormat" xml:space="preserve">
+    <value>Not yet met in your story · {0}</value>
+    <comment>Moonfall companion picker: a card back's tooltip; {0} the power.</comment>
+  </data>
+  <data name="MoonfallPickerNotReachedFormat" xml:space="preserve">
+    <value>{0} joins at stage {1}</value>
+    <comment>Moonfall companion picker: a companion not reached; {0} name, {1} stage.</comment>
+  </data>
+  <data name="MoonfallQuickLevelLineFormat" xml:space="preserve">
+    <value>{0} · {1} · {2}</value>
+    <comment>Moonfall Quick Play: {0} campaign, {1} level code, {2} stage name.</comment>
+  </data>
+  <data name="MoonfallPageFormat" xml:space="preserve">
+    <value>{0} of {1}</value>
+    <comment>Moonfall lists: page {0} of {1}.</comment>
+  </data>
+  <data name="MoonfallChallengesLine" xml:space="preserve">
+    <value>Twelve to start: score targets, half the balls, more oranges, clear every peg, and duels with the companions.</value>
+    <comment>Moonfall challenges: the line under the title.</comment>
+  </data>
+  <data name="MoonfallChallengeUnavailable" xml:space="preserve">
+    <value>its levels are on their way</value>
+    <comment>Moonfall challenges: a challenge whose levels are not built yet.</comment>
+  </data>
+  <data name="MoonfallChallengeUnavailableLine" xml:space="preserve">
+    <value>Its levels are not built yet: it opens when they are.</value>
+    <comment>Moonfall challenges: the detail of a challenge whose levels are not built yet.</comment>
+  </data>
+  <data name="MoonfallChallengeRulesFormat" xml:space="preserve">
+    <value>{0} · {1} balls · {2} oranges</value>
+    <comment>Moonfall challenges: {0} what it asks, {1} balls, {2} oranges.</comment>
+  </data>
+  <data name="MoonfallChallengeLevelsFormat" xml:space="preserve">
+    <value>Levels: {0}</value>
+    <comment>Moonfall challenges: {0} the levels' codes.</comment>
+  </data>
+  <data name="MoonfallChallengeDoneFormat" xml:space="preserve">
+    <value>Won · best {0}</value>
+    <comment>Moonfall challenges: a challenge met; {0} its best total.</comment>
+  </data>
+  <data name="MoonfallChallengeNotTried" xml:space="preserve">
+    <value>Not yet tried</value>
+    <comment>Moonfall challenges: a challenge never played.</comment>
+  </data>
+  <data name="MoonfallChallengeKindScore" xml:space="preserve">
+    <value>Reach the score</value>
+    <comment>Moonfall challenges: a score challenge.</comment>
+  </data>
+  <data name="MoonfallChallengeKindWin" xml:space="preserve">
+    <value>Win every level</value>
+    <comment>Moonfall challenges: a win challenge.</comment>
+  </data>
+  <data name="MoonfallChallengeKindClear" xml:space="preserve">
+    <value>Clear every peg</value>
+    <comment>Moonfall challenges: a clear-all challenge.</comment>
+  </data>
+  <data name="MoonfallChallengeKindDuel" xml:space="preserve">
+    <value>Win every duel</value>
+    <comment>Moonfall challenges: a duel challenge.</comment>
+  </data>
+  <data name="MoonfallSealed" xml:space="preserve">
+    <value>Sealed</value>
+    <comment>Moonfall challenges: the locked Play button.</comment>
+  </data>
+  <data name="MoonfallDuelLine" xml:space="preserve">
+    <value>Take turns on one board against a companion: the higher score wins.</value>
+    <comment>Moonfall duel: the line under the title.</comment>
+  </data>
+  <data name="MoonfallDuelNone" xml:space="preserve">
+    <value>Meet a companion in your story and reach a level first.</value>
+    <comment>Moonfall duel: why no duel can be set up.</comment>
+  </data>
+  <data name="MoonfallOpponentCaps" xml:space="preserve">
+    <value>OPPONENT</value>
+    <comment>Moonfall duel: the opponent picker's caption.</comment>
+  </data>
+  <data name="MoonfallDifficultyCaps" xml:space="preserve">
+    <value>DIFFICULTY</value>
+    <comment>Moonfall duel: the difficulty's caption.</comment>
+  </data>
+  <data name="MoonfallLevelCaps" xml:space="preserve">
+    <value>LEVEL</value>
+    <comment>Moonfall duel: the level's caption.</comment>
+  </data>
+  <data name="MoonfallYourCompanionCaps" xml:space="preserve">
+    <value>YOUR COMPANION</value>
+    <comment>Moonfall duel: the player's companion's caption.</comment>
+  </data>
+  <data name="MoonfallDuelRecordFormat" xml:space="preserve">
+    <value>{0}: won {1}, lost {2}, drawn {3}</value>
+    <comment>Moonfall duel: the record at this difficulty; {0} difficulty, {1} wins, {2} losses, {3} draws.</comment>
+  </data>
+  <data name="MoonfallDuelPlayFormat" xml:space="preserve">
+    <value>Duel {0}</value>
+    <comment>Moonfall duel: the start button; {0} the opponent.</comment>
+  </data>
+  <data name="MoonfallDifficulty.Novice" xml:space="preserve">
+    <value>Novice</value>
+    <comment>Moonfall duel difficulty.</comment>
+  </data>
+  <data name="MoonfallDifficulty.Adept" xml:space="preserve">
+    <value>Adept</value>
+    <comment>Moonfall duel difficulty.</comment>
+  </data>
+  <data name="MoonfallDifficulty.Master" xml:space="preserve">
+    <value>Master</value>
+    <comment>Moonfall duel difficulty.</comment>
+  </data>
 </root>
