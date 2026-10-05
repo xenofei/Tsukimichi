@@ -32,10 +32,11 @@ public sealed record MoonfallLevelLoad(MoonfallLevel? Level, IReadOnlyList<strin
 /// </code>
 /// Everything in the original's 800×600 units (the only playfield version 1 has). Comments and trailing commas are
 /// allowed; unknown properties are ignored, so a newer editor's extras do not break an older build, but a newer
-/// <c>version</c> is refused. The checks: every number finite; every peg and brick, along its whole motion, inside the
-/// walls, below the launcher's swing and above the bucket; round pegs and bricks not overlapping each other (bricks may
-/// touch bricks); enough pegs that may be orange for the 25 the level needs, and some to spare for the blue, green and
-/// purple ones.
+/// <c>version</c> is refused. The checks: the peg count first (an oversized file is refused unread); every number
+/// finite; every peg and brick, along its whole length and motion, inside the walls, below the launcher's swing and above
+/// the bucket; round pegs and bricks not overlapping each other (bricks may touch bricks), and no mover passing through a
+/// still piece or moving faster than <see cref="MaxMoverSpeed"/>; enough pegs that may be orange for the 25 the level
+/// needs, and some to spare for the blue, green and purple ones. At most <see cref="MaxErrors"/> errors are listed.
 /// </summary>
 public static partial class MoonfallLevelLoader
 {
@@ -52,6 +53,19 @@ public static partial class MoonfallLevelLoader
 
     /// <summary>How low a peg may reach: a ball's diameter and a pixel above the bucket's rim, so a ball can always pass over the bucket.</summary>
     public const double LowestEdge = MoonfallRules.BucketTop - (2 * MoonfallRules.BallRadius) - 1;
+
+    /// <summary>Most errors listed for one file; the rest are counted ("and 12 more").</summary>
+    public const int MaxErrors = 40;
+
+    /// <summary>
+    /// [J] A mover's top speed (px/s): a little over the ball's launch speed. The ball's sub-steps follow the ball's own
+    /// speed, so a faster peg could step past it between two checks; at this speed a peg moves 4.2 px a tick against a
+    /// contact distance of 16.
+    /// </summary>
+    public const double MaxMoverSpeed = 420;
+
+    /// <summary>How far apart (px) the bounds and overlap checks sample a brick's length or a mover's path.</summary>
+    private const double SampleStep = 2;
 
     /// <summary>How far two pieces may overlap before it is an error (rounding in hand-placed coordinates).</summary>
     private const double OverlapTolerance = 0.5;
@@ -134,6 +148,15 @@ public static partial class MoonfallLevelLoader
             errors.Add($"playfield must be {{ \"width\": {MoonfallRules.Width}, \"height\": {MoonfallRules.Height} }}");
         }
 
+        // The count first, so an oversized file is refused before any peg is read or compared.
+        var count = (root.TryGetProperty("pegs", out var pegCount) && pegCount.ValueKind == JsonValueKind.Array ? pegCount.GetArrayLength() : 0)
+            + (root.TryGetProperty("bricks", out var brickCount) && brickCount.ValueKind == JsonValueKind.Array ? brickCount.GetArrayLength() : 0);
+        if (count < MinPegs || count > MaxPegs)
+        {
+            errors.Add($"a level holds {MinPegs} to {MaxPegs} pegs and bricks; this one has {count}");
+            return null;
+        }
+
         var pegs = new List<MoonfallPeg>();
         var labels = new List<string>();
         if (root.TryGetProperty("pegs", out var pegList))
@@ -147,6 +170,11 @@ public static partial class MoonfallLevelLoader
                 var i = 0;
                 foreach (var node in pegList.EnumerateArray())
                 {
+                    if (errors.Count >= MaxErrors)
+                    {
+                        break;
+                    }
+
                     var label = $"pegs[{i++}]";
                     if (ReadPeg(node, label, errors) is { } peg)
                     {
@@ -168,6 +196,11 @@ public static partial class MoonfallLevelLoader
                 var i = 0;
                 foreach (var node in brickList.EnumerateArray())
                 {
+                    if (errors.Count >= MaxErrors)
+                    {
+                        break;
+                    }
+
                     var label = $"bricks[{i++}]";
                     if (ReadBrick(node, label, errors) is { } brick)
                     {
@@ -178,18 +211,24 @@ public static partial class MoonfallLevelLoader
             }
         }
 
-        if (pegs.Count < MinPegs || pegs.Count > MaxPegs)
-        {
-            errors.Add($"a level holds {MinPegs} to {MaxPegs} pegs and bricks; this one has {pegs.Count}");
-        }
-
         var level = new MoonfallLevel(id ?? string.Empty, name ?? string.Empty, pegs);
         if (level.OrangeCandidates < MoonfallRules.OrangeCount)
         {
             errors.Add($"{level.OrangeCandidates} pegs may be orange; a level needs {MoonfallRules.OrangeCount}");
         }
 
-        CheckOverlaps(pegs, labels, errors);
+        if (errors.Count < MaxErrors)
+        {
+            CheckOverlaps(pegs, labels, errors);
+        }
+
+        if (errors.Count > MaxErrors)
+        {
+            var more = errors.Count - MaxErrors;
+            errors.RemoveRange(MaxErrors, more);
+            errors.Add($"and {more} more");
+        }
+
         return level;
     }
 
@@ -223,6 +262,12 @@ public static partial class MoonfallLevelLoader
         }
 
         var peg = MoonfallPeg.Round(x, y, r, canBeOrange, mover);
+        if (mover.Kind != MoverKind.None && TopSpeed(peg) > MaxMoverSpeed)
+        {
+            errors.Add($"{label}.move: moves faster than {MaxMoverSpeed.ToString("0", CultureInfo.InvariantCulture)} px/s; give it a longer period");
+            return null;
+        }
+
         CheckRoundPath(peg, label, errors);
         return errors.Count == before ? peg : null;
     }
@@ -254,6 +299,7 @@ public static partial class MoonfallLevelLoader
         if (period is < 1 or > 60)
         {
             errors.Add($"{label}.move: period must be 1 to 60 seconds");
+            return PegMover.None;
         }
 
         return new PegMover(kind, x, y, period, clockwise);
@@ -338,26 +384,56 @@ public static partial class MoonfallLevelLoader
         && y - radius >= MoonfallRules.Ceiling
         && MoonfallGeometry.Hypot(x - MoonfallRules.LauncherX, y - MoonfallRules.LauncherY) - radius >= LauncherClearance;
 
-    private static void CheckRoundPath(MoonfallPeg peg, string label, List<string> errors)
+    /// <summary>A mover's fastest speed (px/s): an orbit's steady 2πr/T, a slide's π·d/T at its middle.</summary>
+    private static double TopSpeed(MoonfallPeg peg)
     {
-        // Sampled along the whole motion: 64 points a cycle find a mover's widest swing within a fraction of a pixel.
-        var samples = peg.Mover.Kind == MoverKind.None ? 1 : 64;
-        var orbitRadius = MoonfallGeometry.Hypot(peg.X - peg.Mover.X, peg.Y - peg.Mover.Y);
-        var orbitAngle = Math.Atan2(peg.Y - peg.Mover.Y, peg.X - peg.Mover.X);
-        for (var k = 0; k < samples; k++)
+        var d = MoonfallGeometry.Hypot(peg.X - peg.Mover.X, peg.Y - peg.Mover.Y);
+        return peg.Mover.Kind == MoverKind.Orbit ? 2 * Math.PI * d / peg.Mover.PeriodSeconds : Math.PI * d / peg.Mover.PeriodSeconds;
+    }
+
+    /// <summary>How many points sample a mover's path: one every <see cref="SampleStep"/> px of it, and at least 64.</summary>
+    private static int PathSamples(MoonfallPeg peg)
+    {
+        if (peg.Mover.Kind == MoverKind.None)
         {
-            var (x, y) = (peg.X, peg.Y);
-            var phase = 2 * Math.PI * k / samples;
-            if (peg.Mover.Kind == MoverKind.Orbit)
+            return 1;
+        }
+
+        var d = MoonfallGeometry.Hypot(peg.X - peg.Mover.X, peg.Y - peg.Mover.Y);
+        var length = peg.Mover.Kind == MoverKind.Orbit ? 2 * Math.PI * d : 2 * d;
+        return Math.Clamp((int)Math.Ceiling(length / SampleStep), 64, 4096);
+    }
+
+    /// <summary>Where a round peg is at <paramref name="k"/> of <paramref name="samples"/> points along its motion's cycle.</summary>
+    private static (double X, double Y) PathPoint(MoonfallPeg peg, int k, int samples)
+    {
+        var phase = 2 * Math.PI * k / samples;
+        switch (peg.Mover.Kind)
+        {
+            case MoverKind.Orbit:
             {
-                (x, y) = (peg.Mover.X + (orbitRadius * Math.Cos(orbitAngle + phase)), peg.Mover.Y + (orbitRadius * Math.Sin(orbitAngle + phase)));
-            }
-            else if (peg.Mover.Kind == MoverKind.Slide)
-            {
-                var s = (1 - Math.Cos(phase)) * 0.5;
-                (x, y) = (peg.X + ((peg.Mover.X - peg.X) * s), peg.Y + ((peg.Mover.Y - peg.Y) * s));
+                var radius = MoonfallGeometry.Hypot(peg.X - peg.Mover.X, peg.Y - peg.Mover.Y);
+                var start = Math.Atan2(peg.Y - peg.Mover.Y, peg.X - peg.Mover.X);
+                return (peg.Mover.X + (radius * Math.Cos(start + phase)), peg.Mover.Y + (radius * Math.Sin(start + phase)));
             }
 
+            case MoverKind.Slide:
+            {
+                var s = (1 - Math.Cos(phase)) * 0.5;
+                return (peg.X + ((peg.Mover.X - peg.X) * s), peg.Y + ((peg.Mover.Y - peg.Y) * s));
+            }
+
+            default:
+                return (peg.X, peg.Y);
+        }
+    }
+
+    private static void CheckRoundPath(MoonfallPeg peg, string label, List<string> errors)
+    {
+        var samples = PathSamples(peg);
+        for (var k = 0; k < samples; k++)
+        {
+            var (x, y) = PathPoint(peg, k, samples);
             if (!InBounds(x, y, peg.Radius))
             {
                 errors.Add($"{label}: {(samples == 1 ? "is" : "moves")} off the board (inside the walls, below the launcher, above the bucket) at ({x.ToString("0.#", CultureInfo.InvariantCulture)}, {y.ToString("0.#", CultureInfo.InvariantCulture)})");
@@ -366,21 +442,30 @@ public static partial class MoonfallLevelLoader
         }
     }
 
+    /// <summary>A brick's middle line, sampled every <see cref="SampleStep"/> px of its length (a long arc cannot bulge past a check between samples).</summary>
+    private static int BrickSamples(MoonfallPeg brick)
+    {
+        var length = brick.Shape == PegShape.Line
+            ? MoonfallGeometry.Hypot(brick.X2 - brick.X, brick.Y2 - brick.Y)
+            : brick.Radius * MoonfallGeometry.Radians(brick.SweepDegrees);
+        return Math.Clamp((int)Math.Ceiling(length / SampleStep), 1, 4096);
+    }
+
     private static void CheckBrickBounds(MoonfallPeg brick, string label, List<string> errors)
     {
         var half = brick.Thickness * 0.5;
-        const int Samples = 32;
-        for (var k = 0; k <= Samples; k++)
+        var samples = BrickSamples(brick);
+        for (var k = 0; k <= samples; k++)
         {
             double x, y;
             if (brick.Shape == PegShape.Line)
             {
-                x = brick.X + ((brick.X2 - brick.X) * k / Samples);
-                y = brick.Y + ((brick.Y2 - brick.Y) * k / Samples);
+                x = brick.X + ((brick.X2 - brick.X) * k / samples);
+                y = brick.Y + ((brick.Y2 - brick.Y) * k / samples);
             }
             else
             {
-                var angle = MoonfallGeometry.Radians(brick.StartDegrees + (brick.SweepDegrees * k / Samples));
+                var angle = MoonfallGeometry.Radians(brick.StartDegrees + (brick.SweepDegrees * k / samples));
                 x = brick.X + (brick.Radius * Math.Cos(angle));
                 y = brick.Y + (brick.Radius * Math.Sin(angle));
             }
@@ -397,25 +482,34 @@ public static partial class MoonfallLevelLoader
 
     private static void CheckOverlaps(List<MoonfallPeg> pegs, List<string> labels, List<string> errors)
     {
-        for (var i = 0; i < pegs.Count; i++)
+        for (var i = 0; i < pegs.Count && errors.Count < MaxErrors; i++)
         {
             var a = pegs[i];
-            if (a.Shape != PegShape.Round || a.Mover.Kind != MoverKind.None)
+            if (a.Shape != PegShape.Round)
             {
                 continue;
             }
 
+            var moving = a.Mover.Kind != MoverKind.None;
+            var samples = PathSamples(a);
             for (var j = 0; j < pegs.Count; j++)
             {
                 var b = pegs[j];
-                if (j == i || (b.Shape == PegShape.Round && j < i) || b.Mover.Kind != MoverKind.None)
+                // Still round pegs are checked once a pair; movers against every still piece; movers never against
+                // each other (a ring of them turns together).
+                if (j == i || b.Mover.Kind != MoverKind.None || (!moving && b.Shape == PegShape.Round && j < i))
                 {
                     continue;
                 }
 
-                if (MoonfallGeometry.SurfaceDistance(b, b.X, b.Y, a.X, a.Y) - a.Radius < -OverlapTolerance)
+                for (var k = 0; k < samples; k++)
                 {
-                    errors.Add($"{labels[i]} overlaps {labels[j]}");
+                    var (x, y) = PathPoint(a, k, samples);
+                    if (MoonfallGeometry.SurfaceDistance(b, b.X, b.Y, x, y) - a.Radius < -OverlapTolerance)
+                    {
+                        errors.Add(moving ? $"{labels[i]} moves into {labels[j]}" : $"{labels[i]} overlaps {labels[j]}");
+                        break;
+                    }
                 }
             }
         }

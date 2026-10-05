@@ -139,6 +139,61 @@ public sealed class MoonfallLevelLoaderTests
     }
 
     [Fact]
+    public void An_oversized_level_is_refused_unread_with_one_error()
+    {
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var load = MoonfallLevelLoader.Parse(Level(count: 5000));
+        Assert.False(load.Ok);
+        Assert.Equal(["a level holds 29 to 400 pegs and bricks; this one has 5000"], load.Errors);
+        Assert.True(watch.Elapsed < TimeSpan.FromSeconds(2), $"took {watch.Elapsed}");
+    }
+
+    [Fact]
+    public void The_error_list_is_capped()
+    {
+        // 300 pegs all missing x: the first 40 errors are listed, the rest counted.
+        var bad = string.Join(",", Enumerable.Repeat("""{ "y": 300 }""", 300));
+        var load = MoonfallLevelLoader.Parse(Level(pegs: bad));
+        Assert.False(load.Ok);
+        Assert.InRange(load.Errors.Count, MoonfallLevelLoader.MaxErrors, MoonfallLevelLoader.MaxErrors + 2);
+    }
+
+    [Fact]
+    public void A_mover_that_passes_through_a_still_peg_is_refused()
+    {
+        // A still peg at (450, 440); a mover sliding from (450, 480) to (450, 400) runs straight through it.
+        var load = MoonfallLevelLoader.Parse(Level(pegs: """{ "x": 450, "y": 440 }, { "x": 450, "y": 480, "move": { "kind": "slide", "x": 450, "y": 400, "period": 4 } }"""));
+        Assert.Contains("pegs[31] moves into pegs[30]", load.Errors);
+    }
+
+    [Fact]
+    public void A_mover_that_pinches_a_brick_is_refused()
+    {
+        var load = MoonfallLevelLoader.Parse(Level(
+            pegs: """{ "x": 600, "y": 470, "move": { "kind": "orbit", "x": 560, "y": 470, "period": 6 } }""",
+            bricks: """{ "kind": "line", "x1": 540, "y1": 500, "x2": 560, "y2": 520 }"""));
+        Assert.Contains("pegs[30] moves into bricks[0]", load.Errors);
+    }
+
+    [Fact]
+    public void A_mover_faster_than_the_cap_is_refused()
+    {
+        // An orbit of radius 80 once a second runs at 503 px/s.
+        var load = MoonfallLevelLoader.Parse(Level(pegs: """{ "x": 480, "y": 450, "move": { "kind": "orbit", "x": 400, "y": 450, "period": 1 } }"""));
+        Assert.Contains(load.Errors, e => e.Contains("moves faster than 420 px/s", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_long_arc_is_checked_along_its_length_so_its_middle_cannot_bulge_past_the_floor()
+    {
+        // r = 400 from 60.9 to 120.9 degrees about (400, 150.03): its lowest point, between where 33 even samples would fall,
+        // reaches 0.03 px past the lowest edge a brick may reach. Sampled every 2 px of length, it is caught.
+        var load = MoonfallLevelLoader.Parse(Level(bricks: """{ "kind": "arc", "x": 400, "y": 150.03, "r": 400, "start": 60.9375, "sweep": 60 }"""));
+        Assert.Contains(load.Errors, e => e.StartsWith("bricks[0]: is off the board", StringComparison.Ordinal));
+        Assert.True(MoonfallLevelLoader.Parse(Level(bricks: """{ "kind": "arc", "x": 400, "y": 149.9, "r": 400, "start": 60.9375, "sweep": 60 }""")).Ok);
+    }
+
+    [Fact]
     public void Unknown_properties_are_ignored()
     {
         Assert.True(MoonfallLevelLoader.Parse(Level(root: ", \"author\": \"someone\", \"editor\": { \"grid\": 10 }")).Ok);

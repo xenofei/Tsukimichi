@@ -1,6 +1,7 @@
 using System;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
+using Tsukimichi.Core.Ui.Themes;
 
 namespace Tsukimichi.Ui;
 
@@ -46,7 +47,7 @@ public sealed partial class MainWindow
 
         // A peg as the pill's mark: the game's orange.
         var mark = new Vector2(min.X + pad + dot, textY + (line * 0.5f));
-        dl.AddCircleFilled(mark, dot, Theme.U32(Theme.Palette.Pegs.Orange), 12);
+        dl.AddCircleFilled(mark, dot, Theme.U32(PegInks.For(Theme.Palette).Orange), 12);
         dl.AddText(new Vector2(mark.X + dot + between, textY), Theme.U32(hovered ? s.Text : s.TextSecondary), label);
         Chrome.FocusRing(rounding);
         if (hovered)

@@ -1,10 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Bindings.ImGui;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Moonfall;
@@ -46,6 +49,9 @@ public sealed partial class MoonfallWindow : Window
     private readonly MoonfallCampaignKind campaign = MoonfallCampaignKind.Base;
 
     private MoonfallGame? game;
+    private volatile bool unsaved;
+    private int saving;
+    private MoonfallProgress? mergedFromDisk;
     private int levelIndex;
     private double aim;
     private Theme.StyleScope chrome;
@@ -79,6 +85,8 @@ public sealed partial class MoonfallWindow : Window
     }
 
     public override void OnOpen() => pause.Pause(MoonfallPauseReason.Reopened);
+
+    public override void OnClose() => SaveInBackground();
 
     public override void PreDraw()
     {
@@ -124,6 +132,7 @@ public sealed partial class MoonfallWindow : Window
             return;
         }
 
+        TakeMerged();
         game ??= NewGame(levelIndex);
         var focused = ImGui.IsWindowFocused(ImGuiFocusedFlags.RootAndChildWindows);
         pause.Update(causes() | (focused ? MoonfallPauseReason.None : MoonfallPauseReason.Unfocused));
@@ -203,37 +212,101 @@ public sealed partial class MoonfallWindow : Window
         }
     }
 
-    /// <summary>The level just won moves the account's furthest level on, in memory now and on disk off the frame.</summary>
+    /// <summary>The level just won moves the account's furthest level on: in memory now, on disk off the frame.</summary>
     private void RecordWin()
     {
         var cleared = levelIndex + 1;
-        if (cleared <= progress.Cleared(campaign))
+        if (cleared > progress.Cleared(campaign))
+        {
+            if (campaign == MoonfallCampaignKind.Expansion)
+            {
+                progress.ExpansionCleared = cleared;
+            }
+            else
+            {
+                progress.BaseCleared = cleared;
+            }
+
+            unsaved = true;
+        }
+
+        // A save that failed before is tried again with this win.
+        SaveInBackground();
+    }
+
+    /// <summary>
+    /// Saves unsaved progress on a worker, one save at a time. A failed save keeps it unsaved, so the next win, closing
+    /// the window or unloading the plugin (<see cref="SaveNow"/>) tries again. Another client's further progress, merged
+    /// in by the save, shows on the next frame.
+    /// </summary>
+    private void SaveInBackground()
+    {
+        if (!unsaved || Interlocked.Exchange(ref saving, 1) == 1)
         {
             return;
         }
 
-        if (campaign == MoonfallCampaignKind.Expansion)
-        {
-            progress.ExpansionCleared = cleared;
-        }
-        else
-        {
-            progress.BaseCleared = cleared;
-        }
-
-        var path = progressPath;
-        var kind = campaign;
+        unsaved = false;
+        var snapshot = progress.Copy();
         _ = Task.Run(() =>
         {
             try
             {
-                MoonfallProgress.Record(path, kind, cleared);
+                Save(snapshot);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            finally
             {
-                log?.Warning(ex, "Moonfall progress could not be saved; it is saved again with the next level won");
+                Volatile.Write(ref saving, 0);
             }
         });
+    }
+
+    /// <summary>Saves unsaved progress now, on this thread (the window closing, the plugin unloading). Never throws.</summary>
+    public void SaveNow()
+    {
+        if (!unsaved || Interlocked.Exchange(ref saving, 1) == 1)
+        {
+            return;
+        }
+
+        unsaved = false;
+        try
+        {
+            Save(progress.Copy());
+        }
+        finally
+        {
+            Volatile.Write(ref saving, 0);
+        }
+    }
+
+    private void Save(MoonfallProgress snapshot)
+    {
+        try
+        {
+            var warnings = new List<string>();
+            var merged = MoonfallProgress.Record(progressPath, snapshot, warnings);
+            foreach (var warning in warnings)
+            {
+                log?.Warning("Moonfall progress: {Warning}", warning);
+            }
+
+            Volatile.Write(ref mergedFromDisk, merged);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            unsaved = true;
+            log?.Warning(ex, "Moonfall progress could not be saved; it is tried again with the next level won and when the window closes");
+        }
+    }
+
+    /// <summary>The progress a save merged with the file (another client may be further on), taken in on the draw thread.</summary>
+    private void TakeMerged()
+    {
+        if (Interlocked.Exchange(ref mergedFromDisk, null) is { } merged)
+        {
+            progress.Absorb(merged);
+        }
     }
 
     // ---- The bar ----
@@ -360,16 +433,26 @@ public sealed partial class MoonfallWindow : Window
         ImGui.GetWindowDrawList().AddText(ImGui.GetFont(), scoreSize, new Vector2(at.X, at.Y + ((frame - scoreSize) * 0.5f)), Theme.U32(Theme.Gold), scoreText);
         ImGui.Dummy(new Vector2(scoreWidth, frame));
         ImGui.SameLine(0f, gap);
-        if (ImGui.Button(pauseLabel + "##moonfallPause", new Vector2(pauseWidth, 0f)))
+        // While combat, a duty or a cutscene holds the pause, Resume is off and says why.
+        var held = (pause.Active & (MoonfallPauseReason.Combat | MoonfallPauseReason.Duty | MoonfallPauseReason.Cutscene)) != 0;
+        using (ImRaii.Disabled(held))
         {
-            if (pause.Paused)
+            if (ImGui.Button(pauseLabel + "##moonfallPause", new Vector2(pauseWidth, 0f)))
             {
-                pause.TryResume();
+                if (pause.Paused)
+                {
+                    pause.TryResume();
+                }
+                else
+                {
+                    pause.Pause(MoonfallPauseReason.Player);
+                }
             }
-            else
-            {
-                pause.Pause(MoonfallPauseReason.Player);
-            }
+        }
+
+        if (held && ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
+        {
+            UiMetrics.Tooltip(PauseReasonText() ?? Strings.MoonfallPaused, Strings.MoonfallWaitsForIt);
         }
 
         ImGui.SameLine();

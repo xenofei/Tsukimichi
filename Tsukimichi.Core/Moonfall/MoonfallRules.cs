@@ -151,6 +151,13 @@ public static class MoonfallRules
     /// </summary>
     public const int StuckSinkTicks = 300;
 
+    /// <summary>
+    /// [J] Only a slow ball counts towards <see cref="StuckSinkTicks"/>: below 120 px/s. A ball running fast along a long
+    /// flat shelf gets no lower either, but it is going somewhere; a ball rocking in a hollow spends its time near the
+    /// turning points, well under this, so it is still caught.
+    /// </summary>
+    public const double StuckSinkSpeed = 120;
+
     /// <summary>[J] A peg within this distance (px) of contact counts as touching the stuck ball.</summary>
     public const double StuckTouchSlack = 2;
 

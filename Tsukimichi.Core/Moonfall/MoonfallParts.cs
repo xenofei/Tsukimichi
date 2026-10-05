@@ -116,6 +116,10 @@ public static class MoonfallBucket
     public static double VelocityAt(long tick) =>
         MoonfallRules.BucketAmplitude * (2 * Math.PI / (MoonfallRules.BucketPeriodTicks * MoonfallRules.TickSeconds)) * Math.Cos(Phase(tick));
 
+    /// <summary>The bucket's centre at a fractional game tick (the window draws between ticks).</summary>
+    public static double CentreAt(double tick) =>
+        MoonfallRules.BucketCentre + (MoonfallRules.BucketAmplitude * Math.Sin(2 * Math.PI * (tick % MoonfallRules.BucketPeriodTicks) / MoonfallRules.BucketPeriodTicks));
+
     private static double Phase(long tick) => 2 * Math.PI * (tick % MoonfallRules.BucketPeriodTicks) / MoonfallRules.BucketPeriodTicks;
 
     /// <summary>A rim post's radius: half of (131 − 104) / 2.</summary>

@@ -41,29 +41,39 @@ public sealed class MoonfallProgress
         Clean(UserFile.Load<MoonfallProgress>(path, warnings) ?? new MoonfallProgress());
 
     /// <summary>
-    /// Records that <paramref name="cleared"/> levels of <paramref name="kind"/> are won: under the file's lock, merged
-    /// with what is on disk (the higher count wins), then written atomically. Returns the merged progress. Throws
-    /// <see cref="IOException"/> when the lock or the file cannot be had; meant for a background thread.
+    /// Saves <paramref name=known/> (this client's progress): under the file's lock it is merged with what is on disk,
+    /// each count the higher of the two, then written atomically. Returns the merged progress, which may be further on
+    /// than <paramref name=known/> when another client has won more. A corrupt file is quarantined and reported in
+    /// <paramref name=warnings/>, and <paramref name=known/> is written in its place, so a damaged file never costs the
+    /// player an unlock. Throws <see cref="IOException"/> when the lock or the file cannot be had (the caller tries again
+    /// later); meant for a background thread.
     /// </summary>
-    public static MoonfallProgress Record(string path, MoonfallCampaignKind kind, int cleared, TimeSpan? lockTimeout = null)
+    public static MoonfallProgress Record(string path, MoonfallProgress known, IList<string>? warnings = null, TimeSpan? lockTimeout = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(path);
+        ArgumentNullException.ThrowIfNull(known);
         using (SharedFile.Lock(path, lockTimeout))
         {
-            var disk = Clean(UserFile.LoadForMerge<MoonfallProgress>(path, null, out _) ?? new MoonfallProgress());
-            if (kind == MoonfallCampaignKind.Expansion)
-            {
-                disk.ExpansionCleared = Math.Max(disk.ExpansionCleared, cleared);
-            }
-            else
-            {
-                disk.BaseCleared = Math.Max(disk.BaseCleared, cleared);
-            }
-
+            var disk = Clean(UserFile.LoadForMerge<MoonfallProgress>(path, warnings, out _) ?? new MoonfallProgress());
+            disk.BaseCleared = Math.Max(disk.BaseCleared, known.BaseCleared);
+            disk.ExpansionCleared = Math.Max(disk.ExpansionCleared, known.ExpansionCleared);
             disk.Version = CurrentVersion;
             AtomicFile.Write(path, JsonSerializer.Serialize(disk, StorageJson.Options));
             return disk;
         }
+    }
+
+    /// <summary>A copy of the counts, for a save on another thread.</summary>
+    public MoonfallProgress Copy() => new() { BaseCleared = BaseCleared, ExpansionCleared = ExpansionCleared };
+
+    /// <summary>Moves each count up to <paramref name="other"/>'s where that is further; true when anything moved.</summary>
+    public bool Absorb(MoonfallProgress other)
+    {
+        ArgumentNullException.ThrowIfNull(other);
+        var moved = other.BaseCleared > BaseCleared || other.ExpansionCleared > ExpansionCleared;
+        BaseCleared = Math.Max(BaseCleared, other.BaseCleared);
+        ExpansionCleared = Math.Max(ExpansionCleared, other.ExpansionCleared);
+        return moved;
     }
 
     private static MoonfallProgress Clean(MoonfallProgress progress)

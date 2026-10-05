@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Moonfall;
+using Tsukimichi.Core.Ui.Themes;
 
 namespace Tsukimichi.Ui;
 
@@ -17,8 +18,8 @@ public sealed partial class MoonfallWindow
 
     private static readonly Vector2 BoardCentre = new((float)(MoonfallRules.Width * 0.5), (float)(MoonfallRules.Height * 0.5));
 
-    /// <summary>Popup texts by value: the few values pegs score (10 to 5,000) are formatted once.</summary>
-    private static readonly Dictionary<long, string> ValueTexts = [];
+    /// <summary>Popup texts by value: the few values pegs score (10 to 5,000) are formatted once per culture.</summary>
+    private readonly Dictionary<long, string> valueTexts = [];
 
     private readonly Popup[] popups = new Popup[PopupCapacity];
     private readonly Ring[] rings = new Ring[RingCapacity];
@@ -32,6 +33,13 @@ public sealed partial class MoonfallWindow
     private (long Value, int Count) shotFor = (-1, -1);
 
     private string[] feverTexts = [];
+    private string perfectText = string.Empty;
+    private CultureInfo? textsCulture;
+
+    /// <summary>The pegs' inks for the palette in effect (<see cref="PegInks.For"/>), worked out once per palette.</summary>
+    private PegInks inks;
+    private uint litOutline;
+    private UiPalette? inksFor;
 
     private readonly record struct Popup(double At, double X, double Y, double Below, string Text);
 
@@ -61,12 +69,45 @@ public sealed partial class MoonfallWindow
         freeBallUntil = double.NegativeInfinity;
     }
 
+    /// <summary>Drops the formatted numbers when the culture changes (a language switch), so they are made again in it.</summary>
+    private void RefreshTexts()
+    {
+        var culture = CultureInfo.CurrentCulture;
+        if (ReferenceEquals(culture, textsCulture))
+        {
+            return;
+        }
+
+        textsCulture = culture;
+        valueTexts.Clear();
+        var values = MoonfallRules.FeverBucketValues;
+        feverTexts = new string[values.Length];
+        for (var k = 0; k < values.Length; k++)
+        {
+            feverTexts[k] = values[k].ToString("N0", culture);
+        }
+
+        perfectText = MoonfallRules.PerfectFeverBucketValue.ToString("N0", culture);
+    }
+
+    private void RefreshInks()
+    {
+        var palette = Theme.Palette;
+        if (!ReferenceEquals(palette, inksFor))
+        {
+            inksFor = palette;
+            inks = PegInks.For(palette);
+            litOutline = Theme.U32(PegInks.LitOutline(palette));
+        }
+    }
+
     private void AddPopup(int peg, long value, double x, double y)
     {
-        if (!ValueTexts.TryGetValue(value, out var text))
+        RefreshTexts();
+        if (!valueTexts.TryGetValue(value, out var text))
         {
-            text = value.ToString("N0", CultureInfo.CurrentCulture);
-            ValueTexts[value] = text;
+            text = value.ToString("N0", textsCulture);
+            valueTexts[value] = text;
         }
 
         var below = game is { } g && peg >= 0 && peg < g.PegCount ? Below(g.Peg(peg)) : MoonfallRules.PegRadius;
@@ -138,12 +179,15 @@ public sealed partial class MoonfallWindow
             }
         }
 
+        RefreshTexts();
+        RefreshInks();
+        var alpha = g.Alpha;
         var dl = ImGui.GetWindowDrawList();
         dl.PushClipRect(origin, origin + size, true);
         DrawGround(dl, view, origin, size);
-        DrawBucket(dl, view, g);
-        DrawPegs(dl, view, g);
-        DrawLauncher(dl, view, g);
+        DrawBucket(dl, view, g, alpha);
+        DrawPegs(dl, view, g, alpha);
+        DrawLauncher(dl, view, g, alpha);
         DrawRings(dl, view);
         DrawPopups(dl, view);
         DrawShotTally(dl, origin, scale, g);
@@ -173,14 +217,14 @@ public sealed partial class MoonfallWindow
         dl.AddLine(view.Map(MoonfallRules.RightWall, -400), view.Map(MoonfallRules.RightWall, MoonfallRules.Height + 400), wall, thickness);
     }
 
-    private void DrawBucket(ImDrawListPtr dl, in View view, MoonfallGame g)
+    private void DrawBucket(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha)
     {
         var rim = Theme.U32(Theme.GoldDeep);
         var mouth = Theme.U32(Theme.Surface.Sunken);
         var floor = MoonfallRules.Height + 20;
         if (!g.Fever)
         {
-            var x = g.BucketX;
+            var x = g.BucketXAt(alpha);
             var half = MoonfallRules.BucketMouth * 0.5;
             dl.AddRectFilled(view.Map(x - half, MoonfallRules.BucketTop), view.Map(x + half, floor), mouth);
             var r = MoonfallBucket.RimRadius;
@@ -196,16 +240,6 @@ public sealed partial class MoonfallWindow
         // Full Moon: the five buckets rise across the floor with their bonuses.
         var shown = (float)g.FeverBucketsShown;
         var values = MoonfallRules.FeverBucketValues;
-        if (feverTexts.Length != values.Length)
-        {
-            feverTexts = new string[values.Length];
-            for (var k = 0; k < values.Length; k++)
-            {
-                feverTexts[k] = values[k].ToString("N0", CultureInfo.CurrentCulture);
-            }
-        }
-
-        var perfect = MoonfallRules.PerfectFeverBucketValue.ToString("N0", CultureInfo.CurrentCulture);
         var lift = (1 - shown) * 30;
         for (var k = 0; k < values.Length; k++)
         {
@@ -214,7 +248,7 @@ public sealed partial class MoonfallWindow
             var max = view.Map(left + MoonfallBucket.FeverBucketWidth - 2, floor);
             var lit = g.FeverBucket == k;
             dl.AddRectFilled(min, max, Theme.WithAlpha(lit ? Theme.Gold : Theme.Surface.CoolDeep, shown * (lit ? 0.85f : 0.7f)), view.Size(4));
-            var text = g.Perfect ? perfect : feverTexts[k];
+            var text = g.Perfect ? perfectText : feverTexts[k];
             var textSize = ImGui.CalcTextSize(text);
             var centre = view.Map(left + (MoonfallBucket.FeverBucketWidth * 0.5), MoonfallRules.BucketTop + lift + 11);
             dl.AddText(centre - (textSize * 0.5f), Theme.WithAlpha(lit ? Theme.OnGold : Theme.Surface.Text, shown), text);
@@ -222,31 +256,39 @@ public sealed partial class MoonfallWindow
     }
 
     /// <summary>A peg's colour from the palette's peg role (placeholders until the art track's pegs).</summary>
-    private static Vector4 PegTone(PegColour colour) => colour switch
+    private Vector4 PegTone(PegColour colour) => colour switch
     {
-        PegColour.Orange => Theme.Palette.Pegs.Orange,
-        PegColour.Green => Theme.Palette.Pegs.Green,
-        PegColour.Purple => Theme.Palette.Pegs.Purple,
-        _ => Theme.Palette.Pegs.Blue,
+        PegColour.Orange => inks.Orange,
+        PegColour.Green => inks.Green,
+        PegColour.Purple => inks.Purple,
+        _ => inks.Blue,
     };
 
-    private static uint PegInk(PegColour colour) => Theme.U32(PegTone(colour));
+    private uint PegInk(PegColour colour)
+    {
+        RefreshInks();
+        return Theme.U32(PegTone(colour));
+    }
 
-    private static void DrawPegs(ImDrawListPtr dl, in View view, MoonfallGame g)
+    private void DrawPegs(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha)
     {
         var glow = Theme.ShowGlow;
         var edge = Theme.U32(Theme.Surface.Deep);
+        var outline = litOutline;
+        var surface = Theme.Surface;
         for (var i = 0; i < g.PegCount; i++)
         {
-            var peg = g.Peg(i);
+            var peg = g.Peg(i, alpha);
             if (peg.Cleared)
             {
                 continue;
             }
 
-            // A lit peg brightens towards moonlight (it waits to clear at the end of the turn).
+            // A lit peg moves towards the text colour (brighter on a dark board, deeper on a light one) and takes a gold
+            // outline, so it reads as lit on every palette; it waits to clear at the end of the turn.
             var tone = PegTone(peg.Colour);
-            var fill = peg.Lit ? Theme.U32(Vector4.Lerp(tone, Theme.Scene.Moonlight, 0.55f)) : Theme.U32(tone);
+            var fill = peg.Lit ? Theme.U32(PegInks.Lit(tone, surface)) : Theme.U32(tone);
+            var rim = MathF.Max(1.5f, view.Size(1.6));
             switch (peg.Shape)
             {
                 case PegShape.Line:
@@ -257,6 +299,13 @@ public sealed partial class MoonfallWindow
                     if (peg.Lit && glow)
                     {
                         dl.AddLine(a, b, Theme.WithAlpha(Theme.Scene.Moonlight, 0.18f), thick * 1.6f);
+                    }
+
+                    if (peg.Lit)
+                    {
+                        dl.AddLine(a, b, outline, thick + (2 * rim));
+                        dl.AddCircleFilled(a, (thick * 0.5f) + rim, outline, 16);
+                        dl.AddCircleFilled(b, (thick * 0.5f) + rim, outline, 16);
                     }
 
                     dl.AddLine(a, b, fill, thick);
@@ -277,11 +326,22 @@ public sealed partial class MoonfallWindow
                         dl.PathStroke(Theme.WithAlpha(Theme.Scene.Moonlight, 0.18f), ImDrawFlags.None, thick * 1.6f);
                     }
 
+                    if (peg.Lit)
+                    {
+                        dl.PathArcTo(centre, radius, (float)peg.StartRadians, (float)(peg.StartRadians + peg.SweepRadians), segments);
+                        dl.PathStroke(outline, ImDrawFlags.None, thick + (2 * rim));
+                    }
+
                     dl.PathArcTo(centre, radius, (float)peg.StartRadians, (float)(peg.StartRadians + peg.SweepRadians), segments);
                     dl.PathStroke(fill, ImDrawFlags.None, thick);
                     foreach (var end in (ReadOnlySpan<double>)[peg.StartRadians, peg.StartRadians + peg.SweepRadians])
                     {
                         var cap = view.Map(peg.X + (peg.Radius * Math.Cos(end)), peg.Y + (peg.Radius * Math.Sin(end)));
+                        if (peg.Lit)
+                        {
+                            dl.AddCircleFilled(cap, (thick * 0.5f) + rim, outline, 16);
+                        }
+
                         dl.AddCircleFilled(cap, thick * 0.5f, fill, 16);
                     }
 
@@ -298,14 +358,14 @@ public sealed partial class MoonfallWindow
                     }
 
                     dl.AddCircleFilled(centre, radius, fill, 24);
-                    dl.AddCircle(centre, radius, edge, 24, MathF.Max(1f, view.Size(1.2)));
+                    dl.AddCircle(centre, radius, peg.Lit ? outline : edge, 24, peg.Lit ? rim : MathF.Max(1f, view.Size(1.2)));
                     break;
                 }
             }
         }
     }
 
-    private void DrawLauncher(ImDrawListPtr dl, in View view, MoonfallGame g)
+    private void DrawLauncher(ImDrawListPtr dl, in View view, MoonfallGame g, double alpha)
     {
         var pivot = view.Map(MoonfallRules.LauncherX, MoonfallRules.LauncherY);
         var (dx, dy) = MoonfallGame.Direction(aim);
@@ -333,15 +393,16 @@ public sealed partial class MoonfallWindow
         }
         else if (g.BallInPlay)
         {
-            DrawBall(dl, view, g.BallX, g.BallY);
+            var (x, y) = g.BallAt(alpha);
+            DrawBall(dl, view, x, y);
         }
 
         if (boardClock < freeBallUntil)
         {
-            var alpha = (float)Math.Clamp((freeBallUntil - boardClock) / 0.3, 0, 1);
+            var fade = (float)Math.Clamp((freeBallUntil - boardClock) / 0.3, 0, 1);
             var text = Strings.MoonfallFreeBall;
             var at = view.Map(MoonfallRules.LauncherX + 30, MoonfallRules.LauncherY - 30);
-            dl.AddText(at, Theme.WithAlpha(Theme.GoldHigh, alpha), text);
+            dl.AddText(at, Theme.WithAlpha(Theme.GoldHigh, fade), text);
         }
     }
 
@@ -439,15 +500,7 @@ public sealed partial class MoonfallWindow
     private void DrawPaused(ImDrawListPtr dl, Vector2 origin, Vector2 size)
     {
         dl.AddRectFilled(origin, origin + size, Theme.WithAlpha(Theme.Scene.Scrim, 0.75f));
-        var reason = pause.Shown switch
-        {
-            MoonfallPauseReason.Combat => Strings.MoonfallPausedCombat,
-            MoonfallPauseReason.Duty => Strings.MoonfallPausedDuty,
-            MoonfallPauseReason.Cutscene => Strings.MoonfallPausedCutscene,
-            MoonfallPauseReason.Unfocused => Strings.MoonfallPausedFocus,
-            MoonfallPauseReason.Reopened => null,
-            _ => Strings.MoonfallPaused,
-        };
+        var reason = PauseReasonText();
         var hint = pause.Held ? Strings.MoonfallWaitsForIt
             : pause.Shown == MoonfallPauseReason.Reopened && game is { Phase: MoonfallPhase.Aiming, Score: 0 } ? Strings.MoonfallClickToPlay
             : Strings.MoonfallClickToResume;
@@ -462,6 +515,17 @@ public sealed partial class MoonfallWindow
         var hintWidth = ImGui.CalcTextSize(hint).X;
         dl.AddText(new Vector2(origin.X + ((size.X - hintWidth) * 0.5f), y + UiMetrics.Px(8f)), Theme.U32(Theme.Surface.TextSecondary), hint);
     }
+
+    /// <summary>What holds the pause, in words; null when only a click is awaited after opening.</summary>
+    private string? PauseReasonText() => pause.Shown switch
+    {
+        MoonfallPauseReason.Combat => Strings.MoonfallPausedCombat,
+        MoonfallPauseReason.Duty => Strings.MoonfallPausedDuty,
+        MoonfallPauseReason.Cutscene => Strings.MoonfallPausedCutscene,
+        MoonfallPauseReason.Unfocused => Strings.MoonfallPausedFocus,
+        MoonfallPauseReason.Reopened => null,
+        _ => Strings.MoonfallPaused,
+    };
 
     // ---- The end of a level ----
 

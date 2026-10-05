@@ -135,6 +135,76 @@ public sealed class MoonfallFeverTests
     }
 
     [Fact]
+    public void The_drawn_ball_moves_smoothly_through_the_slow_motion()
+    {
+        // At 1/10 speed a game tick comes every tenth real tick: the ball itself jumps about 5 px at a time, the drawn
+        // ball (between its last two ticks, by Alpha) moves a little every 60 Hz frame.
+        var game = LastOrangeBelow();
+        game.Shoot(0);
+        RunUntil(game, static g => g.Approaching);
+        var drawn = new List<double>();
+        var raw = new List<double>();
+        for (var frame = 0; frame < 60 && !game.Fever; frame++)
+        {
+            game.Advance(1.0 / 60);
+            drawn.Add(game.BallAt(game.Alpha).Y);
+            raw.Add(game.BallY);
+        }
+
+        Assert.True(drawn.Count > 30);
+        var drawnSteps = drawn.Zip(drawn.Skip(1), static (a, b) => Math.Abs(b - a)).ToList();
+        var rawSteps = raw.Zip(raw.Skip(1), static (a, b) => Math.Abs(b - a)).ToList();
+        Assert.True(rawSteps.Max() > 3, $"the game ticks moved the ball at most {rawSteps.Max():0.00} px");
+        Assert.True(drawnSteps.Max() < 1.2, $"the drawn ball jumped {drawnSteps.Max():0.00} px in a frame");
+        Assert.True(drawnSteps.Count(static d => d > 0) > drawnSteps.Count * 0.8, "the drawn ball stood still for frames");
+
+        // Drawing reads only: a game that never had Alpha read is the same game.
+        var twin = LastOrangeBelow();
+        twin.Shoot(0);
+        RunUntil(twin, static g => g.Approaching);
+        for (var frame = 0; frame < drawn.Count; frame++)
+        {
+            twin.Advance(1.0 / 60);
+        }
+
+        Assert.Equal(game.Fingerprint(), twin.Fingerprint());
+    }
+
+    [Fact]
+    public void A_ball_rolling_down_a_brick_into_the_last_orange_gets_the_approach()
+    {
+        // The ball lands on a sloping brick and slides down it into the orange resting at its foot: the look-ahead flies
+        // the real contacts, so the brick it is sliding on does not hide the touch.
+        var game = new MoonfallGame(Board(MoonfallPeg.Line(300, 300, 500, 360, canBeOrange: false), Orange(480, 333)), 1, 1);
+        game.PlaceBall(320, 270, 0, 0);
+        var events = RunUntil(game, static g => g.Fever || g.Phase != MoonfallPhase.Flying, 5000);
+        Assert.True(game.Fever);
+        var approach = events.FindIndex(static e => e.Event.Kind == MoonfallEventKind.FeverApproach);
+        var hit = events.FindIndex(static e => e.Event.Kind == MoonfallEventKind.FeverHit);
+        Assert.True(approach >= 0 && approach < hit, "no approach before the hit");
+        Assert.DoesNotContain(events, static e => e.Event.Kind == MoonfallEventKind.FeverApproachEnded);
+    }
+
+    [Fact]
+    public void An_approach_that_no_longer_leads_to_the_orange_ends_at_full_speed()
+    {
+        var game = LastOrangeBelow();
+        game.Shoot(0);
+        RunUntil(game, static g => g.Approaching);
+        Assert.Equal(0.1, game.Speed, 9);
+
+        // Something turns the ball aside (a later power's nudge): the next tick no longer predicts the touch.
+        game.PlaceBall(game.BallX, game.BallY, 400, -300);
+        var events = RunUntil(game, static g => !g.Approaching, 200);
+        Assert.Contains(events, static e => e.Event.Kind == MoonfallEventKind.FeverApproachEnded);
+        Assert.Equal(1.0, game.Speed, 9);
+        var zoom = game.Zoom;
+        game.Tick();
+        Assert.True(game.Zoom < zoom || game.Zoom == 1.0);
+        Assert.False(game.Fever);
+    }
+
+    [Fact]
     public void A_ball_that_misses_the_last_orange_leaves_the_approach_at_full_speed()
     {
         // The orange off to the side: a straight shot never comes near it, so no approach.

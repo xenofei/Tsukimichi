@@ -375,6 +375,18 @@ public sealed class MoonfallRulesTests
     }
 
     [Fact]
+    public void A_ball_running_along_a_long_flat_shelf_is_not_called_stuck()
+    {
+        // 600 px of level shelf at 150 px/s: four seconds without getting any lower, but never slow, so never stuck.
+        var game = new MoonfallGame(Board(MoonfallPeg.Line(100, 400, 700, 400, canBeOrange: false)), 1, 1);
+        game.PlaceBall(110, 400 - 16, 150, 0);
+        var events = RunUntil(game, static g => g.Phase != MoonfallPhase.Flying, 3000);
+        Assert.DoesNotContain(events, static e => e.Event.Kind == MoonfallEventKind.StuckClear);
+        Assert.Contains(events, static e => e.Event.Kind is MoonfallEventKind.BallLost or MoonfallEventKind.BucketCatch);
+        Assert.True(events.Last().Tick > 380, "the ball left the shelf sooner than four seconds");
+    }
+
+    [Fact]
     public void A_ball_rocking_in_a_bowl_clears_the_bowl_after_3_s_without_sinking()
     {
         // A curved brick like a bowl: the ball rocks wider than 15 px but gets no lower; after 3 s it clears.
@@ -383,7 +395,8 @@ public sealed class MoonfallRulesTests
         var events = RunUntil(game, static g => g.Phase != MoonfallPhase.Flying, 3000);
         var stuck = events.Single(e => e.Event.Kind == MoonfallEventKind.StuckClear);
         Assert.Equal(0, stuck.Event.Peg);
-        Assert.InRange(stuck.Tick, 300, 600);
+        // Only the slow stretches of the rocking count (MoonfallRules.StuckSinkSpeed), so it takes a little over 3 s.
+        Assert.InRange(stuck.Tick, 300, 1500);
         Assert.Contains(events, e => e.Event.Kind is MoonfallEventKind.BallLost or MoonfallEventKind.BucketCatch);
     }
 

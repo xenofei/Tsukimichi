@@ -15,6 +15,9 @@ namespace Tsukimichi;
 /// </summary>
 public sealed partial class Plugin
 {
+    /// <summary>The game's window, so unloading saves progress a failed save left unsaved.</summary>
+    private MoonfallWindow? moonfallWindow;
+
     /// <summary>Sets Moonfall up; a failure is logged and leaves the game out, never the plugin.</summary>
     private void InitializeMoonfall()
     {
@@ -48,6 +51,7 @@ public sealed partial class Plugin
         windowSystem.AddWindow(window);
         command.ToggleMoonfall = window.Toggle;
         mainWindow.OpenMoonfall = window.Toggle;
+        moonfallWindow = window;
     }
 
     /// <summary>What pauses the board now: combat, a duty or a cutscene.</summary>
@@ -75,6 +79,8 @@ public sealed partial class Plugin
 
     private void DisposeMoonfall()
     {
+        moonfallWindow?.SaveNow();
+        moonfallWindow = null;
         if (command is not null)
         {
             command.ToggleMoonfall = null;

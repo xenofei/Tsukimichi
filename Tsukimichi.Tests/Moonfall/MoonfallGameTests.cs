@@ -8,6 +8,10 @@ public sealed class MoonfallGameTests
 {
     private static readonly double[] Angles = [-40, 25, -70, 5, 60, -15, 80, -55, 35, -5, 45, -80];
 
+    /// <summary>
+    /// The same build on the same machine: the engine uses Math.Sin, Cos and Atan2, whose last bit may differ between
+    /// CPUs or runtimes, so a replay is promised to match on one machine, not across them.
+    /// </summary>
     [Fact]
     public void The_same_calls_give_the_same_game_bit_for_bit()
     {
@@ -66,6 +70,69 @@ public sealed class MoonfallGameTests
         var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
         Assert.Equal(0, allocated);
         Assert.True(measured.GameTick > 3000);
+    }
+
+    [Fact]
+    public void The_approach_Full_Moon_and_the_tally_allocate_nothing()
+    {
+        // One orange straight below: the shot runs the approach, the hit, the speed ramp, the stuck watch on the lit
+        // orange, a Fever bucket, the clearing and the won tally, with the window's reads every frame.
+        var dots = new (double X, double Y)[MoonfallRules.GuideMaxDots];
+
+        void Play(MoonfallGame game)
+        {
+            game.Guide(0, dots);
+            game.Shoot(0);
+            for (var frame = 0; frame < 3000; frame++)
+            {
+                game.Advance(1.0 / 60);
+                var alpha = game.Alpha;
+                _ = game.BallAt(alpha);
+                _ = game.BucketXAt(alpha);
+                for (var i = 0; i < game.PegCount; i++)
+                {
+                    _ = game.Peg(i, alpha);
+                }
+
+                while (game.TryReadEvent(out _))
+                {
+                }
+            }
+        }
+
+        static MoonfallGame Fresh() => new(Board(Orange(400, 300), MoonfallPeg.Round(200, 400, canBeOrange: false, mover: new PegMover(MoverKind.Orbit, 240, 400, 5, true))), 1, 3);
+
+        Play(Fresh());
+        var measured = Fresh();
+        var before = GC.GetAllocatedBytesForCurrentThread();
+        Play(measured);
+        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        Assert.Equal(0, allocated);
+        Assert.Equal(MoonfallPhase.Won, measured.Phase);
+        Assert.NotNull(measured.Tally);
+    }
+
+    [Fact]
+    public void The_fingerprint_sees_the_clocks_the_counter_and_the_events()
+    {
+        var a = new MoonfallGame(Grid(40), 1, 9);
+        var b = new MoonfallGame(Grid(40), 1, 9);
+        Assert.Equal(a.Fingerprint(), b.Fingerprint());
+
+        // Half a tick of wall-clock time moves no ball, but it is state.
+        a.Advance(0.005);
+        Assert.NotEqual(a.Fingerprint(), b.Fingerprint());
+        b.Advance(0.005);
+        Assert.Equal(a.Fingerprint(), b.Fingerprint());
+
+        // An unread event is state too.
+        a.PlaceBall(90, 580, 0, 300);
+        b.PlaceBall(90, 580, 0, 300);
+        a.LightForTest(0);
+        b.LightForTest(0);
+        Assert.Equal(a.Fingerprint(), b.Fingerprint());
+        a.TryReadEvent(out _);
+        Assert.NotEqual(a.Fingerprint(), b.Fingerprint());
     }
 
     [Fact]

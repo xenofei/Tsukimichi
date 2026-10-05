@@ -24,9 +24,9 @@ public sealed class MoonfallProgressTests
         Assert.Equal(0, fresh.BaseCleared);
         Assert.Equal(0, fresh.ExpansionCleared);
 
-        Assert.Equal(3, MoonfallProgress.Record(path, MoonfallCampaignKind.Base, 3).BaseCleared);
-        Assert.Equal(3, MoonfallProgress.Record(path, MoonfallCampaignKind.Base, 1).BaseCleared);
-        Assert.Equal(2, MoonfallProgress.Record(path, MoonfallCampaignKind.Expansion, 2).ExpansionCleared);
+        Assert.Equal(3, MoonfallProgress.Record(path, new MoonfallProgress { BaseCleared = 3 }).BaseCleared);
+        Assert.Equal(3, MoonfallProgress.Record(path, new MoonfallProgress { BaseCleared = 1 }).BaseCleared);
+        Assert.Equal(2, MoonfallProgress.Record(path, new MoonfallProgress { ExpansionCleared = 2 }).ExpansionCleared);
         var read = MoonfallProgress.Load(path);
         Assert.Equal(3, read.BaseCleared);
         Assert.Equal(2, read.ExpansionCleared);
@@ -39,9 +39,33 @@ public sealed class MoonfallProgressTests
         var path = dir.File("user/moonfall.json");
         Directory.CreateDirectory(dir.File("user"));
         File.WriteAllText(path, """{ "version": 1, "baseCleared": 5, "expansionCleared": 1 }""");
-        var merged = MoonfallProgress.Record(path, MoonfallCampaignKind.Base, 2);
+        var mine = new MoonfallProgress { BaseCleared = 2, ExpansionCleared = 3 };
+        var merged = MoonfallProgress.Record(path, mine);
         Assert.Equal(5, merged.BaseCleared);
+        Assert.Equal(3, merged.ExpansionCleared);
+
+        // This client takes in the further count (the window does this after each save).
+        Assert.True(mine.Absorb(merged));
+        Assert.Equal(5, mine.BaseCleared);
+        Assert.False(mine.Absorb(merged));
+    }
+
+    [Fact]
+    public void A_save_over_a_corrupt_file_keeps_this_clients_progress_and_says_so()
+    {
+        // A damaged file must never cost the player an unlock: the save writes what this client knows.
+        using var dir = new TempDir();
+        var path = dir.File("moonfall.json");
+        File.WriteAllText(path, "{ not json");
+        var warnings = new List<string>();
+        var merged = MoonfallProgress.Record(path, new MoonfallProgress { BaseCleared = 4, ExpansionCleared = 1 }, warnings);
+        Assert.Equal(4, merged.BaseCleared);
         Assert.Equal(1, merged.ExpansionCleared);
+        Assert.Single(warnings);
+        Assert.Contains("moonfall.json", warnings[0], StringComparison.Ordinal);
+        var read = MoonfallProgress.Load(path);
+        Assert.Equal(4, read.BaseCleared);
+        Assert.Single(Directory.GetFiles(dir.Path), f => !f.EndsWith("moonfall.json", StringComparison.Ordinal));
     }
 
     [Fact]

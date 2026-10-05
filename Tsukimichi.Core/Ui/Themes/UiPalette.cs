@@ -77,8 +77,8 @@ public sealed record UiPalette
     /// </summary>
     public required Vector4 MedalRimGap { get; init; }
 
-    /// <summary>Moonfall's peg colours (1.23.0); Night's unless a palette designs its own.</summary>
-    public PegInks Pegs { get; init; } = PegInks.Night;
+    /// <summary>Moonfall's designed peg colours (1.23.0); null takes Night's or Day's by lightness (<see cref="PegInks.For"/>).</summary>
+    public PegInks? Pegs { get; init; }
 
     /// <summary>The table's alternate row tint; null draws the disabled tone at .16 (Night's 1.15 zebra).</summary>
     public Vector4? Zebra { get; init; }
