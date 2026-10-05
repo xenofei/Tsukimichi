@@ -148,8 +148,9 @@ public static class MoonfallArtFiles
 
     /// <summary>
     /// What a level holds on the GPU (see <see cref="MoonfallArtBudget"/>): the 1x sheet always, the 2x sheet at
-    /// <paramref name="twoX"/>, and its scene at that tier when <paramref name="hasScene"/>, else the sky. While the 2x
-    /// scene loads the 1x one stands in, so a tier change holds both for a moment.
+    /// <paramref name="twoX"/>, and its scene at that tier when <paramref name="hasScene"/>, else the sky. This is one
+    /// tier's figure: a level that changes tier (the window resized across 800 × 600, or the Full Moon zoom) keeps the
+    /// other tier's scene too until the level ends or the window closes, so its worst case adds the 1x scene.
     /// </summary>
     public static MoonfallArtBudget Budget(MoonfallAtlas atlas, bool twoX, bool hasScene)
     {
