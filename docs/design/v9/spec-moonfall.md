@@ -66,7 +66,7 @@ Every size is in the original's 800 × 600 playfield units (plan v9 G1), so 1 un
 | Side rails | 0–75 and 725–800 | Their brass beads are the walls. The ball's centre stays within x 81.5–718.5. |
 | Board opening | x 75–725, y 41–594 | |
 | Peg | r 10 (collision r 10.7 with the ball's 6, so 16.7 apart at contact) | Moon sprite, 4 sea layouts. |
-| Brick | 30 long × 12 thick on its arc (r 236 in the sample), 2 units apart | Moonstone slab, rounded 4.5 units at its edges. |
+| Brick | 30 long × 12 thick on its arc (r 236 in the sample), 2 units apart | Moonstone slab, rounded 4.5 units at its edges. **In the game, bricks are drawn at their collision thickness: 20 units by default, or the level's own `thickness`.** The 12 in the concept art is the slab's look, which the sprite is stretched across that thickness to keep. A ball never bounces off air above a thinner drawn brick. |
 | Ball | r 6 | Satin silver. In the ball channel: r 10.5. |
 | Launcher | pivot (400, 87); tube from 8 to 70 units, r 7.4 → 6.0; the ball leaves at 73 | Brass telescope, ±81°. |
 | Free-ball gauge | an arc of r 25.5 round the pivot, 200°–340°, channel 6 wide | Notches at 25k, 75k and 125k. |

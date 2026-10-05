@@ -382,9 +382,91 @@ public sealed class MoonfallArtTests : IDisposable
             Assert.Equal(level.Scene is null ? atlas.SkyBytes : 800 * 600 * 4, oneX.Ground);
             Assert.Equal(level.Scene is null ? atlas.SkyBytes : 1600 * 1200 * 4, twoX.Ground);
 
-            // The budget to set: a level's board at the 2x tier stays under 12 MB (the What's new and theme art's figure).
-            Assert.True(twoX.Total < 12L * 1024 * 1024, $"{level.Id}: {twoX.Total:N0} bytes");
+            // A level's board at the 2x tier (its settled worst case) stays under the 12 MiB the rest of the art keeps to.
+            Assert.True(twoX.Total < Budget, $"{level.Id}: {twoX.Total:N0} bytes");
         }
+    }
+
+    /// <summary>The budget the rest of Tsukimichi's art keeps to (What's new, the theme atlases).</summary>
+    private const long Budget = 12L * 1024 * 1024;
+
+    /// <summary>One frame of <c>MoonfallArtTextures.Frame</c>'s rules: land what decoded, drop the unused scene tier, start what is wanted.</summary>
+    private static void Frame(MoonfallArtSlots<string> slots, bool twoX, List<string> released, params MoonfallArtSlot[] landing)
+    {
+        foreach (var slot in landing)
+        {
+            Assert.Null(slots.Land(slot, slot.ToString()));
+        }
+
+        if (slots.SceneToDrop(twoX, out var unused) && slots.Clear(unused) is { } gone)
+        {
+            released.Add(gone);
+        }
+
+        foreach (var slot in new[] { MoonfallArtSlot.Sheet1x, twoX ? MoonfallArtSlot.Sheet2x : MoonfallArtSlot.Sheet1x, twoX ? MoonfallArtSlot.Scene2x : MoonfallArtSlot.Scene1x })
+        {
+            if (slots.ShouldLoad(slot))
+            {
+                slots.Begin(slot);
+            }
+        }
+
+        if (slots.NeedsSky && slots.ShouldLoad(MoonfallArtSlot.Sky))
+        {
+            slots.Begin(MoonfallArtSlot.Sky);
+        }
+    }
+
+    [Fact]
+    public void A_scene_level_stays_under_12_MiB_through_tier_changes_both_ways()
+    {
+        var atlas = Shipped();
+        var slots = new MoonfallArtSlots<string>();
+        slots.SetManifest(atlas);
+        var released = new List<string>();
+        slots.WantScene("moon-road-night", released);
+        var settled = new List<long>();
+
+        // Opened at 1x: the 1x sheet and the 1x scene, and no sky.
+        Frame(slots, false, released);
+        Frame(slots, false, released, MoonfallArtSlot.Sheet1x, MoonfallArtSlot.Scene1x);
+        Assert.Equal(MoonfallSlotState.Idle, slots.State(MoonfallArtSlot.Sky));
+        settled.Add(slots.HeldBytes(atlas));
+
+        // The Full Moon zoom (or a larger window): the 2x tier loads while the 1x scene still draws.
+        Frame(slots, true, released);
+        Assert.Equal("Scene1x", slots.Ground(true, out _));
+        Frame(slots, true, released, MoonfallArtSlot.Sheet2x, MoonfallArtSlot.Scene2x);
+        Assert.Equal(new[] { "Scene1x" }, released);
+        Assert.Equal(MoonfallSlotState.Idle, slots.State(MoonfallArtSlot.Scene1x));
+        Assert.Equal("Scene2x", slots.Ground(true, out _));
+        settled.Add(slots.HeldBytes(atlas));
+
+        // Back out of the zoom (or a smaller window): the 1x scene comes back, and once it lands the 2x one goes.
+        Frame(slots, false, released);
+        Assert.Equal("Scene2x", slots.Ground(false, out _));
+        Frame(slots, false, released, MoonfallArtSlot.Scene1x);
+        Assert.Equal(new[] { "Scene1x", "Scene2x" }, released);
+        settled.Add(slots.HeldBytes(atlas));
+
+        // And in again: still one scene picture at a time.
+        Frame(slots, true, released);
+        Frame(slots, true, released, MoonfallArtSlot.Scene2x);
+        settled.Add(slots.HeldBytes(atlas));
+
+        Assert.All(settled, held => Assert.True(held < Budget, $"{held:N0} bytes"));
+        Assert.Equal(MoonfallArtFiles.Budget(atlas, twoX: true, hasScene: true).Total, settled.Max());
+
+        // A scene tier that fails keeps the other: nothing is dropped for a picture that never came.
+        var failing = new MoonfallArtSlots<string>();
+        failing.SetManifest(atlas);
+        failing.WantScene("moon-road-night", released);
+        Frame(failing, false, released);
+        Frame(failing, false, released, MoonfallArtSlot.Sheet1x, MoonfallArtSlot.Scene1x);
+        Frame(failing, true, released);
+        failing.Fail(MoonfallArtSlot.Scene2x);
+        Assert.False(failing.SceneToDrop(true, out _));
+        Assert.Equal("Scene1x", failing.Ground(true, out _));
     }
 
     // ---- Geometry ----

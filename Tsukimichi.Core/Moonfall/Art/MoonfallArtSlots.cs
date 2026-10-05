@@ -156,6 +156,37 @@ public sealed class MoonfallArtSlots<T>
     }
 
     /// <summary>
+    /// The scene tier no longer in use, once the tier the board wants has landed: a resize across 800 × 600 or the Full
+    /// Moon zoom, either way, keeps one scene picture, not both. False while the wanted tier loads (the other stands in
+    /// meanwhile) or failed, or when the other holds and loads nothing.
+    /// </summary>
+    public bool SceneToDrop(bool wantTwoX, out MoonfallArtSlot other)
+    {
+        var wanted = wantTwoX ? MoonfallArtSlot.Scene2x : MoonfallArtSlot.Scene1x;
+        other = wantTwoX ? MoonfallArtSlot.Scene1x : MoonfallArtSlot.Scene2x;
+        return states[(int)wanted] == MoonfallSlotState.Ready && states[(int)other] is MoonfallSlotState.Ready or MoonfallSlotState.Loading;
+    }
+
+    /// <summary>
+    /// What the board holds on the GPU now (<see cref="MoonfallArtFiles.SlotBytes"/>): the pictures landed, and with
+    /// <paramref name="withLoading"/> those still decoding too.
+    /// </summary>
+    public long HeldBytes(MoonfallAtlas atlas, bool withLoading = false)
+    {
+        ArgumentNullException.ThrowIfNull(atlas);
+        var total = 0L;
+        for (var i = 0; i < Count; i++)
+        {
+            if (states[i] == MoonfallSlotState.Ready || (withLoading && states[i] == MoonfallSlotState.Loading))
+            {
+                total += MoonfallArtFiles.SlotBytes(atlas, (MoonfallArtSlot)i);
+            }
+        }
+
+        return total;
+    }
+
+    /// <summary>
     /// Whether the sky is needed now: for a level without a scene, or once a tier of its scene has failed (so a scene
     /// that loads keeps the sky's memory free).
     /// </summary>

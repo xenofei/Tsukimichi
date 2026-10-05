@@ -105,6 +105,13 @@ internal sealed class MoonfallArtTextures : IDisposable
             Land((MoonfallArtSlot)i);
         }
 
+        // The wanted scene tier has landed: the other (a resize across 800 x 600, or the zoom in or out) goes back.
+        if (slots.SceneToDrop(wantTwoX, out var unused))
+        {
+            Abandon(unused);
+            Release(unused);
+        }
+
         Start(MoonfallArtSlot.Sheet1x, Path.Combine(folder, atlas.OneXFile), (atlas.Width, atlas.Height));
         if (wantTwoX)
         {

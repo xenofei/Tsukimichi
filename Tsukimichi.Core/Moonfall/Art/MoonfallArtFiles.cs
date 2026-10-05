@@ -146,11 +146,26 @@ public static class MoonfallArtFiles
         return true;
     }
 
+    /// <summary>The bytes one picture of the art holds on the GPU (RGBA).</summary>
+    public static long SlotBytes(MoonfallAtlas atlas, MoonfallArtSlot slot)
+    {
+        ArgumentNullException.ThrowIfNull(atlas);
+        return slot switch
+        {
+            MoonfallArtSlot.Sheet1x => atlas.SheetBytes(false),
+            MoonfallArtSlot.Sheet2x => atlas.SheetBytes(true),
+            MoonfallArtSlot.Sky => atlas.SkyBytes,
+            MoonfallArtSlot.Scene1x => (long)SceneWidth * SceneHeight * 4,
+            _ => (long)SceneWidth * SceneHeight * 16,
+        };
+    }
+
     /// <summary>
     /// What a level holds on the GPU (see <see cref="MoonfallArtBudget"/>): the 1x sheet always, the 2x sheet at
-    /// <paramref name="twoX"/>, and its scene at that tier when <paramref name="hasScene"/>, else the sky. This is one
-    /// tier's figure: a level that changes tier (the window resized across 800 × 600, or the Full Moon zoom) keeps the
-    /// other tier's scene too until the level ends or the window closes, so its worst case adds the 1x scene.
+    /// <paramref name="twoX"/>, and its scene at that tier when <paramref name="hasScene"/>, else the sky. A level that
+    /// changes tier (the window resized across 800 × 600, or the Full Moon zoom) keeps the 2x sheet once loaded, and lets
+    /// the other tier's scene go as soon as the wanted one lands (<see cref="MoonfallArtSlots{T}.SceneToDrop"/>), so this
+    /// 2x figure is a level's worst case once settled. While the new tier decodes, the old one still draws.
     /// </summary>
     public static MoonfallArtBudget Budget(MoonfallAtlas atlas, bool twoX, bool hasScene)
     {
