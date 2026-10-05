@@ -292,6 +292,110 @@ public sealed class MoonfallRulesTests
         Assert.Contains(events, e => e.Event.Kind == MoonfallEventKind.BucketBounce);
     }
 
+    // The rim and the walls (judgement, MoonfallRules.RimWallGap). The sweep carries the outer rim to x 727 at the right
+    // end (the wall is at 724.5) and to 76 at the left (75.5). Before the gap was closed, a ball dropped down either wall
+    // as the bucket came over was squeezed between the wall and the rim's side and chattered: these drops made 116 and
+    // 138 bounces, wall and rim alternately, until the ball fell out of the bottom.
+    [Theory]
+    [InlineData(1, 72)]
+    [InlineData(1, 76)]
+    [InlineData(-1, 372)]
+    [InlineData(-1, 378)]
+    public void A_ball_dropped_down_the_wall_as_the_bucket_comes_is_never_squeezed_against_it(int side, int tick)
+    {
+        var run = DropDownTheWall(side, tick, 540, 0);
+        Assert.True(run.Pinches == 0, $"the ball was caught between the rim and the wall on {run.Pinches} ticks");
+        Assert.True(run.Bounces <= 4, $"the ball bounced {run.Bounces} times");
+        Assert.True(run.End is MoonfallEventKind.BallLost or MoonfallEventKind.BucketCatch, "the ball never left");
+    }
+
+    // Tick 120 (right) and 425 (left): the bucket nears an end and its outer rim is 10 px or less from the wall, too close
+    // for a ball. A ball set down on the gap (its centre 1 px above resting) settles across it, rides out the end of the
+    // sweep and drops through once the bucket pulls away and the gap is wider than the ball again (about tick 182 and
+    // 478). At the right end the crown passes 1.75 px under the ball and comes back before the ball can roll in; at the
+    // left it never reaches the ball's track (82.75 against 81.5).
+    [Theory]
+    [InlineData(1, 120)]
+    [InlineData(-1, 425)]
+    public void A_ball_set_down_on_the_gap_at_either_end_rests_across_it_then_drops_when_the_gap_opens(int side, int tick)
+    {
+        var run = DropDownTheWall(side, tick, 566, 0);
+        Assert.Equal(MoonfallEventKind.BallLost, run.End);
+        Assert.Equal(0, run.Pinches);
+        Assert.True(run.Bounces <= 6, $"the ball bounced {run.Bounces} times");
+        Assert.InRange(run.Ticks, 40, MoonfallRules.StuckTicks - 1);
+    }
+
+    [Fact]
+    public void No_ball_dropped_along_either_wall_is_trapped_or_chatters_at_any_point_of_the_sweep()
+    {
+        // Every game tick of the sweep, both walls, three heights, on the wall and a little off it. A ball may still meet
+        // the rim's side while the gap is wider than itself (it can fall through that), so it may go between the two a
+        // few times on the way down. These drops now make at most 9 bounces, 5 turns and one tick touching both. Before
+        // the gap was closed, straight drops like these made up to 168 bounces, 30 ticks of them squeezed between the two.
+        foreach (var side in (ReadOnlySpan<int>)[1, -1])
+        {
+            foreach (var y in (ReadOnlySpan<double>)[500, 540, 560])
+            {
+                foreach (var inset in (ReadOnlySpan<double>)[0, 3, 8])
+                {
+                    for (var tick = 0; tick < MoonfallRules.BucketPeriodTicks; tick++)
+                    {
+                        var run = DropDownTheWall(side, tick, y, inset);
+                        var what = $"side {side}, tick {tick}, y {y}, {inset} px off the wall";
+                        Assert.True(run.End is MoonfallEventKind.BallLost or MoonfallEventKind.BucketCatch, $"{what}: the ball never left");
+                        Assert.True(run.Pinches <= 1, $"{what}: the ball was caught between the rim and the wall on {run.Pinches} ticks");
+                        Assert.True(run.Switches <= 6, $"{what}: the ball went between the rim and the wall {run.Switches} times");
+                        Assert.True(run.Bounces <= 10, $"{what}: the ball bounced {run.Bounces} times");
+                        Assert.True(run.Ticks < MoonfallRules.StuckTicks * 2, $"{what}: the ball took {run.Ticks} ticks to leave");
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Drops a ball beside the right (<paramref name="side"/> 1) or left (−1) wall, <paramref name="inset"/> px off it,
+    /// from <paramref name="y"/> at game tick <paramref name="tick"/>. It counts the bounces off the rim and the walls,
+    /// the ticks with both at once (a pinch), the turns from one to the other, and how the ball left.
+    /// </summary>
+    private static (int Bounces, int Pinches, int Switches, int Ticks, MoonfallEventKind? End) DropDownTheWall(int side, int tick, double y, double inset)
+    {
+        var game = new MoonfallGame(Board(), 1, 1);
+        RunUntil(game, g => g.GameTick >= tick, 1000);
+        var x = side > 0 ? MoonfallRules.RightWall - MoonfallRules.BallRadius - inset : MoonfallRules.LeftWall + MoonfallRules.BallRadius + inset;
+        game.PlaceBall(x, y, 0, 0);
+        int bounces = 0, pinches = 0, switches = 0, ticks = 0;
+        MoonfallEventKind? last = null;
+        MoonfallEventKind? end = null;
+        while (game.Phase == MoonfallPhase.Flying && ticks < 1000)
+        {
+            game.Tick();
+            ticks++;
+            bool wall = false, rim = false;
+            while (game.TryReadEvent(out var e))
+            {
+                switch (e.Kind)
+                {
+                    case MoonfallEventKind.WallBounce or MoonfallEventKind.BucketBounce:
+                        bounces++;
+                        wall |= e.Kind == MoonfallEventKind.WallBounce;
+                        rim |= e.Kind == MoonfallEventKind.BucketBounce;
+                        switches += last is { } k && k != e.Kind ? 1 : 0;
+                        last = e.Kind;
+                        break;
+                    case MoonfallEventKind.BallLost or MoonfallEventKind.BucketCatch:
+                        end = e.Kind;
+                        break;
+                }
+            }
+
+            pinches += wall && rim ? 1 : 0;
+        }
+
+        return (bounces, pinches, switches, ticks, end);
+    }
+
     [Fact]
     public void A_ball_beside_the_bucket_is_lost()
     {

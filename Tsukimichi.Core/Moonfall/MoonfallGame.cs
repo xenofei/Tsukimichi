@@ -856,11 +856,33 @@ public sealed partial class MoonfallGame
         contacts[slot] = new Contact { Kind = kind, Index = index, Depth = depth, Nx = nx, Ny = ny, Vx = vx, Vy = vy };
     }
 
-    /// <summary>A rim or post: a vertical capsule from its top cap's centre down past the floor.</summary>
+    /// <summary>
+    /// A rim or post: a vertical capsule from its top cap's centre down past the floor. When its gap to a wall is
+    /// narrower than a ball (<see cref="MoonfallRules.RimWallGap"/>), that gap is closed at the top: a ball on the wall's
+    /// side of the crown meets a flat ledge level with it, and a ball already below the post's top with its centre past
+    /// the post's inner face falls past it. (A ball that touches the cap from the mouth's side with its centre below the
+    /// top is always more than a post radius inside that face, so it still meets the cap.)
+    /// </summary>
     private void PostContact(in Ball b, double x, double topY, double radius, double vx)
     {
-        var qy = Math.Max(b.Y, topY);
         var dx = b.X - x;
+
+        // How far the ball's centre is past the post's centre towards a wall that the post is too close to for a ball.
+        var towardWall = MoonfallRules.RightWall - (x + radius) < MoonfallRules.RimWallGap ? dx
+            : (x - radius) - MoonfallRules.LeftWall < MoonfallRules.RimWallGap ? -dx
+            : double.NegativeInfinity;
+        if (towardWall > -radius && b.Y > topY - radius)
+        {
+            return;
+        }
+
+        if (towardWall > 0)
+        {
+            // The ledge runs level from the crown to the wall, so its nearest point is straight below the ball.
+            dx = 0;
+        }
+
+        var qy = Math.Max(b.Y, topY);
         var dy = b.Y - qy;
         var reach = radius + MoonfallRules.BallRadius;
         var d2 = (dx * dx) + (dy * dy);
