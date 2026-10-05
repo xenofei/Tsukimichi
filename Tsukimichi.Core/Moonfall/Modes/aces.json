@@ -1,0 +1,13 @@
+{
+  // Moonfall's Ace scores (plan v9 G7), by level id: our own numbers. Each is the greedy player's suggestion
+  // (MoonfallAces.Suggest: the 75th percentile of its won games' scores, rounded up to 10,000); the playability test
+  // prints the suggestion for every shipped level.
+  "format": "moonfall-aces",
+  "version": 1,
+  "aces": {
+    "base-01": 340000,
+    "base-02": 330000,
+    "base-03": 320000,
+    "base-04": 350000
+  }
+}
