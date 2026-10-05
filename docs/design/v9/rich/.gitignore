@@ -1,0 +1,4 @@
+# Raw textures read from the game install by tools/texdump (Square Enix art): local only. The graded renders are committed.
+.cache/
+tools/bin/
+tools/obj/

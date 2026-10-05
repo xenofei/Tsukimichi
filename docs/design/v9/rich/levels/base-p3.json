@@ -1,0 +1,389 @@
+{
+  "format": "moonfall-level",
+  "version": 1,
+  "id": "base-p3",
+  "name": "The Moonlit Post",
+  "playfield": {
+    "width": 800,
+    "height": 600
+  },
+  "scene": {
+    "source": "asset",
+    "file": "scenes/base-p3-moogle.jpg",
+    "file2x": "scenes/base-p3-moogle@2x.jpg",
+    "veil": 0.22
+  },
+  "pegs": [
+    {
+      "x": 540.0,
+      "y": 256.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 235.5,
+      "y": 265.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 238.5,
+      "y": 231.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 248.5,
+      "y": 198.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 274.5,
+      "y": 175.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 308.5,
+      "y": 184.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 335.5,
+      "y": 163.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 463.5,
+      "y": 168.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 505.5,
+      "y": 147.5,
+      "canBeOrange": false
+    },
+    {
+      "x": 541.5,
+      "y": 99.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 571.5,
+      "y": 82.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 601.5,
+      "y": 98.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 602.5,
+      "y": 132.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 577.5,
+      "y": 156.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 584.5,
+      "y": 190.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 584.5,
+      "y": 224.5,
+      "canBeOrange": false
+    },
+    {
+      "x": 593.5,
+      "y": 257.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 597.5,
+      "y": 291.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 575.5,
+      "y": 317.5,
+      "canBeOrange": false
+    },
+    {
+      "x": 557.5,
+      "y": 346.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 555.5,
+      "y": 380.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 524.5,
+      "y": 394.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 490.5,
+      "y": 396.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 459.5,
+      "y": 410.5,
+      "canBeOrange": false
+    },
+    {
+      "x": 429.5,
+      "y": 426.5,
+      "canBeOrange": false
+    },
+    {
+      "x": 400.5,
+      "y": 444.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 368.5,
+      "y": 457.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 335.5,
+      "y": 447.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 334.5,
+      "y": 403.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 343.5,
+      "y": 370.5,
+      "canBeOrange": false
+    },
+    {
+      "x": 309.5,
+      "y": 363.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 279.5,
+      "y": 347.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 254.5,
+      "y": 323.5,
+      "canBeOrange": true
+    },
+    {
+      "x": 331.9,
+      "y": 284.7,
+      "canBeOrange": false
+    },
+    {
+      "x": 283.8,
+      "y": 264.7,
+      "canBeOrange": true
+    },
+    {
+      "x": 292.5,
+      "y": 307.9,
+      "canBeOrange": true
+    },
+    {
+      "x": 356.2,
+      "y": 331.5,
+      "canBeOrange": false
+    },
+    {
+      "x": 89.0,
+      "y": 404.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 141.0,
+      "y": 416.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 217.0,
+      "y": 404.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 293.0,
+      "y": 404.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 369.0,
+      "y": 416.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 597.0,
+      "y": 416.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 673.0,
+      "y": 404.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 640.0,
+      "y": 70.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 684.0,
+      "y": 104.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 160.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 660.0,
+      "y": 200.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 236.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 640.0,
+      "y": 300.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 690.0,
+      "y": 330.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 650.0,
+      "y": 380.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 120.0,
+      "y": 230.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 170.0,
+      "y": 262.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 130.0,
+      "y": 300.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 180.0,
+      "y": 340.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 110.0,
+      "y": 360.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 240.0,
+      "y": 120.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 98.0,
+      "y": 470.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.0,
+      "y": 486.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 210.0,
+      "y": 470.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 270.0,
+      "y": 486.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 450.0,
+      "y": 470.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 520.0,
+      "y": 486.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 590.0,
+      "y": 470.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 650.0,
+      "y": 486.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 470.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 120.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 200.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 300.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 420.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 520.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 620.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 530.0,
+      "canBeOrange": false
+    }
+  ],
+  "bricks": []
+}

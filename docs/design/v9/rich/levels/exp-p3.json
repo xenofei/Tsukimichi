@@ -1,0 +1,581 @@
+{
+  "format": "moonfall-level",
+  "version": 1,
+  "id": "exp-p3",
+  "name": "The Sea of Sorrows",
+  "playfield": {
+    "width": 800,
+    "height": 600
+  },
+  "scene": {
+    "source": "game",
+    "texture": "ui/loadingimage/-nowloading_base25.tex",
+    "mirror": true,
+    "crop": [
+      557,
+      -108,
+      1166,
+      875
+    ],
+    "padTop": 120,
+    "padMode": "reflect",
+    "grade": "medallion-night-violet",
+    "veil": 0.26
+  },
+  "pegs": [
+    {
+      "x": 507.0,
+      "y": 173.0,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 548.2,
+      "y": 178.0,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 586.9,
+      "y": 192.7,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 621.1,
+      "y": 216.3,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 648.6,
+      "y": 247.3,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 667.8,
+      "y": 284.0,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 677.7,
+      "y": 324.3,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 677.7,
+      "y": 365.7,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 667.8,
+      "y": 406.0,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 648.6,
+      "y": 442.7,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 621.1,
+      "y": 473.7,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 586.9,
+      "y": 497.3,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 548.2,
+      "y": 512.0,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 507.0,
+      "y": 517.0,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 465.8,
+      "y": 512.0,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 427.1,
+      "y": 497.3,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 392.9,
+      "y": 473.7,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 365.4,
+      "y": 442.7,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 346.2,
+      "y": 406.0,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 336.3,
+      "y": 365.7,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 336.3,
+      "y": 324.3,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 346.2,
+      "y": 284.0,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 365.4,
+      "y": 247.3,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 392.9,
+      "y": 216.3,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 427.1,
+      "y": 192.7,
+      "canBeOrange": true,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 465.8,
+      "y": 178.0,
+      "canBeOrange": false,
+      "move": {
+        "kind": "orbit",
+        "x": 507.0,
+        "y": 345.0,
+        "period": 26.0,
+        "clockwise": true
+      }
+    },
+    {
+      "x": 470.0,
+      "y": 300.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 548.0,
+      "y": 322.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 500.0,
+      "y": 372.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 452.0,
+      "y": 404.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 566.0,
+      "y": 410.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 528.0,
+      "y": 452.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 100.0,
+      "y": 150.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 132.0,
+      "y": 168.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 168.0,
+      "y": 152.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 204.0,
+      "y": 172.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 240.0,
+      "y": 158.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 276.0,
+      "y": 178.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 312.0,
+      "y": 166.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 110.0,
+      "y": 206.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.0,
+      "y": 222.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 190.0,
+      "y": 208.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 232.0,
+      "y": 226.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 272.0,
+      "y": 214.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 520.0,
+      "y": 126.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 560.0,
+      "y": 132.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 600.0,
+      "y": 146.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 640.0,
+      "y": 134.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 680.0,
+      "y": 150.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 700.0,
+      "y": 196.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 140.0,
+      "y": 270.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.0,
+      "y": 306.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 156.0,
+      "y": 342.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 152.0,
+      "y": 378.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 138.0,
+      "y": 412.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 110.0,
+      "y": 330.0,
+      "r": 12,
+      "canBeOrange": true
+    },
+    {
+      "x": 128.0,
+      "y": 470.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 172.0,
+      "y": 456.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 150.0,
+      "y": 512.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 210.0,
+      "y": 500.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 254.0,
+      "y": 520.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 290.0,
+      "y": 470.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 280.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 330.0,
+      "y": 512.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 380.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 614.0,
+      "y": 540.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 660.0,
+      "y": 516.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 548.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 482.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 700.0,
+      "y": 430.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 250.0,
+      "y": 330.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 290.0,
+      "y": 380.0,
+      "canBeOrange": true
+    },
+    {
+      "x": 250.0,
+      "y": 424.0,
+      "canBeOrange": false
+    },
+    {
+      "x": 286.0,
+      "y": 296.0,
+      "canBeOrange": false
+    }
+  ],
+  "bricks": []
+}
