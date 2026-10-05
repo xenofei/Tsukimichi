@@ -31,10 +31,10 @@ public static class GiverPortraits
     /// <summary>The warmed index; null (or returning null) while it builds.</summary>
     public static Func<PortraitIndex?>? Index { get; set; }
 
-    /// <summary>Settings › General › Look › Giver portraits; null reads as the default, Game art.</summary>
+    /// <summary>Settings › General › Look › Giver portraits; null reads as the default, Game art + photos.</summary>
     public static Func<GiverPortraitMode>? Mode { get; set; }
 
-    /// <summary>The installed portrait pack (feature plan v7 F4); null (or returning null) when none is.</summary>
+    /// <summary>The giver photos that ship with the plugin (feature plan v7 F4); null (or returning null) until they are read.</summary>
     public static Func<PortraitPack?>? Pack { get; set; }
 
     // The index with the pack behind it, kept while neither changes, so asking for a plate allocates nothing.
@@ -43,15 +43,15 @@ public static class GiverPortraits
     private static PortraitIndex combined = PortraitIndex.Empty;
 
     /// <summary>
-    /// The index the plates use: the warmed game-art index, with the portrait pack behind it under Game art + portrait
-    /// pack (<see cref="PortraitIndex.WithPack"/>). Draw thread only.
+    /// The index the plates use: the warmed game-art index, with the giver photos behind it under Game art + photos
+    /// (<see cref="PortraitIndex.WithPack"/>). Draw thread only.
     /// </summary>
     public static PortraitIndex Current
     {
         get
         {
             var index = Index?.Invoke() ?? PortraitIndex.Empty;
-            var pack = (Mode?.Invoke() ?? GiverPortraitMode.GameArt) == GiverPortraitMode.GameArtAndPack ? Pack?.Invoke() : null;
+            var pack = BundledPortraits.InUse(Mode?.Invoke() ?? GiverPortraitMode.GameArtAndPack, Pack?.Invoke());
             if (!ReferenceEquals(index, lastIndex) || !ReferenceEquals(pack, lastPack))
             {
                 lastIndex = index;
@@ -63,7 +63,7 @@ public static class GiverPortraits
         }
     }
 
-    /// <summary>Which pack the plates draw from (its zip's SHA-256); null with none. A new pack's photos are new art.</summary>
+    /// <summary>Which photos the plates draw from (their manifest's SHA-256); null with none. New photos are new art.</summary>
     public static string? PackId => combined.Pack?.Sha256;
 
     /// <summary>The image file of a pack portrait (<see cref="PortraitSource.Pack"/>: its icon is the NPC id); false when the pack in use has none.</summary>

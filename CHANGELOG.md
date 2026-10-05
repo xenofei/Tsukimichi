@@ -4,6 +4,9 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+### Changed
+- **Portrait photos come with Tsukimichi:** quest-giver photos are now part of the plugin, re-cut so faces sit centred, and photos that showed a weapon, a helmet crest or a hat now show the face. There's nothing to download, and a copy you downloaded before is removed to free space. To turn the photos off, set Settings › General › Look › Giver portraits to Game art.
+
 ## [1.22.0] - 2026-10-04
 
 ### Added
@@ -21,9 +24,6 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ### Changed
 - **The What's new card leaves the main window;** the popup and Settings replace it.
 - **Quest gates:** twelve late-game quests that need a dungeon floor, a variant dungeon record, an Island Sanctuary rank or a Triple Triad achievement now ask you to confirm ("I've done this") instead of showing Ready too early. The detail pane names where such a gate is stated, the Lodestone or Questionable included.
-
-### Fixed
-- **Portrait pack:** the photos are re-cut so faces sit centred, and photos that showed a weapon, a helmet crest or a hat now show the face. Pack 2 also adds about 70 givers pack 1 left out. If you have pack 1, Settings › Look shows "Pack 2 is ready to download": choose **Update…**. Pack 1 keeps working until you do.
 
 ## [1.21.0] - 2026-10-04
 

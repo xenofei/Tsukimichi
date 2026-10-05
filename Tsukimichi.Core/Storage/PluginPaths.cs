@@ -47,11 +47,11 @@ public sealed class PluginPaths
     public string FestivalsFile => Path.Combine(CuratedDir, CuratedData.FestivalsFileName);
     public string FeatureQuestsFile => Path.Combine(CuratedDir, CuratedData.FeatureQuestsFileName);
 
-    /// <summary>The portrait pack this build offers (feature plan v7 F4): its release, size and hash.</summary>
-    public string PortraitPackOfferFile => Path.Combine(PluginDir, Portraits.PortraitPackOffer.FileName);
-
-    /// <summary>Where a downloaded portrait pack is installed (<see cref="Portraits.PortraitPackStore"/>).</summary>
-    public string PortraitPackDir => Path.Combine(ConfigDir, "portraits");
+    /// <summary>
+    /// Where 1.20 to 1.22 installed the downloaded portrait pack; the photos now ship with the plugin, and
+    /// <see cref="Portraits.BundledPortraits.RemoveDownloaded"/> clears this folder once.
+    /// </summary>
+    public string DownloadedPortraitPackDir => Path.Combine(ConfigDir, "portraits");
 
     /// <summary>The snapshot file for one character, as <see cref="JsonSnapshotStore"/> names it.</summary>
     public string SnapshotFile(ulong contentId) =>

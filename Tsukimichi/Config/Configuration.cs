@@ -653,11 +653,12 @@ public sealed partial class Configuration : IPluginConfiguration
 
     // ---- 1.15.0: giver portraits (feature plan v7 F2, F5) ----
     /// <summary>
-    /// Settings › General › Look › Giver portraits (docs/design/v7/ui/spec-1.15.md A8): Game art (the default) puts the
-    /// giver's face from the game's own art, or a fallback, on a moon plate in the Giver card, beside each stop and in the
-    /// Journal's optional Giver column; Off draws no plates. The art is read from the install and never uploaded.
+    /// Settings › General › Look › Giver portraits (docs/design/v7/ui/spec-1.15.md A8): Game art + photos (the default
+    /// since the photos ship with the plugin) puts the giver's face from the game's own art, else a photo that ships with
+    /// the plugin, else a fallback, on a moon plate in the Giver card, beside each stop and in the Journal's optional
+    /// Giver column; Game art leaves the photos out; Off draws no plates. Nothing is uploaded or downloaded.
     /// </summary>
-    public Core.Ui.GiverPortraitMode GiverPortraits { get; set; } = Core.Ui.GiverPortraitMode.GameArt;
+    public Core.Ui.GiverPortraitMode GiverPortraits { get; set; } = Core.Ui.GiverPortraitMode.GameArtAndPack;
 
     /// <summary>
     /// Moonlit's view (feature plan v4 V5, proposal §7.5): a gallery of reward icons instead of the table. Off (the
@@ -930,8 +931,11 @@ public sealed partial class Configuration : IPluginConfiguration
 
         if (!Enum.IsDefined(config.GiverPortraits))
         {
-            config.GiverPortraits = Core.Ui.GiverPortraitMode.GameArt;
+            config.GiverPortraits = Core.Ui.GiverPortraitMode.GameArtAndPack;
         }
+
+        // The giver photos ship with the plugin: Game art + photos becomes the default once (see the method).
+        ApplyBundledPhotos(config, hadFile, System.IO.Path.Combine(pluginInterface.GetPluginConfigDirectory(), "portraits"));
 
         if (!Enum.IsDefined(config.JournalBadge))
         {

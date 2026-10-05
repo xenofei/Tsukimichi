@@ -189,7 +189,7 @@ public static partial class Chrome
         {
             if (portrait.Source == PortraitSource.Pack)
             {
-                // A portrait pack photo (F4): its file in the installed pack, checked and decoded once at install.
+                // A giver photo (F4): its file in the photos that ship with the plugin, checked and decoded when the pack was built.
                 shared = GiverPortraits.TryGetPackPath(portrait, out var path) ? textures.GetFromFileAbsolute(path) : null;
             }
             else if (textures.TryGetFromGameIcon(new GameIconLookup(portrait.Icon, false, true), out var icon))

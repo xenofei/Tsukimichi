@@ -7,7 +7,7 @@ Tsukimichi (月道, "the moon's path") takes *tsuki* from the author's character
 - Source: this repository, [MIT licensed](LICENSE).
 - Releases: [GitHub Releases](https://github.com/xenofei/Tsukimichi/releases), built by GitHub Actions from the tagged commit.
 - Issues: [GitHub Issues](https://github.com/xenofei/Tsukimichi/issues).
-- Local only: it sends nothing, and goes online only to fetch the optional portrait pack when you ask. [What Tsukimichi reads and sends](docs/privacy.md).
+- Local only: it sends nothing and never goes online. [What Tsukimichi reads and sends](docs/privacy.md).
 
 ## Install
 
@@ -83,7 +83,7 @@ Everything else is a Dalamud window. It also talks to other plugins over Dalamud
 
 Tsukimichi automates only when you press a button that hands the work to one of the [companion plugins](#companion-plugins). On its own it does not move your character, accept or turn in quests, skip dialogue or press anything for you. Teleport to the giver is a button you click, handed to Lifestream; Walk to giver and Go to giver are buttons you click, handed to vnavmesh (and Lifestream) until you arrive or press Stop; "Run with AutoDuty" is a button you click, handed to AutoDuty; "Add and start Questionable" hands your questing to Questionable, after asking you first, until you stop it. Map flags, journal pages and chat links use the game's own functions.
 
-It sends nothing, and its only download is the optional portrait pack, after you confirm it. Nothing leaves your machine; [What Tsukimichi reads and sends](docs/privacy.md) says it all in plain words, and how to check the build you run. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json`, `<id>.abandoned.json`, `<id>.dates.json` (quest completion dates) and two backups, `<id>.prev.json` refreshed once a day and `<id>.prev2.json` the one before it ([how to restore them](docs/restore-backup.md)), `<id>.live.json` while that character is logged in (see [multibox](#several-game-clients-at-once-multibox)), `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Characters & data can delete everything else.
+It sends nothing and downloads nothing. Nothing leaves your machine; [What Tsukimichi reads and sends](docs/privacy.md) says it all in plain words, and how to check the build you run. Snapshots and settings live in `%AppData%\XIVLauncher\pluginConfigs\Tsukimichi\` (`characters\<id>.json` with its `<id>.accepted.json`, `<id>.abandoned.json`, `<id>.dates.json` (quest completion dates) and two backups, `<id>.prev.json` refreshed once a day and `<id>.prev2.json` the one before it ([how to restore them](docs/restore-backup.md)), `<id>.live.json` while that character is logged in (see [multibox](#several-game-clients-at-once-multibox)), `user\pins.json`, `user\overrides.json`, `user\discovery.json`). Exports are files you write on purpose, to `exports\` unless you choose another folder, and Settings › Characters & data can delete everything else.
 
 ## Several game clients at once (multibox)
 
@@ -144,7 +144,7 @@ Known quirks (quests the game skips a step on, older guides' rank names, seasona
 
 - Quest, reward and journal data are read from your own installed copy of FINAL FANTASY XIV. FINAL FANTASY XIV © SQUARE ENIX CO., LTD. All rights reserved. FINAL FANTASY is a registered trademark of Square Enix Holdings Co., Ltd.
 - Curated lists (duty and system unlocks, story chains, seasonal windows, store re-sells) were checked against the [Final Fantasy XIV Console Games Wiki](https://ffxiv.consolegameswiki.com/) (CC BY-NC-SA 3.0), [FFXIV Collect](https://ffxivcollect.com/) and [Garland Tools](https://www.garlandtools.org/), with ids confirmed through [xivapi](https://v2.xivapi.com/). The plugin itself never contacts any of them.
-- The optional portrait pack (Settings › General › Look › Portrait pack) holds head crops of [Garland Tools](https://www.garlandtools.org/)' NPC photos, by Celes. It downloads from Tsukimichi's own GitHub release, and only when you click Download.
+- The giver photos that ship with the plugin (Settings › General › Look › Giver portraits, Game art + photos) are head crops of [Garland Tools](https://www.garlandtools.org/)' NPC photos, by Celes.
 
 ## Third-party tools and the Terms of Service
 

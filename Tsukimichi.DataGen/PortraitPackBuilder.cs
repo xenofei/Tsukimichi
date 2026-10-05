@@ -11,8 +11,8 @@ using Tsukimichi.GameData;
 namespace Tsukimichi.DataGen;
 
 /// <summary>
-/// <c>--portrait-pack &lt;out dir&gt;</c> (feature plan v7 F4, decision 8): builds the optional portrait pack the plugin
-/// offers as a download from Tsukimichi's GitHub release. For every named quest giver in the install it fetches the
+/// <c>--portrait-pack &lt;out dir&gt;</c> (feature plan v7 F4): builds the portrait pack, the quest-giver photos that ship
+/// inside the plugin (<c>Tsukimichi/assets/portraits</c>, <see cref="BundledPortraits"/>). For every named quest giver in the install it fetches the
 /// Garland Tools NPC page (<c>/db/doc/npc/en/2/&lt;id&gt;.json</c>), and when that names a photo, the photo
 /// (<c>/files/photos/npc/Enpc_&lt;id&gt;.png</c>, a full-body studio render on transparency, credit Celes), one request
 /// a second, every answer cached on disk so a rerun fetches nothing it has. Each photo is cut to a
@@ -30,8 +30,8 @@ namespace Tsukimichi.DataGen;
 /// <c>boxes.json</c> (each image's square in its photo) and contact sheets under <c>sheets/</c> for a spot check of the
 /// crops (<c>--skip &lt;ids&gt;</c> leaves out a giver; a per-NPC box re-cuts one). A per-NPC box outside its photo,
 /// under <see cref="MinBox"/> px, or disagreeing with another for the same photo stops the build. With
-/// <c>--offer &lt;file&gt; --tag &lt;portraits-N&gt;</c> it also writes the plugin's <c>portrait_pack.json</c>: the
-/// release, asset name, size and hash the plugin will accept. Nothing is uploaded.
+/// <c>--bundle &lt;dir&gt;</c> (normally <c>Tsukimichi/assets/portraits</c>) the checked images and manifest replace the
+/// pack there, and are read back as the plugin reads them. Nothing is uploaded.
 /// </para>
 /// </summary>
 internal static partial class PortraitPackBuilder
@@ -49,8 +49,7 @@ internal static partial class PortraitPackBuilder
         string? game = null;
         string? outDir = null;
         string? cache = null;
-        string? offerPath = null;
-        string? tag = null;
+        string? bundleDir = null;
         DateTime? built = null;
         var curatedDir = Path.Combine("Tsukimichi", "Data", "curated");
         var overridesPath = PortraitPackOverrides.DefaultPath;
@@ -77,11 +76,8 @@ internal static partial class PortraitPackBuilder
                 case "--overrides" when i + 1 < args.Length:
                     overridesPath = args[++i];
                     break;
-                case "--offer" when i + 1 < args.Length:
-                    offerPath = args[++i];
-                    break;
-                case "--tag" when i + 1 < args.Length:
-                    tag = args[++i];
+                case "--bundle" when i + 1 < args.Length:
+                    bundleDir = args[++i];
                     break;
                 case "--built" when i + 1 < args.Length && DateTime.TryParseExact(args[i + 1], "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var day):
                     built = DateTime.SpecifyKind(day.Date, DateTimeKind.Utc);
@@ -121,9 +117,9 @@ internal static partial class PortraitPackBuilder
             return 2;
         }
 
-        if ((offerPath is null) != (tag is null))
+        if (bundleDir is not null && (only is not null || limit != int.MaxValue))
         {
-            Console.Error.WriteLine("--offer and --tag go together: the offer names the release the zip is uploaded to.");
+            Console.Error.WriteLine("--bundle ships the pack with the plugin: build every giver (no --ids or --limit).");
             return 2;
         }
 
@@ -300,14 +296,29 @@ internal static partial class PortraitPackBuilder
         var zipSha = Convert.ToHexStringLower(SHA256.HashData(zipBytes));
         File.WriteAllText(zipPath + ".sha256", $"{zipSha}  {AssetName}\n");
 
-        // Check the zip exactly as the plugin will, before anyone uploads it.
+        // Check the zip (every name safe, every image listed, matching its hash and decoding), then, with --bundle,
+        // put exactly what passed into the plugin's assets folder and read it back as the plugin will.
         var check = Path.Combine(outDir, "check-" + Guid.NewGuid().ToString("N")[..8]);
-        var verdict = PortraitPackArchive.Extract(zipPath, check, CancellationToken.None, out _, out var detail);
-        Directory.Delete(check, recursive: true);
-        if (verdict != PortraitPackFailure.None)
+        try
         {
-            Console.Error.WriteLine($"The pack does not pass the plugin's checks: {verdict} {detail}");
-            return 1;
+            var verdict = PortraitPackArchive.Extract(zipPath, check, CancellationToken.None, out _, out var detail);
+            if (verdict != PortraitPackFailure.None)
+            {
+                Console.Error.WriteLine($"The pack does not pass the checks: {verdict} {detail}");
+                return 1;
+            }
+
+            if (bundleDir is not null && !Bundle(check, bundleDir))
+            {
+                return 1;
+            }
+        }
+        finally
+        {
+            if (Directory.Exists(check))
+            {
+                Directory.Delete(check, recursive: true);
+            }
         }
 
         WriteSheets(Path.Combine(outDir, "sheets"), sheet);
@@ -316,24 +327,48 @@ internal static partial class PortraitPackBuilder
             + Framing(overridesPath, layout, unknown, unused);
         File.WriteAllText(Path.Combine(outDir, "report.md"), report);
 
-        Console.WriteLine($"wrote:   {zipPath} ({PortraitPackOffer.SizeText(zipBytes.LongLength)}, {images.Count} images, {entries.Count} givers)");
+        Console.WriteLine($"wrote:   {zipPath} ({SizeText(zipBytes.LongLength)}, {images.Count} images, {entries.Count} givers)");
         Console.WriteLine($"sha256:  {zipSha}");
         Console.WriteLine($"fetched: {fetch.Live} live, {fetch.Cached} from the cache");
-        if (offerPath is not null && tag is not null)
-        {
-            var offer = new PortraitPackOffer(tag, AssetName, zipBytes.LongLength, zipSha, manifest.Format, gameVersion, entries.Count);
-            if (PortraitPackOffer.Parse(offer.ToJson(), out var warning) is null)
-            {
-                Console.Error.WriteLine($"--tag {tag}: not a release tag the plugin accepts ({warning ?? "no tag"}).");
-                return 2;
-            }
-
-            File.WriteAllBytes(offerPath, offer.ToJson());
-            Console.WriteLine($"offer:   {offerPath} ({offer.DownloadUri})");
-        }
-
         return 0;
     }
+
+    /// <summary>
+    /// Replaces the pack in <paramref name="bundleDir"/> (the plugin's <c>assets/portraits</c>) with the checked one in
+    /// <paramref name="check"/>: its <c>manifest.json</c> and PNGs go, anything else there stays. Then reads it back with
+    /// <see cref="BundledPortraits.Load"/>, as the plugin does at start.
+    /// </summary>
+    private static bool Bundle(string check, string bundleDir)
+    {
+        Directory.CreateDirectory(bundleDir);
+        foreach (var old in Directory.EnumerateFiles(bundleDir).Where(f => Path.GetExtension(f) == ".png" || Path.GetFileName(f) == PortraitPackManifest.FileName).ToList())
+        {
+            File.Delete(old);
+        }
+
+        long bytes = 0;
+        foreach (var file in Directory.EnumerateFiles(check))
+        {
+            var to = Path.Combine(bundleDir, Path.GetFileName(file));
+            File.Copy(file, to);
+            bytes += new FileInfo(to).Length;
+        }
+
+        var pack = BundledPortraits.Load(bundleDir, out var problem);
+        if (pack is null)
+        {
+            Console.Error.WriteLine($"--bundle {bundleDir}: the plugin would not read it: {problem}");
+            return false;
+        }
+
+        Console.WriteLine($"bundle:  {bundleDir} ({pack.Faces} photos, {pack.Givers} givers, {SizeText(bytes)}; manifest SHA-256 {pack.Sha256})");
+        return true;
+    }
+
+    /// <summary>"12.3 MB" or "840 KB".</summary>
+    private static string SizeText(long bytes) => bytes >= 1024 * 1024
+        ? string.Create(CultureInfo.InvariantCulture, $"{bytes / (1024d * 1024d):0.0} MB")
+        : string.Create(CultureInfo.InvariantCulture, $"{Math.Max(1, bytes / 1024)} KB");
 
     private static string Report(string gameVersion, DateTime builtUtc, PortraitInputs inputs, PortraitIndex gameIndex, List<PortraitGiver> givers, SortedDictionary<uint, string> entries, SortedDictionary<string, byte[]> images, List<(uint Id, string Name, string Why)> missing, long zipSize, string zipSha)
     {
@@ -359,7 +394,7 @@ internal static partial class PortraitPackBuilder
         text.AppendLine($"| Named givers asked for | {givers.Count:N0} |");
         text.AppendLine($"| Givers with a photo | {entries.Count:N0} ({(givers.Count == 0 ? 0 : 100d * entries.Count / givers.Count):0.0}%) |");
         text.AppendLine($"| Distinct images | {images.Count:N0} |");
-        text.AppendLine($"| Zip | {PortraitPackOffer.SizeText(zipSize)} ({zipSize:N0} bytes), SHA-256 `{zipSha}` |");
+        text.AppendLine($"| Zip | {SizeText(zipSize)} ({zipSize:N0} bytes), SHA-256 `{zipSha}` |");
         text.AppendLine($"| Quests with a giver | {quests.Count:N0} |");
         text.AppendLine($"| … with a game-art face | {game:N0} ({Share(game)}%) |");
         text.AppendLine($"| … with a pack photo | {pack:N0} ({Share(pack)}%) |");

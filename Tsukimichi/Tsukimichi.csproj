@@ -72,6 +72,12 @@ Local only: no network code.</Description>
       file is no picture.
     -->
     <Content Include="assets\whatsnew\**\*.jpg" CopyToOutputDirectory="PreserveNewest" />
+    <!--
+      The quest-giver photos (feature plan v7 F4; the portrait pack, shipped with the plugin since the release after
+      1.22): assets\portraits\manifest.json and one 128 px PNG per photo, written by Tsukimichi.DataGen (portrait-pack
+      with bundle, docs/data/portrait-pack.md). Read at start (Game\BundledPortraitLoader.cs); Garland Tools renders, credit Celes.
+    -->
+    <Content Include="assets\portraits\*.png;assets\portraits\manifest.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- The frame kits' frames and badges (1.17 T11, ATLAS-CONTRACT.md §7): one folder per kit, loaded only while a set is composed in it. -->
     <Content Include="assets\ui\kits\**\*.png;assets\ui\kits\**\*.json" Exclude="assets\ui\kits\**\metrics.json" CopyToOutputDirectory="PreserveNewest" />
     <!-- Packaged as images\icon.png, where Dalamud looks for a plugin's icon inside the zip; assets\icon.png stays the source. -->

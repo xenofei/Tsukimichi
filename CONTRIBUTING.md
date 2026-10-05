@@ -223,7 +223,7 @@ The `name` is the key (never change it); only the `<value>` is yours. `Strings.r
 
 ## Ground rules
 
-- No network code in the plugin beyond the optional portrait pack's download (`Tsukimichi/Game/PortraitPackHttp.cs`, the one file `NoNetworkTests` allows, run only after the player confirms it), and no automation of its own: it never moves the character, accepts quests or presses anything. Automation happens only when the player presses a button that hands the work to a companion plugin (feature plan v5, decision 1; `Tsukimichi.Core/Companions/CompanionCatalog.cs`), and such a button stays visible, disabled with `CompanionPlugins.DisabledReason(...)` as its tooltip, when the plugin is missing.
+- No network code in the plugin (`NoNetworkTests`; the giver photos ship inside it, `Tsukimichi/assets/portraits`), and no automation of its own: it never moves the character, accepts quests or presses anything. Automation happens only when the player presses a button that hands the work to a companion plugin (feature plan v5, decision 1; `Tsukimichi.Core/Companions/CompanionCatalog.cs`), and such a button stays visible, disabled with `CompanionPlugins.DisabledReason(...)` as its tooltip, when the plugin is missing.
 - Nothing that identifies a character (name, content id) goes into logs, diagnostics or issue text.
 - Public copy writes the name as "Tsukimichi — FFXIV quest tracker (Dalamud)".
 - Commits use conventional prefixes (`feat:`, `fix:`, `docs:`, `build:`, `ci:`); user-visible changes get a line under `## [Unreleased]` in the changelog, written for players.
