@@ -8,14 +8,20 @@ Every pack row of reconciled/reconciled.json is one Garland photo shared by the 
      over the width): side = s * W, x = cx * W - side / 2, y = cy * H - side / 2, clamped to the photo.
    - "accept": the reconciler's final box (final.curated.photoBox).
 2. No answer: the reconciler's final box, when it changed the box (final.action "change") and the face-centring
-   supervisor passed it (reconciled/supervisor/verdicts.json). Otherwise the row gets no override and the builder's
-   head finder frames the photo.
+   supervisor passed it (reconciled/supervisor/verdicts.json).
+3. No answer, and the reconciler kept the pack-1 box (final.action not "change") with a supervisor pass: that kept box.
+   It was a good frame already, and the head finder's rule must not make it worse. Run with --head-boxes (below) to
+   see which of these the head finder would frame differently.
+Otherwise the row gets no override and the builder's head finder frames the photo.
 
 A box under 72 px (the builder's MinBox: the 72 px plate never upscales) is held at 72 px with its eye line (0.44 of
 the side) and centre where they were, as the reconciler held its own, then clamped to the photo.
 
-Usage, from the repository root: py -3 tools/portrait-pack/make_overrides.py [--check]
+Usage, from the repository root: py -3 tools/portrait-pack/make_overrides.py [--check] [--head-boxes <boxes.json>]
 --check exits 1 when the file on disk differs from what the audit files give.
+--head-boxes reads the boxes.json a --portrait-pack build wrote and says, for each kept box (rule 3), whether the head
+finder's own square agrees with it (centres within 0.05 of the side, sides within 10 %, as report.md counts). It only
+reports: the file never depends on a build.
 """
 import json
 import os
@@ -52,6 +58,7 @@ def build():
     owner = {c['key']: c for c in load('desk', 'owner-answers.json')['corrections'] if c['key'].startswith('pack:')}
     stats = Counter()
     skipped = []
+    kept = []
     out = {}
     for row in rows:
         key, photo = row['key'], row['id']
@@ -78,6 +85,11 @@ def build():
             box = held(*final['curated']['photoBox'], w, h)
             stats['reconciler, supervisor pass'] += 1
             note = f'reconciler box, supervisor pass, photo {photo}'
+        elif verdicts.get(key, {}).get('verdict') == 'pass':
+            box = held(*final['curated']['photoBox'], w, h)
+            stats['kept box, supervisor pass'] += 1
+            kept.append(photo)
+            note = f'kept box (unchanged by the reconciler), supervisor pass, photo {photo}'
         else:
             why = 'box unchanged by the reconciler' if final['action'] != 'change' else \
                 f'supervisor verdict {verdicts.get(key, {}).get("verdict", "none")}'
@@ -97,7 +109,7 @@ def build():
                 'script, not this file.',
         'overrides': dict(sorted(out.items(), key=lambda kv: int(kv[0]))),
     }
-    return data, stats, skipped
+    return data, stats, skipped, kept
 
 
 def render(data):
@@ -116,7 +128,7 @@ def render(data):
 
 
 def main():
-    data, stats, skipped = build()
+    data, stats, skipped, kept = build()
     text = render(data)
     if '--check' in sys.argv:
         with open(OUT, encoding='utf-8') as f:
@@ -125,13 +137,31 @@ def main():
         return 0 if same else 1
     with open(OUT, 'w', encoding='utf-8', newline='\n') as f:
         f.write(text)
-    photos = stats['owner adjust'] + stats['owner accept'] + stats['reconciler, supervisor pass']
+    photos = stats['owner adjust'] + stats['owner accept'] + stats['reconciler, supervisor pass'] + stats['kept box, supervisor pass']
     print(f'{OUT}: {len(data["overrides"])} NPCs on {photos} photos')
     for k, v in stats.items():
         print(f'  {k}: {v}')
     for photo, who, why in skipped:
         print(f'  no override: photo {photo} ({who}): {why}')
+    if '--head-boxes' in sys.argv:
+        report_head(data, kept, sys.argv[sys.argv.index('--head-boxes') + 1])
     return 0
+
+
+def report_head(data, kept, path):
+    """For each kept box (rule 3), whether the head finder's square in a build's boxes.json agrees with it."""
+    with open(path, encoding='utf-8') as f:
+        boxes = json.load(f)
+    by_photo = {int(e['note'].split('photo ')[1].split(',')[0]): e['photoBox'] for e in data['overrides'].values()}
+    for photo in kept:
+        a, h = by_photo[photo], boxes.get(f'{photo}.png', {}).get('head')
+        if h is None:
+            print(f'  kept box, photo {photo}: {a}; the head finder found no head')
+            continue
+        agrees = (abs((a[0] + a[2] / 2) - (h[0] + h[2] / 2)) <= 0.05 * a[2]
+                  and abs((a[1] + a[2] / 2) - (h[1] + h[2] / 2)) <= 0.05 * a[2]
+                  and abs(h[2] / a[2] - 1) <= 0.1)
+        print(f'  kept box, photo {photo}: {a}; head finder {h}: {"agrees" if agrees else "differs"}')
 
 
 if __name__ == '__main__':
