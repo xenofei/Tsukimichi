@@ -1,4 +1,5 @@
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Core.Ui.Themes;
 
 namespace Tsukimichi.Core.Releases;
 
@@ -68,8 +69,16 @@ public static class ReleaseArt
         Path.Combine(pluginDir, Folder, version, theme + Extension);
 
     /// <summary>
+    /// The theme whose picture stands in when a release has none in the look's theme: the default theme. From 1.22.1 on,
+    /// a release ships one picture, in the default theme only (owner, 4 October 2026); 1.14.0 to 1.22.0 keep a picture per
+    /// theme.
+    /// </summary>
+    public static string FallbackTheme => ThemePresets.Default.Key;
+
+    /// <summary>
     /// The picture to load for a release in a look, or null when none applies: Plain, an unreadable version or theme,
-    /// or no such file (<paramref name="exists"/>, the file system's check in the plugin).
+    /// or no such file (<paramref name="exists"/>, the file system's check in the plugin). The look's own theme comes
+    /// first, then <see cref="FallbackTheme"/>, the one picture a release ships from 1.22.1 on.
     /// </summary>
     public static string? Find(string pluginDir, string version, Flair flair, string themeKey, Func<string, bool> exists)
     {
@@ -86,6 +95,12 @@ public static class ReleaseArt
         }
 
         var path = PathFor(pluginDir, normalized, theme);
-        return exists(path) ? path : null;
+        if (exists(path))
+        {
+            return path;
+        }
+
+        var fallback = PathFor(pluginDir, normalized, FallbackTheme);
+        return exists(fallback) ? fallback : null;
     }
 }
