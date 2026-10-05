@@ -25,6 +25,7 @@ public sealed class UmbraAddonSetupLintTests
         Path.Combine("Tsukimichi", "Config", "Configuration.UmbraAddonSetup.cs"),
         Path.Combine("Tsukimichi.Core", "Umbra", "UmbraAddonSetup.cs"),
         Path.Combine("Tsukimichi.Core", "Umbra", "UmbraSetupRunner.cs"),
+        Path.Combine("Tsukimichi.Core", "Umbra", "UmbraSetupCoordinator.cs"),
     ];
 
     // An API that writes, creates, moves or deletes a file or folder.
@@ -118,8 +119,9 @@ public sealed class UmbraAddonSetupLintTests
     [Fact]
     public void Umbra_changes_only_from_the_agree_button()
     {
-        // The setup starts in one place: the card's Agree and add, after the pill reported the click.
-        Assert.Equal([Path.Combine("Tsukimichi", "Ui", "UmbraAddonCard.cs")], FilesWith(".AddToUmbra("));
+        // The setup starts in one place: the card's Agree and add, after the pill reported the click; the service only
+        // forwards it, after the quiet-moment check.
+        Assert.Equal([Path.Combine("Tsukimichi", "Game", "UmbraAddonSetupService.cs"), Path.Combine("Tsukimichi", "Ui", "UmbraAddonCard.cs")], FilesWith(".AddToUmbra("));
         var footer = Member(Code(Path.Combine("Tsukimichi", "Ui", "UmbraAddonCard.cs")), "private void DrawConfirmFooter()");
         var pill = footer.IndexOf("var agree = Chrome.ActionPill(\"##umbraCardAgree\"", StringComparison.Ordinal);
         var gate = footer.IndexOf("if (agree && ready)", StringComparison.Ordinal);
@@ -127,30 +129,79 @@ public sealed class UmbraAddonSetupLintTests
         Assert.True(pill >= 0 && gate > pill && start > gate, "AddToUmbra must follow the Agree pill's click");
         Assert.Contains("Strings.UmbraSetupAgree", footer, StringComparison.Ordinal);
         Assert.Single(Regex.Matches(footer, @"\.AddToUmbra\("));
+        Assert.Single(Regex.Matches(Code(Path.Combine("Tsukimichi", "Ui", "UmbraAddonCard.cs")), @"\.AddToUmbra\("));
 
         // Undo starts in one place: Settings' Remove confirmation button.
-        Assert.Equal([Path.Combine("Tsukimichi", "Ui", "ConfigWindow.UmbraAddonSetup.cs")], FilesWith(".RemoveFromUmbra("));
+        Assert.Equal([Path.Combine("Tsukimichi", "Game", "UmbraAddonSetupService.cs"), Path.Combine("Tsukimichi", "Ui", "ConfigWindow.UmbraAddonSetup.cs")], FilesWith(".RemoveFromUmbra("));
         var settings = Code(Path.Combine("Tsukimichi", "Ui", "ConfigWindow.UmbraAddonSetup.cs"));
         Assert.Contains("umbraSetupConfirmLabel = new(static () => Strings.UmbraSetupRemoveConfirm + ", settings, StringComparison.Ordinal);
         var confirm = settings.IndexOf("if (ImGui.Button(umbraSetupConfirmLabel.Value))", StringComparison.Ordinal);
         var remove = settings.IndexOf("setup.RemoveFromUmbra()", StringComparison.Ordinal);
         Assert.True(confirm >= 0 && remove > confirm && remove - confirm < 200, "RemoveFromUmbra must sit in the Remove confirmation's button");
+        Assert.Single(Regex.Matches(settings, @"\.RemoveFromUmbra\("));
 
-        // The runner is called only by the service's two starts, and Umbra's mutating calls only by the runner (Core).
+        // The service forwards each to the coordinator once, behind the quiet-moment check, and nothing else calls it.
         var service = Code(Path.Combine("Tsukimichi", "Game", "UmbraAddonSetupService.cs"));
-        Assert.Contains("UmbraSetupRunner.Add(", Member(service, "public bool AddToUmbra()"), StringComparison.Ordinal);
-        Assert.Contains("UmbraSetupRunner.Remove(", Member(service, "public bool RemoveFromUmbra()"), StringComparison.Ordinal);
-        Assert.Equal([Path.Combine("Tsukimichi", "Game", "UmbraAddonSetupService.cs")], FilesWith("UmbraSetupRunner."));
-        foreach (var mutating in new[] { ".SetCustomPlugins(", ".AddRepository(", ".RemoveRepository(", ".PlaceWidget(", ".RemoveWidget(", "control.Restart(" })
+        Assert.Contains("CanChangeNow && coordinator.AddToUmbra()", Member(service, "public bool AddToUmbra()"), StringComparison.Ordinal);
+        Assert.Contains("CanChangeNow && coordinator.RemoveFromUmbra()", Member(service, "public bool RemoveFromUmbra()"), StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(service, @"coordinator\.AddToUmbra\("));
+        Assert.Single(Regex.Matches(service, @"coordinator\.RemoveFromUmbra\("));
+
+        // The runner is called only by the coordinator's two starts (Core), and Umbra's mutating calls only by the
+        // runner: no plugin file makes them (UmbraControl.cs only declares them).
+        var coordinator = Code(Path.Combine("Tsukimichi.Core", "Umbra", "UmbraSetupCoordinator.cs"));
+        Assert.Contains("UmbraSetupRunner.Add(", Member(coordinator, "public Task? AddToUmbra()"), StringComparison.Ordinal);
+        Assert.Contains("UmbraSetupRunner.Remove(", Member(coordinator, "public Task? RemoveFromUmbra()"), StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(coordinator, @"UmbraSetupRunner\.Add\("));
+        Assert.Single(Regex.Matches(coordinator, @"UmbraSetupRunner\.Remove\("));
+        Assert.Empty(FilesWith("UmbraSetupRunner."));
+        foreach (var mutating in new[] { ".SetCustomPlugins(", ".AddRepository(", ".RemoveRepository(", ".PlaceWidget(", ".RemoveWidget(", "session.Restart(" })
         {
             Assert.Empty(FilesWith(mutating));
+            Assert.DoesNotContain(mutating, coordinator, StringComparison.Ordinal);
         }
 
-        // Before the player agrees the service only looks.
-        Assert.Equal(["Look", "Prepare"], Regex.Matches(service, @"\bcontrol\.(\w+)\(").Select(m => m.Groups[1].Value).Distinct().Order(StringComparer.Ordinal));
+        // Before the player agrees the coordinator only opens and looks (the preview).
+        var preview = Member(coordinator, "public Task RefreshPreview()");
+        Assert.Equal(["Look", "Open"], Regex.Matches(preview, @"\b(?:control|session)\.(\w+)\(").Select(m => m.Groups[1].Value).Distinct().Order(StringComparer.Ordinal));
 
         // The reflection layer is made in one place.
         Assert.Equal([Path.Combine("Tsukimichi", "Plugin.UmbraAddonSetup.cs")], FilesWith("new Game.UmbraControl(").Concat(FilesWith("new UmbraControl(")));
+    }
+
+    [Fact]
+    public void Each_run_has_its_own_umbra_and_no_wait_outlives_it()
+    {
+        var control = Code(Path.Combine("Tsukimichi", "Game", "UmbraControl.cs"));
+
+        // Members live in the run's session, never in a field another run could replace mid-run.
+        Assert.DoesNotContain("Members? members", control, StringComparison.Ordinal);
+        Assert.Contains("new Session(this, found)", control, StringComparison.Ordinal);
+
+        // Restart: Umbra is looked at in the same framework call that restarts it, and a restart still running refuses the next run.
+        Assert.Contains("owner.OnFramework(() => Live(m) ? Started(m.Restart.Invoke(null, null)) : null)", Member(control, "public async Task<UmbraFailure> Restart()"), StringComparison.Ordinal);
+        Assert.Contains("restarting is { IsCompleted: false }", Member(control, "public Task<UmbraOpened> Open()"), StringComparison.Ordinal);
+
+        // Every timer is cancelled when its wait ends, and on unload.
+        var within = Member(control, "private async Task<bool> Within(");
+        Assert.Contains("CreateLinkedTokenSource(Token)", within, StringComparison.Ordinal);
+        Assert.Contains("await timer.CancelAsync()", within, StringComparison.Ordinal);
+        Assert.Contains("lifetime.Cancel();", Member(control, "public void Dispose()"), StringComparison.Ordinal);
+        Assert.Contains("Task.Delay(SaveSettle, owner.Token)", control, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Settings_offers_add_and_remove_only_at_quiet_moments_and_not_add_while_removing()
+    {
+        var settings = Code(Path.Combine("Tsukimichi", "Ui", "ConfigWindow.UmbraAddonSetup.cs"));
+        Assert.Contains("else if (!removing && !umbra.AddonPresent && ShowUmbraConfirm is { } show)", settings, StringComparison.Ordinal);
+        Assert.Contains("enabled: canChange, reason: Strings.UmbraSetupNotNowReason", settings, StringComparison.Ordinal);
+        Assert.Contains("enabled: canChange || removing, reason: Strings.UmbraSetupNotNowReason", settings, StringComparison.Ordinal);
+        Assert.Contains("var canAsk = here && state.Activity == UmbraSetupActivity.Idle && canChange;", settings, StringComparison.Ordinal);
+
+        // The card never stays on its progress once nothing runs.
+        var draw = Member(Code(Path.Combine("Tsukimichi", "Ui", "UmbraAddonCard.cs")), "public override void Draw()");
+        Assert.Contains("if (page == Page.Progress && state.Activity == UmbraSetupActivity.Idle)", draw, StringComparison.Ordinal);
     }
 
     [Fact]

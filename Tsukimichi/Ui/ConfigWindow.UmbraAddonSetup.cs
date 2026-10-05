@@ -11,20 +11,24 @@ namespace Tsukimichi.Ui;
 /// Settings › About › Umbra, setting up Tsukimichi for Umbra (<see cref="UmbraAddonSetupService"/>): the same actions as
 /// the "Add Tsukimichi to your Umbra bar?" card, whatever the player answered there.
 /// <list type="bullet">
-/// <item><b>Set it up for you</b> (while the add-on is missing): "Add to Umbra…" opens the card on its confirmation,
-/// where Agree and add is the one button that changes Umbra.</item>
-/// <item><b>Remove from Umbra</b> (while Tsukimichi has changes in Umbra): "Remove…" lists exactly what will be undone,
-/// and Remove undoes only that (<see cref="UmbraSetupRunner.Remove"/>); Keep it cancels.</item>
+/// <item><b>Set it up for you</b> (while the add-on is missing and no Remove runs): "Add to Umbra…" opens the card on
+/// its confirmation, where Agree and add is the one button that changes Umbra.</item>
+/// <item><b>Remove from Umbra</b> (while Tsukimichi has changes on this character's Umbra profile): "Remove…" lists
+/// exactly what will be undone, and Remove undoes only that (<see cref="UmbraSetupRunner.Remove"/>); Keep it cancels.
+/// Changes on another Umbra profile are named, and nothing is offered here.</item>
+/// <item>Both restart Umbra's toolbar, so both are off in a fight, a duty or a cutscene, with the reason.</item>
 /// <item>While either runs, the step it is on.</item>
 /// </list>
 /// </summary>
 public sealed partial class ConfigWindow
 {
-    private const string UmbraSetupKeywords = UmbraKeywords + " set up setup automatic add remove undo repository widget custom plugins";
+    private const string UmbraSetupKeywords = UmbraKeywords + " set up setup automatic add remove undo repository widget custom plugins profile";
 
     private bool umbraRemoveAsk;
     private (UmbraFailure Failure, bool Kept, int Language) umbraRemovedKey = (UmbraFailure.None, false, -1);
     private string umbraRemovedLine = string.Empty;
+    private (UmbraSetupBook? Book, string? Profile, int Language) umbraOtherKey = (null, null, -1);
+    private string umbraOtherLine = string.Empty;
 
     // The button labels with their ids, made once per language (no string is built per frame).
     private readonly LocText umbraSetupAddLabel = new(static () => Strings.UmbraSetupSettingsAddButton + "##umbraSetupAdd");
@@ -48,34 +52,47 @@ public sealed partial class ConfigWindow
         }
 
         var state = setup.View;
-        var record = setup.Record;
+        var canChange = setup.CanChangeNow;
+        var removing = state.Activity == UmbraSetupActivity.Removing;
         if (state.Activity is UmbraSetupActivity.Adding or UmbraSetupActivity.PuttingBack or UmbraSetupActivity.Waiting)
         {
             Note(Strings.UmbraSetupSettingsBusyLabel, BusyLine(state), UmbraSetupKeywords);
         }
-        else if (!umbra.AddonPresent && ShowUmbraConfirm is { } show)
+        else if (!removing && !umbra.AddonPresent && ShowUmbraConfirm is { } show)
         {
             // The last try's reason, when it failed; otherwise what Add does.
             var hint = state.Outcome is UmbraSetupOutcome.Failed or UmbraSetupOutcome.FailedPartly ? Strings.UmbraSetupReason(state.Failure) : Strings.UmbraSetupSettingsAddHint;
-            if (ButtonRow(Strings.UmbraSetupSettingsAddLabel, hint, umbraSetupAddLabel.Value, UmbraSetupKeywords))
+            if (ButtonRow(Strings.UmbraSetupSettingsAddLabel, hint, umbraSetupAddLabel.Value, UmbraSetupKeywords, enabled: canChange, reason: Strings.UmbraSetupNotNowReason))
             {
                 show();
             }
         }
 
-        var removing = state.Activity == UmbraSetupActivity.Removing;
-        if (record.IsEmpty && !removing && !state.RemoveDone)
+        var book = setup.Book;
+        if (book.IsEmpty && !removing && !state.RemoveDone)
         {
+            return;
+        }
+
+        // This character's Umbra profile (as Umbra's settings were last read); unknown before a read, when the Remove
+        // itself finds the live profile and refuses any other.
+        var profile = setup.CurrentProfile;
+        var record = profile is null ? (book.IsEmpty ? null : book.Records[0]) : book.For(profile);
+        var here = record is { IsEmpty: false };
+        if (!here && !removing && !book.IsEmpty)
+        {
+            // Changes only on other profiles: say where, offer nothing.
+            Note(Strings.UmbraSetupSettingsRemoveLabel, UmbraOtherProfileLine(book, profile), UmbraSetupKeywords);
             return;
         }
 
         var button = removing ? umbraSetupRemovingLabel.Value : umbraSetupRemoveLabel.Value;
-        if (!Setting(Strings.UmbraSetupSettingsRemoveLabel, Strings.UmbraSetupSettingsRemoveHint, UmbraSetupKeywords, ImGui.CalcTextSize(button, true).X + (ImGui.GetStyle().FramePadding.X * 2f)))
+        if (!Setting(Strings.UmbraSetupSettingsRemoveLabel, Strings.UmbraSetupSettingsRemoveHint, UmbraSetupKeywords, ImGui.CalcTextSize(button, true).X + (ImGui.GetStyle().FramePadding.X * 2f), enabled: canChange || removing, reason: Strings.UmbraSetupNotNowReason))
         {
             return;
         }
 
-        var canAsk = !record.IsEmpty && state.Activity == UmbraSetupActivity.Idle;
+        var canAsk = here && state.Activity == UmbraSetupActivity.Idle && canChange;
         if (!canAsk)
         {
             ImGui.BeginDisabled();
@@ -91,9 +108,9 @@ public sealed partial class ConfigWindow
             ImGui.EndDisabled();
         }
 
-        if (umbraRemoveAsk && canAsk)
+        if (umbraRemoveAsk && canAsk && record is not null)
         {
-            // The confirmation: exactly what will be undone, then Remove or Keep it.
+            // The confirmation: exactly what will be undone on this profile, then Remove or Keep it.
             SettingBelow();
             using (Typography.Caption())
             using (Theme.PushText(Theme.Surface.TextSecondary))
@@ -128,7 +145,9 @@ public sealed partial class ConfigWindow
         }
         else if (state.RemoveDone && !removing)
         {
-            SettingNote(UmbraRemovedLine(state.RemoveFailure, state.KeptCustomPluginsOn));
+            SettingNote(state.RemoveFailure == UmbraFailure.OtherProfile
+                ? UmbraOtherProfileLine(book, profile)
+                : UmbraRemovedLine(state.RemoveFailure, state.KeptCustomPluginsOn));
         }
 
         EndSetting();
@@ -162,5 +181,18 @@ public sealed partial class ConfigWindow
         }
 
         return umbraRemovedLine;
+    }
+
+    /// <summary>"Tsukimichi's changes are on Umbra profile Main…", rebuilt when the book, the profile or the language changes.</summary>
+    private string UmbraOtherProfileLine(UmbraSetupBook book, string? profile)
+    {
+        var language = Loc.Version;
+        if (!ReferenceEquals(book, umbraOtherKey.Book) || !string.Equals(profile, umbraOtherKey.Profile, StringComparison.Ordinal) || language != umbraOtherKey.Language || umbraOtherLine.Length == 0)
+        {
+            umbraOtherKey = (book, profile, language);
+            umbraOtherLine = string.Format(CultureInfo.CurrentCulture, Strings.UmbraSetupOtherProfileFormat, string.Join(", ", book.OtherProfiles(profile)));
+        }
+
+        return umbraOtherLine;
     }
 }

@@ -242,4 +242,93 @@ public sealed class UmbraAddonSetupTests
         Assert.Equal(UmbraSettings.AddonName, UmbraAddon.RepositoryName);
         Assert.Contains(UmbraAddon.WidgetPanel, new[] { "Left", "Center", "Right" });
     }
+
+    [Fact]
+    public void Putting_back_a_failed_run_always_reverts_the_switch_it_turned_on()
+    {
+        // Dormant add-ons loaded when it turned custom plugins on; they were off before the run, so off they go again.
+        var record = new UmbraSetupRecord(true, true, []) { OtherAddonsAtTurnOn = 3 };
+        var look = new UmbraLook(true, true, false, false, 3);
+        Assert.Contains(UmbraUndoStep.TurnOffCustomPlugins, UmbraAddonSetup.UndoPlan(record, look, sameRun: true));
+        Assert.False(UmbraAddonSetup.KeepsCustomPluginsOn(record, look with { OtherAddons = 9 }, sameRun: true));
+    }
+
+    [Fact]
+    public void A_later_remove_keeps_custom_plugins_on_only_if_addons_were_added_since()
+    {
+        var record = new UmbraSetupRecord(true, false, []) { OtherAddonsAtTurnOn = 2 };
+        Assert.False(UmbraAddonSetup.KeepsCustomPluginsOn(record, new UmbraLook(true, false, false, false, 2)));
+        Assert.Contains(UmbraUndoStep.TurnOffCustomPlugins, UmbraAddonSetup.UndoPlan(record, new UmbraLook(true, false, false, false, 2)));
+        Assert.True(UmbraAddonSetup.KeepsCustomPluginsOn(record, new UmbraLook(true, false, false, false, 3)));
+        Assert.DoesNotContain(UmbraUndoStep.TurnOffCustomPlugins, UmbraAddonSetup.UndoPlan(record, new UmbraLook(true, false, false, false, 3)));
+    }
+
+    [Fact]
+    public void Anything_that_restarts_umbra_waits_for_a_quiet_moment()
+    {
+        Assert.True(UmbraAddonSetup.CanChangeNow(Quiet));
+        Assert.True(UmbraAddonSetup.CanChangeNow(Quiet with { SecondsInWorld = 0 }));
+        foreach (var moment in Hidden)
+        {
+            Assert.False(UmbraAddonSetup.CanChangeNow(moment));
+        }
+    }
+
+    [Fact]
+    public void Records_merge_on_one_profile_and_keep_the_count_of_the_run_that_turned_on()
+    {
+        var earlier = new UmbraSetupRecord(true, false, ["a"]) { Profile = "Main", CharacterId = 1, OtherAddonsAtTurnOn = 1 };
+        var later = earlier.Merge(new UmbraSetupRecord(false, true, ["b"]) { Profile = "Main", CharacterId = 2 });
+        Assert.Equal(1, later.OtherAddonsAtTurnOn);
+        Assert.Equal(2UL, later.CharacterId);
+        Assert.Equal(["a", "b"], later.WidgetIds);
+
+        var turnedOnAgain = UmbraSetupRecord.For("Main").Merge(new UmbraSetupRecord(true, false, []) { Profile = "Main", OtherAddonsAtTurnOn = 4 });
+        Assert.Equal(4, turnedOnAgain.OtherAddonsAtTurnOn);
+    }
+
+    [Fact]
+    public void The_book_keeps_one_record_per_umbra_profile()
+    {
+        var book = UmbraSetupBook.Empty
+            .With(new UmbraSetupRecord(true, true, ["a"]) { Profile = "Main" })
+            .With(new UmbraSetupRecord(false, false, ["b"]) { Profile = "Alt" });
+        Assert.Equal(2, book.Records.Count);
+        Assert.Equal(["a"], book.For("Main").WidgetIds);
+        Assert.True(book.For("Other").IsEmpty);
+        Assert.Equal("Other", book.For("Other").Profile);
+        Assert.Equal(["Alt"], book.OtherProfiles("Main"));
+        Assert.Equal(["Main", "Alt"], book.OtherProfiles(null));
+
+        // An emptied record leaves the book.
+        var less = book.With(UmbraSetupRecord.For("Alt"));
+        Assert.Single(less.Records);
+        Assert.True(less.With(UmbraSetupRecord.For("Main")).IsEmpty);
+    }
+
+    [Fact]
+    public void The_book_survives_its_saved_form_and_a_hand_edited_one()
+    {
+        var book = UmbraSetupBook.Empty.With(new UmbraSetupRecord(true, true, ["a"]) { Profile = "Main", CharacterId = 9, OtherAddonsAtTurnOn = 2 });
+        var back = UmbraSetupBook.FromData(book.ToData());
+        var record = back.For("Main");
+        Assert.True(record.TurnedOnCustomPlugins);
+        Assert.True(record.AddedRepository);
+        Assert.Equal(["a"], record.WidgetIds);
+        Assert.Equal(9UL, record.CharacterId);
+        Assert.Equal(2, record.OtherAddonsAtTurnOn);
+
+        // Nulls, a missing profile, empty widget ids and a negative count read as nothing or zero.
+        var odd = UmbraSetupBook.FromData(
+        [
+            null,
+            new UmbraSetupRecordData { Profile = null, AddedRepository = true },
+            new UmbraSetupRecordData { Profile = "Main", WidgetIds = null, AddedRepository = true, OtherAddonsAtTurnOn = -5 },
+            new UmbraSetupRecordData { Profile = "Empty", WidgetIds = [""] },
+        ]);
+        Assert.Single(odd.Records);
+        Assert.Equal(0, odd.For("Main").OtherAddonsAtTurnOn);
+        Assert.Empty(odd.For("Main").WidgetIds);
+        Assert.True(UmbraSetupBook.FromData(null).IsEmpty);
+    }
 }

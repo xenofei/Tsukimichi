@@ -25,14 +25,31 @@ public static class UmbraAddon
 }
 
 /// <summary>
-/// What Umbra holds now, read through Umbra's own code (<see cref="IUmbraControl.Look"/>).
+/// What Umbra holds now, read through Umbra's own code (<see cref="IUmbraSession.Look"/>).
 /// </summary>
 /// <param name="CustomPluginsOn">Umbra's custom plugins are on (<c>PluginManager.CustomPluginsEnabled</c>).</param>
 /// <param name="RepositoryListed">Umbra's plugin list has an entry from the add-on's repository.</param>
 /// <param name="WidgetRegistered">Umbra knows the add-on's widget: the add-on is loaded in Umbra.</param>
 /// <param name="WidgetPlaced">The active toolbar profile already has a Tsukimichi widget.</param>
-/// <param name="OtherAddons">How many entries in Umbra's plugin list are not the add-on's.</param>
-public readonly record struct UmbraLook(bool CustomPluginsOn, bool RepositoryListed, bool WidgetRegistered, bool WidgetPlaced, int OtherAddons);
+/// <param name="OtherAddons">
+/// How many entries in Umbra's plugin list (in memory) are not the add-on's. Umbra reads its stored list only while
+/// custom plugins are on, so entries stored while they were off count only once they are turned on.
+/// </param>
+/// <param name="Profile">
+/// Umbra's active configuration profile (<c>ConfigManager.GetActiveProfileName()</c>): the file that holds custom plugins,
+/// the plugin list and the toolbar for this character (Umbra keeps one per character, <c>profiles.json</c>).
+/// </param>
+/// <param name="CharacterId">The character Umbra runs for (<c>Framework.LocalCharacterId</c>).</param>
+/// <param name="AddonWidgetIds">The instance ids of the Tsukimichi widgets on the active toolbar profile; null when unknown.</param>
+public readonly record struct UmbraLook(
+    bool CustomPluginsOn,
+    bool RepositoryListed,
+    bool WidgetRegistered,
+    bool WidgetPlaced,
+    int OtherAddons,
+    string Profile = UmbraSettings.DefaultProfile,
+    ulong CharacterId = 0,
+    IReadOnlyList<string>? AddonWidgetIds = null);
 
 /// <summary>One change "Add to Umbra" makes, in the order it makes them.</summary>
 public enum UmbraSetupStep : byte
@@ -72,8 +89,14 @@ public enum UmbraFailure : byte
     /// <summary>Nothing went wrong.</summary>
     None,
 
-    /// <summary>Umbra isn't running, or is between starts (it starts after login).</summary>
+    /// <summary>Umbra isn't running, or is between starts (it starts after login, and restarts to load add-ons).</summary>
     NotRunning,
+
+    /// <summary>More than one live copy of Umbra was found (Dalamud may still be reloading it): nothing was changed.</summary>
+    SeveralUmbras,
+
+    /// <summary>Remove: Tsukimichi's changes are on another Umbra profile than this character's, so nothing was changed.</summary>
+    OtherProfile,
 
     /// <summary>A member Tsukimichi drives is missing or changed: this Umbra version is not one it knows. Nothing was changed.</summary>
     UnknownUmbra,
@@ -92,6 +115,12 @@ public enum UmbraFailure : byte
 
     /// <summary>A step took too long (a download or a restart).</summary>
     TimedOut,
+
+    /// <summary>
+    /// Umbra's restart took too long: it may still be starting, so nothing more was changed or put back (a later
+    /// "Remove from Umbra" undoes what was changed, once Umbra is back).
+    /// </summary>
+    RestartTimedOut,
 
     /// <summary>Umbra threw while doing a step.</summary>
     Unexpected,
@@ -118,6 +147,10 @@ public enum UmbraSetupOutcome : byte
 /// configuration. Only Tsukimichi's own changes are in it: a switch the player had on, a repository they had added, or a
 /// widget they placed themselves never is.
 /// </summary>
+/// <para>
+/// Umbra keeps custom plugins, its plugin list and the toolbar in one configuration profile per character, so a record
+/// belongs to the profile it was made on (<see cref="Profile"/>; <see cref="UmbraSetupBook"/>) and is undone only there.
+/// </para>
 /// <param name="TurnedOnCustomPlugins">Tsukimichi turned Umbra's custom plugins on (they were off).</param>
 /// <param name="AddedRepository">Tsukimichi added the repository entry (it was not listed).</param>
 /// <param name="WidgetIds">The instance ids of the widgets Tsukimichi placed.</param>
@@ -126,17 +159,41 @@ public sealed record UmbraSetupRecord(bool TurnedOnCustomPlugins, bool AddedRepo
     /// <summary>Nothing changed.</summary>
     public static UmbraSetupRecord Empty { get; } = new(false, false, []);
 
+    /// <summary>The Umbra configuration profile the changes were made on.</summary>
+    public string Profile { get; init; } = UmbraSettings.DefaultProfile;
+
+    /// <summary>The character Umbra ran for when the changes were made (several characters may share a profile).</summary>
+    public ulong CharacterId { get; init; }
+
+    /// <summary>
+    /// How many other add-ons Umbra listed right after Tsukimichi turned custom plugins on (entries stored earlier load
+    /// then). A later Remove keeps custom plugins on only if that count has grown since: the player added one.
+    /// </summary>
+    public int OtherAddonsAtTurnOn { get; init; }
+
     /// <summary>Nothing to undo.</summary>
     public bool IsEmpty => !TurnedOnCustomPlugins && !AddedRepository && WidgetIds.Count == 0;
 
-    /// <summary>This record and <paramref name="run"/>'s changes together (a later run adds to what an earlier one did).</summary>
+    /// <summary>A record with nothing changed yet, for <paramref name="profile"/>.</summary>
+    public static UmbraSetupRecord For(string profile, ulong characterId = 0) => Empty with { Profile = profile, CharacterId = characterId };
+
+    /// <summary>
+    /// This record and <paramref name="run"/>'s changes together (a later run on the same profile adds to what an
+    /// earlier one did). The run's profile and character win; so does its add-on count when it is the run that turned
+    /// custom plugins on.
+    /// </summary>
     public UmbraSetupRecord Merge(UmbraSetupRecord run)
     {
         ArgumentNullException.ThrowIfNull(run);
         return new UmbraSetupRecord(
             TurnedOnCustomPlugins || run.TurnedOnCustomPlugins,
             AddedRepository || run.AddedRepository,
-            [.. WidgetIds.Concat(run.WidgetIds).Distinct(StringComparer.Ordinal)]);
+            [.. WidgetIds.Concat(run.WidgetIds).Distinct(StringComparer.Ordinal)])
+        {
+            Profile = run.Profile,
+            CharacterId = run.CharacterId,
+            OtherAddonsAtTurnOn = run.TurnedOnCustomPlugins ? run.OtherAddonsAtTurnOn : OtherAddonsAtTurnOn,
+        };
     }
 
     /// <summary>This record with <paramref name="widgetId"/> gone.</summary>
@@ -270,11 +327,12 @@ public static class UmbraAddonSetup
 
     /// <summary>
     /// The changes "Remove from Umbra" makes: only Tsukimichi's own. Its widgets come off; the repository goes only if
-    /// Tsukimichi added it and it is still listed; custom plugins turn off only if Tsukimichi turned them on, they are
-    /// still on, and no other add-on is listed (turning them off would unload the player's own). A restart follows when
-    /// the repository went or custom plugins turned off, so the add-on unloads.
+    /// Tsukimichi added it and it is still listed; custom plugins turn off only if Tsukimichi turned them on and they are
+    /// still on, and, on a later Remove, no add-on was added since (<see cref="KeepsCustomPluginsOn"/>; turning them off
+    /// would unload the player's own). Putting back a failed run (<paramref name="sameRun"/>) always reverts its own
+    /// switch. A restart follows when the repository went or custom plugins turned off, so the add-on unloads.
     /// </summary>
-    public static IReadOnlyList<UmbraUndoStep> UndoPlan(UmbraSetupRecord record, in UmbraLook look)
+    public static IReadOnlyList<UmbraUndoStep> UndoPlan(UmbraSetupRecord record, in UmbraLook look, bool sameRun = false)
     {
         ArgumentNullException.ThrowIfNull(record);
         var steps = new List<UmbraUndoStep>(4);
@@ -288,7 +346,7 @@ public static class UmbraAddonSetup
             steps.Add(UmbraUndoStep.RemoveRepository);
         }
 
-        if (KeepsCustomPluginsOn(record, look) is false)
+        if (KeepsCustomPluginsOn(record, look, sameRun) is false)
         {
             steps.Add(UmbraUndoStep.TurnOffCustomPlugins);
         }
@@ -302,10 +360,12 @@ public static class UmbraAddonSetup
     }
 
     /// <summary>
-    /// Whether custom plugins stay on although Tsukimichi turned them on: another add-on is listed now. Null when
-    /// Tsukimichi did not turn them on (there is nothing of its own to keep or undo), or they are already off.
+    /// Whether custom plugins stay on although Tsukimichi turned them on: more add-ons are listed now than right after it
+    /// turned them on (the player added one since), and this is a later Remove, not putting back a failed run
+    /// (<paramref name="sameRun"/>). Null when Tsukimichi did not turn them on (nothing of its own to keep or undo), or
+    /// they are already off.
     /// </summary>
-    public static bool? KeepsCustomPluginsOn(UmbraSetupRecord record, in UmbraLook look)
+    public static bool? KeepsCustomPluginsOn(UmbraSetupRecord record, in UmbraLook look, bool sameRun = false)
     {
         ArgumentNullException.ThrowIfNull(record);
         if (!record.TurnedOnCustomPlugins || !look.CustomPluginsOn)
@@ -313,7 +373,9 @@ public static class UmbraAddonSetup
             return null;
         }
 
-        return look.OtherAddons > 0;
+        // Putting back a failed run reverts the switch it turned on, whatever add-ons that loaded: they were dormant
+        // (stored while custom plugins were off) before it. Later, only add-ons added since keep it on.
+        return !sameRun && look.OtherAddons > record.OtherAddonsAtTurnOn;
     }
 
     /// <summary>Where the wait for the add-on's answer stands, <paramref name="seconds"/> after the last step went through.</summary>
@@ -348,5 +410,101 @@ public static class UmbraAddonSetup
 
     /// <summary>Whether "Try again" is offered: a failure that may pass (the network, a slow restart, Umbra not running yet).</summary>
     public static bool CanTryAgain(UmbraFailure failure) =>
-        failure is UmbraFailure.ReleaseUnreachable or UmbraFailure.TimedOut or UmbraFailure.NotRunning;
+        failure is UmbraFailure.ReleaseUnreachable or UmbraFailure.TimedOut or UmbraFailure.NotRunning or UmbraFailure.SeveralUmbras;
+
+    /// <summary>
+    /// Whether anything that restarts Umbra's toolbar may start now (Settings' Add and Remove, as the card's own
+    /// visibility): in the world, not in a fight, a duty, a cutscene, Group Pose or a loading screen.
+    /// </summary>
+    public static bool CanChangeNow(in WhatsNewMoment moment) => Visible(moment, otherFirst: false);
+}
+
+/// <summary>
+/// Tsukimichi's records of its changes in Umbra, one per Umbra configuration profile (<see cref="UmbraSetupRecord.Profile"/>):
+/// a Remove acts only on the record of the profile Umbra runs now.
+/// </summary>
+public sealed class UmbraSetupBook
+{
+    private UmbraSetupBook(IReadOnlyList<UmbraSetupRecord> records) => Records = records;
+
+    /// <summary>No records.</summary>
+    public static UmbraSetupBook Empty { get; } = new([]);
+
+    /// <summary>The non-empty records, one per profile.</summary>
+    public IReadOnlyList<UmbraSetupRecord> Records { get; }
+
+    /// <summary>Nothing to undo on any profile.</summary>
+    public bool IsEmpty => Records.Count == 0;
+
+    /// <summary>The record for <paramref name="profile"/>; an empty one for that profile when there is none.</summary>
+    public UmbraSetupRecord For(string profile) =>
+        Records.FirstOrDefault(r => string.Equals(r.Profile, profile, StringComparison.Ordinal)) ?? UmbraSetupRecord.For(profile);
+
+    /// <summary>The profiles other than <paramref name="profile"/> that hold changes.</summary>
+    public IReadOnlyList<string> OtherProfiles(string? profile) =>
+        [.. Records.Select(r => r.Profile).Where(p => !string.Equals(p, profile, StringComparison.Ordinal))];
+
+    /// <summary>This book with <paramref name="record"/> in its profile's place (gone when it is empty).</summary>
+    public UmbraSetupBook With(UmbraSetupRecord record)
+    {
+        ArgumentNullException.ThrowIfNull(record);
+        var others = Records.Where(r => !string.Equals(r.Profile, record.Profile, StringComparison.Ordinal));
+        return new UmbraSetupBook(record.IsEmpty ? [.. others] : [.. others, record]);
+    }
+
+    /// <summary>The book from its saved form; entries without a profile or with nothing in them are dropped.</summary>
+    public static UmbraSetupBook FromData(IEnumerable<UmbraSetupRecordData?>? saved)
+    {
+        var book = Empty;
+        foreach (var data in saved ?? [])
+        {
+            if (data is { Profile: { Length: > 0 } profile })
+            {
+                book = book.With(new UmbraSetupRecord(data.TurnedOnCustomPlugins, data.AddedRepository, [.. (data.WidgetIds ?? []).Where(id => !string.IsNullOrEmpty(id))])
+                {
+                    Profile = profile,
+                    CharacterId = data.CharacterId,
+                    OtherAddonsAtTurnOn = Math.Max(0, data.OtherAddonsAtTurnOn),
+                });
+            }
+        }
+
+        return book;
+    }
+
+    /// <summary>The book in its saved form.</summary>
+    public List<UmbraSetupRecordData> ToData() =>
+    [
+        .. Records.Select(r => new UmbraSetupRecordData
+        {
+            Profile = r.Profile,
+            CharacterId = r.CharacterId,
+            TurnedOnCustomPlugins = r.TurnedOnCustomPlugins,
+            AddedRepository = r.AddedRepository,
+            OtherAddonsAtTurnOn = r.OtherAddonsAtTurnOn,
+            WidgetIds = [.. r.WidgetIds],
+        }),
+    ];
+}
+
+/// <summary>One <see cref="UmbraSetupRecord"/> as Tsukimichi's configuration saves it.</summary>
+public sealed class UmbraSetupRecordData
+{
+    /// <summary>The Umbra configuration profile.</summary>
+    public string? Profile { get; set; }
+
+    /// <summary>The character Umbra ran for.</summary>
+    public ulong CharacterId { get; set; }
+
+    /// <summary>Tsukimichi turned custom plugins on.</summary>
+    public bool TurnedOnCustomPlugins { get; set; }
+
+    /// <summary>Tsukimichi added the repository.</summary>
+    public bool AddedRepository { get; set; }
+
+    /// <summary>Other add-ons listed right after it turned custom plugins on.</summary>
+    public int OtherAddonsAtTurnOn { get; set; }
+
+    /// <summary>The widgets it placed.</summary>
+    public List<string>? WidgetIds { get; set; }
 }

@@ -117,10 +117,19 @@ static partial class Strings
 
     public static string UmbraSetupRemoveStoppedFormat => Loc.Get("UmbraSetup.RemoveStoppedFormat");
 
+    public static string UmbraSetupOtherProfileFormat => Loc.Get("UmbraSetup.OtherProfileFormat");
+
+    public static string UmbraSetupNotNowReason => Loc.Get("UmbraSetup.NotNowReason");
+
+    public static string UmbraSetupPutBackKeptOn => Loc.Get("UmbraSetup.PutBackKeptOn");
+
     /// <summary>Why setting up or removing stopped, in plain words.</summary>
     public static string UmbraSetupReason(UmbraFailure failure) => failure switch
     {
         UmbraFailure.NotRunning => Loc.Get("UmbraSetup.Reason.NotRunning"),
+        UmbraFailure.SeveralUmbras => Loc.Get("UmbraSetup.Reason.SeveralUmbras"),
+        UmbraFailure.OtherProfile => Loc.Get("UmbraSetup.Reason.OtherProfile"),
+        UmbraFailure.RestartTimedOut => Loc.Get("UmbraSetup.Reason.RestartTimedOut"),
         UmbraFailure.UnknownUmbra => Loc.Get("UmbraSetup.Reason.UnknownUmbra"),
         UmbraFailure.ReleaseUnreachable => Loc.Get("UmbraSetup.Reason.ReleaseUnreachable"),
         UmbraFailure.ReleaseRefused => Loc.Get("UmbraSetup.Reason.ReleaseRefused"),

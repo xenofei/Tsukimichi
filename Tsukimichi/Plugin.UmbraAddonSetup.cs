@@ -24,7 +24,7 @@ public sealed partial class Plugin
 
         var control = new Game.UmbraControl(Framework, Log);
         umbraControl = control;
-        var setup = new Game.UmbraAddonSetupService(control, Settings, PluginInterface, Framework, umbra, Log);
+        var setup = new Game.UmbraAddonSetupService(control, Settings, PluginInterface, Framework, umbra, Log) { Moment = WhatsNewMomentNow };
         umbraSetup = setup;
         var card = new UmbraAddonCard(Settings, PluginInterface, setup, umbra, Log)
         {

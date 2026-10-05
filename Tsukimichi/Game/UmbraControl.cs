@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
+using System.Threading;
 using System.Threading.Tasks;
 using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
@@ -13,7 +14,9 @@ namespace Tsukimichi.Game;
 
 /// <summary>
 /// Umbra, driven through Umbra's own code by reflection (<see cref="IUmbraControl"/>): the same members Umbra's
-/// settings call, so Umbra's own checks, saving and loading run. Written against Umbra 3.1.18.0's source:
+/// settings call, so Umbra's own checks, saving and loading run. Written against Umbra 3.1.18.0: every member and its
+/// shape was checked against the metadata of the installed 3.1.18.0 <c>Umbra.dll</c> and <c>Umbra.Common.dll</c>
+/// (that check is the authority; the behaviour was read in the source at tag 3.1.18):
 /// <list type="bullet">
 /// <item>custom plugins: <c>ConfigManager.Set("CustomPlugins.Enabled", …)</c>, what Umbra's "I agree" button calls
 /// (SettingsWindowPluginsModule.cs), then <c>PluginRepository.LoadPluginEntries()</c>, which Umbra runs at start, so the
@@ -24,14 +27,17 @@ namespace Tsukimichi.Game;
 /// <item>loading: <c>Framework.Restart()</c>, Umbra's own Restart button (SettingsWindow.cs); Umbra loads add-ons only
 /// when it starts (PluginManager.LoadCustomPlugins);</item>
 /// <item>the widget: <c>WidgetManager.CreateWidget(id, panel, …)</c>, as Umbra's "Add widget" (WidgetControlColumnNode.cs),
-/// and <c>RemoveWidget</c>; both save the active toolbar profile themselves.</item>
+/// and <c>RemoveWidget</c>; both save the active toolbar profile themselves;</item>
+/// <item>which profile: <c>ConfigManager.GetActiveProfileName()</c> and <c>Framework.LocalCharacterId</c>.</item>
 /// </list>
 /// Umbra saves through its own <c>ConfigManager</c>; Tsukimichi never writes Umbra's files.
 /// <para>
-/// <b>Version guard.</b> <see cref="Prepare"/> finds Umbra's assemblies in their load context, checks that Umbra is live
-/// (its framework compiled for the logged-in character), and resolves every member by name with its exact parameter and
-/// return types. Any member missing or changed stops the setup before anything changes (<see cref="UmbraFailure.UnknownUmbra"/>),
-/// whatever Umbra's version number says. Every call runs on the framework thread, as Umbra's own buttons do.
+/// <b>Version guard.</b> <see cref="Open"/> finds Umbra's assemblies in their load context, checks that exactly one Umbra
+/// is live (its framework compiled for the logged-in character), and resolves every member by name with its exact
+/// parameter and return types into the session's own <see cref="Members"/>. Any member missing or changed stops the
+/// setup before anything changes (<see cref="UmbraFailure.UnknownUmbra"/>), whatever Umbra's version number says. Every
+/// call runs on the framework thread, as Umbra's own buttons do. A restart still running after its limit refuses every
+/// later session until it ends; every wait is cancelled when Tsukimichi unloads.
 /// </para>
 /// </summary>
 public sealed class UmbraControl : IUmbraControl, IDisposable
@@ -56,7 +62,8 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
 
     private readonly IFramework framework;
     private readonly IPluginLog log;
-    private volatile Members? members;
+    private readonly CancellationTokenSource lifetime = new();
+    private volatile Task? restarting;
     private volatile bool disposed;
 
     public UmbraControl(IFramework framework, IPluginLog log)
@@ -65,159 +72,180 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
         this.log = log ?? throw new ArgumentNullException(nameof(log));
     }
 
-    /// <summary>Umbra's version as last found, for the log and Settings; null before <see cref="Prepare"/> found it.</summary>
-    public Version? UmbraVersion => members?.Version;
-
-    /// <summary>Stops every later call (Tsukimichi unloads): a run in progress ends at its next step.</summary>
-    public void Dispose() => disposed = true;
-
-    public Task<UmbraFailure> Prepare() => OnFramework(() =>
+    /// <summary>Stops every later call and cancels every wait (Tsukimichi unloads): a run in progress ends at its next step.</summary>
+    public void Dispose()
     {
-        members = null;
+        if (disposed)
+        {
+            return;
+        }
+
+        disposed = true;
+        lifetime.Cancel();
+        lifetime.Dispose();
+    }
+
+    public Task<UmbraOpened> Open() => OnFramework(() =>
+    {
+        if (restarting is { IsCompleted: false })
+        {
+            // An earlier restart outlived its limit and is still running: driving Umbra now would race it.
+            return new UmbraOpened(UmbraFailure.NotRunning, null);
+        }
+
         var (found, failure) = Find();
-        members = found;
-        return failure;
+        return found is null ? new UmbraOpened(failure, null) : new UmbraOpened(UmbraFailure.None, new Session(this, found));
     });
 
-    public Task<UmbraLook> Look() => OnFramework(() =>
+    // ------------------------------------------------------------------ one run's session
+
+    /// <summary>One run's handle on Umbra: the members it resolved, never replaced while it runs.</summary>
+    private sealed class Session(UmbraControl owner, Members m) : IUmbraSession
     {
-        var m = Require();
-        var on = m.CustomPluginsEnabled.GetValue(null) is true;
-        var listed = m.FindEntry.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName]) is not null;
-        var others = Entries(m).Count(entry => !IsOurs(m, entry));
-        var manager = WidgetManager(m);
-        var registered = m.GetWidgetInfo.Invoke(manager, [UmbraAddon.WidgetId]) is not null;
-        var placed = Instances(m, manager).Any(widget => string.Equals(InfoIdOf(m, widget), UmbraAddon.WidgetId, StringComparison.Ordinal));
-        return new UmbraLook(on, listed, registered, placed, others);
-    });
-
-    public Task SetCustomPlugins(bool on) => OnFramework(() =>
-    {
-        var m = Require();
-        m.ConfigSet.Invoke(null, [CustomPluginsVariable, on, true]);
-        if (on)
+        public Task<UmbraLook> Look() => owner.OnFramework(() =>
         {
-            // Umbra reads its stored add-on list only at start, and only while custom plugins are on; read it now, as
-            // its start would, so adding an entry saves the player's earlier ones too, not a list of one.
-            m.LoadEntries.Invoke(null, null);
-        }
+            var on = m.CustomPluginsEnabled.GetValue(null) is true;
+            var listed = m.FindEntry.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName]) is not null;
+            var others = Entries(m).Count(entry => !IsOurs(m, entry));
+            var manager = WidgetManager(m);
+            var registered = m.GetWidgetInfo.Invoke(manager, [UmbraAddon.WidgetId]) is not null;
+            var ours = Instances(m, manager)
+                .Where(widget => string.Equals(InfoIdOf(m, widget), UmbraAddon.WidgetId, StringComparison.Ordinal))
+                .Select(widget => IdOf(m, widget) ?? string.Empty)
+                .ToList();
+            var profile = m.ActiveProfile.Invoke(null, null) as string ?? UmbraSettings.DefaultProfile;
+            var character = m.LocalCharacterId.GetValue(null) is ulong id ? id : 0UL;
+            return new UmbraLook(on, listed, registered, ours.Count > 0, others, profile, character, ours);
+        });
 
-        return true;
-    });
-
-    public async Task<UmbraFailure> AddRepository()
-    {
-        var m = Require();
-        var fetch = await OnFramework(() => Started(m.Fetch.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName]))).ConfigureAwait(false);
-        if (!await Within(fetch, FetchLimit).ConfigureAwait(false))
+        public Task SetCustomPlugins(bool on) => owner.OnFramework(() =>
         {
-            return UmbraFailure.TimedOut;
-        }
-
-        if (fetch.IsFaulted || fetch.IsCanceled || ResultOf(fetch) is not { } pair)
-        {
-            return UmbraFailure.ReleaseUnreachable;
-        }
-
-        // (FetchResult, Release?): anything but NewerVersionAvailable with a release means Umbra found nothing to add.
-        var result = pair.GetType().GetField("Item1")?.GetValue(pair);
-        var release = pair.GetType().GetField("Item2")?.GetValue(pair);
-        if (!Equals(result, m.NewerVersionAvailable) || release is null)
-        {
-            return UmbraFailure.ReleaseUnreachable;
-        }
-
-        CheckLive();
-        var download = await OnFramework(() => Started(m.Download.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName, release]))).ConfigureAwait(false);
-        if (!await Within(download, DownloadLimit).ConfigureAwait(false))
-        {
-            return UmbraFailure.TimedOut;
-        }
-
-        if (download.IsFaulted || download.IsCanceled)
-        {
-            return UmbraFailure.ReleaseUnreachable;
-        }
-
-        // Umbra checked each file as it would load it (DownloadRelease): none passing means it would not take the release.
-        if (ResultOf(download) is not IList entries || entries.Count == 0)
-        {
-            return UmbraFailure.ReleaseRefused;
-        }
-
-        return await OnFramework(() =>
-        {
-            var live = Require();
-            foreach (var entry in entries)
+            m.ConfigSet.Invoke(null, [CustomPluginsVariable, on, true]);
+            if (on)
             {
-                live.AddEntry.Invoke(null, [entry, false]);
+                // Umbra reads its stored add-on list only at start, and only while custom plugins are on; read it now, as
+                // its start would, so adding an entry saves the player's earlier ones too, not a list of one.
+                m.LoadEntries.Invoke(null, null);
             }
 
-            return live.FindEntry.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName]) is null ? UmbraFailure.ReleaseRefused : UmbraFailure.None;
-        }).ConfigureAwait(false);
+            return true;
+        });
+
+        public async Task<UmbraFailure> AddRepository()
+        {
+            var fetch = await owner.OnFramework(() => Started(m.Fetch.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName]))).ConfigureAwait(false);
+            if (!await owner.Within(fetch, FetchLimit).ConfigureAwait(false))
+            {
+                return UmbraFailure.TimedOut;
+            }
+
+            if (fetch.IsFaulted || fetch.IsCanceled || ResultOf(fetch) is not { } pair)
+            {
+                return UmbraFailure.ReleaseUnreachable;
+            }
+
+            // (FetchResult, Release?): anything but NewerVersionAvailable with a release means Umbra found nothing to add.
+            var result = pair.GetType().GetField("Item1")?.GetValue(pair);
+            var release = pair.GetType().GetField("Item2")?.GetValue(pair);
+            if (!Equals(result, m.NewerVersionAvailable) || release is null)
+            {
+                return UmbraFailure.ReleaseUnreachable;
+            }
+
+            var download = await owner.OnFramework(() => Started(m.Download.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName, release]))).ConfigureAwait(false);
+            if (!await owner.Within(download, DownloadLimit).ConfigureAwait(false))
+            {
+                return UmbraFailure.TimedOut;
+            }
+
+            if (download.IsFaulted || download.IsCanceled)
+            {
+                return UmbraFailure.ReleaseUnreachable;
+            }
+
+            // Umbra checked each file as it would load it (DownloadRelease): none passing means it would not take the release.
+            if (ResultOf(download) is not IList entries || entries.Count == 0)
+            {
+                return UmbraFailure.ReleaseRefused;
+            }
+
+            return await owner.OnFramework(() =>
+            {
+                foreach (var entry in entries)
+                {
+                    m.AddEntry.Invoke(null, [entry, false]);
+                }
+
+                return m.FindEntry.Invoke(null, [UmbraAddon.RepositoryOwner, UmbraAddon.RepositoryName]) is null ? UmbraFailure.ReleaseRefused : UmbraFailure.None;
+            }).ConfigureAwait(false);
+        }
+
+        public Task<int> RemoveRepository() => owner.OnFramework(() =>
+        {
+            var ours = Entries(m).Where(entry => IsOurs(m, entry)).ToList();
+            foreach (var entry in ours)
+            {
+                m.RemoveEntry.Invoke(null, [entry]);
+            }
+
+            return ours.Count;
+        });
+
+        public async Task<UmbraFailure> Restart()
+        {
+            await Task.Delay(SaveSettle, owner.Token).ConfigureAwait(false);
+
+            // Looked at again in the same framework call that restarts: Umbra or the player may have gone during the wait.
+            var restart = await owner.OnFramework(() => Live(m) ? Started(m.Restart.Invoke(null, null)) : null).ConfigureAwait(false);
+            if (restart is null)
+            {
+                owner.log.Information("Umbra setup: Umbra went away before its restart; nothing was restarted");
+                return UmbraFailure.NotRunning;
+            }
+
+            owner.log.Information("Umbra setup: restarting Umbra's toolbar (Umbra's own Restart)");
+            owner.restarting = restart;
+            if (!await owner.Within(restart, RestartLimit).ConfigureAwait(false))
+            {
+                owner.log.Warning("Umbra setup: Umbra's restart is still running after {Seconds} s; nothing more is changed", RestartLimit.TotalSeconds);
+                return UmbraFailure.RestartTimedOut;
+            }
+
+            if (restart.IsFaulted || restart.IsCanceled)
+            {
+                return UmbraFailure.Unexpected;
+            }
+
+            // Umbra's start catches its own errors (CrashLogger.Guard): it is back only if its services answer again.
+            return await owner.OnFramework(() => Live(m) ? UmbraFailure.None : UmbraFailure.Unexpected).ConfigureAwait(false);
+        }
+
+        public Task<bool> PlaceWidget(string widgetId) => owner.OnFramework(() =>
+        {
+            var manager = WidgetManager(m);
+
+            // Umbra's CreateWidget shows its crash window for a widget it doesn't know: only ever asked for a known one.
+            if (m.GetWidgetInfo.Invoke(manager, [UmbraAddon.WidgetId]) is null)
+            {
+                return false;
+            }
+
+            m.CreateWidget.Invoke(manager, [UmbraAddon.WidgetId, UmbraAddon.WidgetPanel, null, widgetId, null, true]);
+            return Instances(m, manager).Any(widget => string.Equals(IdOf(m, widget), widgetId, StringComparison.Ordinal));
+        });
+
+        public Task<bool> RemoveWidget(string widgetId) => owner.OnFramework(() =>
+        {
+            var manager = WidgetManager(m);
+            if (!Instances(m, manager).Any(widget => string.Equals(IdOf(m, widget), widgetId, StringComparison.Ordinal)))
+            {
+                return false;
+            }
+
+            m.RemoveWidget.Invoke(manager, [widgetId, true]);
+            return true;
+        });
     }
-
-    public Task<int> RemoveRepository() => OnFramework(() =>
-    {
-        var m = Require();
-        var ours = Entries(m).Where(entry => IsOurs(m, entry)).ToList();
-        foreach (var entry in ours)
-        {
-            m.RemoveEntry.Invoke(null, [entry]);
-        }
-
-        return ours.Count;
-    });
-
-    public async Task<UmbraFailure> Restart()
-    {
-        var m = Require();
-        await Task.Delay(SaveSettle).ConfigureAwait(false);
-        CheckLive();
-        log.Information("Umbra setup: restarting Umbra's toolbar (Umbra's own Restart)");
-        var restart = await OnFramework(() => Started(m.Restart.Invoke(null, null))).ConfigureAwait(false);
-        if (!await Within(restart, RestartLimit).ConfigureAwait(false))
-        {
-            return UmbraFailure.TimedOut;
-        }
-
-        if (restart.IsFaulted || restart.IsCanceled)
-        {
-            return UmbraFailure.Unexpected;
-        }
-
-        // Umbra's start catches its own errors (CrashLogger.Guard): it is back only if its services answer again.
-        return await OnFramework(() => Live(m) ? UmbraFailure.None : UmbraFailure.Unexpected).ConfigureAwait(false);
-    }
-
-    public Task<string?> PlaceWidget() => OnFramework(() =>
-    {
-        var m = Require();
-        var manager = WidgetManager(m);
-
-        // Umbra's CreateWidget shows its crash window for a widget it doesn't know: only ever asked for a known one.
-        if (m.GetWidgetInfo.Invoke(manager, [UmbraAddon.WidgetId]) is null)
-        {
-            return null;
-        }
-
-        var id = Guid.NewGuid().ToString();
-        m.CreateWidget.Invoke(manager, [UmbraAddon.WidgetId, UmbraAddon.WidgetPanel, null, id, null, true]);
-        return Instances(m, manager).Any(widget => string.Equals(IdOf(m, widget), id, StringComparison.Ordinal)) ? id : (string?)null;
-    });
-
-    public Task<bool> RemoveWidget(string widgetId) => OnFramework(() =>
-    {
-        var m = Require();
-        var manager = WidgetManager(m);
-        if (!Instances(m, manager).Any(widget => string.Equals(IdOf(m, widget), widgetId, StringComparison.Ordinal)))
-        {
-            return false;
-        }
-
-        m.RemoveWidget.Invoke(manager, [widgetId, true]);
-        return true;
-    });
 
     // ------------------------------------------------------------------ finding Umbra
 
@@ -280,6 +308,7 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
         if (live.Count > 1)
         {
             log.Warning("Umbra setup: {Count} live copies of Umbra found; nothing was changed", live.Count);
+            return (null, UmbraFailure.SeveralUmbras);
         }
 
         return (null, unknown ? UmbraFailure.UnknownUmbra : UmbraFailure.NotRunning);
@@ -290,7 +319,7 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
     {
         try
         {
-            if (m.DalamudPlugin.GetValue(null) is not IDalamudPluginInterface plugin || !string.Equals(plugin.InternalName, Core.Umbra.UmbraSettings.InternalName, StringComparison.Ordinal))
+            if (m.DalamudPlugin.GetValue(null) is not IDalamudPluginInterface plugin || !string.Equals(plugin.InternalName, UmbraSettings.InternalName, StringComparison.Ordinal))
             {
                 return false;
             }
@@ -304,13 +333,14 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
         }
     }
 
-    private Members Require()
+    private CancellationToken Token
     {
-        CheckLive();
-        return members ?? throw new InvalidOperationException("Umbra was not prepared");
+        get
+        {
+            ObjectDisposedException.ThrowIf(disposed, this);
+            return lifetime.Token;
+        }
     }
-
-    private void CheckLive() => ObjectDisposedException.ThrowIf(disposed, this);
 
     private static object WidgetManager(Members m) =>
         m.Service.Invoke(null, [m.WidgetManagerType]) ?? throw new InvalidOperationException("Umbra's toolbar is not running");
@@ -334,12 +364,20 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
 
     private static object? ResultOf(Task task) => task.GetType().GetProperty("Result")?.GetValue(task);
 
-    private static async Task<bool> Within(Task task, TimeSpan limit) =>
-        await Task.WhenAny(task, Task.Delay(limit)).ConfigureAwait(false) == task;
+    /// <summary>Whether <paramref name="task"/> ends within <paramref name="limit"/>; the timer is cancelled either way, and on unload.</summary>
+    private async Task<bool> Within(Task task, TimeSpan limit)
+    {
+        using var timer = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        var delay = Task.Delay(limit, timer.Token);
+        var first = await Task.WhenAny(task, delay).ConfigureAwait(false);
+        await timer.CancelAsync().ConfigureAwait(false);
+        ObjectDisposedException.ThrowIf(disposed, this);
+        return first == task;
+    }
 
     private Task<T> OnFramework<T>(Func<T> work)
     {
-        CheckLive();
+        ObjectDisposedException.ThrowIf(disposed, this);
         return framework.RunOnFrameworkThread(work);
     }
 
@@ -347,10 +385,12 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
     private sealed record Members(
         Version? Version,
         PropertyInfo DalamudPlugin,
+        PropertyInfo LocalCharacterId,
         MethodInfo Restart,
         MethodInfo Service,
         MethodInfo ConfigSet,
         MethodInfo ConfigGet,
+        MethodInfo ActiveProfile,
         PropertyInfo CustomPluginsEnabled,
         MethodInfo FindEntry,
         PropertyInfo Entries,
@@ -394,10 +434,12 @@ public sealed class UmbraControl : IUmbraControl, IDisposable
             return new Members(
                 umbra.GetName().Version,
                 Property(framework, "DalamudPlugin", typeof(IDalamudPluginInterface)),
+                Property(framework, "LocalCharacterId", typeof(ulong)),
                 Method(framework, "Restart", [], typeof(Task)),
                 Generic(framework, "Service", [typeof(Type)]),
                 Method(config, "Set", [typeof(string), typeof(object), typeof(bool)], typeof(void)),
                 Generic(config, "Get", [typeof(string)]),
+                Method(config, "GetActiveProfileName", [], typeof(string)),
                 Property(pluginManager, "CustomPluginsEnabled", typeof(bool)),
                 Method(repository, "FindEntryFromRepository", [typeof(string), typeof(string)], entry),
                 Property(repository, "Entries", entries),

@@ -4,15 +4,21 @@ namespace Tsukimichi.Tests.Umbra;
 
 /// <summary>
 /// "Add to Umbra" and "Remove from Umbra" (<see cref="UmbraSetupRunner"/>) against a fake Umbra: only what is missing
-/// changes, every change is recorded as it is made, any failed step puts back that run's changes (and only those), and
-/// Remove reverses only Tsukimichi's own changes.
+/// changes, every change is recorded as it is made (also one a throwing step made), any failed step puts back that run's
+/// changes (its own switch included), a restart that timed out changes nothing more, and Remove reverses only
+/// Tsukimichi's own changes, on its own Umbra profile only.
 /// </summary>
 public sealed class UmbraSetupRunnerTests
 {
+    private static UmbraSetupBook Book(params UmbraSetupRecord[] records) => records.Aggregate(UmbraSetupBook.Empty, (book, record) => book.With(record));
+
+    private static UmbraSetupRecord On(string profile, bool turnedOn, bool added, params string[] widgets) =>
+        new UmbraSetupRecord(turnedOn, added, widgets) { Profile = profile };
+
     [Fact]
     public async Task From_nothing_it_turns_on_adds_restarts_and_places_and_records_each_change()
     {
-        var umbra = new FakeUmbra();
+        var umbra = new FakeUmbra { Profile = "Main", CharacterId = 42 };
         var records = new List<UmbraSetupRecord>();
         var steps = new List<UmbraSetupStep>();
 
@@ -25,15 +31,27 @@ public sealed class UmbraSetupRunnerTests
         Assert.True(umbra.AddonLoaded);
         Assert.Single(umbra.Widgets);
 
-        // Recorded the moment each change was made, so a crash mid-run still leaves something to undo.
+        // Recorded the moment each change was made, for the profile and character it was made on.
         Assert.Equal(3, records.Count);
         Assert.True(records[0].TurnedOnCustomPlugins);
         Assert.False(records[0].AddedRepository);
         Assert.True(records[1].AddedRepository);
         Assert.Equal([umbra.Widgets[0].Id], records[2].WidgetIds);
+        Assert.All(records, r => Assert.Equal("Main", r.Profile));
+        Assert.All(records, r => Assert.Equal(42UL, r.CharacterId));
         Assert.True(result.Left.TurnedOnCustomPlugins);
         Assert.True(result.Left.AddedRepository);
         Assert.Equal(records[2].WidgetIds, result.Left.WidgetIds);
+    }
+
+    [Fact]
+    public async Task Turning_on_records_the_addons_umbra_lists_then()
+    {
+        var umbra = new FakeUmbra { DormantAddons = 2 };
+        var result = await UmbraSetupRunner.Add(umbra, _ => { }, _ => { }, _ => { });
+
+        Assert.Equal(UmbraFailure.None, result.Failure);
+        Assert.Equal(2, result.Left.OtherAddonsAtTurnOn);
     }
 
     [Fact]
@@ -85,12 +103,13 @@ public sealed class UmbraSetupRunnerTests
 
         Assert.Equal(UmbraFailure.None, result.Failure);
         Assert.True(result.Left.IsEmpty);
-        Assert.Equal(["Prepare", "Look"], umbra.Calls);
+        Assert.Equal(["Open", "Look"], umbra.Calls);
     }
 
     [Theory]
     [InlineData(UmbraFailure.NotRunning)]
     [InlineData(UmbraFailure.UnknownUmbra)]
+    [InlineData(UmbraFailure.SeveralUmbras)]
     public async Task An_umbra_that_cannot_be_driven_is_never_changed(UmbraFailure failure)
     {
         var umbra = new FakeUmbra { PrepareResult = failure };
@@ -98,13 +117,13 @@ public sealed class UmbraSetupRunnerTests
 
         Assert.Equal(failure, result.Failure);
         Assert.True(result.PutBack);
-        Assert.Equal(["Prepare"], umbra.Calls);
+        Assert.Equal(["Open"], umbra.Calls);
     }
 
     [Fact]
-    public async Task Prepare_throwing_is_an_unknown_umbra_and_changes_nothing()
+    public async Task Open_throwing_is_an_unknown_umbra_and_changes_nothing()
     {
-        var umbra = new FakeUmbra { ThrowOn = "Prepare" };
+        var umbra = new FakeUmbra { ThrowOn = "Open" };
         var result = await UmbraSetupRunner.Add(umbra, _ => { }, _ => { }, _ => { });
 
         Assert.Equal(UmbraFailure.UnknownUmbra, result.Failure);
@@ -129,6 +148,20 @@ public sealed class UmbraSetupRunnerTests
         Assert.False(umbra.Listed);
         Assert.Contains(UmbraUndoStep.TurnOffCustomPlugins, undo);
         Assert.True(records[^1].IsEmpty);
+    }
+
+    [Fact]
+    public async Task Putting_back_turns_custom_plugins_off_even_when_dormant_addons_loaded_with_them()
+    {
+        // The player once had add-ons and turned custom plugins off; turning them on loads those stored entries.
+        var umbra = new FakeUmbra { DormantAddons = 2, AddResult = UmbraFailure.ReleaseUnreachable };
+        var result = await UmbraSetupRunner.Add(umbra, _ => { }, _ => { }, _ => { });
+
+        Assert.Equal(UmbraFailure.ReleaseUnreachable, result.Failure);
+        Assert.True(result.PutBack);
+        Assert.False(result.KeptCustomPluginsOn);
+        Assert.False(umbra.CustomPluginsOn);
+        Assert.Equal(UmbraSetupOutcome.Failed, UmbraAddonSetup.OutcomeOf(result.Failure, result.PutBack, UmbraHelloWait.Waiting));
     }
 
     [Fact]
@@ -183,6 +216,41 @@ public sealed class UmbraSetupRunnerTests
         Assert.Equal(1, umbra.OtherAddons);
     }
 
+    [Theory]
+    [InlineData("SetCustomPlugins(True)")]
+    [InlineData("AddRepository")]
+    [InlineData("PlaceWidget")]
+    public async Task A_step_that_throws_after_changing_umbra_is_recorded_and_put_back(string step)
+    {
+        var umbra = new FakeUmbra { ThrowAfter = step };
+        var records = new List<UmbraSetupRecord>();
+
+        var result = await UmbraSetupRunner.Add(umbra, _ => { }, _ => { }, records.Add);
+
+        Assert.Equal(UmbraFailure.Unexpected, result.Failure);
+        Assert.True(result.PutBack);
+        Assert.False(umbra.CustomPluginsOn);
+        Assert.False(umbra.Listed);
+        Assert.Empty(umbra.Widgets);
+
+        // The change the throwing step made was recorded before it was put back.
+        var salvaged = records.First(r => !r.IsEmpty);
+        switch (step)
+        {
+            case "SetCustomPlugins(True)":
+                Assert.True(salvaged.TurnedOnCustomPlugins);
+                break;
+            case "AddRepository":
+                Assert.Contains(records, r => r.AddedRepository);
+                break;
+            default:
+                Assert.Contains(records, r => r.WidgetIds.Count == 1);
+                break;
+        }
+
+        Assert.True(records[^1].IsEmpty);
+    }
+
     [Fact]
     public async Task When_putting_back_fails_too_what_is_left_stays_recorded()
     {
@@ -198,6 +266,24 @@ public sealed class UmbraSetupRunnerTests
     }
 
     [Fact]
+    public async Task A_restart_that_times_out_changes_nothing_more_and_keeps_the_record()
+    {
+        var umbra = new FakeUmbra { RestartResult = UmbraFailure.RestartTimedOut };
+        var undo = new List<UmbraUndoStep>();
+        var result = await UmbraSetupRunner.Add(umbra, _ => { }, undo.Add, _ => { });
+
+        Assert.Equal(UmbraFailure.RestartTimedOut, result.Failure);
+        Assert.Empty(undo);
+        Assert.False(result.PutBack);
+        Assert.True(result.Left.TurnedOnCustomPlugins);
+        Assert.True(result.Left.AddedRepository);
+        Assert.True(umbra.CustomPluginsOn);
+        Assert.True(umbra.Listed);
+        Assert.Single(umbra.Calls, "Restart");
+        Assert.Equal(UmbraSetupOutcome.FailedPartly, UmbraAddonSetup.OutcomeOf(result.Failure, result.PutBack, UmbraHelloWait.Waiting));
+    }
+
+    [Fact]
     public async Task Remove_reverses_only_tsukimichis_own_changes()
     {
         // The player: custom plugins on, another add-on, and their own Tsukimichi widget. Tsukimichi: the repository and one widget.
@@ -206,7 +292,7 @@ public sealed class UmbraSetupRunnerTests
         umbra.Widgets.Add(("ours", UmbraAddon.WidgetId));
         var records = new List<UmbraSetupRecord>();
 
-        var result = await UmbraSetupRunner.Remove(umbra, new UmbraSetupRecord(false, true, ["ours"]), _ => { }, records.Add);
+        var result = await UmbraSetupRunner.Remove(umbra, Book(On(umbra.Profile, false, true, "ours")), _ => { }, records.Add);
 
         Assert.Equal(UmbraFailure.None, result.Failure);
         Assert.True(result.PutBack);
@@ -218,21 +304,24 @@ public sealed class UmbraSetupRunnerTests
     }
 
     [Fact]
-    public async Task Remove_turns_custom_plugins_off_only_when_tsukimichi_turned_them_on_and_nothing_else_uses_them()
+    public async Task Remove_turns_custom_plugins_off_unless_the_player_added_addons_since()
     {
-        var alone = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true };
-        var result = await UmbraSetupRunner.Remove(alone, new UmbraSetupRecord(true, true, []), _ => { }, _ => { });
-        Assert.False(alone.CustomPluginsOn);
+        // Two add-ons loaded when Tsukimichi turned custom plugins on: still two, so they go back off.
+        var same = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true, OtherAddons = 2 };
+        var result = await UmbraSetupRunner.Remove(same, Book(On(same.Profile, true, true) with { OtherAddonsAtTurnOn = 2 }), _ => { }, _ => { });
+        Assert.False(same.CustomPluginsOn);
         Assert.False(result.KeptCustomPluginsOn);
 
-        var shared = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true, OtherAddons = 2 };
-        result = await UmbraSetupRunner.Remove(shared, new UmbraSetupRecord(true, true, []), _ => { }, _ => { });
-        Assert.True(shared.CustomPluginsOn);
+        // A third since: they stay on for it.
+        var grown = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true, OtherAddons = 3 };
+        result = await UmbraSetupRunner.Remove(grown, Book(On(grown.Profile, true, true) with { OtherAddonsAtTurnOn = 2 }), _ => { }, _ => { });
+        Assert.True(grown.CustomPluginsOn);
         Assert.True(result.KeptCustomPluginsOn);
         Assert.True(result.Left.IsEmpty);
 
+        // The player's own switch is never touched.
         var players = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true };
-        await UmbraSetupRunner.Remove(players, new UmbraSetupRecord(false, false, []), _ => { }, _ => { });
+        await UmbraSetupRunner.Remove(players, Book(On(players.Profile, false, false, "gone")), _ => { }, _ => { });
         Assert.True(players.CustomPluginsOn);
         Assert.True(players.Listed);
     }
@@ -241,7 +330,7 @@ public sealed class UmbraSetupRunnerTests
     public async Task Remove_of_a_widget_already_gone_still_clears_the_record()
     {
         var umbra = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true };
-        var result = await UmbraSetupRunner.Remove(umbra, new UmbraSetupRecord(false, false, ["gone"]), _ => { }, _ => { });
+        var result = await UmbraSetupRunner.Remove(umbra, Book(On(umbra.Profile, false, false, "gone")), _ => { }, _ => { });
 
         Assert.Equal(UmbraFailure.None, result.Failure);
         Assert.True(result.Left.IsEmpty);
@@ -253,169 +342,60 @@ public sealed class UmbraSetupRunnerTests
     {
         var widgetOnly = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true };
         widgetOnly.Widgets.Add(("ours", UmbraAddon.WidgetId));
-        await UmbraSetupRunner.Remove(widgetOnly, new UmbraSetupRecord(false, false, ["ours"]), _ => { }, _ => { });
+        await UmbraSetupRunner.Remove(widgetOnly, Book(On(widgetOnly.Profile, false, false, "ours")), _ => { }, _ => { });
         Assert.DoesNotContain("Restart", widgetOnly.Calls);
 
         var repository = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true };
-        await UmbraSetupRunner.Remove(repository, new UmbraSetupRecord(false, true, []), _ => { }, _ => { });
+        await UmbraSetupRunner.Remove(repository, Book(On(repository.Profile, false, true)), _ => { }, _ => { });
         Assert.Contains("Restart", repository.Calls);
         Assert.False(repository.AddonLoaded);
     }
 
     [Fact]
-    public async Task Remove_on_an_umbra_that_cannot_be_driven_keeps_the_record()
+    public async Task Remove_on_another_umbra_profile_changes_nothing()
+    {
+        // Tsukimichi's changes were made on profile "Main"; this character's Umbra runs "Alt", where the player has
+        // the repository listed and custom plugins on themselves.
+        var umbra = new FakeUmbra { Profile = "Alt", CustomPluginsOn = true, Listed = true, AddonLoaded = true };
+        var book = Book(On("Main", true, true, "ours"));
+        var records = new List<UmbraSetupRecord>();
+
+        var result = await UmbraSetupRunner.Remove(umbra, book, _ => { }, records.Add);
+
+        Assert.Equal(UmbraFailure.OtherProfile, result.Failure);
+        Assert.Empty(records);
+        Assert.True(umbra.CustomPluginsOn);
+        Assert.True(umbra.Listed);
+        Assert.Equal(["Open", "Look"], umbra.Calls);
+
+        // On "Main" it undoes them.
+        umbra.Profile = "Main";
+        result = await UmbraSetupRunner.Remove(umbra, book, _ => { }, records.Add);
+        Assert.Equal(UmbraFailure.None, result.Failure);
+        Assert.False(umbra.Listed);
+        Assert.All(records, r => Assert.Equal("Main", r.Profile));
+    }
+
+    [Fact]
+    public async Task Remove_on_an_umbra_that_cannot_be_driven_keeps_the_book()
     {
         var umbra = new FakeUmbra { PrepareResult = UmbraFailure.UnknownUmbra };
-        var record = new UmbraSetupRecord(true, true, ["ours"]);
-        var result = await UmbraSetupRunner.Remove(umbra, record, _ => { }, _ => { });
+        var records = new List<UmbraSetupRecord>();
+        var result = await UmbraSetupRunner.Remove(umbra, Book(On(umbra.Profile, true, true, "ours")), _ => { }, records.Add);
 
         Assert.Equal(UmbraFailure.UnknownUmbra, result.Failure);
-        Assert.Same(record, result.Left);
+        Assert.Empty(records);
     }
 
     [Fact]
     public async Task A_failed_restart_after_removing_still_clears_the_saved_changes()
     {
         // The changes are saved in Umbra by then; Umbra applies them when it next starts.
-        var umbra = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true, RestartResult = UmbraFailure.TimedOut };
-        var result = await UmbraSetupRunner.Remove(umbra, new UmbraSetupRecord(false, true, []), _ => { }, _ => { });
+        var umbra = new FakeUmbra { CustomPluginsOn = true, Listed = true, AddonLoaded = true, RestartResult = UmbraFailure.RestartTimedOut };
+        var result = await UmbraSetupRunner.Remove(umbra, Book(On(umbra.Profile, false, true)), _ => { }, _ => { });
 
-        Assert.Equal(UmbraFailure.TimedOut, result.Failure);
+        Assert.Equal(UmbraFailure.RestartTimedOut, result.Failure);
         Assert.True(result.Left.IsEmpty);
         Assert.False(umbra.Listed);
-    }
-
-    /// <summary>
-    /// Umbra as the runner sees it: custom plugins, the add-on's repository entry, whether the add-on is loaded (only a
-    /// restart loads or unloads it, as Umbra's own), and the widgets on the active toolbar profile, which Umbra shows
-    /// only while the add-on is loaded.
-    /// </summary>
-    private sealed class FakeUmbra : IUmbraControl
-    {
-        private int next;
-        private bool undoing;
-
-        public bool CustomPluginsOn { get; set; }
-
-        public bool Listed { get; set; }
-
-        public bool AddonLoaded { get; set; }
-
-        public int OtherAddons { get; set; }
-
-        public List<(string Id, string Widget)> Widgets { get; } = [];
-
-        public UmbraFailure PrepareResult { get; init; }
-
-        public UmbraFailure AddResult { get; init; }
-
-        public bool AddListsAnyway { get; init; }
-
-        public UmbraFailure RestartResult { get; init; }
-
-        public bool RestartLoads { get; init; } = true;
-
-        public bool PlaceFails { get; init; }
-
-        /// <summary>A call that throws while adding.</summary>
-        public string? ThrowOn { get; init; }
-
-        /// <summary>A call that throws while putting back.</summary>
-        public string? ThrowOnUndo { get; init; }
-
-        public List<string> Calls { get; } = [];
-
-        public Task<UmbraFailure> Prepare()
-        {
-            Call("Prepare");
-            return Task.FromResult(PrepareResult);
-        }
-
-        public Task<UmbraLook> Look()
-        {
-            if (Calls.Count == 0 || Calls[^1] != "Look")
-            {
-                Calls.Add("Look");
-            }
-
-            var placed = AddonLoaded && Widgets.Any(w => w.Widget == UmbraAddon.WidgetId);
-            return Task.FromResult(new UmbraLook(CustomPluginsOn, Listed, AddonLoaded, placed, OtherAddons));
-        }
-
-        public Task SetCustomPlugins(bool on)
-        {
-            if (!on)
-            {
-                undoing = true;
-            }
-
-            Call($"SetCustomPlugins({on})");
-            CustomPluginsOn = on;
-            return Task.CompletedTask;
-        }
-
-        public Task<UmbraFailure> AddRepository()
-        {
-            Call("AddRepository");
-            if (AddResult != UmbraFailure.None)
-            {
-                Listed = AddListsAnyway;
-                return Task.FromResult(AddResult);
-            }
-
-            Listed = true;
-            return Task.FromResult(UmbraFailure.None);
-        }
-
-        public Task<int> RemoveRepository()
-        {
-            undoing = true;
-            Call("RemoveRepository");
-            var was = Listed;
-            Listed = false;
-            return Task.FromResult(was ? 1 : 0);
-        }
-
-        public Task<UmbraFailure> Restart()
-        {
-            Call("Restart");
-            if (RestartResult != UmbraFailure.None)
-            {
-                return Task.FromResult(RestartResult);
-            }
-
-            AddonLoaded = Listed && CustomPluginsOn && RestartLoads;
-            return Task.FromResult(UmbraFailure.None);
-        }
-
-        public Task<string?> PlaceWidget()
-        {
-            Call("PlaceWidget");
-            if (PlaceFails || !AddonLoaded)
-            {
-                return Task.FromResult<string?>(null);
-            }
-
-            var id = $"w{next++}";
-            Widgets.Add((id, UmbraAddon.WidgetId));
-            return Task.FromResult<string?>(id);
-        }
-
-        public Task<bool> RemoveWidget(string widgetId)
-        {
-            undoing = true;
-            Call("RemoveWidget");
-            return Task.FromResult(Widgets.RemoveAll(w => w.Id == widgetId) > 0);
-        }
-
-        private void Call(string name)
-        {
-            Calls.Add(name);
-            var throwing = undoing ? ThrowOnUndo : ThrowOn;
-            if (throwing is not null && name.StartsWith(throwing, StringComparison.Ordinal))
-            {
-                throw new InvalidOperationException($"Umbra threw in {name}");
-            }
-        }
     }
 }

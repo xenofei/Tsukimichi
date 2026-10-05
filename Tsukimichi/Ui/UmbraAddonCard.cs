@@ -137,7 +137,9 @@ public sealed class UmbraAddonCard : Window
     /// <summary>Settings › About › Umbra's "Add to Umbra…": the card opens on its confirmation, whether or not it was answered.</summary>
     public void ShowConfirm()
     {
-        page = setup.Busy ? Page.Progress : Page.Confirm;
+        // An add that runs shows its progress; otherwise (nothing runs, or a Remove runs) the confirmation, whose
+        // Agree and add stays off while anything runs.
+        page = setup.View.Activity is UmbraSetupActivity.Adding or UmbraSetupActivity.PuttingBack or UmbraSetupActivity.Waiting ? Page.Progress : Page.Confirm;
         howReturn = Page.Confirm;
         if (page == Page.Confirm)
         {
@@ -228,10 +230,18 @@ public sealed class UmbraAddonCard : Window
         drawnFrame = ImGui.GetFrameCount();
         var state = setup.View;
 
-        // The run ended (here or from Settings): its outcome replaces the progress.
-        if (page == Page.Progress && state.Activity == UmbraSetupActivity.Idle && state.Outcome is not null)
+        // Progress never outlives the run: its outcome replaces it, or, with none (a Remove ran instead), the confirmation.
+        if (page == Page.Progress && state.Activity == UmbraSetupActivity.Idle)
         {
-            page = Page.Result;
+            if (state.Outcome is not null)
+            {
+                page = Page.Result;
+            }
+            else
+            {
+                page = Page.Confirm;
+                setup.RefreshPreview();
+            }
         }
 
         UiMetrics.ApplyFontScale();
@@ -382,7 +392,11 @@ public sealed class UmbraAddonCard : Window
             default:
                 into.Add(new Line(Strings.UmbraSetupFailedTitle, Kind.Title));
                 into.Add(new Line(Strings.UmbraSetupReason(tallest ? reason : state.Failure), Kind.Body));
-                into.Add(new Line(outcome == UmbraSetupOutcome.Failed ? Strings.UmbraSetupPutBack : Strings.UmbraSetupNotPutBack, Kind.Secondary));
+                into.Add(new Line(
+                    outcome == UmbraSetupOutcome.FailedPartly ? Strings.UmbraSetupNotPutBack
+                    : !tallest && state.KeptCustomPluginsOn ? Strings.UmbraSetupPutBackKeptOn
+                    : Strings.UmbraSetupPutBack,
+                    Kind.Secondary));
                 break;
         }
 
@@ -743,7 +757,7 @@ public sealed class UmbraAddonCard : Window
             return;
         }
 
-        var ready = preview.Ready && !setup.Busy;
+        var ready = preview.Ready && !setup.Busy && setup.CanChangeNow;
         var agree = Chrome.ActionPill("##umbraCardAgree", FontAwesomeIcon.Check.ToIconString(), Strings.UmbraSetupAgree, PillTone.Primary, ready, null, PillLayout.Frame);
         ImGui.SameLine();
         BackButton();

@@ -15776,7 +15776,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Umbra add-on confirmation when there is nothing to change.</comment>
   </data>
   <data name="UmbraSetup.Agreement" xml:space="preserve">
-    <value>Your click on Agree and add is your agreement. Remove from Umbra, in Settings › About › Umbra, undoes all of it.</value>
+    <value>Your click on Agree and add is your agreement. Remove from Umbra, in Settings › About › Umbra, undoes these changes on this Umbra profile; custom plugins stay on only if you've added another add-on since.</value>
     <comment>Umbra add-on confirmation caption.</comment>
   </data>
   <data name="UmbraSetup.Agree" xml:space="preserve">
@@ -15852,7 +15852,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Umbra add-on failure: the run's changes were undone.</comment>
   </data>
   <data name="UmbraSetup.NotPutBack" xml:space="preserve">
-    <value>Some changes may still be in Umbra. Remove from Umbra, in Settings › About › Umbra, undoes them.</value>
+    <value>Some changes may still be in Umbra. Once Umbra is back, Remove from Umbra in Settings › About › Umbra undoes them on this Umbra profile.</value>
     <comment>Umbra add-on failure: undoing failed too.</comment>
   </data>
   <data name="UmbraSetup.TryAgain" xml:space="preserve">
@@ -15872,7 +15872,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Copies xenofei/Tsukimichi.Umbra.</comment>
   </data>
   <data name="UmbraSetup.Reason.NotRunning" xml:space="preserve">
-    <value>Umbra isn't running right now. It starts after you log in.</value>
+    <value>Umbra isn't running right now, or is still restarting. It starts after you log in; try again in a moment.</value>
     <comment>Umbra add-on failure reason.</comment>
   </data>
   <data name="UmbraSetup.Reason.UnknownUmbra" xml:space="preserve">
@@ -15924,7 +15924,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Settings › About › Umbra row: the undo.</comment>
   </data>
   <data name="UmbraSetup.SettingsRemoveHint" xml:space="preserve">
-    <value>Undoes only what Tsukimichi changed in Umbra.</value>
+    <value>Undoes only what Tsukimichi changed in Umbra, on this character's Umbra profile.</value>
     <comment>Settings › About › Umbra row hint.</comment>
   </data>
   <data name="UmbraSetup.SettingsRemoveButton" xml:space="preserve">
@@ -15940,7 +15940,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Remove from Umbra confirmation line.</comment>
   </data>
   <data name="UmbraSetup.RemoveCustomPlugins" xml:space="preserve">
-    <value>Custom plugins turn off again, unless another add-on uses them.</value>
+    <value>Custom plugins turn off again, unless you've added another add-on since.</value>
     <comment>Remove from Umbra confirmation line.</comment>
   </data>
   <data name="UmbraSetup.RemoveConfirm" xml:space="preserve">
@@ -15960,11 +15960,35 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Remove from Umbra result.</comment>
   </data>
   <data name="UmbraSetup.RemovedKeptOn" xml:space="preserve">
-    <value>Removed. Custom plugins stay on because another add-on uses them.</value>
+    <value>Removed. Custom plugins stay on because you've added another add-on since.</value>
     <comment>Remove from Umbra result.</comment>
   </data>
   <data name="UmbraSetup.RemoveStoppedFormat" xml:space="preserve">
     <value>Remove stopped: {0}</value>
     <comment>Remove from Umbra failure. {0} = the reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.SeveralUmbras" xml:space="preserve">
+    <value>Two copies of Umbra seem to be loaded (Dalamud may still be reloading it), so nothing was changed. Try again in a moment.</value>
+    <comment>Umbra add-on failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.OtherProfile" xml:space="preserve">
+    <value>Tsukimichi's changes are on another Umbra profile, so nothing was changed here.</value>
+    <comment>Remove from Umbra failure reason.</comment>
+  </data>
+  <data name="UmbraSetup.Reason.RestartTimedOut" xml:space="preserve">
+    <value>Umbra's restart took too long, so Tsukimichi stopped there and changed nothing more.</value>
+    <comment>Umbra add-on failure reason: Umbra may still be starting.</comment>
+  </data>
+  <data name="UmbraSetup.OtherProfileFormat" xml:space="preserve">
+    <value>Tsukimichi's changes are on Umbra profile {0}, not this character's. Log in with a character that uses it to remove them; nothing changes here.</value>
+    <comment>Settings › About › Umbra, Remove from Umbra on another profile. {0} = Umbra profile name(s).</comment>
+  </data>
+  <data name="UmbraSetup.NotNowReason" xml:space="preserve">
+    <value>Available outside combat, duties and cutscenes.</value>
+    <comment>Settings › About › Umbra: why Add or Remove is off right now (it restarts Umbra's toolbar).</comment>
+  </data>
+  <data name="UmbraSetup.PutBackKeptOn" xml:space="preserve">
+    <value>Umbra is back as it was, except custom plugins stay on because you've added another add-on since.</value>
+    <comment>Umbra add-on failure: undone, but custom plugins stayed on.</comment>
   </data>
 </root>
