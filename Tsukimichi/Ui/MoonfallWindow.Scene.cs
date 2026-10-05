@@ -191,8 +191,8 @@ public sealed partial class MoonfallWindow
     }
 
     /// <summary>
-    /// The veil under each live round peg, at its place this frame (a mover's too), fading with the peg as it clears:
-    /// the scene recedes round the layout and nothing is left where a peg has gone (the bricks' veil is baked).
+    /// The veil under each live piece, at its place this frame (a mover's too), fading with the piece as it clears: the
+    /// scene recedes round the layout and nothing is left where a peg or a brick has gone.
     /// </summary>
     private void RichVeil(in ArtPen p, MoonfallSceneTextures<IDalamudTextureWrap> scene, MoonfallGame g, double alpha)
     {
@@ -204,13 +204,11 @@ public sealed partial class MoonfallWindow
 
         var v = p.View;
         var quick = UiMetrics.ReduceMotion || Theme.Flair == Flair.Plain;
+        Span<Vector2> spots = stackalloc Vector2[64];
+        var brickAlpha = MoonfallVeil.BrickAlpha(k);
         for (var i = 0; i < g.PegCount; i++)
         {
             var peg = g.Peg(i, alpha);
-            if (peg.Shape != PegShape.Round)
-            {
-                continue;
-            }
 
             var fade = 1f;
             if (peg.Cleared)
@@ -223,6 +221,20 @@ public sealed partial class MoonfallWindow
                 }
 
                 fade = 1f - (float)(age / span);
+            }
+
+            if (peg.Shape != PegShape.Round)
+            {
+                // A brick: a row of the sprites along its middle line.
+                var n = MoonfallVeil.BrickSpots(peg.Shape, (float)peg.X, (float)peg.Y, (float)peg.X2, (float)peg.Y2, (float)peg.Radius, (float)peg.StartRadians, (float)peg.SweepRadians, spots);
+                var brickReach = (float)(MoonfallRules.PegRadius * MoonfallVeil.Reach);
+                var tint = Ink(Vector3.Zero, brickAlpha * fade);
+                for (var j = 0; j < n; j++)
+                {
+                    p.Dl.AddImage(veil.Handle, v.Map(spots[j].X - brickReach, spots[j].Y - brickReach), v.Map(spots[j].X + brickReach, spots[j].Y + brickReach), Vector2.Zero, Vector2.One, tint);
+                }
+
+                continue;
             }
 
             var reach = (float)(peg.Radius * MoonfallVeil.Reach);

@@ -154,12 +154,12 @@ public sealed partial class MoonfallWindow
         if (won && !last)
         {
             var split = x0 + ((x1 - x0) * 0.42);
-            if (PillButton(c, x0 + 37, by0, split - 6, by0 + bh, Strings.MoonfallPlayAgain, "##moonfallAgainRich", focus: false))
+            if (PillButton(c, x0 + 46, by0, split - 6, by0 + bh, Strings.MoonfallPlayAgain, "##moonfallAgainRich", focus: false))
             {
                 Go(RestartChoice);
             }
 
-            if (PillButton(c, split + 6, by0, x1 - 37, by0 + bh, Strings.MoonfallNextLevel, "##moonfallNextRich", focus: true))
+            if (PillButton(c, split + 6, by0, x1 - 46, by0 + bh, Strings.MoonfallNextLevel, "##moonfallNextRich", focus: true))
             {
                 Go(next);
             }

@@ -250,14 +250,8 @@ public static class MoonfallSceneBuilder
         }
 
         var backdrop = Backdrop(px, s, recipe.Chrome);
-        // The veil: baked round the bricks; each round peg carries its own as a sprite in play (MoonfallVeil), so it goes
-        // with the peg when it clears and moves with it on a mover's path.
-        var bricks = level.Pegs.Where(static p => p.Shape != PegShape.Round).ToList();
-        if (bricks.Count > 0)
-        {
-            MoonfallDress.Veil(ctx, px, recipe.Veil, MoonfallClearance.For(bricks).ToPlane(s));
-        }
-
+        // The veil is not baked: every piece carries its own as sprites drawn under it in play (MoonfallVeil), so it goes
+        // with the piece when it clears and moves with it on a mover's path.
         Lap("veil");
 
         var flickers = new List<MoonfallFlicker>();

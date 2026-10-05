@@ -44,10 +44,10 @@ The build runs in this order. Each step reads the result of the one before.
 8. **Small lights** (`lights`), **fireflies**, **stars**: each placed clear of every piece or dropped (a light keeps
    8 units plus 0.6 of its halo; a firefly 8 units plus its whole halo, round its whole wander; a star 10).
 9. **Check** (Debug builds and the tests): the fuller-board rules below, measured on the result.
-10. **Veil** (`veil`): the scene recedes behind and round the layout, so the pieces read. It is baked round the bricks
-    only; each round peg carries its own veil as a sprite drawn under it in play, at its place that frame (a mover's
-    too), fading with the peg as it clears. So nothing peg-shaped is ever baked into the scene, and a cleared peg leaves
-    no dark place behind.
+10. **Veil** (`veil`): the scene recedes behind and round the layout, so the pieces read. It is never baked:
+    each round peg carries its own veil as a sprite drawn under it in play, at its place that frame (a mover's too), and
+    each brick a row of the same sprites along its middle line, all fading with their piece as it clears. So nothing
+    piece-shaped is ever baked into the scene, and a cleared peg or brick leaves no dark place behind.
 11. **Layers**: the scene over the opening, the margins' blurred backdrop (with the rails' enamel), the beams, the open
     sky for Fever, the framing in front of the moon, the mist tiles.
 

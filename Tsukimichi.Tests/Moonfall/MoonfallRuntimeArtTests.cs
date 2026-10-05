@@ -297,6 +297,18 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
             VeilAt(y0, b.Board, 1f, (float)peg.X, (float)peg.Y, (float)peg.Radius, layers.VeilK);
         }
 
+        // The bricks' veil, as the window draws it: a row of sprites along each brick.
+        Span<Vector2> spots = stackalloc Vector2[64];
+        foreach (var brick in level.Pegs.Where(static p => p.Shape != PegShape.Round))
+        {
+            var n = MoonfallVeil.BrickSpots(brick.Shape, (float)brick.X, (float)brick.Y, (float)brick.X2, (float)brick.Y2, (float)brick.Radius,
+                (float)(brick.StartDegrees * Math.PI / 180), (float)(brick.SweepDegrees * Math.PI / 180), spots);
+            for (var j = 0; j < n; j++)
+            {
+                VeilAt(y0, b.Board, 1f, spots[j].X, spots[j].Y, (float)MoonfallRules.PegRadius, MoonfallVeil.BrickAlpha(layers.VeilK));
+            }
+        }
+
         return y0;
     }
 

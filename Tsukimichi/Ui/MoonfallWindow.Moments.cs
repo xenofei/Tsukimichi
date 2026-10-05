@@ -207,7 +207,7 @@ public sealed partial class MoonfallWindow
     /// with gilt rules above and below; the words in Jupiter, spaced. Units; <paramref name="plate"/> fades the ribbon only.
     /// </summary>
     private void Banner(in ChromePen c, double cx, double cy, string text, float size, string? sub, float subSize, Vector3 accent, float plate, float alpha,
-        bool laurel, double maxWidth, float tracking)
+        bool laurel, double maxWidth, float tracking, bool subIsNumber = false)
     {
         var v = c.View;
         var dl = c.Dl;
@@ -217,7 +217,8 @@ public sealed partial class MoonfallWindow
         var bandH = (size * 1.0) + (sub is not null ? subSize * 1.9 : 0);
         var by0 = cy - (size * 0.55);
         // The plate holds the title and the line under it (raised to the text floor in a small window, the line can be the wider).
-        var subPx = sub is not null ? NamePx(v, subSize, MoonfallFace.Axis) : 0f;
+        // The line under the title is a label (its floor 7 px caps) or a value (a number's floor, 8 px).
+        var subPx = sub is null ? 0f : subIsNumber ? NumberPx(v, subSize, MoonfallFace.Axis) : NamePx(v, subSize, MoonfallFace.Axis);
         var sw = sub is not null ? MeasureText(MoonfallFace.Axis, subPx, sub) / v.Size(1) : 0;
         var half = (Math.Max(tw, sw) / 2) + 26;
         if (plate > 0)
@@ -246,16 +247,27 @@ public sealed partial class MoonfallWindow
             var s = (size * 1.9) / l.H;
             const float Gap = 8;
             const float LeftW = 262, RightFrom = 380;
-            while (tw + (2 * Gap) + ((LeftW + (l.W - RightFrom)) * s) > maxWidth && s > 0.05)
+            // Each side within half of maxWidth (the halves differ in width), so neither tail crosses its neighbour.
+            var widest = MathF.Max(LeftW, l.W - RightFrom);
+            while (tw + (2 * Gap) + (2 * widest * s) > maxWidth && s > 0.05)
             {
                 s *= 0.95;
+            }
+
+            if (tw + (2 * Gap) + (2 * widest * s) > maxWidth)
+            {
+                // No room even for a small laurel: the plate alone.
+                s = 0;
             }
 
             var top = cy - (l.H * s * 0.52);
             // The ribbon's tails fade with the plate (Fever's plate settles to 35% so the lit pegs show through).
             var tint = Ink(Vector3.One, alpha * (plate > 0 ? MathF.Max(plate, 0.35f) : 1f));
-            Part(c, MoonfallChromePart.Laurel, cx - (tw / 2) - Gap - (LeftW * s), top, cx - (tw / 2) - Gap, top + (l.H * s), tint, u1: LeftW);
-            Part(c, MoonfallChromePart.Laurel, cx + (tw / 2) + Gap, top, cx + (tw / 2) + Gap + ((l.W - RightFrom) * s), top + (l.H * s), tint, u0: RightFrom);
+            if (s > 0)
+            {
+                Part(c, MoonfallChromePart.Laurel, cx - (tw / 2) - Gap - (LeftW * s), top, cx - (tw / 2) - Gap, top + (l.H * s), tint, u1: LeftW);
+                Part(c, MoonfallChromePart.Laurel, cx + (tw / 2) + Gap, top, cx + (tw / 2) + Gap + ((l.W - RightFrom) * s), top + (l.H * s), tint, u0: RightFrom);
+            }
         }
 
         DrawText(dl, MoonfallFace.Jupiter, px, v.Map(cx, cy), Anchor.Centre, Ink(GoldHiInk, alpha), text, Ink(MoonfallColor.Hex("#140A02"), alpha), v.Size(1.6), v.Size(tracking));
@@ -281,7 +293,7 @@ public sealed partial class MoonfallWindow
 
             var fade = age < StyleSeconds - 0.3 ? 1f : (float)((StyleSeconds - age) / 0.3);
             var accent = MoonfallColor.Hex("#FFB45E");
-            Banner(c, r.Centre.X, r.Centre.Y - (r.Value.Length > 0 ? 8 : 0), r.Title, 22f, r.Value.Length > 0 ? r.Value : null, 18f, accent, fade, fade, laurel: false, r.Size.X, 2f);
+            Banner(c, r.Centre.X, r.Centre.Y - (r.Value.Length > 0 ? 8 : 0), r.Title, 22f, r.Value.Length > 0 ? r.Value : null, 18f, accent, fade, fade, laurel: false, r.Size.X, 2f, subIsNumber: true);
         }
     }
 

@@ -32,18 +32,18 @@
     {
       "body": "#0A0610", "inner": "#2A1640", "rim": "#E8B880", "rimK": 0.35, "seed": 3,
       "shapes": [
-        { "kind": "rope", "from": [85, 46], "to": [300, 46], "sag": 22, "width": 1.4 },
-        { "kind": "rope", "from": [500, 46], "to": [715, 46], "sag": 22, "width": 1.4 }
+        { "kind": "rope", "from": [70, 42], "to": [300, 46], "sag": 24, "width": 1.4 },
+        { "kind": "rope", "from": [500, 46], "to": [730, 42], "sag": 24, "width": 1.4 }
       ]
     }
   ],
   "lights": [
-    { "x": 122, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
-    { "x": 192, "y": 73, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
-    { "x": 263, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
-    { "x": 537, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
-    { "x": 608, "y": 73, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
-    { "x": 678, "y": 63, "size": 1.1, "colour": "#FFB060", "core": 2.6, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true }
+    { "x": 109, "y": 61, "size": 1.25, "colour": "#FFB060", "core": 2.8, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 185, "y": 73, "size": 1.25, "colour": "#FFB060", "core": 2.8, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 261, "y": 64, "size": 1.25, "colour": "#FFB060", "core": 2.8, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 539, "y": 64, "size": 1.25, "colour": "#FFB060", "core": 2.8, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 615, "y": 73, "size": 1.25, "colour": "#FFB060", "core": 2.8, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true },
+    { "x": 691, "y": 61, "size": 1.25, "colour": "#FFB060", "core": 2.8, "k": 0.95, "halo": 9, "haloK": 0.32, "flicker": true }
   ],
   "veil": 0.40,
   "motion": {
