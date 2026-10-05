@@ -1,0 +1,109 @@
+{
+  // Moonfall's challenges (plan v9 G7): the starter twelve. Each kind follows the original's challenge types
+  // (docs/research/plan-v9/peg-mechanics.md §6 l.129-130): score targets with fewer balls, half-ball, 35 and 45 oranges,
+  // clearing every peg, multilevel runs and duels against the companions. The names and numbers are our own. A challenge
+  // whose levels are not authored yet shows as unavailable until they ship.
+  "format": "moonfall-challenges",
+  "version": 1,
+  "challenges": [
+    {
+      "id": "ch-01",
+      "name": "Seven Lanterns",
+      "text": "Score 150,000 with 7 balls.",
+      "kind": "score",
+      "levels": [ "base-03" ],
+      "target": 150000,
+      "balls": 7
+    },
+    {
+      "id": "ch-02",
+      "name": "Half the Light",
+      "text": "Win with half the balls: 5.",
+      "kind": "win",
+      "levels": [ "base-02" ],
+      "balls": 5
+    },
+    {
+      "id": "ch-03",
+      "name": "Thirty-Five Moons",
+      "text": "Win with 35 orange pegs.",
+      "kind": "win",
+      "levels": [ "base-04" ],
+      "oranges": 35
+    },
+    {
+      "id": "ch-04",
+      "name": "Forty-Five Moons",
+      "text": "Win with 45 orange pegs.",
+      "kind": "win",
+      "levels": [ "base-03" ],
+      "oranges": 45
+    },
+    {
+      "id": "ch-05",
+      "name": "Clear Skies",
+      "text": "Clear every peg before the last orange.",
+      "kind": "clearAll",
+      "levels": [ "base-01" ]
+    },
+    {
+      "id": "ch-06",
+      "name": "Not a Star Left",
+      "text": "Clear every peg of a Night Skyway board.",
+      "kind": "clearAll",
+      "levels": [ "base-13" ]
+    },
+    {
+      "id": "ch-07",
+      "name": "The Long Road",
+      "text": "Score 600,000 over three boards of stage 2.",
+      "kind": "score",
+      "levels": [ "base-06", "base-07", "base-08" ],
+      "target": 600000
+    },
+    {
+      "id": "ch-08",
+      "name": "Moonrise Run",
+      "text": "Win four boards in a row, one from each of stages 2 to 5.",
+      "kind": "win",
+      "levels": [ "base-10", "base-15", "base-20", "base-25" ]
+    },
+    {
+      "id": "ch-09",
+      "name": "Burning Bright",
+      "text": "Score 250,000 on a stage 9 board with Y'shtola and 7 balls.",
+      "kind": "score",
+      "levels": [ "base-43" ],
+      "target": 250000,
+      "balls": 7,
+      "companion": "yshtola"
+    },
+    {
+      "id": "ch-10",
+      "name": "A Duel at the Waking Sands",
+      "text": "Beat Minfilia (novice) in three duels.",
+      "kind": "duel",
+      "levels": [ "base-01", "base-02", "base-03" ],
+      "opponent": "minfilia",
+      "difficulty": "novice"
+    },
+    {
+      "id": "ch-11",
+      "name": "The Admiral's Wager",
+      "text": "Beat Merlwyb (adept) in three duels.",
+      "kind": "duel",
+      "levels": [ "base-21", "base-22", "base-23" ],
+      "opponent": "merlwyb",
+      "difficulty": "adept"
+    },
+    {
+      "id": "ch-12",
+      "name": "The Archon's Path",
+      "text": "Beat Louisoix (master) in three duels.",
+      "kind": "duel",
+      "levels": [ "base-46", "base-48", "base-50" ],
+      "opponent": "louisoix",
+      "difficulty": "master"
+    }
+  ]
+}

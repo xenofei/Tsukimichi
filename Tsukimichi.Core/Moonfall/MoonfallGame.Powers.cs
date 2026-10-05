@@ -54,7 +54,7 @@ public sealed partial class MoonfallGame
     // ---- What the window reads ----
 
     /// <summary>The power a green peg triggers on this level (the level's character's), or <see cref="MoonfallPower.None"/>.</summary>
-    public MoonfallPower Power { get; }
+    public MoonfallPower Power { get; private set; }
 
     /// <summary>
     /// The shots <paramref name="power"/> still acts in: counting this one while it acts in it, or the coming shot's
@@ -748,6 +748,19 @@ public sealed partial class MoonfallGame
     /// </summary>
     private long FlyCandidate(double angleDegrees, int budget, long launchTick)
     {
+        var used = FlyProbe(angleDegrees, budget, launchTick, out var caught);
+        LastPathSubSteps += used;
+        return (probe.Value * probe.Pegs) + (probe.Oranges * MoonfallRules.PathOrangeWeight) + (caught ? MoonfallRules.PathCatchWeight : 0);
+    }
+
+    /// <summary>
+    /// One flight off the live ball, leaving the barrel on the tick after <paramref name="launchTick"/>, recorded in
+    /// <see cref="probe"/> (what it touched still unlit: their value, count and oranges); <paramref name="caught"/> when
+    /// it lands in the bucket. It stops at <paramref name="budget"/> sub-steps, checked before each one, so it never
+    /// takes more, and returns the sub-steps it took. Changes nothing a player sees.
+    /// </summary>
+    private int FlyProbe(double angleDegrees, int budget, long launchTick, out bool caught)
+    {
         if (++stampId == int.MaxValue)
         {
             Array.Clear(stamp);
@@ -761,7 +774,7 @@ public sealed partial class MoonfallGame
         b.Vx = dirX * MoonfallRules.LaunchSpeed;
         b.Vy = dirY * MoonfallRules.LaunchSpeed;
         probe = new Probe { Recording = true, Peg = -1 };
-        var caught = false;
+        caught = false;
         var used = 0;
         try
         {
@@ -777,7 +790,7 @@ public sealed partial class MoonfallGame
                     // The budget is a hard cap: a tick's sub-steps never carry the flight past it.
                     if (used == budget)
                     {
-                        return Worth();
+                        return used;
                     }
 
                     used++;
@@ -789,26 +802,22 @@ public sealed partial class MoonfallGame
                     if (previousY < MoonfallRules.CatchLine && b.Y >= MoonfallRules.CatchLine && Math.Abs(b.X - bucketX) <= MouthHalf)
                     {
                         caught = true;
-                        return Worth();
+                        return used;
                     }
 
                     if (b.Y > MoonfallRules.FloorExit)
                     {
-                        return Worth();
+                        return used;
                     }
                 }
             }
 
-            return Worth();
+            return used;
         }
         finally
         {
-            LastPathSubSteps += used;
             probe.Recording = false;
         }
-
-        long Worth() =>
-            (probe.Value * probe.Pegs) + (probe.Oranges * MoonfallRules.PathOrangeWeight) + (caught ? MoonfallRules.PathCatchWeight : 0);
     }
 
     /// <summary>A flight off the live ball overlaps peg <paramref name="index"/>: noted, and counted once a flight while the path search records.</summary>
@@ -868,5 +877,6 @@ public sealed partial class MoonfallGame
         hash.Add(pathLaunchTick);
         hash.Add(greenQueued);
         AddStyleTo(ref hash);
+        AddDuelTo(ref hash);
     }
 }

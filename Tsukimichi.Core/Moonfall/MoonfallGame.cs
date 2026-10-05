@@ -103,6 +103,9 @@ public sealed partial class MoonfallGame
     private bool turnScored;
     private bool lostThisTurn;
 
+    /// <summary>How many oranges the level start picks (<see cref="MoonfallRules.OrangeCount"/>, or a challenge's).</summary>
+    private readonly int orangeTarget;
+
     private int lastOrange = -1;
     private int approachBall;
     private bool approach;
@@ -123,13 +126,27 @@ public sealed partial class MoonfallGame
     /// <param name="seed">Picks the oranges, greens and purples; the same seed gives the same board.</param>
     /// <param name="balls">Balls to start with (<see cref="MoonfallRules.BallsPerLevel"/>; a challenge may give fewer).</param>
     /// <param name="power">The power a green peg triggers (plan v9 G5): the level's character's (<see cref="MoonfallCharacters"/>); none by default.</param>
-    public MoonfallGame(MoonfallLevel level, int levelNumber, ulong seed, int balls = MoonfallRules.BallsPerLevel, MoonfallPower power = MoonfallPower.None)
+    /// <param name="ruleSet">
+    /// The rules: the standard game, or a duel's (plan v9 G7, <see cref="MoonfallRuleSet.Duel"/>): one green at a time,
+    /// the duel's smaller style and Fever values, no bonus for balls left, and each side's powers its own
+    /// (<see cref="HandOver"/>). A duel's sides are kept by <see cref="MoonfallDuel"/>.
+    /// </param>
+    /// <param name="oranges">
+    /// How many oranges to pick (<see cref="MoonfallRules.OrangeCount"/>; a challenge may ask for more, "45 Orange Pegs"
+    /// [R §6 l.129]), at most the pegs that may be orange. The meter stays at ×1 until 15 are left, so with more than
+    /// 25 it is "frozen until 25 remain" as the research says [R §3].
+    /// </param>
+    public MoonfallGame(MoonfallLevel level, int levelNumber, ulong seed, int balls = MoonfallRules.BallsPerLevel, MoonfallPower power = MoonfallPower.None, MoonfallRuleSet ruleSet = MoonfallRuleSet.Standard, int oranges = MoonfallRules.OrangeCount)
     {
         ArgumentNullException.ThrowIfNull(level);
         ArgumentOutOfRangeException.ThrowIfLessThan(levelNumber, 1);
         ArgumentOutOfRangeException.ThrowIfLessThan(balls, 1);
+        ArgumentOutOfRangeException.ThrowIfLessThan(oranges, 1);
         ArgumentOutOfRangeException.ThrowIfGreaterThan((int)power, MoonfallPowers.Count, nameof(power));
         Level = level;
+        RuleSet = ruleSet;
+        orangeTarget = oranges;
+        sidePowerShots = Duel ? new int[2 * (MoonfallPowers.Count + 1)] : [];
         LevelNumber = levelNumber;
         BallsLeft = balls;
         Power = power;
@@ -1164,7 +1181,7 @@ public sealed partial class MoonfallGame
     private void LandInFeverBucket(ref Ball b)
     {
         feverBucket = MoonfallBucket.FeverBucketAt(b.X);
-        feverBonus = Perfect ? MoonfallRules.PerfectFeverBucketValue : MoonfallRules.FeverBucketValues[feverBucket];
+        feverBonus = FeverBucketValue(feverBucket, Perfect, Duel);
         feverLanded = true;
         speedMilli = SpeedOne;
         CheckClearNight(in b);
@@ -1264,7 +1281,7 @@ public sealed partial class MoonfallGame
         Post(MoonfallEventKind.ShotScored, -1, shot, shotPegs, ball.X, ball.Y);
         if (feverHit)
         {
-            var ballBonus = (long)BallsLeft * MoonfallRules.UnusedBallBonus;
+            var ballBonus = Duel ? 0 : (long)BallsLeft * MoonfallRules.UnusedBallBonus;
             var total = levelScore + feverBonus + ballBonus;
             Tally = new MoonfallTally(levelScore, feverBonus, Perfect, BallsLeft, ballBonus, total);
             Score = total;
@@ -1303,7 +1320,7 @@ public sealed partial class MoonfallGame
             }
         }
 
-        var oranges = Math.Min(MoonfallRules.OrangeCount, n);
+        var oranges = Math.Min(orangeTarget, n);
         for (var k = 0; k < oranges; k++)
         {
             var pick = k + random.Next(n - k);
@@ -1317,16 +1334,20 @@ public sealed partial class MoonfallGame
             return;
         }
 
+        // Greens from the blue pegs that may be green (format version 2's canBeGreen; every peg of a version 1 level
+        // may), in file order, so a level whose pegs all may be green deals exactly as it did before the flag. A duel
+        // deals one now and the next once it is gone (DealDuelGreen).
         n = 0;
         for (var i = 0; i < bodies.Length; i++)
         {
-            if (bodies[i].Colour == PegColour.Blue)
+            if (bodies[i].Colour == PegColour.Blue && bodies[i].CanBeGreen)
             {
                 pool[n++] = i;
             }
         }
 
-        var greens = Math.Min(MoonfallRules.GreenCount, n);
+        var greens = Math.Min(Duel ? 1 : MoonfallRules.GreenCount, n);
+        duelGreensLeft = Duel ? MoonfallRules.GreenCount - greens : 0;
         for (var k = 0; k < greens; k++)
         {
             var pick = k + random.Next(n - k);
@@ -1342,6 +1363,8 @@ public sealed partial class MoonfallGame
         {
             bodies[purple].Colour = PegColour.Blue;
         }
+
+        DealDuelGreen();
 
         var candidates = 0;
         for (var i = 0; i < bodies.Length; i++)
@@ -1719,6 +1742,7 @@ public sealed partial class MoonfallGame
         public double OrbitAngle;
         public bool Clockwise;
         public bool CanBeOrange;
+        public bool CanBeGreen;
         public PegColour Colour;
         public bool Lit;
         public bool Cleared;
@@ -1734,6 +1758,7 @@ public sealed partial class MoonfallGame
                 PrevX = peg.X,
                 PrevY = peg.Y,
                 CanBeOrange = peg.CanBeOrange,
+                CanBeGreen = peg.CanBeGreen,
                 Colour = PegColour.Blue,
                 HitIndex = -1,
             };
