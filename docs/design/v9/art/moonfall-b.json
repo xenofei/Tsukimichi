@@ -1,0 +1,66 @@
+{
+  "release": "1.23.0",
+  "name": "Moonfall",
+  "painter": "docs/design/v9/src/whatsnew_123.paint",
+  "horizon": 0.585,
+  "sun_glow": [
+    0.215,
+    0.235
+  ],
+  "dawn": 0.0,
+  "dawn_lines": false,
+  "moon": [
+    0.215,
+    0.235,
+    22.0
+  ],
+  "figure_zone": [
+    640,
+    830
+  ],
+  "figure_split": 2000,
+  "bluff_split": 1.0,
+  "glass_bars": [
+    30,
+    430
+  ],
+  "aether_domes": [
+    [
+      0.12,
+      0.14
+    ],
+    [
+      0.55,
+      0.12
+    ],
+    [
+      0.88,
+      0.16
+    ]
+  ],
+  "sumi_bands": [
+    [
+      0.4,
+      0.66,
+      0.12,
+      0.032
+    ],
+    [
+      -0.06,
+      0.18,
+      0.9,
+      0.03
+    ]
+  ],
+  "far_layers": [
+    "far_a",
+    "far_b",
+    "far_c"
+  ],
+  "field_flat": true,
+  "lines": [
+    "post",
+    "star"
+  ],
+  "note": "Medallion only (the owner's rule of 4 October 2026: one painting per release in the default theme). The other keys are kept so the five other treatments could still run."
+}
