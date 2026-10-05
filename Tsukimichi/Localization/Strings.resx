@@ -16080,7 +16080,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Umbra add-on confirmation: a change. Only when they are off.</comment>
   </data>
   <data name="UmbraSetup.Warning" xml:space="preserve">
-    <value>Umbra's own warning, in plain words: custom plugins run code inside your game, so only add ones you trust. Tsukimichi for Umbra is open source, at the link below.</value>
+    <value>Umbra's own warning, in plain words: custom plugins run code inside your game with full access to your computer, like any third-party plugin, so only add ones you trust. Umbra's authors don't support them. Tsukimichi for Umbra is open source, at the link below.</value>
     <comment>Umbra add-on confirmation: Umbra's custom-plugin warning, restated.</comment>
   </data>
   <data name="UmbraSetup.ChangeRepositoryFormat" xml:space="preserve">
