@@ -473,6 +473,10 @@ def fever(W=1280, H=800):
     n = len(lvl["pegs"]) + len(lvl["bricks"])
     rng = np.random.default_rng(4)
     gone = set(rng.choice(n, size=int(n * 0.62), replace=False).tolist())
+    # every orange has been hit by now (the last one started Fever), so none is left on the board
+    from board import engine_colours
+    cols = engine_colours(OUT_COMP.parent / "levels" / "exp-p2.json", 5, 7)
+    gone |= {i for i, c in enumerate(cols) if c == "orange"}
     lit = set(range(n)) - gone
 
     def extra(img):
@@ -499,7 +503,7 @@ def tally(W=1280, H=800):
     n = len(lvl["pegs"]) + len(lvl["bricks"])
     gone = set(range(n)) - {3, 9, 17, 22, 30, 41, 47, 55, 61}
     px, _ = board("exp-p1", "exp-p1-sharlayan", "boat", 4, gone=gone,
-                  hud_kw=dict(stage="7-4", score="318,640", balls=3, cleared=25, mult="×10", oranges=0, ball=False,
+                  hud_kw=dict(stage="7-4", score="278,640", balls=3, cleared=25, mult="×10", oranges=0, ball=False,
                               power="Moonbloom", turns=0, portrait=portrait("ottilie")))
     img = window(px, W, H)
     dim(img, 0.50)
