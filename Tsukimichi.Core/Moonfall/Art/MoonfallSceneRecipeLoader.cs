@@ -686,7 +686,7 @@ public static partial class MoonfallSceneRecipeLoader
                         }
 
                         var mode = blend switch { "screen" => MoonfallPlateBlend.Screen, "multiply" => MoonfallPlateBlend.Multiply, _ => MoonfallPlateBlend.Add };
-                        list.Add(new MoonfallPlate(picture!, mode, Bool(l, "cover")));
+                        list.Add(new MoonfallPlate(picture, mode, Bool(l, "cover")));
                         break;
                     case "glow":
                         list.Add(new MoonfallGlow(Num(l, "x", 0, -800, 1600), Num(l, "y", 0, -600, 1200), Num(l, "r", 100, 1, 2000), ColourV(l, "colour", at), Num(l, "k", 0.05f, 0, 0.2f)));
