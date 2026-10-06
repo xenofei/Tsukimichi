@@ -73,16 +73,28 @@ After `FinishLevel`, `FinishChallenge` or `FinishDuel`, save the progress the sa
 **Unlocks** [R §6 l.126]:
 
 ```
-level i of a campaign:  Missing  if no level of its id ships
-                        Cleared  if won (its record, or i < the campaign's count)
-                        Open     if the campaign is open and i <= the count
+level i of a campaign:  Veiled   if its stage is set past the player's story (the spoiler shield; MoonfallPlaces)
+                        Missing  else if no level of its id ships
+                        Cleared  else if won
+                        Open     else if the campaign is open and (i <= the frontier, or level i - 1 is won)
                         Sealed   otherwise
+the frontier = the first level neither won nor on a veiled stage (MoonfallModes.Frontier): the road steps over a veiled stage
 The Moon Road is always open; The Far Shore opens when all 55 of The Moon Road are won.
-A stage is Done when all five are cleared, Open when its first level is reached, Sealed otherwise.
-A stage "opens its companion": a companion is reached once its stage's first level is open.
+A stage is Veiled when set past the story, Done when all five are cleared, Open when its first level is reached, Sealed otherwise.
+A companion is reached once its stage is open by that rule (the frontier at or past it, or a level of it won or opened) and the
+stage is not itself veiled (MoonfallModes.CompanionReached).
 ```
 
-The count (`BaseCleared`, `ExpansionCleared`) moves past every level won from the start (`MoonfallProgress.RecordLevel`), so winning level *i* opens level *i + 1*.
+- **The frontier** steps over veiled stages, so a stage the story allows is never stuck behind one set past it. The count
+  (`BaseCleared`, `ExpansionCleared`) is still the run of consecutive wins, so a veiled stage's unwon levels keep "all won"
+  and the Far Shore's completion waiting.
+- **Winning a level opens the next, for good.** A level whose predecessor is won stays open whatever the frontier says now, so a
+  reveal, or the story reaching a stepped-over stage (which pulls the frontier back to it), never closes a level the player
+  had come to.
+- **Where Adventure goes next** (`MoonfallModes.Next`, the title's Continue): the frontier's level when it can be played;
+  otherwise the first veiled stage before the frontier that has levels built (the road waits there, the map opens on it); a
+  stage whose levels are not built is never "past your story", it is "levels on their way" (`MoonfallLooks.Coming`, measured
+  from the frontier).
 
 ## 3. Companions and the spoiler shield (`MoonfallCompanions`, `MoonfallStory`)
 

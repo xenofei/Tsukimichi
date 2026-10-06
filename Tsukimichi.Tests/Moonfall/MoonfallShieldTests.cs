@@ -206,6 +206,67 @@ public sealed class MoonfallShieldTests
     private static MoonfallModes FarShoreStart(MoonfallShield shield) =>
         new(Full(), new MoonfallProgress { BaseCleared = MoonfallStages.BaseLevels }, MoonfallStory.Everyone, MoonfallChallenges.LoadBuiltIn().Challenges) { Shield = shield };
 
+    /// <summary>The Moon Road built and won, and the Far Shore's first <paramref name=stagesBuilt/> stages built.</summary>
+    private static MoonfallModes PartlyBuilt(MoonfallShield shield, int stagesBuilt)
+    {
+        var shape = MoonfallCampaigns.LoadBuiltIn().Base.Levels[0];
+        var full = Full();
+        var far = Enumerable.Range(0, stagesBuilt * MoonfallCharacters.LevelsPerStage).Select(i => shape with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, i) }).ToList();
+        var campaigns = new MoonfallCampaigns(full.Base, new MoonfallCampaign(MoonfallCampaignKind.Expansion, far), []);
+        return new MoonfallModes(campaigns, new MoonfallProgress { BaseCleared = MoonfallStages.BaseLevels }, MoonfallStory.Everyone, []) { Shield = shield };
+    }
+
+    [Fact]
+    public void Nothing_built_yet_is_never_called_past_the_story()
+    {
+        // The Moon Road won and no Far Shore level built, at A Realm Reborn: the road goes on, no reveal is asked for.
+        var modes = PartlyBuilt(StoryAt(MoonfallPlaces.ARealmReborn), 0);
+        Assert.Null(modes.Next());
+        Assert.Null(modes.Continue());
+    }
+
+    [Fact]
+    public void A_partly_built_far_shore_waits_on_its_unbuilt_stages_as_coming_not_veiled()
+    {
+        // Heavensward, stages 1 to 3 built and won: stage 4 (the Ruby Sea, Stormblood) is veiled but not built, stage 5
+        // not built. Nothing waits past the story; stage 5 is "levels on their way".
+        var modes = PartlyBuilt(StoryAt(MoonfallPlaces.Heavensward), 3);
+        WalkTheRoad(modes);
+        Assert.Null(modes.Next());
+        var stage5 = modes.Stages(MoonfallCampaignKind.Expansion)[4];
+        Assert.True(MoonfallLooks.Coming(stage5, modes.Frontier(MoonfallCampaignKind.Expansion)));
+        Assert.Null(modes.NextLevel(MoonfallCampaignKind.Expansion, (3 * MoonfallCharacters.LevelsPerStage) - 1, out var veil));
+        Assert.Null(veil);
+    }
+
+    [Fact]
+    public void A_built_veiled_stage_before_the_frontier_is_where_the_road_waits()
+    {
+        // Stormblood, stages 1 to 8 built: the road steps over stage 7 (Il Mheg) to play 8; with 8 won and 9 on not built,
+        // the road waits at 7.
+        var modes = PartlyBuilt(StoryAt(MoonfallPlaces.Stormblood), 8);
+        WalkTheRoad(modes);
+        Assert.Equal(new MoonfallNext(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, 6 * MoonfallCharacters.LevelsPerStage), true), modes.Next());
+    }
+
+    [Fact]
+    public void Advancing_the_story_or_revealing_never_closes_a_level_already_opened()
+    {
+        // Heavensward, the road walked up to 11-3 (11-1 and 11-2 won). The story reaches Stormblood: stage 4 unveils
+        // and the frontier returns to 4-1, but 11-3 stays open (the level before it is won), and the moogle stays reached.
+        var heavensward = FarShoreStart(StoryAt(MoonfallPlaces.Heavensward));
+        for (var guard = 0; guard < 200 && heavensward.Continue() is { } next && next.Index < (10 * MoonfallCharacters.LevelsPerStage) + 2; guard++)
+        {
+            heavensward.Progress.RecordLevel(MoonfallStages.LevelId(next.Campaign, next.Index), won: true, score: 100_000);
+        }
+
+        Assert.Equal(MoonfallLevelState.Open, heavensward.Slot(MoonfallCampaignKind.Expansion, (10 * MoonfallCharacters.LevelsPerStage) + 2).State);
+        var stormblood = new MoonfallModes(heavensward.Campaigns, heavensward.Progress, MoonfallStory.Everyone, []) { Shield = StoryAt(MoonfallPlaces.Stormblood) };
+        Assert.Equal(MoonfallLevelState.Open, stormblood.Slot(MoonfallCampaignKind.Expansion, (10 * MoonfallCharacters.LevelsPerStage) + 2).State);
+        Assert.Equal(MoonfallLevelState.Open, stormblood.Slot(MoonfallCampaignKind.Expansion, 3 * MoonfallCharacters.LevelsPerStage).State);
+        Assert.Equal(MoonfallCompanionState.Available, stormblood.CompanionState(MoonfallCompanion.Moogle));
+    }
+
     /// <summary>Plays Adventure as Continue leads it, winning each level, until it has nothing left to play.</summary>
     private static void WalkTheRoad(MoonfallModes modes)
     {
@@ -247,9 +308,22 @@ public sealed class MoonfallShieldTests
         }
 
         // Before Endwalker, from Heavensward, the moogle's Storm Post (stage 11, the Churning Mists) is reached.
+        // The companion follows its stage: the moogle is Available, offered by Quick Play, and plays Storm Post's levels.
         if (reach is >= MoonfallPlaces.Heavensward and < MoonfallPlaces.Endwalker)
         {
             Assert.DoesNotContain(11, veiledLeft);
+            Assert.Equal(MoonfallCompanionState.Available, modes.CompanionState(MoonfallCompanion.Moogle));
+            Assert.Contains(MoonfallCompanion.Moogle, modes.QuickPlayCompanions());
+            Assert.NotNull(modes.QuickPlay("expansion-51", MoonfallCompanion.Moogle));
+        }
+
+        // Every companion whose stage is won is reached; one whose stage is veiled is not.
+        foreach (var view in modes.Stages(MoonfallCampaignKind.Expansion))
+        {
+            if (view.Stage.Companion is var who && who != MoonfallCompanion.None && MoonfallCompanions.Get(who).Campaign == MoonfallCampaignKind.Expansion)
+            {
+                Assert.Equal(view.State == MoonfallStageState.Done, modes.CompanionReached(who));
+            }
         }
 
         // The Far Shore is not complete while a veiled stage waits, and Continue's sibling points at the first of them.

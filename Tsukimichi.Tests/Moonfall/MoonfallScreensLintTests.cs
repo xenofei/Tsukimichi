@@ -208,6 +208,43 @@ public sealed class MoonfallScreensLintTests
     }
 
     [Fact]
+    public void The_key_that_closes_a_popup_is_not_also_back()
+    {
+        // ImGui closes the top popup on Esc or B during NewFrame, before the window draws: a popup open at the end of the
+        // last frame keeps that key from also going back a screen or pausing.
+        var keys = Member(Ui("MoonfallWindow.Flow.cs"), "private void HandleKeys(");
+        Assert.Contains("if (popupWasOpen || ImGui.IsPopupOpen(", keys, StringComparison.Ordinal);
+        var draw = Member(Ui("MoonfallWindow.cs"), "private void DrawWindow(");
+        Assert.Contains("popupWasOpen = ImGui.IsPopupOpen(", draw, StringComparison.Ordinal);
+        Assert.True(draw.IndexOf("ShieldText.DrawMenu(", StringComparison.Ordinal) < draw.IndexOf("popupWasOpen = ", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_veiled_stage_reveals_on_a_press_and_its_head_offers_levels_only_when_it_has_them()
+    {
+        var menu = Member(Ui("MoonfallWindow.Menu.cs"), "private bool MenuButton(");
+        Assert.Contains("if (clicked && (!inert || style == MenuStyle.Veiled))", menu, StringComparison.Ordinal);
+
+        var map = Ui("MoonfallWindow.Map.cs");
+        var reveal = Member(map, "private void PlayOrReveal(");
+        Assert.Contains("ShieldText.RequestMenu(SpoilerKind.Area, zone, panelName);", reveal, StringComparison.Ordinal);
+        Assert.Contains("panelRevealable", reveal, StringComparison.Ordinal);
+
+        var small = Member(map, "private void SmallStagePanel(");
+        Assert.Contains("var headOpens = view.State is MoonfallStageState.Open or MoonfallStageState.Done;", small, StringComparison.Ordinal);
+        Assert.Contains("if ((hovered || nav) && headOpens)", small, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_plain_bar_draws_whole_parts_only_with_the_game_state_first_in_a_duel()
+    {
+        var bar = Member(Ui("MoonfallWindow.cs"), "private float DrawPlainBar(");
+        Assert.Contains("? [turn, ballsText, orangesText, multiplierText, stageText, levelName]", bar, StringComparison.Ordinal);
+        Assert.Contains("if (x + w > right)", bar, StringComparison.Ordinal);
+        Assert.DoesNotContain("PushClipRect", bar, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void The_plugin_gives_moonfall_the_viewed_characters_shield_for_places_and_its_reveal()
     {
         var plugin = Plugin("Plugin.Moonfall.cs");

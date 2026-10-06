@@ -161,9 +161,19 @@ internal static class Render
         {
             progress.BaseCleared = MoonfallStages.BaseLevels;
             var walker = new MoonfallModes(campaigns, progress, story ?? MoonfallStory.Everyone, []) { Shield = shield ?? MoonfallShield.Open };
+            string? last = null;
             for (var guard = 0; guard < 200 && walker.Continue() is { } next; guard++)
             {
-                progress.RecordLevel(MoonfallStages.LevelId(next.Campaign, next.Index), won: true, score: 120_000);
+                last = MoonfallStages.LevelId(next.Campaign, next.Index);
+                progress.RecordLevel(last, won: true, score: 120_000);
+            }
+
+            // --leave-one: the walk's last level is left unwon, so "--screen tally" plays and wins it there: the tally
+            // with no Next because the road then waits past the story (its note), and Map opening on that stage.
+            if (args.Contains("--leave-one") && last is not null && MoonfallStages.TryPlace(last, out var lastPlace))
+            {
+                progress.Levels.Remove(last);
+                progress.ExpansionCleared = Math.Min(progress.ExpansionCleared, lastPlace.Index);
             }
         }
         var temp = Path.Combine(Path.GetTempPath(), "moonfall-render-progress.json");

@@ -449,7 +449,7 @@ public sealed partial class MoonfallWindow
         // A sealed entry (Locked, with a padlock), one past the story (Veiled, the shield's mark) or one whose content is still to come (Waiting) does nothing.
         var inert = style is MenuStyle.Locked or MenuStyle.Waiting or MenuStyle.Veiled;
         var lit = !inert && (nav || (isDefault && !ImGui.GetIO().NavVisible));
-        EntryGlow(m, x0, y0, x1, y1, lit, hovered && !inert);
+        EntryGlow(m, x0, y0, x1, y1, lit, hovered && (!inert || style == MenuStyle.Veiled));
         var state = style switch
         {
             MenuStyle.Danger => MoonfallChromePart.PillDanger,

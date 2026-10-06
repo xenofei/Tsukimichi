@@ -63,7 +63,9 @@ public sealed partial class MoonfallWindow
             navigationTaken = false;
         }
 
-        if (ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
+        // A popup open now, or at the end of the last frame: the Esc or B that closed it during NewFrame (ImGui closes the
+        // top popup on a cancel before the window draws) must not also go back a screen or pause.
+        if (popupWasOpen || ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
         {
             return;
         }
@@ -358,18 +360,19 @@ public sealed partial class MoonfallWindow
     private void LeaveBoard()
     {
         flow.Leave();
-        if (playKind == MoonfallPlayKind.Adventure && game is { } g && LevelOver(g) && tallyVeil is { } waiting)
-        {
-            // The tally said the road waits at a stage past the story: the map opens on it.
-            mapCampaign = waiting.Campaign;
-            mapStage = waiting.Number - 1;
-        }
-
         EndBoard();
     }
 
     private void EndBoard()
     {
+        // The tally said the road waits at a stage past the story: the map opens on it, whichever way the board is
+        // left (the tally's Map, or Esc and the gamepad's back over the tally).
+        if (playKind == MoonfallPlayKind.Adventure && game is { } g && LevelOver(g) && tallyVeil is { } waiting)
+        {
+            mapCampaign = waiting.Campaign;
+            mapStage = waiting.Number - 1;
+        }
+
         SoundNewLevel();
         pause.TryResume();
         game = null;

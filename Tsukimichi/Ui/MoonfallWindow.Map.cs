@@ -137,7 +137,10 @@ public sealed partial class MoonfallWindow
     private bool panelComing;
 
     /// <summary>The stage panel's Play: lit when there is a level to play, waiting (no padlock) when its levels are on their way, else sealed.</summary>
-    private MenuStyle PanelPlayStyle => panelPlayable ? MenuStyle.Normal : panelVeiledZone is not null ? MenuStyle.Veiled : panelComing ? MenuStyle.Waiting : MenuStyle.Locked;
+    private MenuStyle PanelPlayStyle => panelPlayable ? MenuStyle.Normal : panelRevealable ? MenuStyle.Veiled : panelComing ? MenuStyle.Waiting : MenuStyle.Locked;
+
+    /// <summary>The selected stage is past the story and reached: its pill reveals. Past the story and not reached, it is the padlock's "Not reached" (a reveal would not open it).</summary>
+    private bool panelRevealable;
     private string panelState = string.Empty;
     private string panelStage = string.Empty;
     private string panelName = string.Empty;
@@ -435,6 +438,11 @@ public sealed partial class MoonfallWindow
             if (look.Veiled)
             {
                 StoryVeil(m, at.X, at.Y, r);
+                if (view.Here)
+                {
+                    // Where the road waits: a faint slate ring (a veiled stop is never lit).
+                    m.Dl.AddCircle(m.V.Map(at.X, at.Y), m.V.Size(r * 1.32), Ink(MoonfallColor.Hex("#9AA6CC"), 0.75f), 40, MathF.Max(1.5f, m.V.Size(2)));
+                }
             }
 
             // The shield's mark (past the story) and the padlock (not reached) at the ring's foot; both when both hold.
@@ -578,7 +586,7 @@ public sealed partial class MoonfallWindow
     }
 
     /// <summary>The stage Play's reason when it cannot play: the veil's (with its reveal) or the padlock's.</summary>
-    private string? PanelPlayTip => panelPlayable || panelComing ? null : panelVeiledZone is not null ? Strings.MoonfallStageVeiledPillTip : Strings.MoonfallStageSealedTooltip;
+    private string? PanelPlayTip => panelPlayable || panelComing ? null : panelRevealable ? Strings.MoonfallStageVeiledPillTip : Strings.MoonfallStageSealedTooltip;
 
     /// <summary>
     /// The stage's Play: on a stage past the player's story, pressing it (mouse, keyboard or gamepad) opens the shield's
@@ -586,7 +594,7 @@ public sealed partial class MoonfallWindow
     /// </summary>
     private void PlayOrReveal(MoonfallStageView view)
     {
-        if (panelVeiledZone is { } zone)
+        if (panelRevealable && panelVeiledZone is { } zone)
         {
             ShieldText.RequestMenu(SpoilerKind.Area, zone, panelName);
             return;
@@ -604,10 +612,18 @@ public sealed partial class MoonfallWindow
         var power = MoonfallCompanions.TryGet(view.Stage.Companion, out var info) ? info.Power : MoonfallPower.None;
         var accent = MoonfallCards.For(power)?.Accent ?? GoldInk;
         Panel(m, x0, y0, x1, y1, accent, 0.3);
-        if (MenuHit(m, "##mfStageHead", x0 + 10, y0 + 8, x1 - 10, y0 + 56, out var hovered, out var nav) && view.State is MoonfallStageState.Open or MoonfallStageState.Done)
+        if (MenuHit(m, "##mfStageHead", x0 + 10, y0 + 8, x1 - 10, y0 + 56, out var hovered, out var nav))
         {
-            SoundClick();
-            OpenLevels(mapStage, -1);
+            if (view.State is MoonfallStageState.Open or MoonfallStageState.Done)
+            {
+                SoundClick();
+                OpenLevels(mapStage, -1);
+            }
+            else if (panelRevealable)
+            {
+                // On a stage past the story the head (the placeholder's line) reveals, as its pill does.
+                PlayOrReveal(view);
+            }
         }
 
         // The head opens level select only on a stage that has one to open; elsewhere it offers nothing (a veiled
@@ -773,7 +789,8 @@ public sealed partial class MoonfallWindow
         stopComing = new bool[stages.Count];
         stopVeiled = new bool[stages.Count];
         anyVeiled = false;
-        var cleared = modes.CampaignOpen(mapCampaign) ? progress.Cleared(mapCampaign) : -1;
+        // "Coming" is measured from the road's frontier (stepping over veils), not the run of consecutive wins.
+        var cleared = modes.CampaignOpen(mapCampaign) ? modes.Frontier(mapCampaign) : -1;
         for (var i = 0; i < stages.Count; i++)
         {
             var view = stages[i];
@@ -796,7 +813,7 @@ public sealed partial class MoonfallWindow
             stopTips[i] = stopVeiled[i]
                 ? string.Format(c, Strings.MoonfallStopTipVeiledFormat, view.Stage.Number, power)
                 : string.Format(c, Strings.MoonfallStopTipFormat, view.Stage.Number, StageNameShown(view.Stage), state, power);
-            stopTipLines[i] = view.State == MoonfallStageState.Veiled ? (view.Reached ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageVeiledSealedLine)
+            stopTipLines[i] = view.State == MoonfallStageState.Veiled ? (view.Reached ? Strings.MoonfallStopVeiledLine : Strings.MoonfallStopVeiledSealedLine)
                 : view.Companion == MoonfallCompanionState.NotMet && !view.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
                 : view.State == MoonfallStageState.Sealed && !stopComing[i] ? Strings.MoonfallStopSealedLine
                 : string.Empty;
@@ -834,7 +851,8 @@ public sealed partial class MoonfallWindow
         panelPlayable = false;
         var selComing = stopComing[Math.Clamp(mapStage, 0, stages.Count - 1)];
         panelComing = selComing;
-        panelPlay = sel.State == MoonfallStageState.Veiled ? Strings.MoonfallStageVeiledButton : selComing ? Strings.MoonfallLevelsComing : sel.State == MoonfallStageState.Sealed ? Strings.MoonfallNotReached : Strings.MoonfallChooseLevel;
+        panelRevealable = sel.State == MoonfallStageState.Veiled && sel.Reached;
+        panelPlay = panelRevealable ? Strings.MoonfallStageRevealButton : selComing ? Strings.MoonfallLevelsComing : sel.State is MoonfallStageState.Sealed or MoonfallStageState.Veiled ? Strings.MoonfallNotReached : Strings.MoonfallChooseLevel;
 
         // At 640 the panel's state line stands in for the legend and the stop's tooltip.
         var veiledLine = sel.Reached ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageVeiledSealedLine;
@@ -961,7 +979,6 @@ public sealed partial class MoonfallWindow
         stripPlay = sel.Reached ? string.Format(c, Strings.MoonfallPlayFormat, LevelCode(sel.Place.Index)) : Strings.MoonfallNotReached;
     }
 
-    /// <summary><paramref name="text"/> as it fits <paramref name="room"/> pixels at <paramref name="px"/>: whole, or cut short with an ellipsis.</summary>
     /// <summary>Whether <paramref name="text"/> ends on an article or a small linking word, which a cut never ends on ("Above the…").</summary>
     private static bool EndsOnSmallWord(ReadOnlySpan<char> text)
     {
@@ -978,6 +995,7 @@ public sealed partial class MoonfallWindow
         return false;
     }
 
+    /// <summary><paramref name="text"/> as it fits <paramref name="room"/> pixels at <paramref name="px"/>: whole, or cut short with an ellipsis.</summary>
     private string FitLine(MoonfallFace face, float px, string text, float room)
     {
         if (MeasureText(face, px, text) <= room)

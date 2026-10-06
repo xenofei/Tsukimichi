@@ -131,6 +131,9 @@ public sealed partial class MoonfallWindow : Window
     /// </summary>
     internal SessionState? ShieldSession { get; set; }
 
+    /// <summary>A popup (the shield's reveal menu) was open at the end of the last frame: its closing key is not also Back.</summary>
+    private bool popupWasOpen;
+
     /// <summary>The offline renderer: the board's clock is held (while the art loads), so a staged moment renders the same every run.</summary>
     internal bool HoldBoardForRender { get; set; }
 
@@ -267,6 +270,9 @@ public sealed partial class MoonfallWindow : Window
         {
             ShieldText.DrawMenu(nameof(MoonfallWindow), session);
         }
+
+        // Remembered for the next frame's keys (see HandleKeys).
+        popupWasOpen = ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel);
     }
 
     /// <summary>The board this frame: its clock, its events, its end, the board itself, the pause menu and the tally.</summary>
@@ -545,6 +551,7 @@ public sealed partial class MoonfallWindow : Window
         {
             var pauseWidth = MathF.Max(ImGui.CalcTextSize(Strings.MoonfallPause).X, ImGui.CalcTextSize(Strings.MoonfallResume).X) + (2f * ImGui.GetStyle().FramePadding.X);
             ImGui.SetCursorScreenPos(new Vector2(right - pauseWidth, at.Y));
+            TextSinkForRender?.Invoke(PauseButtonLabel(pause.Paused));
             if (ImGui.Button(PauseButtonLabel(pause.Paused), new Vector2(pauseWidth, height)))
             {
                 TogglePause(g);
@@ -572,6 +579,7 @@ public sealed partial class MoonfallWindow : Window
         else
         {
             var scoreWidth = ImGui.CalcTextSize(scoreText).X;
+            TextSinkForRender?.Invoke(scoreText);
             dl.AddText(new Vector2(right - scoreWidth, y), Theme.U32(Theme.Gold), scoreText);
             right -= scoreWidth + gap;
         }
@@ -593,6 +601,12 @@ public sealed partial class MoonfallWindow : Window
             var w = ImGui.CalcTextSize(part).X;
             if (x + w > right)
             {
+                // In a level the name gives way and the game state after it still shows; elsewhere the run stops here.
+                if (duel is null && ReferenceEquals(part, levelName))
+                {
+                    continue;
+                }
+
                 break;
             }
 

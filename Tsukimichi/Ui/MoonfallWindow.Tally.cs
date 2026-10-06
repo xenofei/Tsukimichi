@@ -35,6 +35,9 @@ public sealed partial class MoonfallWindow
 
     /// <summary>The stage past the player's story the road waits at, when the tally has no Next because of it: Map opens on it.</summary>
     private MoonfallStage? tallyVeil;
+
+    /// <summary>The note says why a win has no Next (the road waits past the story, or the last level built): drawn in place of the sub-line.</summary>
+    private bool tallyNoteOnWin;
     private string? tallyNext;
     private string? tallyAgain;
     private string tallyHome = string.Empty;
@@ -72,6 +75,7 @@ public sealed partial class MoonfallWindow
         var won = g.Phase == MoonfallPhase.Won;
         tallyNext = null;
         tallyVeil = null;
+        tallyNoteOnWin = false;
         tallyNote = string.Empty;
         switch (playKind)
         {
@@ -125,15 +129,19 @@ public sealed partial class MoonfallWindow
                         ? string.Format(CultureInfo.CurrentCulture, Strings.MoonfallNextCodeFormat, LevelCode(AdventureNext() ?? levelIndex + 1))
                         : Strings.MoonfallNextLevel;
                 }
-                else if (won && playKind == MoonfallPlayKind.Adventure && AdventureNext() is null && adventureVeil is { } veil)
+                else if (won && playKind == MoonfallPlayKind.Adventure && modes.Next() is { Veiled: true } waits
+                    && MoonfallStages.StageOf(waits.Place.Campaign, waits.Place.Index) is { } veil)
                 {
-                    // No Next because the road waits at a stage past the player's story: say so, and Map opens on it.
+                    // No Next because the road waits at a stage past the player's story: say so (the same stage the title
+                    // and the map name), and Map opens on it. Drawn in place of the sub-line on a win.
                     tallyVeil = veil;
                     tallyNote = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallTallyVeiledFormat, veil.Number);
+                    tallyNoteOnWin = true;
                 }
                 else if (won && playKind == MoonfallPlayKind.Adventure)
                 {
                     tallyNote = Strings.MoonfallLastLevel;
+                    tallyNoteOnWin = true;
                 }
 
                 break;
@@ -208,7 +216,7 @@ public sealed partial class MoonfallWindow
             tallySub = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallTallyStageFormat, Strings.MoonfallCampaignName(campaign), stageText, g.BallsLeft);
         }
 
-        var sub = rows > 0 ? tallySub : tallyNote;
+        var sub = rows > 0 && !tallyNoteOnWin ? tallySub : tallyNote;
         DrawText(dl, MoonfallFace.Axis, NamePx(v, small ? 15 : 11.25f, MoonfallFace.Axis), v.Map(cx, titleY + (small ? 27 : 24)), Anchor.Centre, Ink(Ink2), sub);
         var ruleY = y0 + ruleOffset;
         if (sheet[MoonfallChromePart.ShortRule] is { } rule)

@@ -596,7 +596,7 @@ public sealed partial class MoonfallWindow
         {
             MoonfallChallengeState.Sealed => Strings.MoonfallChallengesSealedTooltip,
             MoonfallChallengeState.Unavailable => Strings.MoonfallChallengeUnavailableLine,
-            MoonfallChallengeState.Veiled => string.Format(c, Strings.MoonfallChallengeVeiledLineFormat, challengeVeil?.Number ?? 0),
+            MoonfallChallengeState.Veiled => challengeVeil is { } veiledStage ? string.Format(c, Strings.MoonfallChallengeVeiledLineFormat, veiledStage.Number) : Strings.MoonfallChallengeVeiled,
             _ when record is { Done: true } => string.Format(c, Strings.MoonfallChallengeDoneFormat, record.Best.ToString("N0", c)),
             _ when record is { Best: > 0 } => string.Format(c, Strings.MoonfallBestFormat, record.Best.ToString("N0", c)),
             _ => Strings.MoonfallChallengeNotTried,

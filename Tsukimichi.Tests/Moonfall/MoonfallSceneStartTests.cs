@@ -23,9 +23,18 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
 
         public ConcurrentBag<(string Name, long Bytes)> Uploaded { get; } = [];
 
-        public Task<MoonfallImage?> ReadGameTexture(string path) => Task.FromResult(MoonfallSceneKit.GameTexture(path));
+        /// <summary>Holds every game-texture read until it completes (a build caught mid-way); done by default.</summary>
+        public Task Gate { get; set; } = Task.CompletedTask;
 
-        public Task<MoonfallImage?> ReadPicture(string name) => Task.FromResult(MoonfallSceneKit.Picture(name, twoX: false));
+        public ConcurrentBag<string> Pictures { get; } = [];
+
+        public Task<MoonfallImage?> ReadGameTexture(string path) => Gate.ContinueWith(_ => MoonfallSceneKit.GameTexture(path), TaskScheduler.Default);
+
+        public Task<MoonfallImage?> ReadPicture(string name)
+        {
+            Pictures.Add(name);
+            return Task.FromResult(MoonfallSceneKit.Picture(name, twoX: false));
+        }
 
         public Task<Tex> Upload(MoonfallRgba pixels, string name)
         {
@@ -115,6 +124,40 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         }
 
         Assert.Equal(0, art.ThumbsPending);
+    }
+
+    [Fact]
+    public void A_thumbnail_the_veil_overtakes_mid_build_is_never_landed_and_is_rebuilt_story_safe()
+    {
+        // Lantern night (Kugane) is built for a thumbnail with its scene shown; while its painting is still being read,
+        // the shield comes to hide the scene's place. The finished Kugane build is dropped unlanded, and the thumbnail is
+        // built again over the recipe's story-safe fallback.
+        var gate = new TaskCompletionSource();
+        var host = new Host { Gate = gate.Task };
+        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
+        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Recipe.Name == "lantern-night");
+        var hide = MoonfallSceneHide.Shown;
+        art.HidesScene = (_, _) => hide;
+
+        // The thumbnail's build starts and waits on the painting.
+        for (var i = 0; i < 5; i++)
+        {
+            host.Frame++;
+            _ = art.Thumb(level, out _);
+            art.Menu();
+        }
+
+        Assert.Equal(0, host.Uploaded.Count(static u => u.Name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal)));
+
+        // The veil falls, then the Kugane read completes.
+        hide = MoonfallSceneHide.Fallback;
+        art.VeilChanged();
+        gate.SetResult();
+        Until(() => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
+
+        // One thumbnail landed, and it was built from the fallback picture, never from the Kugane build.
+        Assert.Single(host.Uploaded, static u => u.Name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal));
+        Assert.Contains(recipe.Fallback!, host.Pictures);
     }
 
     [Fact]

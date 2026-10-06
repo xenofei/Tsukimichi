@@ -579,6 +579,18 @@ static partial class Strings
     /// <summary>Moonfall title: why Duel is locked when no companion has been met.</summary>
     public static string MoonfallDuelNoOpponentTooltip => Loc.Get("MoonfallDuelNoOpponentTooltip");
 
+    /// <summary>Moonfall title: the Continue card&#x27;s caption when the road waits at a stage past the player&#x27;s story. {0} is the stage&#x27;s number.</summary>
+    public static string MoonfallContinueStageCapsFormat => Loc.Get("MoonfallContinueStageCapsFormat");
+
+    /// <summary>Moonfall map: the button of a reached stage set past the player&#x27;s story; pressing it opens the spoiler shield&#x27;s reveal for the session.</summary>
+    public static string MoonfallStageRevealButton => Loc.Get("MoonfallStageRevealButton");
+
+    /// <summary>Moonfall map: a veiled stop&#x27;s short reason in its hover (the panel says it in full).</summary>
+    public static string MoonfallStopVeiledLine => Loc.Get("MoonfallStopVeiledLine");
+
+    /// <summary>Moonfall map: the short reason in the hover of a stop both past the player&#x27;s story and not reached.</summary>
+    public static string MoonfallStopVeiledSealedLine => Loc.Get("MoonfallStopVeiledSealedLine");
+
     /// <summary>A duel opponent's difficulty.</summary>
     public static string MoonfallDifficultyName(MoonfallAiDifficulty difficulty) => difficulty switch
     {

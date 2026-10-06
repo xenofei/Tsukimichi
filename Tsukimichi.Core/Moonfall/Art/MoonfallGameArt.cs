@@ -360,10 +360,13 @@ public sealed class MoonfallGameArt<T> : IDisposable
             {
                 if (thumbBuilds.TryGetValue(id, out var build))
                 {
-                    if (build.IsCompleted && thumbLevels.TryGetValue(id, out var built) && !string.Equals(thumbBuiltWith.GetValueOrDefault(id), PickScene(built)?.Name, StringComparison.Ordinal))
+                    // A finished build is checked against today's scene once (and again after a veil change), never
+                    // every frame: one the veil overtook while it built is dropped unlanded and made again.
+                    if (build.IsCompleted && thumbChecked.Add(id) && thumbLevels.TryGetValue(id, out var built)
+                        && !string.Equals(thumbBuiltWith.GetValueOrDefault(id), PickScene(built)?.Name, StringComparison.Ordinal))
                     {
-                        // The veil changed while it built (a scene now hidden, or one now shown): never landed, made again.
                         thumbBuilds.Remove(id);
+                        thumbChecked.Remove(id);
                     }
                     else if (build.IsCompletedSuccessfully && build.Result is { } pixels)
                     {
@@ -607,6 +610,9 @@ public sealed class MoonfallGameArt<T> : IDisposable
     /// <summary>The thumbnail builds' recipes, so a build the veil overtook is never landed.</summary>
     private readonly Dictionary<string, string?> thumbBuiltWith = new(StringComparer.Ordinal);
 
+    /// <summary>Finished thumbnail builds already checked against the veil (cleared when it changes).</summary>
+    private readonly HashSet<string> thumbChecked = new(StringComparer.Ordinal);
+
     /// <summary>The scene <paramref name="level"/> is drawn on, after the veil: null for none (or a hidden one).</summary>
     private MoonfallSceneRecipe? PickScene(MoonfallLevel level)
     {
@@ -667,6 +673,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         pickedFor = null;
         warmAsked = null;
         palettes.Clear();
+        thumbChecked.Clear();
         foreach (var (id, build) in thumbBuilds)
         {
             if (build.IsCompleted && thumbLevels.TryGetValue(id, out var level) && !string.Equals(thumbBuiltWith.GetValueOrDefault(id), PickScene(level)?.Name, StringComparison.Ordinal))

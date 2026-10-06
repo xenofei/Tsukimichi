@@ -596,7 +596,8 @@ public sealed partial class MoonfallWindow
         PrepareTally(g);
         var line = ImGui.GetTextLineHeightWithSpacing();
         var rows = TallyRows(g);
-        var panel = new Vector2(MathF.Min(size.X - UiMetrics.Px(24f), UiMetrics.Px(420f)), line * (Math.Max(rows, 1) + 5.5f));
+        // A win's note (why there is no Next) takes a line of its own above the buttons.
+        var panel = new Vector2(MathF.Min(size.X - UiMetrics.Px(24f), UiMetrics.Px(420f)), line * (Math.Max(rows, 1) + 5.5f + (rows > 0 && tallyNoteOnWin ? 1.4f : 0f)));
         var min = origin + ((size - panel) * 0.5f);
         var max = min + panel;
         dl.AddRectFilled(origin, origin + size, Theme.WithAlpha(Theme.Scene.Scrim, 0.55f));
@@ -618,6 +619,12 @@ public sealed partial class MoonfallWindow
                 var valueWidth = ImGui.CalcTextSize(tallyLines[k + 1]).X;
                 dl.AddText(new Vector2(max.X - pad - valueWidth, y), Theme.U32(total ? Theme.Gold : Theme.Surface.Text), tallyLines[k + 1]);
                 y += line;
+            }
+
+            // A win with no Next says why (the road waits past the story, or this was the last level built).
+            if (tallyNoteOnWin)
+            {
+                dl.AddText(new Vector2(x, y + (line * 0.4f)), Theme.U32(Theme.Surface.TextSecondary), tallyNote);
             }
         }
         else

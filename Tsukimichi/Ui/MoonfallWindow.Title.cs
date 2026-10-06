@@ -43,6 +43,7 @@ public sealed partial class MoonfallWindow
     private MoonfallStage? titleVeiledStage;
     private string? titleVeiledZone;
     private string[] titleVeiledLines = [];
+    private string titleContinueEyebrow = string.Empty;
     private (int Views, float Scale) titleVeiledLinesFor = (-1, 0f);
     private MoonfallPower titleContinuePower;
     private string versionText = string.Empty;
@@ -142,6 +143,7 @@ public sealed partial class MoonfallWindow
             titleContinueCode = string.Empty;
             titleContinueName = StageNameShown(waiting);
             titleContinueLine = Strings.MoonfallTitleVeiledLine;
+            titleContinueEyebrow = string.Format(c, Strings.MoonfallContinueStageCapsFormat, waiting.Number);
             titleContinue = Strings.MoonfallScreenMap;
             titleContinueWith = string.Empty;
             titleContinueSmall = string.Format(c, Strings.MoonfallTitleVeiledSmallFormat, titleContinueName);
@@ -415,10 +417,10 @@ public sealed partial class MoonfallWindow
             if (titleVeiledLinesFor != (menuViewsKey.GetHashCode(), v.Scale))
             {
                 titleVeiledLinesFor = (menuViewsKey.GetHashCode(), v.Scale);
-                titleVeiledLines = Wrap(m, MoonfallFace.Axis, 14, titleContinueLine, (float)(x1 - x0 - 60));
+                titleVeiledLines = Wrap(m, MoonfallFace.Axis, 14, titleContinueLine, (float)(x1 - x0 - 36));
             }
 
-            MenuText(m, MoonfallFace.Axis, 14, (x0 + x1) / 2, y0 + 40, Strings.MoonfallContinueCaps, GoldInk, Anchor.Centre, edge: 0f);
+            MenuText(m, MoonfallFace.Axis, 14, (x0 + x1) / 2, y0 + 40, titleContinueEyebrow, GoldInk, Anchor.Centre, edge: 0f);
             var nw = MenuText(m, MoonfallFace.Axis, 22, (x0 + x1) / 2, y0 + 72, titleContinueName, Ink2, Anchor.Centre, edge: 1f, maxWidth: (float)(x1 - x0 - 80));
             var half = Math.Min(nw, x1 - x0 - 80) / 2;
             ShieldMark(m, ((x0 + x1) / 2) - half - 16, y0 + 72, 8);
