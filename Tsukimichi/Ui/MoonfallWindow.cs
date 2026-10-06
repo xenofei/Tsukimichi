@@ -377,9 +377,12 @@ public sealed partial class MoonfallWindow : Window
     /// <summary>The board's clock.</summary>
     internal double ClockForRender => boardClock;
 
-    /// <summary>Whether the art has settled: the chrome, the level's scene at its tier (or failed), and the menus' backdrops.</summary>
+    /// <summary>
+    /// Whether the art has settled: the chrome (or its fallback, once its textures are known missing), the level's scene at
+    /// its tier (or failed), and the menus' backdrops.
+    /// </summary>
     internal bool ArtSettledForRender => gameArt is null
-        || (gameArt.ChromeTexture is not null && art?.Atlas is not null && (flow.Current != MoonfallScreen.Play || gameArt.SceneSettled) && MenuArtSettled);
+        || ((gameArt.ChromeTexture is not null || gameArt.Chrome is { FrameReady: false }) && art?.Atlas is not null && (flow.Current != MoonfallScreen.Play || gameArt.SceneSettled) && MenuArtSettled);
 
     /// <summary>A style shot's ribbon, as the event would place it.</summary>
     internal void RibbonForRender(string title, string value)

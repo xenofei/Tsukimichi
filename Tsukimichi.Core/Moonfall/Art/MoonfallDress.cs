@@ -18,6 +18,7 @@ internal sealed class MoonfallDressContext
         Cover = new MoonfallPlane(W, H);
         Rim = new MoonfallPlane(W, H);
         ClearanceAtS = clearance.ToPlane(s);
+        Land = (_, _) => new MoonfallPlane(W, H);
     }
 
     public float S { get; }
@@ -34,6 +35,12 @@ internal sealed class MoonfallDressContext
     public MoonfallPlane Cover { get; }
 
     public MoonfallPlane Rim { get; }
+
+    /// <summary>The painting's land for a mask's (threshold, grow) (<see cref="MoonfallMaskKind.Land"/>); none until the build sets it.</summary>
+    public Func<float, int, MoonfallPlane> Land { get; set; }
+
+    /// <summary>The recipe's plates by picture name, as the caller read them.</summary>
+    public IReadOnlyDictionary<string, MoonfallImage>? Plates { get; init; }
 
     /// <summary>The small lights placed: (x, y, halo reach), board units.</summary>
     public List<Vector3> Lights { get; } = [];

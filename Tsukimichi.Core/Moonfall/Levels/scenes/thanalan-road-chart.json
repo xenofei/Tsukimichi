@@ -1,0 +1,162 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "thanalan-road-chart",
+ "source": {
+  "game": "ui/map/w1f1/00/w1f100_m.tex",
+  "crop": [284, 340, 1429, 1071],
+  "erase": [[1280, 860, 110, 135], [1515, 1150, 160, 70], [1335, 1270, 95, 155], [345, 676, 115, 56]]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.6,
+  "exposure": 0.66,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "land": [0.75, 5],
+     "blur": 6.0,
+     "invert": true
+    }
+   ],
+   "mul": 0.8
+  },
+  {
+   "kind": "plate",
+   "picture": "thanalan-road-chart-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "thanalan-road-chart-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#4A3FC0"], [600, "#3047B8"]],
+  "chroma": 1.8,
+  "floor": 0.07,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "regions": [
+   {
+    "hue": "#9E6478",
+    "chroma": 0.055,
+    "where": [
+     {
+      "land": [0.75, 5],
+      "blur": 5.0,
+      "invert": true
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [50, 14],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [50, 14],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 110,
+   "y": 50,
+   "r": 260,
+   "colour": "#FFC27A",
+   "k": 0.03
+  },
+  {
+   "kind": "shafts",
+   "origin": [-60, -160],
+   "angles": [50, 58, 67],
+   "widths": [46, 32, 52],
+   "k": 0.06,
+   "colour": "#FFD9A0",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "thanalan-road-chart-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "thanalan-road-chart-ticks",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "thanalan-road-chart-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "thanalan-road-chart-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "thanalan-road-chart-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "veil": 0.4,
+ "motion": {
+  "dust": 26,
+  "glints": [
+   {
+    "points": [[150, 185], [200, 199], [246, 210], [296, 224], [347, 235], [400, 238], [451, 254]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[451, 254], [446, 298], [464, 343], [504, 382], [527, 428], [550, 472], [605, 480], [657, 478], [678, 474]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 15,
+    "colour": "#FFE6B0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#141A4E",
+  "deep": "#070A22",
+  "jewel1": "#3A3FB0",
+  "jewel2": "#B0607E"
+ }
+}

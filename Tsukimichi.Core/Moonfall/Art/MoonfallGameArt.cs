@@ -640,20 +640,14 @@ public sealed class MoonfallGameArt<T> : IDisposable
     /// </summary>
     private MoonfallSceneRecipe? SafeRecipe(MoonfallSceneRecipe recipe)
     {
-        if (recipe.Fallback is not { } picture)
+        if (recipe.Fallback is null)
         {
             return null;
         }
 
         if (!safeRecipes.TryGetValue(recipe.Name, out var safe))
         {
-            safe = recipe with
-            {
-                Name = recipe.Name + "~safe",
-                Source = new MoonfallSceneSource(MoonfallSourceKind.Picture, picture, false, 0, 0, false, null),
-                Grade = null,
-                Fallback = null,
-            };
+            safe = MoonfallSceneBuilder.StorySafe(recipe)!;
             safeRecipes[recipe.Name] = safe;
         }
 
@@ -1071,7 +1065,26 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
         // The pieces' clearance depends on the level alone: worked out once, then shared by its tiers and its thumbnail.
         var clearance = clearances.GetOrAdd(level.Id, static (_, l) => MoonfallClearance.For(l), level);
-        return painting is null ? null : MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check, clearance);
+        if (painting is null)
+        {
+            return null;
+        }
+
+        // The recipe's plates (our own pictures of its dress); one missing is left out of the scene and logged.
+        var plates = new Dictionary<string, MoonfallImage>(StringComparer.Ordinal);
+        foreach (var plateName in MoonfallSceneBuilder.PlateNames(recipe))
+        {
+            if (await host.ReadPicture(plateName).ConfigureAwait(false) is { } plate)
+            {
+                plates[plateName] = plate;
+            }
+            else
+            {
+                host.Warn($"Moonfall: the scene {recipe.Name}'s plate {plateName} is missing; it is left out.");
+            }
+        }
+
+        return MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check, clearance, plates);
     });
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, MoonfallClearance> clearances = new(StringComparer.Ordinal);

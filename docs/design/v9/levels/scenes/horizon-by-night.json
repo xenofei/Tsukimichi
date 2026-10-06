@@ -1,0 +1,94 @@
+{
+ "name": "horizon-by-night",
+ "about": "Our own painting: Horizon, the Western Thanalan town on its mesa, its roofline against the stars (painters/horizon.py; shipped as a JPEG).",
+ "source": {
+  "kind": "painting",
+  "painter": "horizon",
+  "params": {}
+ },
+ "veil": 0.3,
+ "features": {
+  "star sky": [[70, 36], [730, 36], [730, 348], [708, 348], [668, 348], [660, 330], [620, 330], [584.0, 256.0], [540.0, 226.0], [496.0, 256.0], [448, 336], [416, 336], [408, 318], [356, 318], [340, 344], [304, 344], [296, 326], [242, 326], [230.0, 286], [214.0, 232.0], [198.0, 286], [192, 352], [154, 352], [146, 338], [100, 338], [80, 348.0], [70, 348]]
+ },
+ "dress": {
+  "palette": {
+   "name": "Indigo sky and aquamarine mesa (Horizon)",
+   "sky": "#141A4E",
+   "deep": "#070818",
+   "jewel1": "#3A40C0",
+   "jewel2": "#2AA8A0",
+   "warm": "#FFB45E",
+   "rim": "#B9E6F0"
+  },
+  "jewel": {
+   "bands": [[0, "#3E42C8"], [600, "#2E34A0"]],
+   "valueHues": [[0.08, "#1E2A8A"], [0.45, "#D0D8FF"]],
+   "chroma": 1.2,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#6AAC5D",
+     "chroma": 0.252,
+     "mask": [["y", 388, 406], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [40, 18]
+  },
+  "shafts": [
+   {
+    "origin": [-80, -90],
+    "angles": [40, 48, 56, 64],
+    "widths": [30, 22, 36, 24],
+    "k": 0.05,
+    "col": "#D8DCFF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "outcrop",
+    "points": [[60, 470], [92, 480], [120, 506], [150, 540], [180, 600]],
+    "seed": 33,
+    "rough": 12
+   },
+   {
+    "kind": "outcrop",
+    "points": [[620, 600], [660, 540], [690, 506], [716, 482], [740, 470]],
+    "seed": 35,
+    "rough": 12
+   },
+   {
+    "kind": "palm",
+    "x": 742,
+    "y": 30,
+    "fronds": [168, 140, 114],
+    "length": 120,
+    "leaf": 22,
+    "seed": 37
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16204E",
+   "rim": "#B9E6F0",
+   "rimK": 0.4,
+   "seed": 19
+  }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16,
+   "stars": 36,
+   "starWhere": [["poly", "star sky", 8]]
+  }
+ },
+ "tone": [
+  {
+   "mask": [["y", 388, 406], ["x", 75, 135], ["x", 725, 665]],
+   "mul": 1.2
+  },
+  {
+   "mask": [["y", 480, 560]],
+   "mul": 1.7
+  }
+ ]
+}

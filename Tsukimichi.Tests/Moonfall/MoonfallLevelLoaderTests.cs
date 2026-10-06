@@ -263,20 +263,48 @@ public sealed class MoonfallLevelLoaderTests
         Assert.Contains(load.Errors, e => e.StartsWith("scene must be", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// Every shipped level's scene ships its pictures. A scene with no recipe of its name is drawn whole at the tier
+    /// (MoonfallArtSlots), so it ships at both tiers; so does a recipe's fallback, drawn whole when its build fails. A
+    /// recipe's own picture and its plates are cut to the tier by the builder, so either size serves (one may ship at 2x
+    /// only), but each must ship and read.
+    /// </summary>
     [Fact]
-    public void Every_shipped_scene_has_its_pictures_at_both_tiers()
+    public void Every_shipped_scene_has_its_pictures()
     {
         var campaigns = MoonfallCampaigns.LoadBuiltIn();
+        var recipes = MoonfallSceneRecipeLoader.LoadBuiltIn();
         var folder = Path.Combine(Tsukimichi.Tests.Ui.OrnamentLayoutTests.RepoRoot(), "Tsukimichi", "assets", "moonfall");
         var scenes = campaigns.Base.Levels.Concat(campaigns.Expansion.Levels).Select(l => l.Scene).OfType<string>().Distinct().ToList();
         Assert.NotEmpty(scenes);
         foreach (var scene in scenes)
         {
-            foreach (var twoX in new[] { false, true })
+            var whole = new List<string>();
+            var cut = new List<string>();
+            if (recipes.TryGetValue(scene, out var recipe))
             {
-                Assert.True(
-                    MoonfallArtFiles.SceneUsable(MoonfallArtFiles.ScenePath(folder, scene, twoX), twoX, out var error),
-                    error);
+                whole.AddRange(recipe.Fallback is { } fallback ? [fallback] : []);
+                cut.AddRange(recipe.Source.Kind == MoonfallSourceKind.Picture ? [recipe.Source.Path] : []);
+                cut.AddRange(MoonfallSceneBuilder.PlateNames(recipe));
+            }
+            else
+            {
+                whole.Add(scene);
+            }
+
+            foreach (var name in whole)
+            {
+                foreach (var twoX in new[] { false, true })
+                {
+                    Assert.True(MoonfallArtFiles.SceneUsable(MoonfallArtFiles.ScenePath(folder, name, twoX), twoX, out var error), $"{scene}: {error}");
+                }
+            }
+
+            foreach (var name in cut)
+            {
+                var one = MoonfallArtFiles.SceneUsable(MoonfallArtFiles.ScenePath(folder, name, false), false, out var error1);
+                var two = MoonfallArtFiles.SceneUsable(MoonfallArtFiles.ScenePath(folder, name, true), true, out var error2);
+                Assert.True(one || two, $"{scene}: {error1}; {error2}");
             }
         }
     }

@@ -89,6 +89,28 @@ public static class MoonfallPlaces
 
         // Our own painting.
         ["moon-road-night"] = MoonfallPlace.Nowhere,
+
+        // The Moon Road's stages 1 and 2 (the level pipeline, docs/design/v9/levels). Western Thanalan's own area map.
+        ["thanalan-road-chart"] = new(ARealmReborn, "Western Thanalan"),
+
+        // The Thanalan loading painting's great dome.
+        ["uldah-gilded-dome"] = new(ARealmReborn, "Ul'dah - Steps of Nald"),
+
+        // The La Noscea loading painting's west: Limsa Lominsa's tower over the water.
+        ["limsa-across-water"] = new(ARealmReborn, "Limsa Lominsa Lower Decks"),
+
+        // The world painting "The Three Great Continents" read as a chart: no place in the story, as airship-road.
+        ["rhotano-wonders"] = MoonfallPlace.Nowhere,
+
+        // Our own paintings, each tagged by the place it depicts, as the game's are (critic runtime round 1, m7; the owner:
+        // Moonfall follows the shield). Horizon on its mesa, the constellation over the Waking Sands, Vesper Bay's moonpath,
+        // its ferry and its harbour gate: Western Thanalan. The cactuar on the Sagolii's dunes: Southern Thanalan.
+        ["horizon-by-night"] = new(ARealmReborn, "Western Thanalan"),
+        ["sagolii-cactuar"] = new(ARealmReborn, "Southern Thanalan"),
+        ["crystal-call"] = new(ARealmReborn, "Western Thanalan"),
+        ["vesper-moonpath"] = new(ARealmReborn, "Western Thanalan"),
+        ["ferry-under-sail"] = new(ARealmReborn, "Western Thanalan"),
+        ["vesper-twin-lanterns"] = new(ARealmReborn, "Western Thanalan"),
     };
 
     /// <summary>
@@ -108,6 +130,34 @@ public static class MoonfallPlaces
 
     /// <summary>The scenes tagged here, by name (every shipped recipe must be one; a test holds it).</summary>
     public static IReadOnlyDictionary<string, MoonfallPlace> Scenes => SceneTable;
+
+    /// <summary>
+    /// The places The Moon Road's stage names name (by stage number): its stages are set nowhere in particular, so they are
+    /// never veiled, but a name that names a place the story has not reached prints as the shield's placeholder (the
+    /// owner's standing answer: Moonfall follows the shield; critic runtime round 2, n-e).
+    /// </summary>
+    private static readonly Dictionary<int, MoonfallPlace> BaseNamePlaces = new()
+    {
+        // 1 The Waking Sands and 2 Vesper Bay: Western Thanalan.
+        [1] = new(ARealmReborn, "Western Thanalan"),
+        [2] = new(ARealmReborn, "Western Thanalan"),
+
+        // 9 Mor Dhona's Glass and 10 Silvertear by Night (Silvertear Falls): Mor Dhona.
+        [9] = new(ARealmReborn, "Mor Dhona"),
+        [10] = new(ARealmReborn, "Mor Dhona"),
+    };
+
+    /// <summary>
+    /// The place <paramref name="stage"/>'s name names: a Far Shore stage's own place (<see cref="OfStage"/>), and for The
+    /// Moon Road the place its name names, if any (its stage itself stays set nowhere).
+    /// </summary>
+    public static MoonfallPlace OfStageName(MoonfallStage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        return stage.Campaign == MoonfallCampaignKind.Base
+            ? BaseNamePlaces.GetValueOrDefault(stage.Number, MoonfallPlace.Nowhere)
+            : OfStage(stage);
+    }
 
     /// <summary>Where <paramref name="stage"/> is set: a Far Shore stage's place, <see cref="MoonfallPlace.Nowhere"/> for The Moon Road's.</summary>
     public static MoonfallPlace OfStage(MoonfallStage stage)

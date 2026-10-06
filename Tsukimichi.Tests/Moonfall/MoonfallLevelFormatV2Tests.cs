@@ -126,6 +126,26 @@ public sealed class MoonfallLevelFormatV2Tests
     }
 
     [Fact]
+    public void The_shipped_levels_deal_their_greens_only_where_canBeGreen_lets_them()
+    {
+        // The level pipeline marks each subject's crowns and key features never green (format v2): the engine's own deal,
+        // at every level number that deals greens, puts its greens on the pieces the file lets be green and nowhere else.
+        var campaigns = MoonfallCampaigns.LoadBuiltIn();
+        var levels = campaigns.Base.Levels.Concat(campaigns.Expansion.Levels).ToList();
+        Assert.Contains(levels, static l => l.Pegs.Any(static p => !p.CanBeGreen));
+        foreach (var level in levels)
+        {
+            for (ulong seed = 1; seed <= 120; seed++)
+            {
+                var game = new MoonfallGame(level, MoonfallRules.FirstGreenLevel + (int)(seed % 3), seed);
+                var greens = Enumerable.Range(0, game.PegCount).Where(i => game.Peg(i).Colour == PegColour.Green).ToList();
+                Assert.Equal(MoonfallRules.GreenCount, greens.Count);
+                Assert.All(greens, i => Assert.True(level.Pegs[i].CanBeGreen, $"{level.Id} seed {seed}: green on piece {i}"));
+            }
+        }
+    }
+
+    [Fact]
     public void Every_shipped_level_has_its_greens_whichever_oranges_are_picked()
     {
         var campaigns = MoonfallCampaigns.LoadBuiltIn();

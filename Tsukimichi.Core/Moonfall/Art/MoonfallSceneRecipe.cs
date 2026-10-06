@@ -20,7 +20,14 @@ public enum MoonfallSourceKind : byte
 /// <param name="PadLeft">Columns added at the left, before cropping.</param>
 /// <param name="PadReflect">Padding mirrors the edge (true) or repeats it (false).</param>
 /// <param name="Crop">(x, y, w, h) in source pixels (after mirroring, before padding is added: x and y may be negative into the padding); null takes the whole picture.</param>
-public sealed record MoonfallSceneSource(MoonfallSourceKind Kind, string Path, bool Mirror, int PadTop, int PadLeft, bool PadReflect, (float X, float Y, float W, float H)? Crop);
+public sealed record MoonfallSceneSource(MoonfallSourceKind Kind, string Path, bool Mirror, int PadTop, int PadLeft, bool PadReflect, (float X, float Y, float W, float H)? Crop)
+{
+    /// <summary>
+    /// Boxes (x, y, w, h) in the source's own pixels (before mirroring and padding) filled from their surroundings before the
+    /// cut: a map's exit arrows and stray marks leave plain parchment behind (the level pipeline's <c>scene._erase</c>).
+    /// </summary>
+    public IReadOnlyList<Vector4> Erase { get; init; } = [];
+}
 
 /// <summary>One factor of a mask: a band of a quantity, smoothstepped, optionally inverted and scaled.</summary>
 public enum MoonfallMaskKind : byte
@@ -39,10 +46,26 @@ public enum MoonfallMaskKind : byte
 
     /// <summary>Near the pieces: 1 within b units of a piece's edge, 0 beyond a.</summary>
     Near,
+
+    /// <summary>Inside the closed polygon <see cref="MoonfallMaskTerm.Points"/> (board units), its edge softened by <see cref="MoonfallMaskTerm.Blur"/>.</summary>
+    Poly,
+
+    /// <summary>Near the polyline <see cref="MoonfallMaskTerm.Points"/>: 1 within b units of it, 0 beyond a (a coast, a road).</summary>
+    Line,
+
+    /// <summary>
+    /// The painting's land (a map's): the source cut at 1 px a unit, its OKLab lightness under a (blurred 1.5 px) is a wall,
+    /// grown b pixels; what a flood from the board's four corners cannot reach is land. Softened by <see cref="MoonfallMaskTerm.Blur"/>.
+    /// </summary>
+    Land,
 }
 
 /// <summary>One factor of a mask (<see cref="MoonfallMaskKind"/>): <c>scale × v</c>, or <c>1 − scale × v</c> when inverted.</summary>
-public sealed record MoonfallMaskTerm(MoonfallMaskKind Kind, float[] Args, float Blur, bool Invert, float Scale);
+public sealed record MoonfallMaskTerm(MoonfallMaskKind Kind, float[] Args, float Blur, bool Invert, float Scale)
+{
+    /// <summary>The polygon or polyline of a <see cref="MoonfallMaskKind.Poly"/> or <see cref="MoonfallMaskKind.Line"/> term, board units.</summary>
+    public Vector2[] Points { get; init; } = [];
+}
 
 /// <summary>A second jewel pushed into a region (<see cref="MoonfallJewelRegion"/>), where = the product of its terms × weight.</summary>
 public sealed record MoonfallRegionRecipe(Vector3 Hue, float Chroma, float Weight, IReadOnlyList<MoonfallMaskTerm> Where);
@@ -68,13 +91,26 @@ public sealed record MoonfallPaletteRecipe
 
     /// <summary>Where the palette applies (the product of these terms); empty: everywhere.</summary>
     public IReadOnlyList<MoonfallMaskTerm> Where { get; init; } = [];
+
+    /// <summary>
+    /// Places the palette leaves alone (a lamp's warm window, a creature's own colour): each a product of terms, and the
+    /// palette's <see cref="Where"/> is multiplied by one less their union (the largest of them at each pixel).
+    /// </summary>
+    public IReadOnlyList<IReadOnlyList<MoonfallMaskTerm>> Spare { get; init; } = [];
 }
 
 /// <summary>A light layer, applied in the recipe's order after the palette.</summary>
 public abstract record MoonfallLightRecipe;
 
 /// <summary>Light shafts from beyond the upper left (dress2.shafts; F4: k at most 0.08). <see cref="Moving"/> shafts breathe and drift in play.</summary>
-public sealed record MoonfallShafts(Vector2 Origin, float[] Angles, float[] Widths, float K, Vector3 Colour, int Seed, float Reach, float Near, bool Moving) : MoonfallLightRecipe;
+public sealed record MoonfallShafts(Vector2 Origin, float[] Angles, float[] Widths, float K, Vector3 Colour, int Seed, float Reach, float Near, bool Moving) : MoonfallLightRecipe
+{
+    /// <summary>
+    /// A moving shaft whose still share is already in a plate (<see cref="MoonfallPlate"/>): only its moving share is made
+    /// (the beams), nothing is baked.
+    /// </summary>
+    public bool BeamsOnly { get; init; }
+}
 
 /// <summary>A soft pool of light (dress2.glow), board units.</summary>
 public sealed record MoonfallGlow(float X, float Y, float R, Vector3 Colour, float K) : MoonfallLightRecipe;
@@ -99,6 +135,38 @@ public sealed record MoonfallNeatline(float Inset) : MoonfallLightRecipe;
 
 /// <summary>An engraved dashed route (scene_airship_road.dashed), through Catmull-Rom smoothed points.</summary>
 public sealed record MoonfallRoute(Vector2[] Points, int Smooth, Vector3 Colour, float Width, float Dash, float Gap, float Alpha) : MoonfallLightRecipe;
+
+/// <summary>A region of the painting made lighter or darker (a chart's unwalked desert receding): <c>px × (1 − (1 − mul) × where)</c>. Paint only.</summary>
+public sealed record MoonfallTone(IReadOnlyList<MoonfallMaskTerm> Where, float Mul) : MoonfallLightRecipe;
+
+/// <summary>How a <see cref="MoonfallPlate"/> is laid on the scene.</summary>
+public enum MoonfallPlateBlend : byte
+{
+    /// <summary><c>1 − (1 − px)(1 − plate)</c>: light (black is nothing).</summary>
+    Screen,
+
+    /// <summary><c>px × plate</c>: shade, and the part of the scene a silhouette covers (white is nothing).</summary>
+    Multiply,
+
+    /// <summary><c>px + plate</c>: a silhouette's colour, premultiplied by its coverage (black is nothing).</summary>
+    Add,
+}
+
+/// <summary>
+/// One of our own pictures laid whole over the scene (<c>assets/moonfall/scenes/&lt;picture&gt;.png</c>, 800 × 600 or
+/// 1600 × 1200): the level pipeline's dress (its light, framing and small lights) drawn ahead of time, so the game
+/// draws exactly what was measured there. A <see cref="MoonfallPlateBlend.Multiply"/> plate marked <see cref="Cover"/> is
+/// the framing's coverage (one less the plate): Fever's sky and the moon's front take it, and the framing rules measure it;
+/// a screened plate marked <see cref="Rim"/> is its rim light, which they measure too.
+/// </summary>
+public sealed record MoonfallPlate(string Picture, MoonfallPlateBlend Blend, bool Cover) : MoonfallLightRecipe
+{
+    /// <summary>
+    /// A <see cref="MoonfallPlateBlend.Screen"/> plate that is the silhouettes' rim light: its strength (the brightest of
+    /// its channels) is the framing's rim, so the fuller-board check measures its runs (F3b) as it does a drawn rim's.
+    /// </summary>
+    public bool Rim { get; init; }
+}
 
 /// <summary>A framing shape, drawn into its group's silhouette.</summary>
 public abstract record MoonfallShapeRecipe;
@@ -131,7 +199,18 @@ public sealed record MoonfallFramingGroup(Vector3 Body, Vector3 Inner, float Inn
 public sealed record MoonfallSmallLight(float X, float Y, float Size, Vector3 Colour, float Core, float K, float Halo, float HaloK, bool Flicker);
 
 /// <summary>Fireflies picked in <see cref="Region"/> where their whole wander and halo keep 8 units from every piece (F5).</summary>
-public sealed record MoonfallFireflies(int Count, int Seed, Vector4 Region, Vector3 Colour);
+public sealed record MoonfallFireflies(int Count, int Seed, Vector4 Region, Vector3 Colour)
+{
+    /// <summary>The colour of each firefly's halo (amber by default; a crystal's sparks take their own).</summary>
+    public Vector3 HaloColour { get; init; } = MoonfallColor.Hex("#FFB45E");
+}
+
+/// <summary>
+/// A glint of light that runs slowly along a path (a chart's engraved road), one pass every <see cref="Every"/> seconds at
+/// <see cref="Speed"/> units a second; Catmull-Rom smoothed through <see cref="Points"/> as a route is. It is light, so it
+/// shows only where its whole halo keeps <see cref="MoonfallMotion.PegKeepOut"/> from every piece.
+/// </summary>
+public sealed record MoonfallGlintPath(Vector2[] Points, int Smooth, float Speed, float Every, float Offset, Vector3 Colour);
 
 /// <summary>A mist layer scrolling across a band of the board, wrapping at its tile width.</summary>
 public sealed record MoonfallMist(float Y0, float Y1, float Speed, float Alpha, float Cell, int Seed, Vector3 Colour);
@@ -146,6 +225,15 @@ public sealed record MoonfallMotionRecipe
     public int Stars { get; init; }
 
     public Vector4 StarRegion { get; init; } = new(75, 41, 725, 330);
+
+    /// <summary>
+    /// The sky the stars may twinkle in (a mask; empty: all of <see cref="StarRegion"/>): a star sits only where it is at
+    /// least <see cref="MoonfallSceneBuilder.StarMaskLeast"/>, so never on the subject (game designer runtime round 1, M1).
+    /// </summary>
+    public IReadOnlyList<MoonfallMaskTerm> StarWhere { get; init; } = [];
+
+    /// <summary>Glints running along paths (a chart's roads).</summary>
+    public IReadOnlyList<MoonfallGlintPath> Glints { get; init; } = [];
 
     public IReadOnlyList<MoonfallMist> Mist { get; init; } = [];
 }

@@ -77,7 +77,7 @@ public sealed partial class MoonfallWindow
             FeverLight(p, scene, g, still);
         }
 
-        // The beams: their moving share breathes ±15% and its break-up drifts; still, it stands as baked.
+        // The beams: their moving share breathes ±30% and its break-up drifts; still, it stands as baked.
         if (scene.BeamsA is { } beamsA)
         {
             var (a, b) = MoonfallMotion.Beams(boardClock, still);
@@ -121,13 +121,36 @@ public sealed partial class MoonfallWindow
             }
         }
 
+        // Glints running slowly along their tracks (a chart's roads): light, shown only where their whole light keeps
+        // 2.5 units from every piece.
+        if (full && layers.Clearance is { } glintClear)
+        {
+            for (var gi = 0; gi < layers.Glints.Count; gi++)
+            {
+                var track = layers.Glints[gi];
+                var d = MoonfallMotion.GlintAlong(boardClock, track.Length, track.Speed, track.Every, track.Offset, still: false);
+                if (d < 0)
+                {
+                    continue;
+                }
+
+                var at = track.At(d);
+                var a = MoonfallMotion.GlintFade(d, track.Length) * MoonfallMotion.GlintClear(glintClear, at) * fade;
+                if (a > 0.01f)
+                {
+                    Put(p, soft, at.X, at.Y, MoonfallMotion.GlintReach / 4f, Ink(track.Colour, MoonfallMotion.GlintHaloK * a));
+                    Put(p, soft, at.X, at.Y, MoonfallMotion.GlintReach * 0.4f / 4f, Ink(Vector3.One, MoonfallMotion.GlintCoreK * a));
+                }
+            }
+        }
+
         // Fireflies: a core and a halo, wandering small closed loops (Full) or resting, always 8 units clear of every piece.
         for (var fi = 0; fi < layers.Fireflies.Count; fi++)
         {
             var f = layers.Fireflies[fi];
             var at = MoonfallMotion.FireflyAt(f, boardClock, !full);
             var pulse = MoonfallMotion.FireflyPulse(f, boardClock, !full);
-            Put(p, soft, at.X, at.Y, MoonfallMotion.FireflyHalo * f.Size * 2.2f / 4f, Ink(MoonfallColor.Hex("#FFB45E"), 0.22f * pulse * fade));
+            Put(p, soft, at.X, at.Y, MoonfallMotion.FireflyHalo * f.Size * 2.2f / 4f, Ink(layers.FireflyHaloColour, 0.22f * pulse * fade));
             Put(p, soft, at.X, at.Y, MoonfallMotion.FireflyCore * f.Size * 2.2f / 4f, Ink(layers.FireflyColour, 0.95f * pulse * fade));
         }
 
@@ -308,7 +331,8 @@ public sealed partial class MoonfallWindow
 
     /// <summary>
     /// The colour-blind assist (<see cref="MoonfallPegMarks"/>): a crescent on orange, a leaf on green, a star with its
-    /// light rim on purple, engraved on every peg not yet cleared; blue stays plain.
+    /// light rim on purple, engraved on every peg and brick not yet cleared (a brick's at its middle, sized to its
+    /// thickness); blue stays plain.
     /// </summary>
     private void PegMarks(in ArtPen p, MoonfallGame g, double alpha)
     {
@@ -323,7 +347,7 @@ public sealed partial class MoonfallWindow
         for (var i = 0; i < g.PegCount; i++)
         {
             var peg = g.Peg(i, alpha);
-            if (peg.Cleared || peg.Shape != PegShape.Round)
+            if (peg.Cleared)
             {
                 continue;
             }
@@ -334,8 +358,9 @@ public sealed partial class MoonfallWindow
                 continue;
             }
 
-            var min = v.Map(peg.X - peg.Radius, peg.Y - peg.Radius);
-            var max = v.Map(peg.X + peg.Radius, peg.Y + peg.Radius);
+            var (centre, half) = MoonfallPegMarks.Place(peg, v.Size(1));
+            var min = v.Map(centre.X - half, centre.Y - half);
+            var max = v.Map(centre.X + half, centre.Y + half);
             if (mark == MoonfallPegMark.Star)
             {
                 var (r0, r1) = MoonfallPegMarks.Uv(MoonfallPegMark.StarRim);

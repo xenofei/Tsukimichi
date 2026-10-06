@@ -52,7 +52,7 @@ public sealed class MoonfallPerfTests
     public void Sages_Path_takes_one_line_a_tick_on_a_full_board()
     {
         var full = FullBoard();
-        var shipped = MoonfallCampaigns.LoadBuiltIn().Base.Levels[3];
+        var shipped = MoonfallCampaigns.LoadBuiltIn().Base.Levels.MaxBy(static l => l.Pegs.Count) ?? throw new InvalidOperationException("no shipped level");
         double[] angles = [-60, -30, -10, 0, 12, 35, 70];
 
         // Warm up the JIT (the same calls, enough for the hot loop to reach its optimised tier).
@@ -63,7 +63,7 @@ public sealed class MoonfallPerfTests
         }
 
         var worstMedian = 0.0;
-        foreach (var (name, level) in new[] { ("full board, 400 pegs", full), ("base-04, the largest shipped", shipped) })
+        foreach (var (name, level) in new[] { ("full board, 400 pegs", full), ($"{shipped.Id}, the largest shipped", shipped) })
         {
             var ticks = new List<double>();
             var worstSearch = 0.0;

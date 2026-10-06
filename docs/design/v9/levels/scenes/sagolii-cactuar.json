@@ -1,0 +1,104 @@
+{
+ "name": "sagolii-cactuar",
+ "about": "Our own painting: a cactuar mid-stride on a dune crest in the Thanalan desert, under the full moon (painters/cactuar.py; shipped as a JPEG).",
+ "source": {
+  "kind": "painting",
+  "painter": "cactuar",
+  "params": {}
+ },
+ "veil": 0.3,
+ "features": {
+  "star sky": [[70, 36], [730, 36], [730, 306], [720, 306], [640, 312], [520, 334], [420, 342], [330, 326], [250, 308], [160, 302], [60, 320], [70, 320]]
+ },
+ "dress": {
+  "palette": {
+   "name": "Violet night and rose sand (the Sagolii)",
+   "sky": "#1C1650",
+   "deep": "#08061C",
+   "jewel1": "#6034C0",
+   "jewel2": "#B05A86",
+   "warm": "#FFB45E",
+   "rim": "#C9B8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#6234C4"], [600, "#50289C"]],
+   "valueHues": [[0.08, "#38187A"], [0.45, "#DCC8FF"]],
+   "chroma": 1.0,
+   "floor": 0.035,
+   "regions": [
+    {
+     "hex": "#B45850",
+     "chroma": 0.12,
+     "mask": [["y", 250, 330], ["not-poly", "cactuar", 6], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [40, 18],
+   "keepMask": [["poly", "cactuar", 4]]
+  },
+  "shafts": [
+   {
+    "origin": [150, 108],
+    "angles": [30, 42, 54, 66],
+    "widths": [20, 30, 18, 26],
+    "k": 0.06,
+    "col": "#D6D8FF",
+    "reach": 760,
+    "near": 60
+   }
+  ],
+  "framing": [
+   {
+    "kind": "outcrop",
+    "points": [[60, 470], [92, 480], [120, 506], [150, 540], [180, 600]],
+    "seed": 23,
+    "rough": 12
+   },
+   {
+    "kind": "outcrop",
+    "points": [[620, 600], [660, 540], [690, 506], [716, 482], [740, 470]],
+    "seed": 29,
+    "rough": 12
+   }
+  ],
+  "silhouette": {
+   "body": "#06051A",
+   "inner": "#24164E",
+   "rim": "#C9B8FF",
+   "rimK": 0.42,
+   "seed": 8
+  },
+  "lights": [
+   {
+    "auto": {
+     "n": 3,
+     "box": [90, 318, 712, 362],
+     "seed": 11
+    },
+    "col": "#FFB45E",
+    "r": 1.2,
+    "k": 0.75,
+    "halo": 4.0,
+    "hk": 0.22
+   }
+  ]
+ },
+ "ceilingExempt": [[150, 108, 64]],
+ "runtime": {
+  "motion": {
+   "dust": 12,
+   "stars": 40,
+   "mist": [
+    {
+     "y": [538, 592],
+     "speed": 3,
+     "alpha": 0.11,
+     "cell": 140,
+     "seed": 12,
+     "colour": "#D9B8C8"
+    }
+   ],
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "cactuar", 30], ["disc", 458, 190, 30, -6]]
+  },
+  "feverMoon": [150, 108, 34]
+ }
+}

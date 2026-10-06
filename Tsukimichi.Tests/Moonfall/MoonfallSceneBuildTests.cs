@@ -37,7 +37,7 @@ public sealed class MoonfallSceneBuildTests(ITestOutputHelper output)
         var (level, recipe) = Scene(id);
         var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
         Assert.NotNull(painting);
-        var layers = MoonfallSceneBuilder.Build(recipe, level, painting, 2, fallback, check: true);
+        var layers = MoonfallSceneBuilder.Build(recipe, level, painting, 2, fallback, check: true, plates: MoonfallSceneKit.Plates(recipe));
         var r = layers.Report!;
         output.WriteLine($"{id} ({recipe.Name}{(fallback ? ", fallback picture" : string.Empty)}): built in {layers.Cost.TotalMilliseconds:0} ms; cover {r.CoverPercent:0.00}%, middle {r.MiddlePercent:0.000}%, " +
             $"clearance {r.MinClearance?.ToString("0.0") ?? "-"}, rim run {r.LongestRimRun:0.0}, dropped {layers.Dropped}, fireflies {layers.Fireflies.Count}, stars {layers.Stars.Count}, {layers.Bytes / 1048576.0:0.00} MiB");

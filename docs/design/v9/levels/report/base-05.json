@@ -1,0 +1,630 @@
+{
+ "id": "base-05",
+ "name": "The Crystal's Call",
+ "stage": 1,
+ "number": 5,
+ "scene": "crystal-call",
+ "subject": "a constellation in the figure of a crystal over the Waking Sands",
+ "technique": "a constellation",
+ "source": "our painting (crystal)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 71,
+   "pegs": 70,
+   "bricks": 1,
+   "movers": 0,
+   "orange_candidates": 28,
+   "never_green": 8,
+   "skipped_while_tracing": [
+    [
+     [
+      420,
+      202
+     ],
+     "line",
+     "8.0 from the peg at (440, 186)"
+    ],
+    [
+     [
+      460,
+      202
+     ],
+     "line",
+     "8.0 from the peg at (440, 186)"
+    ],
+    [
+     [
+      382,
+      250
+     ],
+     "line",
+     "8.0 from the peg at (356, 252)"
+    ],
+    [
+     [
+      498,
+      250
+     ],
+     "line",
+     "8.0 from the peg at (524, 252)"
+    ],
+    [
+     [
+      358,
+      278
+     ],
+     "line",
+     "8.0 from the peg at (356, 252)"
+    ],
+    [
+     [
+      522,
+      278
+     ],
+     "line",
+     "8.0 from the peg at (524, 252)"
+    ],
+    [
+     [
+      440,
+      270
+     ],
+     "line",
+     "8.0 from the peg at (440, 244)"
+    ],
+    [
+     [
+      440,
+      382
+     ],
+     "line",
+     "12.0 from the peg at (440, 412)"
+    ],
+    [
+     [
+      392,
+      413
+     ],
+     "line",
+     "8.0 from the peg at (366, 414)"
+    ],
+    [
+     [
+      488,
+      413
+     ],
+     "line",
+     "8.0 from the peg at (514, 414)"
+    ],
+    [
+     [
+      386,
+      431
+     ],
+     "line",
+     "8.0 from the peg at (366, 414)"
+    ],
+    [
+     [
+      494,
+      431
+     ],
+     "line",
+     "8.0 from the peg at (514, 414)"
+    ],
+    [
+     [
+      440,
+      438
+     ],
+     "line",
+     "8.0 from the peg at (440, 412)"
+    ],
+    [
+     [
+      110,
+      420
+     ],
+     "field star",
+     "-8.1 from the peg at (102, 424)"
+    ],
+    [
+     [
+      450,
+      506
+     ],
+     "horizon",
+     "9.8 from the peg at (440, 478)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-05.json  id=base-05 \"The Crystal's Call\"  pieces=71 (round 70, bricks 1, movers 0)  mayBeOrange=28",
+    "     still round pegs 70: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 150..507"
+   ]
+  },
+  "sweep": {
+   "angles": 681,
+   "pegs_median": 9,
+   "pegs_mean": 8.7,
+   "pegs_max": 18,
+   "oranges_mean": 3.45,
+   "no_hit": 0,
+   "stuck": 1,
+   "stuck_share": 0.001,
+   "long_flights": 0,
+   "bucket": 108,
+   "unreached": [],
+   "pieces": 71
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 23,
+   "games": 48,
+   "oranges_left_when_lost": [
+    1,
+    5,
+    4,
+    3,
+    1,
+    5,
+    1,
+    2,
+    1,
+    1,
+    4,
+    1,
+    2,
+    1,
+    3,
+    9,
+    2,
+    1,
+    1,
+    1,
+    3,
+    1,
+    5,
+    2,
+    7
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 735,
+   "ramp_per_48": 20.4,
+   "shots_mean": 14.1,
+   "stuck_fires": 22,
+   "random_won": 2,
+   "random_oranges_mean": 19.2,
+   "low_left_share": 0.0,
+   "lost_with_low_orange": 0.0,
+   "holdouts": [
+    {
+     "piece": 15,
+     "at": [
+      361,
+      336
+     ],
+     "share_of_lost_games": 0.23
+    },
+    {
+     "piece": 18,
+     "at": [
+      519,
+      336
+     ],
+     "share_of_lost_games": 0.23
+    },
+    {
+     "piece": 9,
+     "at": [
+      258,
+      428
+     ],
+     "share_of_lost_games": 0.18
+    },
+    {
+     "piece": 8,
+     "at": [
+      102,
+      424
+     ],
+     "share_of_lost_games": 0.16
+    },
+    {
+     "piece": 4,
+     "at": [
+      440,
+      412
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 35,
+     "at": [
+      296,
+      390
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 42,
+     "at": [
+      560,
+      380
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 5,
+     "at": [
+      366,
+      414
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 56,
+     "at": [
+      690,
+      330
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "piece": 6,
+     "at": [
+      514,
+      414
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 36,
+     "at": [
+      600,
+      330
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 27,
+     "at": [
+      210,
+      410
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 33,
+     "at": [
+      330,
+      340
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 26,
+     "at": [
+      170,
+      360
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 37,
+     "at": [
+      640,
+      260
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 34,
+     "at": [
+      120,
+      360
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 39,
+     "at": [
+      620,
+      400
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 28,
+     "at": [
+      250,
+      330
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 50,
+     "at": [
+      200,
+      300
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 45,
+     "at": [
+      600,
+      290
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 59,
+     "at": [
+      540,
+      150
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 1,
+     "at": [
+      356,
+      252
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 3,
+     "at": [
+      440,
+      244
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 47,
+     "at": [
+      560,
+      220
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 58,
+     "at": [
+      330,
+      200
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 54,
+     "at": [
+      262,
+      196
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 0,
+     "at": [
+      440,
+      186
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 2,
+     "at": [
+      524,
+      252
+     ],
+     "share_of_lost_games": 0.01
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.254,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 2.38,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 14.96,
+    "longest_rim_run": 23.9,
+    "longest_rim_at": [
+     691,
+     530
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 0,
+    "lights_nearest": 99,
+    "darkened_min_clearance": 18.88,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 43,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.68,
+      "orange": 0.611,
+      "green": 0.701,
+      "purple": 0.584
+     },
+     "0.8x": {
+      "blue": 0.68,
+      "orange": 0.614,
+      "green": 0.707,
+      "purple": 0.582
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.466,
+      "at": [
+       361,
+       336
+      ],
+      "undressed": 0.476,
+      "drop": 0.01
+     },
+     "orange 1x": {
+      "worst": 0.398,
+      "at": [
+       361,
+       336
+      ],
+      "undressed": 0.407,
+      "drop": 0.009
+     },
+     "green 1x": {
+      "worst": 0.488,
+      "at": [
+       361,
+       336
+      ],
+      "undressed": 0.497,
+      "drop": 0.009
+     },
+     "purple 1x": {
+      "worst": 0.37,
+      "at": [
+       361,
+       336
+      ],
+      "undressed": 0.38,
+      "drop": 0.01
+     },
+     "blue 0.8x": {
+      "worst": 0.466,
+      "at": [
+       258,
+       428
+      ],
+      "undressed": 0.476,
+      "drop": 0.01
+     },
+     "orange 0.8x": {
+      "worst": 0.4,
+      "at": [
+       258,
+       428
+      ],
+      "undressed": 0.41,
+      "drop": 0.01
+     },
+     "green 0.8x": {
+      "worst": 0.493,
+      "at": [
+       258,
+       428
+      ],
+      "undressed": 0.503,
+      "drop": 0.01
+     },
+     "purple 0.8x": {
+      "worst": 0.368,
+      "at": [
+       258,
+       428
+      ],
+      "undressed": 0.378,
+      "drop": 0.01
+     }
+    },
+    "worst_margin": 0.368,
+    "largest_drop": 0.01,
+    "bricks_min_margin": [
+     0.519,
+     "blue"
+    ],
+    "protan_orange_p10": 0.121,
+    "protan_places": 28,
+    "protan_worst_at": [
+     540,
+     150
+    ],
+    "protan_min": 0.11,
+    "jewels": {
+     "coloured_px_pct": 98.8,
+     "mean_chroma": 0.079,
+     "second_at_walls_x": 1.15,
+     "second_at_walls_worst_window": [
+      3.89,
+      491
+     ],
+     "first_jewel_hue": 275,
+     "first_share": 0.784,
+     "second_jewel_hue": 202,
+     "second_share": 0.216,
+     "apart_deg": 73,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      6.4,
+      2.7,
+      12.4,
+      24.4,
+      54.0,
+      0.0,
+      0.0
+     ]
+    },
+    "ghost_median": 0.029,
+    "ghost_worst": [
+     0.04688083007931709,
+     [
+      160,
+      470
+     ]
+    ],
+    "ghost_isolated_pegs": 5,
+    "print": {
+     "median": 0.0,
+     "p90": 0.0145,
+     "worst": [
+      0.0211,
+      [
+       160,
+       470
+      ]
+     ],
+     "samples": 67,
+     "mode": "pegs",
+     "hue_median": 0.0021
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 35.5,
+ "verdict": "PASS"
+}

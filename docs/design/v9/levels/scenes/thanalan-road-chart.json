@@ -1,0 +1,209 @@
+{
+ "name": "thanalan-road-chart",
+ "about": "Western Thanalan's own area map, read as a chart on a desk in the Waking Sands by lamplight: the road from the Waking Sands through the Footfalls and Horizon to Scorpion Crossing and the gate toward Ul'dah, with the side roads to Crescent Cove, Copperbell Mines and down through the Hammerlea toward the Silver Bazaar. The map's red exit arrows are erased (plain parchment fills them); the unwalked desert recedes; the roads are engraved over it in gilt. Palm fronds from the window hang over the top corners.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/map/w1f1/00/w1f100_m.tex",
+  "mirror": false,
+  "crop": [284, 340, 1429, 1071],
+  "erase": [[1280, 860, 110, 135], [1515, 1150, 160, 70], [1335, 1270, 95, 155], [345, 676, 115, 56]],
+  "grade": {
+   "gamma": 1.6,
+   "exposure": 0.66,
+   "warm_keep": 0.25,
+   "chroma_mid": 0.45
+  }
+ },
+ "masks": {
+  "land": {
+   "kind": "rim-fill",
+   "threshold": 0.75,
+   "grow": 5
+  }
+ },
+ "tone": [
+  {
+   "mask": [["not-mask", "land", 12]],
+   "mul": 0.8
+  }
+ ],
+ "overlays": [
+  {
+   "kind": "route",
+   "points": [[150, 185], [200, 199], [246, 210], [296, 224], [347, 235], [400, 238], [451, 254]],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.55
+  },
+  {
+   "kind": "route",
+   "points": [[451, 254], [446, 298], [464, 343], [504, 382], [527, 428], [550, 472], [605, 480], [657, 478], [678, 474]],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.55
+  },
+  {
+   "kind": "route",
+   "points": [[296, 224], [270, 264], [246, 305]],
+   "color": "#D9BE82",
+   "width": 1.6,
+   "alpha": 0.45
+  },
+  {
+   "kind": "route",
+   "points": [[451, 254], [498, 243], [545, 232]],
+   "color": "#D9BE82",
+   "width": 1.6,
+   "alpha": 0.45
+  },
+  {
+   "kind": "route",
+   "points": [[504, 382], [470, 425], [425, 465], [395, 480], [340, 530], [290, 560], [250, 600]],
+   "color": "#D9BE82",
+   "width": 1.6,
+   "alpha": 0.45
+  }
+ ],
+ "veil": 0.4,
+ "features": {
+  "waking sands": [[150, 185]],
+  "footfalls": [[296, 224]],
+  "crescent cove": [[246, 305]],
+  "horizon": [[451, 254]],
+  "copperbell mines": [[548, 232]],
+  "bridge": [[504, 382]],
+  "scorpion crossing": [[550, 472]],
+  "east gate": [[678, 474]],
+  "hammerlea": [[395, 482]],
+  "compass": [[190, 420]],
+  "road main": {
+   "points": [[150, 185], [200, 199], [246, 210], [296, 224], [347, 235], [400, 238], [451, 254]],
+   "smooth": 6
+  },
+  "road south": {
+   "points": [[451, 254], [446, 298], [464, 343], [504, 382], [527, 428], [550, 472]],
+   "smooth": 6
+  },
+  "road east": {
+   "points": [[550, 472], [605, 480], [657, 478], [678, 474]],
+   "smooth": 6
+  },
+  "road copperbell": {
+   "points": [[451, 254], [498, 243], [548, 232]],
+   "smooth": 6
+  },
+  "road hammerlea": {
+   "points": [[504, 382], [470, 425], [425, 465], [395, 482]],
+   "smooth": 6
+  },
+  "road bazaar": {
+   "points": [[395, 482], [340, 530], [290, 560]],
+   "smooth": 6
+  },
+  "road cove": {
+   "points": [[296, 224], [270, 264], [246, 305]],
+   "smooth": 6
+  },
+  "west shore": {
+   "points": [[340, 300], [356, 336], [373, 372], [376, 402], [362, 440], [342, 476]],
+   "smooth": 6
+  },
+  "east shore": {
+   "points": [[604, 276], [596, 312], [612, 350], [646, 380], [700, 396]],
+   "smooth": 4
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Indigo and desert rose (the chart)",
+   "sky": "#141A4E",
+   "deep": "#070A22",
+   "jewel1": "#3A3FB0",
+   "jewel2": "#B0607E",
+   "warm": "#FFB45E",
+   "rim": "#9FB8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#4A3FC0"], [600, "#3047B8"]],
+   "chroma": 1.8,
+   "floor": 0.07,
+   "regions": [
+    {
+     "hex": "#9E6478",
+     "chroma": 0.055,
+     "mask": [["not-mask", "land", 10], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [50, 14]
+  },
+  "glows": [
+   {
+    "x": 110,
+    "y": 50,
+    "r": 260,
+    "col": "#FFC27A",
+    "k": 0.03
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [-60, -160],
+    "angles": [50, 58, 67],
+    "widths": [46, 32, 52],
+    "k": 0.06,
+    "col": "#FFD9A0"
+   }
+  ],
+  "extras": [
+   {
+    "kind": "chart_border"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "palm",
+    "x": 60,
+    "y": 30,
+    "fronds": [10, 38, 62],
+    "length": 130,
+    "leaf": 22,
+    "seed": 3
+   },
+   {
+    "kind": "palm",
+    "x": 742,
+    "y": 30,
+    "fronds": [170, 142, 118],
+    "length": 130,
+    "leaf": 22,
+    "seed": 5
+   }
+  ],
+  "silhouette": {
+   "body": "#060818",
+   "inner": "#1A2050",
+   "rim": "#B9C8FF",
+   "rimK": 0.4,
+   "seed": 5
+  }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 26
+  },
+  "glints": [
+   {
+    "overlay": 0,
+    "speed": 30,
+    "every": 30,
+    "offset": 0
+   },
+   {
+    "overlay": 1,
+    "speed": 30,
+    "every": 30,
+    "offset": 15
+   }
+  ]
+ }
+}

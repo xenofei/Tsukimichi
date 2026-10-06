@@ -66,6 +66,7 @@ After `FinishLevel`, `FinishChallenge` or `FinishDuel`, save the progress the sa
   11. The Courier's Wake
   12. The Sea of Sorrows (the moon, decision 20)
 - **The Far Shore follows the spoiler shield** (owner's decision). Each stage, and each shipped scene, is set in an area on the shield's era scale (`MoonfallPlaces`): the Lantern Quay in Limsa Lominsa Lower Decks, the Twin Lights in Western Thanalan, the Skyward Deck over the Sea of Clouds, the Sunlit Isles on the Ruby Sea, the Admiral's Sea in Western La Noscea, the Ferry in the Stars nowhere (our own painting), the Floating Grove in Il Mheg, the Floating Market in Kugane, the Domes of Sharlayan in Old Sharlayan, the Archon's Crossing in Labyrinthos, the Courier's Wake nowhere (our own painting, the owner's answer of 6 October 2026: the moogle, met in the first hours of any start, and its Storm Post open at every era), the Sea of Sorrows in Mare Lamentorum. A stage whose area the shield hides is `Veiled`: its name prints as the shield's placeholder (with its hover and "Reveal this name"), its levels have no names and no scene, and Adventure, Quick Play, duels and challenges cannot play them, until the story reaches the area or the player reveals it. The map marks such a stop with the shield's eye-slash, not the padlock. The companions keep their own gating.
+- **The Moon Road's names follow the shield too** (critic, levels runtime round 2; the owner's standing answer). Its stages are set nowhere and are never veiled, so Adventure always opens there, but a stage name that names a place (`MoonfallPlaces.OfStageName`: "The Waking Sands" and "Vesper Bay" in Western Thanalan, "Mor Dhona's Glass" and "Silvertear by Night" in Mor Dhona) prints as the shield's placeholder until the story reaches the place (`MoonfallModes.StageName`).
 - **Adventure steps over a veiled stage** (owner's ruling). The road's frontier skips a stage set past the story: the next stage the story allows opens, so no story-safe stage (the moogle's Storm Post included) waits behind a veiled one. The veiled stage waits on the map with the shield's mark (and the padlock too while the road has not come to it), its levels unwon; "all won" and The Far Shore's completion still need it. When nothing else is left to play, the title's Continue says the road waits past the story and opens the map on that stage; the tally says so when it has no Next because of it. When the road has come to the stage and its levels are built, pressing its "Reveal its place" pill opens the shield's "Reveal this name" (for this session), as a right-click on its name does. Otherwise the pill is the padlock's "Not reached" (the road has not come to it) or "Levels on their way" (none of its levels is built yet), and a reveal is left to the name's right-click: a reveal is offered only where it opens something.
 - **Scenes and backdrops follow the same rule.** A level on a veiled stage has no scene art (the night sky). A level whose stage is open but whose scene's own place is past the story is drawn over the recipe's declared story-safe fallback picture (every veilable recipe declares one; a test holds it). The menus' backdrops are tagged too: the title's painting is Sohm Al (Heavensward). While the shield hides it, the title is Ul'dah's loading-screen painting (A Realm Reborn, tagged "Ul'dah - Steps of Nald", so the shield test confirms its era; the owner's answer of 6 October 2026). Ul'dah is a pale sketch, so it has its own darker night grade, its own crop (the city, without the loading screen's blurred lower band) and its own focus (the great dome half across). If Sohm Al cannot be read, the title falls to Ul'dah when the shield shows it. The chart (Eorzea's world map, no story place) is only the last fallback, when neither painting can be shown or read.
 - **Levels are referenced by id.** Content is authored separately. `MoonfallCampaigns.Find(id)` returns the shipped level, or null when no level of that id is shipped yet, in which case the slot is `Missing` and Adventure stops before it.
@@ -126,15 +127,25 @@ State(companion) =
   - A won level that reaches it earns `MoonfallRules.AceBonus` (25,000 `[J]`), and the level is marked aced; it stays aced.
   - `FinishLevel` records `max(best, score + bonus)`.
   - A level with no entry has no Ace.
-  - `[J]` The numbers come from the greedy player: the 75th percentile of its won games' scores, rounded up to 10,000 (`MoonfallAces.Suggest`).
-  - The playability test prints the suggestion for every shipped level, so whoever authors a level can copy it in.
+  - `[J]` The numbers come from the greedy player over 576 games (`MoonfallAces.Suggest`, `SuggestGames`): the score a
+    fifth of all its games win at or above (`AceShare` 0.20), rounded to 10,000, so every Ace is about as hard to reach.
+    Levels runtime round 1 (game designer m6, critic m6): the old rule, the 75th percentile of 48 games' wins, gave Aces
+    that 6% to 26% of games reached.
+  - The playability test prints the suggestion over its 48 games for every shipped level; set the Ace over 576
+    (`MoonfallPlayability.Check(level, 576)`).
 
-| Level | Ace |
-|---|---|
-| base-01 | 340,000 |
-| base-02 | 330,000 |
-| base-03 | 320,000 |
-| base-04 | 350,000 |
+| Level | Ace | Games reaching it (576) |
+|---|---|---|
+| base-01 Road to Horizon | 300,000 | 19.6% |
+| base-02 Horizon by Night | 280,000 | 20.0% |
+| base-03 The Cactuar | 260,000 | 18.8% |
+| base-04 The Gilded Dome | 250,000 | 21.5% |
+| base-05 The Crystal's Call | 250,000 | 19.6% |
+| base-06 Limsa Across the Water | 270,000 | 20.7% |
+| base-07 Moonpath on the Bay | 280,000 | 21.4% |
+| base-08 The Kraken's Sea | 260,000 | 18.9% |
+| base-09 The Ferry Under Sail | 240,000 | 20.5% |
+| base-10 Twin Lanterns | 260,000 | 21.2% |
 
 ## 5. Challenges (`MoonfallChallenges`, `MoonfallChallengeRun`)
 
@@ -168,7 +179,8 @@ modes.FinishChallenge(run)                              // records done and best
 
 Each level is played at its Adventure number, and at least 3, so greens and the companion's power are on the board. It is dealt from `run.SeedOf(index)`.
 
-**The starter twelve** are in `Moonfall/Modes/challenges.json`. Five of them run on the four shipped levels; the rest wait for their levels:
+**The starter twelve** are in `Moonfall/Modes/challenges.json`. They were set on the four placeholder levels; the ten
+levels from the level pipeline (1.23.0) replaced those, and the rest wait for their levels:
 
 | Id | Name | Kind | Levels | Rules |
 |---|---|---|---|---|
@@ -184,6 +196,16 @@ Each level is played at its Adventure number, and at least 3, so greens and the 
 | ch-10 | A Duel at the Waking Sands | duel | base-01, 02, 03 | Minfilia, novice |
 | ch-11 | The Admiral's Wager | duel | base-21, 22, 23 | Merlwyb, adept |
 | ch-12 | The Archon's Path | duel | base-46, 48, 50 | Louisoix, master |
+
+**Open item, before challenges open** (they are sealed until The Moon Road's 55 levels are won, so nothing changes in
+1.23.0; game designer m7 and critic runtime round 1, decision 6):
+- **ch-03 and ch-04 can never open as written.** The level pipeline gives every level 28 to 35 orange candidates (the
+  ten shipped have 28), so `MoonfallChallenges.Playable` keeps ch-03 (35 oranges on base-04) and ch-04 (45 on base-03)
+  `Unavailable`. Re-point ch-03 to a level authored with 35 or more candidates, and ch-04 to one authored as an explicit
+  exception with 45 or more (or give ch-04 another rule).
+- **ch-01, ch-05 and ch-07 were set on the placeholders.** Recalibrate them on the shipped levels: ch-01 (150,000 with
+  7 balls on 1-3, which the greedy player cannot test at 7 balls), ch-05 (clear every peg of 1-1, the set's largest board
+  at 82 pieces) and ch-07 (600,000 over 2-1 to 2-3).
 
 ## 6. The duel (`MoonfallDuel`, `MoonfallAi`)
 

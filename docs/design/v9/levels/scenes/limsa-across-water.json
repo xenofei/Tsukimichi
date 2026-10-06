@@ -1,0 +1,178 @@
+{
+ "name": "limsa-across-water",
+ "about": "Limsa Lominsa's great tree-grown tower, its canopy over the lamplit bridge and the sea mist, from the west of the game's own La Noscea loading-screen painting at its high-resolution size, night graded. Stage 5 keeps the painting's east (the white castle and the far towers) for its own crop.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base01_hr1.tex",
+  "mirror": false,
+  "crop": [60, 330, 1660, 1530],
+  "grade": {
+   "gamma": 1.7,
+   "exposure": 0.7,
+   "ceiling": 0.36
+  },
+  "skyDrop": 0.35,
+  "glow": [-50, -60],
+  "squeeze": true
+ },
+ "veil": 0.44,
+ "features": {
+  "canopy": {
+   "points": [[310, 318], [301, 303], [296, 288], [294, 272], [296, 256], [301, 241], [310, 226], [321, 213], [335, 202], [352, 192], [370, 186], [390, 181], [410, 180], [430, 181], [450, 186], [468, 192], [485, 202], [499, 213], [510, 226], [519, 241], [524, 256], [526, 272], [524, 288]]
+  },
+  "house windows": [[500, 312], [528, 346]],
+  "bridge deck": {
+   "points": [[470, 388], [690, 382]]
+  },
+  "bridge lamps": {
+   "points": [[486, 350], [700, 346]]
+  },
+  "west arch": {
+   "circle": [548, 478, 52],
+   "from": 215,
+   "sweep": 110
+  },
+  "east arch": {
+   "circle": [662, 478, 52],
+   "from": 215,
+   "sweep": 110
+  },
+  "west spire": {
+   "points": [[168, 262], [168, 440]]
+  },
+  "middle spire": {
+   "points": [[252, 206], [252, 330]]
+  },
+  "trunk lights": [[262, 444], [300, 470], [356, 452]],
+  "swell": {
+   "points": [[96, 492], [250, 486], [420, 498], [560, 486], [700, 494]]
+  },
+  "tree lanterns": [[398, 296], [322, 352]],
+  "far spire": {
+   "points": [[128, 330], [128, 450]]
+  },
+  "near spire": {
+   "points": [[212, 300], [212, 400]]
+  },
+  "mist lights": {
+   "points": [[200, 452], [380, 456]]
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Indigo night and aquamarine mist (Limsa from the water)",
+   "sky": "#16184E",
+   "deep": "#060818",
+   "jewel1": "#3A40C0",
+   "jewel2": "#2AA8A8",
+   "warm": "#FFC27A",
+   "rim": "#C9D6FF"
+  },
+  "jewel": {
+   "bands": [[0, "#3C42C8"], [600, "#2E34A0"]],
+   "valueHues": [[0.08, "#1E2A8A"], [0.45, "#D0D8FF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#56AE6C",
+     "chroma": 0.14,
+     "mask": [["y", 400, 480]]
+    }
+   ],
+   "quiet": [22, 12]
+  },
+  "shafts": [
+   {
+    "origin": [-120, -200],
+    "angles": [50, 57, 64, 72],
+    "widths": [34, 22, 40, 26],
+    "k": 0.06,
+    "col": "#D8E0FF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "festoon",
+    "spans": [[60, 118, 34], [118, 172, 24], [172, 214, 14]],
+    "col": "#2A1E58"
+   },
+   {
+    "kind": "festoon",
+    "spans": [[586, 628, 14], [628, 682, 24], [682, 740, 34]],
+    "col": "#2A1E58"
+   },
+   {
+    "kind": "rope",
+    "a": [214, 37],
+    "b": [300, 30],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [500, 30],
+    "b": [586, 37],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "outcrop",
+    "points": [[60, 500], [96, 512], [124, 536], [150, 566], [170, 600]],
+    "seed": 61,
+    "rough": 10
+   },
+   {
+    "kind": "outcrop",
+    "points": [[630, 600], [664, 562], [694, 532], [720, 512], [740, 504]],
+    "seed": 63,
+    "rough": 10
+   },
+   {
+    "kind": "lantern_post",
+    "x": 700,
+    "base": 600,
+    "height": 50
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#1A1A48",
+   "rim": "#C9D6FF",
+   "rimK": 0.0,
+   "seed": 17
+  },
+  "lights": [
+   {
+    "posts": true,
+    "col": "#FFB45E",
+    "r": 2.4,
+    "k": 0.95,
+    "halo": 12,
+    "hk": 0.17
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16,
+   "mist": [
+    {
+     "y": [516, 592],
+     "speed": 4,
+     "alpha": 0.11,
+     "cell": 130,
+     "seed": 31,
+     "colour": "#9FD8E0"
+    }
+   ]
+  },
+  "flicker": [0]
+ },
+ "tone": [
+  {
+   "mask": [["y", 400, 480]],
+   "mul": 1.16
+  }
+ ]
+}

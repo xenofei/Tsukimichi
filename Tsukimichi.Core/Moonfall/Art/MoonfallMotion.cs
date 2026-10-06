@@ -37,8 +37,20 @@ public static class MoonfallMotion
     /// <inheritdoc cref="WanderX"/>
     public const float WanderY = 4f;
 
-    /// <summary>The motion's loop, seconds (the beams' drift and breath, the fireflies' wander).</summary>
+    /// <summary>The motion's loop, seconds (the fireflies' wander, the dust's life).</summary>
     public const float Loop = 6f;
+
+    /// <summary>
+    /// The beams' loop, seconds: their drift and breath, slower than the rest so the light swells calmly (game designer
+    /// runtime round 1, m3: the ±15% over 6 s could not be seen).
+    /// </summary>
+    public const float BeamLoop = 9.5f;
+
+    /// <summary>A glint's halo radius, units (its soft light reaches about 2.2 of it).</summary>
+    public const float GlintHalo = 1.8f;
+
+    /// <summary>How far a glint's light reaches from its centre, units.</summary>
+    public const float GlintReach = GlintHalo * 2.2f;
 
     /// <summary>The firefly's core and halo radii (units) at size 1; the halo reaches about 2.2 of its radius.</summary>
     public const float FireflyCore = 1.5f;
@@ -97,18 +109,21 @@ public static class MoonfallMotion
     public static float Breath(double seconds, float period, float amplitude, bool still) =>
         still ? 1f : 1f + (amplitude * MathF.Sin((float)(2 * Math.PI * (seconds % period) / period)));
 
-    /// <summary>The lantern's flicker, ±10% (two sines); 1, steady, when still.</summary>
+    /// <summary>
+    /// A lamp's flicker, ±10%: two sines at 1.3 and 1.9 Hz (never above 2 Hz) whose beat makes it irregular, each lamp
+    /// shifted by its phase; both make whole cycles in 10 s, so the loop joins without a step. 1, steady, when still.
+    /// </summary>
     public static float Flicker(double seconds, float phase, bool still) =>
-        still ? 1f : 1f + (0.06f * MathF.Sin((float)(2 * Math.PI * 2.0 * (seconds % 10)) + phase)) + (0.04f * MathF.Sin((float)(2 * Math.PI * 3.5 * (seconds % 10)) + 1f + phase));
+        still ? 1f : 1f + (0.06f * MathF.Sin((float)(2 * Math.PI * 1.3 * (seconds % 10)) + phase)) + (0.04f * MathF.Sin((float)(2 * Math.PI * 1.9 * (seconds % 10)) + 1f + (1.7f * phase)));
 
     /// <summary>A star's twinkle lift, 0 to 0.35 (none when still).</summary>
     public static float Twinkle(in MoonfallStar s, double seconds, bool still) =>
         still ? 0f : MathF.Max(0f, 0.35f * MathF.Sin((float)(2 * Math.PI * (seconds % s.Period) / s.Period) + s.Phase));
 
     /// <summary>
-    /// The beams' two drift layers and their breath (spec: the break-up drifting on a 5-unit circle every 6 s, breathing
-    /// ±15%): each layer's alpha, 0..1, of its texture (which holds the moving 30%). Still: the first layer at half, so the
-    /// beams stand exactly as baked at rest.
+    /// The beams' two drift layers and their breath (the break-up drifting between two places every
+    /// <see cref="BeamLoop"/> s, breathing ±<see cref="MoonfallSceneBuilder.BeamBreath"/>): each layer's alpha, 0..1, of
+    /// its texture (which holds the moving share). Still: the first layer at half, so the beams stand exactly as baked at rest.
     /// </summary>
     public static (float A, float B) Beams(double seconds, bool still)
     {
@@ -117,7 +132,7 @@ public static class MoonfallMotion
             return (0.5f, 0f);
         }
 
-        var theta = (float)(2 * Math.PI * (seconds % Loop) / Loop);
+        var theta = (float)(2 * Math.PI * (seconds % BeamLoop) / BeamLoop);
         var wa = 0.5f + (0.5f * MathF.Cos(theta));
         var breath = 0.5f + (0.5f * MathF.Sin(theta));
         return (wa * breath, (1 - wa) * breath);
@@ -138,6 +153,45 @@ public static class MoonfallMotion
         var t = ((seconds + offset) % every) / 0.8;
         return t is >= 0 and <= 1 ? (float)t : -1f;
     }
+
+    /// <summary>
+    /// How far along its track a glint is at <paramref name="seconds"/> (units), or -1 between passes and when still: one
+    /// pass of <paramref name="length"/> at <paramref name="speed"/> every <paramref name="every"/> seconds (or as soon as the
+    /// last has run its length).
+    /// </summary>
+    public static float GlintAlong(double seconds, float length, float speed, float every, float offset, bool still)
+    {
+        if (still || length <= 0 || speed <= 0)
+        {
+            return -1f;
+        }
+
+        var cycle = Math.Max(every, (length / speed) + 1);
+        var d = (float)(((seconds + offset) % cycle) * speed);
+        return d <= length ? d : -1f;
+    }
+
+    /// <summary>A glint's light at <paramref name="along"/> units of its track: rising over its first 24 units and falling over its last.</summary>
+    public static float GlintFade(float along, float length) =>
+        along < 0 ? 0f : MoonfallColor.Smooth(0, 24, along) * MoonfallColor.Smooth(length, length - 24, along);
+
+    /// <summary>How far a glint's light dims as it nears a piece, units: over about a third of a second at its speed, so it
+    /// fades under the pegs rather than winking (game designer runtime round 2, g1).</summary>
+    public const float GlintDim = 10f;
+
+    /// <summary>How much of a glint shows at <paramref name="at"/>: none unless its whole light keeps <see cref="PegKeepOut"/> from every piece, full <see cref="GlintDim"/> units further.</summary>
+    public static float GlintClear(MoonfallClearance clearance, Vector2 at)
+    {
+        ArgumentNullException.ThrowIfNull(clearance);
+        var keep = PegKeepOut + GlintReach;
+        return MoonfallFramingCheck.Opening(at.X, at.Y) ? MoonfallColor.Smooth(keep, keep + GlintDim, clearance.At(at.X, at.Y)) : 0f;
+    }
+
+    /// <summary>A glint's halo and core strength at full light: its peak stays under the peg faces' (UX runtime round 2, m2).</summary>
+    public const float GlintHaloK = 0.35f;
+
+    /// <inheritdoc cref="GlintHaloK"/>
+    public const float GlintCoreK = 0.4f;
 
     /// <summary>
     /// Dust mote <paramref name="index"/> at <paramref name="seconds"/>: its place over the

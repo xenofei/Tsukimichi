@@ -1,0 +1,163 @@
+{
+ "name": "uldah-gilded-dome",
+ "about": "Ul'dah's great dome from the game's own Thanalan loading-screen painting (the image the game shows for the Waking Sands, Ul'dah and every Thanalan zone), at its high-resolution size, mirrored so its light comes from the upper left, night graded.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base02_hr1.tex",
+  "mirror": true,
+  "crop": [800, 0, 2080, 1560],
+  "grade": {
+   "gamma": 1.7,
+   "exposure": 0.7,
+   "ceiling": 0.36
+  },
+  "skyDrop": 0.3,
+  "glow": [-50, -60]
+ },
+ "veil": 0.34,
+ "features": {
+  "great dome": {
+   "circle": [447, 330, 150],
+   "from": 210,
+   "sweep": 126
+  },
+  "turret tips": [[505, 228], [548, 262], [568, 300]],
+  "crest": [[410, 236]],
+  "dome a": {
+   "circle": [337, 382, 34]
+  },
+  "dome b": {
+   "circle": [490, 351, 33]
+  },
+  "dome c": [[517, 386]],
+  "dome d": [[310, 418]],
+  "dome e": [[460, 461]],
+  "great arch": {
+   "circle": [415, 424, 30]
+  },
+  "columns": [[372, 470], [404, 476], [436, 476], [492, 470]],
+  "tower": {
+   "points": [[684, 232], [684, 470]]
+  },
+  "aqueduct posts": [[128, 236], [168, 248], [208, 236]],
+  "terrace lamps": {
+   "points": [[100, 505], [700, 505]]
+  },
+  "west sail": {
+   "points": [[198, 410], [176, 440], [160, 476], [154, 506]]
+  },
+  "east sail": {
+   "points": [[700, 410], [712, 450]]
+  },
+  "east dome": {
+   "circle": [548, 178, 44]
+  },
+  "aqueduct deck": {
+   "points": [[108, 300], [160, 292], [215, 284], [270, 276]]
+  },
+  "west sail back": {
+   "points": [[140, 432], [122, 470], [112, 505]]
+  },
+  "drum": {
+   "points": [[352, 302], [550, 302]]
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Cobalt and rose afterglow (Ul'dah)",
+   "sky": "#1A1650",
+   "deep": "#070A22",
+   "jewel1": "#1A7AD4",
+   "jewel2": "#B04E78",
+   "warm": "#FFC27A",
+   "rim": "#C9B8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#1C84E4"], [300, "#1A78D0"], [600, "#1662A4"]],
+   "valueHues": [[0.08, "#124890"], [0.45, "#C4E4FF"]],
+   "chroma": 1.3,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#B44E62",
+     "chroma": 0.13,
+     "mask": [["y", 330, 190], ["luma", 0.2, 0.36, 4], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [40, 18]
+  },
+  "shafts": [
+   {
+    "origin": [-120, -200],
+    "angles": [50, 57, 64, 72],
+    "widths": [34, 22, 40, 26],
+    "k": 0.07,
+    "col": "#D8D0FF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "festoon",
+    "spans": [[60, 118, 34], [118, 172, 24], [172, 214, 14]],
+    "col": "#3A1E50"
+   },
+   {
+    "kind": "festoon",
+    "spans": [[586, 628, 14], [628, 682, 24], [682, 740, 34]],
+    "col": "#3A1E50"
+   },
+   {
+    "kind": "rope",
+    "a": [214, 37],
+    "b": [300, 30],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [500, 30],
+    "b": [586, 37],
+    "sag": 10,
+    "width": 1.4
+   }
+  ],
+  "silhouette": {
+   "body": "#0A0820",
+   "inner": "#1A1238",
+   "rim": "#C9B8FF",
+   "rimK": 0.0,
+   "seed": 12
+  },
+  "lights": [
+   {
+    "auto": {
+     "n": 7,
+     "box": [100, 330, 700, 515],
+     "seed": 7
+    },
+    "col": "#FFC86E",
+    "r": 1.2,
+    "k": 0.7,
+    "halo": 4.5,
+    "hk": 0.2
+   }
+  ]
+ },
+ "tone": [
+  {
+   "mask": [["y", 300, 170]],
+   "mul": 0.7
+  },
+  {
+   "mask": [["disc", 390, 455, 100, 40]],
+   "mul": 0.82
+  }
+ ],
+ "runtime": {
+  "motion": {
+   "dust": 24,
+   "stars": 0
+  },
+  "flicker": [0]
+ }
+}

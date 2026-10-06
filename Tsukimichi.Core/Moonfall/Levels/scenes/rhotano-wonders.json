@@ -1,0 +1,133 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "rhotano-wonders",
+ "source": {
+  "game": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "crop": [1080, 1300, 960, 720]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.35,
+  "exposure": 0.86,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "palette": {
+  "bands": [[0, "#3048C8"], [600, "#2438A0"]],
+  "chroma": 1.5,
+  "floor": 0.05,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9DCFF"]],
+  "regions": [
+   {
+    "hue": "#4FAF71",
+    "chroma": 0.11,
+    "where": [
+     {
+      "lum": [0.16, 0.24],
+      "blur": 4
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [44, 12],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [44, 12],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 120,
+   "y": 90,
+   "r": 260,
+   "colour": "#FFC27A",
+   "k": 0.025
+  },
+  {
+   "kind": "shafts",
+   "origin": [-60, -160],
+   "angles": [50, 58, 67],
+   "widths": [46, 32, 52],
+   "k": 0.04,
+   "colour": "#E0E6FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "rhotano-wonders-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "rhotano-wonders-ticks",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "rhotano-wonders-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "rhotano-wonders-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "rhotano-wonders-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "lights": [
+  {
+   "x": 86.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  }
+ ],
+ "veil": 0.34,
+ "motion": {
+  "dust": 16
+ },
+ "chrome": {
+  "sky": "#10204E",
+  "deep": "#050A1C",
+  "jewel1": "#2A48C0",
+  "jewel2": "#1E9E7E"
+ }
+}

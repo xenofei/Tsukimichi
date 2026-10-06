@@ -1,0 +1,147 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "limsa-across-water",
+ "source": {
+  "game": "ui/loadingimage/-nowloading_base01_hr1.tex",
+  "crop": [60, 330, 1660, 1530],
+  "squeeze": true
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.7,
+  "exposure": 0.7,
+  "ceiling": 0.36,
+  "skyDrop": 0.35,
+  "skyTop": 0.3,
+  "skyBottom": 0.75
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "moonGlow",
+   "x": -50,
+   "y": -60,
+   "rCore": 330,
+   "rWide": 900,
+   "kCore": 0.11,
+   "kWide": 0.05,
+   "colour": "#C4C0EE"
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "y": [400, 480]
+    }
+   ],
+   "mul": 1.16
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#3C42C8"], [600, "#2E34A0"]],
+  "chroma": 1.1,
+  "floor": 0.04,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#1E2A8A"], [0.45, "#D0D8FF"]],
+  "regions": [
+   {
+    "hue": "#56AE6C",
+    "chroma": 0.14,
+    "where": [
+     {
+      "y": [400, 480]
+     },
+     {
+      "near": [22, 12],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [22, 12],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "shafts",
+   "origin": [-120, -200],
+   "angles": [50, 57, 64, 72],
+   "widths": [34, 22, 40, 26],
+   "k": 0.06,
+   "colour": "#D8E0FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-across-water-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-across-water-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-across-water-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-across-water-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "lights": [
+  {
+   "x": 700.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  }
+ ],
+ "veil": 0.44,
+ "motion": {
+  "dust": 16,
+  "mist": [
+   {
+    "y": [516, 592],
+    "speed": 4,
+    "alpha": 0.11,
+    "cell": 130,
+    "seed": 31,
+    "colour": "#9FD8E0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#16184E",
+  "deep": "#060818",
+  "jewel1": "#3A40C0",
+  "jewel2": "#2AA8A8"
+ }
+}

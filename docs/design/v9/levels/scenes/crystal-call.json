@@ -1,0 +1,100 @@
+{
+ "name": "crystal-call",
+ "about": "Our own painting: a constellation in the shape of a crystal over the Waking Sands (painters/crystal.py; shipped as a JPEG).",
+ "source": {
+  "kind": "painting",
+  "painter": "crystal",
+  "params": {}
+ },
+ "veil": 0.25,
+ "features": {
+  "star sky": [[70, 36], [730, 36], [730, 488], [690, 488], [600, 484], [520, 492], [420, 498], [330, 494], [260, 486], [180, 482], [90, 488], [70, 486]]
+ },
+ "dress": {
+  "palette": {
+   "name": "Indigo and crystal aquamarine (the Echo)",
+   "sky": "#101A4E",
+   "deep": "#060A1E",
+   "jewel1": "#5636C8",
+   "jewel2": "#2FB89A",
+   "warm": "#FFB45E",
+   "rim": "#A9E6FF"
+  },
+  "jewel": {
+   "bands": [[0, "#5A36CC"], [600, "#4628A4"]],
+   "valueHues": [[0.08, "#30188A"], [0.45, "#DACCFF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#30C490",
+     "chroma": 0.22,
+     "mask": [["poly", "crystal", 14]]
+    },
+    {
+     "hex": "#30C490",
+     "chroma": 0.22,
+     "mask": [["near", "milky way", 85, 160], ["y", 520, 480]]
+    }
+   ],
+   "quiet": [50, 22],
+   "keepMask": [["x", 112, 124], ["x", 240, 228], ["y", 464, 471], ["y", 499, 492]]
+  },
+  "glows": [
+   {
+    "x": 440,
+    "y": 330,
+    "r": 150,
+    "col": "#7FE8D8",
+    "k": 0.035
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [-80, -90],
+    "angles": [40, 48, 56, 64],
+    "widths": [30, 22, 36, 24],
+    "k": 0.05,
+    "col": "#CFE0FF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "palm",
+    "x": 60,
+    "y": 30,
+    "fronds": [14, 42, 70],
+    "length": 110,
+    "leaf": 20,
+    "seed": 13
+   },
+   {
+    "kind": "outcrop",
+    "points": [[600, 600], [650, 560], [690, 530], [720, 515], [740, 510]],
+    "seed": 31,
+    "rough": 10
+   }
+  ],
+  "silhouette": {
+   "body": "#06071A",
+   "inner": "#16204E",
+   "rim": "#A9E6FF",
+   "rimK": 0.38,
+   "seed": 9
+  }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 20,
+   "stars": 30,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "crystal", 24]]
+  },
+  "fireflies": {
+   "count": 10,
+   "seed": 9,
+   "region": [90, 300, 710, 520],
+   "colour": "#9FF0FF",
+   "halo": "#5FD8E8"
+  }
+ }
+}

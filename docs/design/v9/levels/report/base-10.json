@@ -1,0 +1,509 @@
+{
+ "id": "base-10",
+ "name": "Twin Lanterns",
+ "stage": 2,
+ "number": 10,
+ "scene": "vesper-twin-lanterns",
+ "subject": "a harbour gate and twin lanterns mirrored in still water",
+ "technique": "reflection (the mirror image drawn with slide movers)",
+ "source": "our painting (twin_lanterns)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 75,
+   "pegs": 70,
+   "bricks": 5,
+   "movers": 21,
+   "orange_candidates": 28,
+   "never_green": 23,
+   "skipped_while_tracing": []
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-10.json  id=base-10 \"Twin Lanterns\"  pieces=75 (round 70, bricks 5, movers 21)  mayBeOrange=28",
+    "     still round pegs 49: closest surfaces 16.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 150..528"
+   ]
+  },
+  "sweep": {
+   "angles": 681,
+   "pegs_median": 10,
+   "pegs_mean": 10.0,
+   "pegs_max": 21,
+   "oranges_mean": 3.24,
+   "no_hit": 0,
+   "stuck": 4,
+   "stuck_share": 0.006,
+   "long_flights": 1,
+   "bucket": 119,
+   "unreached": [],
+   "pieces": 75
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 23,
+   "games": 48,
+   "oranges_left_when_lost": [
+    3,
+    3,
+    3,
+    3,
+    1,
+    6,
+    1,
+    2,
+    4,
+    2,
+    2,
+    2,
+    4,
+    6,
+    4,
+    4,
+    7,
+    1,
+    6,
+    3,
+    2,
+    2,
+    4,
+    6,
+    1
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 747,
+   "ramp_per_48": 20.8,
+   "shots_mean": 14.5,
+   "stuck_fires": 34,
+   "random_won": 0,
+   "random_oranges_mean": 18.6,
+   "low_left_share": 0.283,
+   "lost_with_low_orange": 0.558,
+   "holdouts": [
+    {
+     "piece": 15,
+     "at": [
+      622,
+      262
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 25,
+     "at": [
+      464,
+      486
+     ],
+     "share_of_lost_games": 0.16
+    },
+    {
+     "piece": 27,
+     "at": [
+      288,
+      394
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 28,
+     "at": [
+      512,
+      394
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 12,
+     "at": [
+      196,
+      336
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 21,
+     "at": [
+      336,
+      486
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 33,
+     "at": [
+      214,
+      438
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 19,
+     "at": [
+      604,
+      336
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "piece": 38,
+     "at": [
+      586,
+      438
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 4,
+     "at": [
+      512,
+      306
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 39,
+     "at": [
+      622,
+      438
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 14,
+     "at": [
+      632,
+      229
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 9,
+     "at": [
+      178,
+      262
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 1,
+     "at": [
+      288,
+      306
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 32,
+     "at": [
+      178,
+      438
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 63,
+     "at": [
+      580,
+      150
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 62,
+     "at": [
+      220,
+      150
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 8,
+     "at": [
+      214,
+      262
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 10,
+     "at": [
+      168,
+      229
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 47,
+     "at": [
+      550,
+      290
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 17,
+     "at": [
+      576,
+      229
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 16,
+     "at": [
+      586,
+      262
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 65,
+     "at": [
+      690,
+      200
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 6,
+     "at": [
+      196,
+      208
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 13,
+     "at": [
+      604,
+      208
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 7,
+     "at": [
+      224,
+      229
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 64,
+     "at": [
+      110,
+      200
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 46,
+     "at": [
+      250,
+      290
+     ],
+     "share_of_lost_games": 0.04
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.207,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 1.52,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 8.51,
+    "longest_rim_run": 12.5,
+    "longest_rim_at": [
+     684,
+     116
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 2,
+    "lights_nearest": 100.2,
+    "darkened_min_clearance": 8.51,
+    "elements_dropped_for_clearance": 26
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 47,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.677,
+      "orange": 0.614,
+      "green": 0.723,
+      "purple": 0.569
+     },
+     "0.8x": {
+      "blue": 0.685,
+      "orange": 0.61,
+      "green": 0.712,
+      "purple": 0.586
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.5,
+      "at": [
+       180,
+       471
+      ],
+      "undressed": 0.503,
+      "drop": 0.003
+     },
+     "orange 1x": {
+      "worst": 0.442,
+      "at": [
+       178,
+       262
+      ],
+      "undressed": 0.449,
+      "drop": 0.007
+     },
+     "green 1x": {
+      "worst": 0.554,
+      "at": [
+       196,
+       302
+      ],
+      "undressed": 0.558,
+      "drop": 0.004
+     },
+     "purple 1x": {
+      "worst": 0.392,
+      "at": [
+       180,
+       471
+      ],
+      "undressed": 0.395,
+      "drop": 0.003
+     },
+     "blue 0.8x": {
+      "worst": 0.484,
+      "at": [
+       178,
+       262
+      ],
+      "undressed": 0.491,
+      "drop": 0.007
+     },
+     "orange 0.8x": {
+      "worst": 0.41,
+      "at": [
+       178,
+       262
+      ],
+      "undressed": 0.416,
+      "drop": 0.006
+     },
+     "green 0.8x": {
+      "worst": 0.542,
+      "at": [
+       196,
+       302
+      ],
+      "undressed": 0.544,
+      "drop": 0.002
+     },
+     "purple 0.8x": {
+      "worst": 0.385,
+      "at": [
+       178,
+       262
+      ],
+      "undressed": 0.392,
+      "drop": 0.007
+     }
+    },
+    "worst_margin": 0.385,
+    "largest_drop": 0.007,
+    "bricks_min_margin": [
+     0.506,
+     "blue"
+    ],
+    "protan_orange_p10": 0.115,
+    "protan_places": 112,
+    "protan_worst_at": [
+     190,
+     438
+    ],
+    "protan_min": 0.113,
+    "jewels": {
+     "coloured_px_pct": 98.8,
+     "mean_chroma": 0.062,
+     "second_at_walls_x": 0.95,
+     "second_at_walls_worst_window": [
+      1.8,
+      191
+     ],
+     "first_jewel_hue": 343,
+     "first_share": 0.765,
+     "second_jewel_hue": 209,
+     "second_share": 0.205,
+     "apart_deg": 135,
+     "bins_pct": [
+      18.5,
+      0.1,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      17.2,
+      2.2,
+      1.2,
+      2.7,
+      7.9,
+      50.2
+     ]
+    },
+    "ghost_median": 0.045,
+    "ghost_worst": [
+     0.054626114666461945,
+     [
+      450,
+      250
+     ]
+    ],
+    "ghost_isolated_pegs": 9,
+    "print": {
+     "median": 0.0011,
+     "p90": 0.021,
+     "worst": [
+      0.0393,
+      [
+       240,
+       190
+      ]
+     ],
+     "samples": 64,
+     "mode": "pegs",
+     "hue_median": 0.0054
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 122.1,
+ "verdict": "PASS"
+}

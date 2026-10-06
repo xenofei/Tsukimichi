@@ -1,13 +1,19 @@
 {
   // Moonfall's Ace scores (plan v9 G7), by level id: our own numbers. Each is the greedy player's suggestion
-  // (MoonfallAces.Suggest: the 75th percentile of its won games' scores, rounded up to 10,000); the playability test
-  // prints the suggestion for every shipped level.
+  // (MoonfallAces.Suggest) over 576 games: the score a fifth of all its games win at or above, rounded to 10,000, so
+  // every level's Ace is about as hard to reach (levels runtime round 1; the shares measured 19-22%).
   "format": "moonfall-aces",
   "version": 1,
   "aces": {
-    "base-01": 340000,
-    "base-02": 330000,
-    "base-03": 320000,
-    "base-04": 350000
+    "base-01": 300000,
+    "base-02": 280000,
+    "base-03": 260000,
+    "base-04": 250000,
+    "base-05": 250000,
+    "base-06": 270000,
+    "base-07": 280000,
+    "base-08": 260000,
+    "base-09": 240000,
+    "base-10": 260000
   }
 }

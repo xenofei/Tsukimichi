@@ -1,0 +1,149 @@
+{
+ "name": "rhotano-wonders",
+ "about": "The Rhotano Sea, which the Vesper Bay ferry sails, as the game's own world painting The Three Great Continents draws it at its high-resolution size: a kraken wrapped round a ship, a galleon, a field of wrecks, a whirlpool and a mermaid with her harp; read as a chart under the moon.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "mirror": false,
+  "crop": [1080, 1300, 960, 720],
+  "grade": {
+   "gamma": 1.35,
+   "exposure": 0.86,
+   "warm_keep": 0.25,
+   "chroma_mid": 0.45
+  }
+ },
+ "veil": 0.34,
+ "features": {
+  "kraken": {
+   "circle": [196, 196, 64]
+  },
+  "galleon hull": {
+   "points": [[344, 318], [362, 338], [392, 344], [420, 330]]
+  },
+  "galleon masts": [[372, 262], [392, 252]],
+  "flock": [[512, 118], [536, 134], [558, 156], [584, 170], [610, 176], [636, 194], [664, 210], [506, 186], [530, 198], [520, 236], [526, 266], [512, 292], [532, 302], [500, 326]],
+  "whirlpool": [564, 404, 42],
+  "mermaid": {
+   "points": [[640, 384], [636, 420], [642, 456], [652, 488]]
+  },
+  "harp": [[676, 340]],
+  "wrecks": [[150, 466], [188, 384], [218, 400], [252, 452], [300, 484], [326, 462], [114, 500]],
+  "islets": [[552, 466], [630, 382]],
+  "current": {
+   "points": [[516, 452], [462, 480], [404, 492], [346, 482], [296, 452], [262, 416]],
+   "smooth": 6
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Lapis deep and sea-green (the Rhotano chart)",
+   "sky": "#10204E",
+   "deep": "#050A1C",
+   "jewel1": "#2A48C0",
+   "jewel2": "#1E9E7E",
+   "warm": "#FFB45E",
+   "rim": "#A9E6D8"
+  },
+  "jewel": {
+   "bands": [[0, "#3048C8"], [600, "#2438A0"]],
+   "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9DCFF"]],
+   "chroma": 1.5,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#4FAF71",
+     "chroma": 0.11,
+     "mask": [["luma", 0.16, 0.24, 4], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [44, 12]
+  },
+  "glows": [
+   {
+    "x": 120,
+    "y": 90,
+    "r": 260,
+    "col": "#FFC27A",
+    "k": 0.025
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [-60, -160],
+    "angles": [50, 58, 67],
+    "widths": [46, 32, 52],
+    "k": 0.04,
+    "col": "#E0E6FF"
+   }
+  ],
+  "extras": [
+   {
+    "kind": "chart_border"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "lantern_post",
+    "x": 86,
+    "base": 600,
+    "height": 50
+   },
+   {
+    "kind": "rope",
+    "a": [60, 300],
+    "b": [110, 600],
+    "sag": 6,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [75, 40],
+    "b": [220, 30],
+    "sag": 14,
+    "width": 1.6
+   },
+   {
+    "kind": "rope",
+    "a": [580, 30],
+    "b": [725, 40],
+    "sag": 14,
+    "width": 1.6
+   },
+   {
+    "kind": "outcrop",
+    "points": [[630, 600], [664, 566], [694, 540], [720, 522], [740, 516]],
+    "seed": 71,
+    "rough": 10
+   },
+   {
+    "kind": "rocks",
+    "items": [[150, 580, 18], [120, 566, 14]],
+    "seed": 73
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16204E",
+   "rim": "#A9E6D8",
+   "rimK": 0.0,
+   "seed": 16
+  },
+  "lights": [
+   {
+    "posts": true,
+    "col": "#FFB45E",
+    "r": 2.4,
+    "k": 0.95,
+    "halo": 12,
+    "hk": 0.17
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16
+  },
+  "flicker": [0]
+ }
+}

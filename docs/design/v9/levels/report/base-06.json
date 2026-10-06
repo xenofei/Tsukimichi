@@ -1,0 +1,514 @@
+{
+ "id": "base-06",
+ "name": "Limsa Across the Water",
+ "stage": 2,
+ "number": 6,
+ "scene": "limsa-across-water",
+ "subject": "Limsa Lominsa's tree-grown tower and its lamplit bridge from the water",
+ "technique": "a landmark in outline over a procession",
+ "source": "ui/loadingimage/-nowloading_base01_hr1.tex",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 74,
+   "pegs": 70,
+   "bricks": 4,
+   "movers": 0,
+   "orange_candidates": 28,
+   "never_green": 17,
+   "skipped_while_tracing": [
+    [
+     [
+      375,
+      166
+     ],
+     "canopy",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      411,
+      162
+     ],
+     "canopy",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      522,
+      349
+     ],
+     "bridge lamp",
+     "-11.1 from the peg at (528, 346)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-06.json  id=base-06 \"Limsa Across the Water\"  pieces=74 (round 70, bricks 4, movers 0)  mayBeOrange=28",
+    "     still round pegs 70: closest surfaces 14.1 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 168..498"
+   ]
+  },
+  "sweep": {
+   "angles": 681,
+   "pegs_median": 8,
+   "pegs_mean": 8.2,
+   "pegs_max": 20,
+   "oranges_mean": 2.8,
+   "no_hit": 0,
+   "stuck": 7,
+   "stuck_share": 0.01,
+   "long_flights": 0,
+   "bucket": 115,
+   "unreached": [],
+   "pieces": 74
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 32,
+   "games": 48,
+   "oranges_left_when_lost": [
+    1,
+    4,
+    3,
+    1,
+    1,
+    2,
+    1,
+    1,
+    1,
+    4,
+    3,
+    2,
+    2,
+    1,
+    3,
+    3
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 1003,
+   "ramp_per_48": 27.9,
+   "shots_mean": 13.6,
+   "stuck_fires": 45,
+   "random_won": 0,
+   "random_oranges_mean": 19.0,
+   "low_left_share": 0.0,
+   "lost_with_low_orange": 0.0,
+   "holdouts": [
+    {
+     "piece": 62,
+     "at": [
+      330,
+      400
+     ],
+     "share_of_lost_games": 0.21
+    },
+    {
+     "piece": 38,
+     "at": [
+      128,
+      364
+     ],
+     "share_of_lost_games": 0.18
+    },
+    {
+     "piece": 19,
+     "at": [
+      614,
+      384
+     ],
+     "share_of_lost_games": 0.16
+    },
+    {
+     "piece": 63,
+     "at": [
+      296,
+      420
+     ],
+     "share_of_lost_games": 0.16
+    },
+    {
+     "piece": 35,
+     "at": [
+      252,
+      278
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 18,
+     "at": [
+      578,
+      385
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 1,
+     "at": [
+      279,
+      295
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 9,
+     "at": [
+      532,
+      227
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "piece": 21,
+     "at": [
+      686,
+      382
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "piece": 10,
+     "at": [
+      543,
+      261
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 2,
+     "at": [
+      278,
+      259
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 14,
+     "at": [
+      322,
+      352
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 25,
+     "at": [
+      630,
+      347
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 64,
+     "at": [
+      420,
+      410
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 3,
+     "at": [
+      289,
+      226
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 28,
+     "at": [
+      168,
+      296
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 0,
+     "at": [
+      295,
+      327
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 22,
+     "at": [
+      486,
+      350
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 23,
+     "at": [
+      560,
+      349
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 13,
+     "at": [
+      398,
+      296
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 11,
+     "at": [
+      500,
+      312
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 4,
+     "at": [
+      312,
+      198
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 8,
+     "at": [
+      510,
+      199
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 12,
+     "at": [
+      528,
+      346
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 5,
+     "at": [
+      341,
+      178
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 7,
+     "at": [
+      482,
+      180
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 33,
+     "at": [
+      252,
+      206
+     ],
+     "share_of_lost_games": 0.01
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.365,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 3.62,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 13.27,
+    "longest_rim_run": 0.0,
+    "longest_rim_at": null,
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 1,
+    "lights_nearest": 99,
+    "darkened_min_clearance": 12.94,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 46,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.679,
+      "orange": 0.615,
+      "green": 0.705,
+      "purple": 0.569
+     },
+     "0.8x": {
+      "blue": 0.672,
+      "orange": 0.609,
+      "green": 0.705,
+      "purple": 0.56
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.424,
+      "at": [
+       128,
+       432
+      ],
+      "undressed": 0.427,
+      "drop": 0.003
+     },
+     "orange 1x": {
+      "worst": 0.37,
+      "at": [
+       128,
+       364
+      ],
+      "undressed": 0.37,
+      "drop": 0.0
+     },
+     "green 1x": {
+      "worst": 0.451,
+      "at": [
+       128,
+       432
+      ],
+      "undressed": 0.453,
+      "drop": 0.002
+     },
+     "purple 1x": {
+      "worst": 0.314,
+      "at": [
+       128,
+       432
+      ],
+      "undressed": 0.317,
+      "drop": 0.003
+     },
+     "blue 0.8x": {
+      "worst": 0.419,
+      "at": [
+       128,
+       432
+      ],
+      "undressed": 0.422,
+      "drop": 0.003
+     },
+     "orange 0.8x": {
+      "worst": 0.365,
+      "at": [
+       528,
+       346
+      ],
+      "undressed": 0.364,
+      "drop": -0.001
+     },
+     "green 0.8x": {
+      "worst": 0.452,
+      "at": [
+       128,
+       432
+      ],
+      "undressed": 0.455,
+      "drop": 0.003
+     },
+     "purple 0.8x": {
+      "worst": 0.308,
+      "at": [
+       128,
+       432
+      ],
+      "undressed": 0.311,
+      "drop": 0.003
+     }
+    },
+    "worst_margin": 0.308,
+    "largest_drop": 0.003,
+    "bricks_min_margin": [
+     0.369,
+     "blue"
+    ],
+    "protan_orange_p10": 0.141,
+    "protan_places": 28,
+    "protan_worst_at": [
+     528,
+     346
+    ],
+    "protan_min": 0.134,
+    "jewels": {
+     "coloured_px_pct": 99.8,
+     "mean_chroma": 0.087,
+     "second_at_walls_x": 0.72,
+     "second_at_walls_worst_window": [
+      2.04,
+      441
+     ],
+     "first_jewel_hue": 271,
+     "first_share": 0.766,
+     "second_jewel_hue": 154,
+     "second_share": 0.214,
+     "apart_deg": 116,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      15.8,
+      4.2,
+      1.5,
+      2.0,
+      16.1,
+      60.4,
+      0.0,
+      0.0
+     ]
+    },
+    "ghost_median": 0.029,
+    "ghost_worst": [
+     0.029043827205896378,
+     [
+      398,
+      296
+     ]
+    ],
+    "ghost_isolated_pegs": 1,
+    "print": {
+     "median": 0.0,
+     "p90": 0.0031,
+     "worst": [
+      0.029,
+      [
+       200,
+       452
+      ]
+     ],
+     "samples": 65,
+     "mode": "pegs",
+     "hue_median": 0.0042
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 42.7,
+ "verdict": "PASS"
+}

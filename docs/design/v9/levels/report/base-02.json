@@ -1,0 +1,563 @@
+{
+ "id": "base-02",
+ "name": "Horizon by Night",
+ "stage": 1,
+ "number": 2,
+ "scene": "horizon-by-night",
+ "subject": "Horizon on its mesa: roofs, the water tower and the derrick against the stars",
+ "technique": "a silhouette band (the roofline traced)",
+ "source": "our painting (horizon)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 68,
+   "pegs": 66,
+   "bricks": 2,
+   "movers": 0,
+   "orange_candidates": 28,
+   "never_green": 4,
+   "skipped_while_tracing": [
+    [
+     [
+      374,
+      314
+     ],
+     "roofline",
+     "8.3 from the peg at (351, 323)"
+    ],
+    [
+     [
+      180,
+      336
+     ],
+     "derrick legs",
+     "-5.5 from the peg at (177, 346)"
+    ],
+    [
+     [
+      248,
+      336
+     ],
+     "derrick legs",
+     "2.4 from the peg at (236, 322)"
+    ],
+    [
+     [
+      594,
+      340
+     ],
+     "tower stilts",
+     "6.8 from the peg at (612, 326)"
+    ],
+    [
+     [
+      194,
+      366
+     ],
+     "lantern string",
+     "10.3 from the peg at (177, 346)"
+    ],
+    [
+     [
+      474,
+      352
+     ],
+     "lantern string",
+     "1.0 from the peg at (486, 340)"
+    ],
+    [
+     [
+      600,
+      350
+     ],
+     "lantern string",
+     "10.8 from the peg at (612, 326)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-02.json  id=base-02 \"Horizon by Night\"  pieces=68 (round 66, bricks 2, movers 0)  mayBeOrange=28",
+    "     still round pegs 66: closest surfaces 14.3 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 150..517"
+   ]
+  },
+  "sweep": {
+   "angles": 681,
+   "pegs_median": 9,
+   "pegs_mean": 8.9,
+   "pegs_max": 21,
+   "oranges_mean": 3.63,
+   "no_hit": 0,
+   "stuck": 2,
+   "stuck_share": 0.003,
+   "long_flights": 0,
+   "bucket": 115,
+   "unreached": [],
+   "pieces": 68
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 25,
+   "games": 48,
+   "oranges_left_when_lost": [
+    3,
+    5,
+    3,
+    1,
+    1,
+    4,
+    1,
+    5,
+    3,
+    1,
+    1,
+    2,
+    2,
+    2,
+    4,
+    5,
+    5,
+    5,
+    2,
+    1,
+    1,
+    1,
+    2
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 979,
+   "ramp_per_48": 27.2,
+   "shots_mean": 14.0,
+   "stuck_fires": 51,
+   "random_won": 2,
+   "random_oranges_mean": 19.8,
+   "low_left_share": 0.0,
+   "lost_with_low_orange": 0.0,
+   "holdouts": [
+    {
+     "piece": 34,
+     "at": [
+      606,
+      416
+     ],
+     "share_of_lost_games": 0.2
+    },
+    {
+     "piece": 36,
+     "at": [
+      678,
+      413
+     ],
+     "share_of_lost_games": 0.18
+    },
+    {
+     "piece": 20,
+     "at": [
+      482,
+      380
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 35,
+     "at": [
+      642,
+      415
+     ],
+     "share_of_lost_games": 0.16
+    },
+    {
+     "piece": 13,
+     "at": [
+      612,
+      326
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 23,
+     "at": [
+      146,
+      411
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 2,
+     "at": [
+      84,
+      334
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 21,
+     "at": [
+      598,
+      380
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 4,
+     "at": [
+      148,
+      334
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 33,
+     "at": [
+      570,
+      418
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 15,
+     "at": [
+      673,
+      338
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 7,
+     "at": [
+      268,
+      322
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 14,
+     "at": [
+      644,
+      326
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 19,
+     "at": [
+      486,
+      340
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 8,
+     "at": [
+      300,
+      323
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 12,
+     "at": [
+      432,
+      332
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 52,
+     "at": [
+      180,
+      150
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 10,
+     "at": [
+      351,
+      323
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 11,
+     "at": [
+      406,
+      314
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 58,
+     "at": [
+      560,
+      150
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 17,
+     "at": [
+      190,
+      282
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 6,
+     "at": [
+      236,
+      322
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 3,
+     "at": [
+      116,
+      334
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 18,
+     "at": [
+      238,
+      282
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 1,
+     "at": [
+      214,
+      224
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 0,
+     "at": [
+      540,
+      214
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 54,
+     "at": [
+      470,
+      190
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 53,
+     "at": [
+      330,
+      170
+     ],
+     "share_of_lost_games": 0.01
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.226,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 4.76,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 8.81,
+    "longest_rim_run": 21.3,
+    "longest_rim_at": [
+     693,
+     81
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 0,
+    "lights_nearest": 99,
+    "darkened_min_clearance": 16.38,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 42,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.675,
+      "orange": 0.608,
+      "green": 0.718,
+      "purple": 0.58
+     },
+     "0.8x": {
+      "blue": 0.674,
+      "orange": 0.602,
+      "green": 0.718,
+      "purple": 0.577
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.471,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.467,
+      "drop": -0.004
+     },
+     "orange 1x": {
+      "worst": 0.405,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.4,
+      "drop": -0.005
+     },
+     "green 1x": {
+      "worst": 0.514,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.51,
+      "drop": -0.004
+     },
+     "purple 1x": {
+      "worst": 0.376,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.371,
+      "drop": -0.005
+     },
+     "blue 0.8x": {
+      "worst": 0.415,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.415,
+      "drop": 0.0
+     },
+     "orange 0.8x": {
+      "worst": 0.342,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.342,
+      "drop": 0.0
+     },
+     "green 0.8x": {
+      "worst": 0.458,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.458,
+      "drop": 0.0
+     },
+     "purple 0.8x": {
+      "worst": 0.318,
+      "at": [
+       84,
+       334
+      ],
+      "undressed": 0.318,
+      "drop": 0.0
+     }
+    },
+    "worst_margin": 0.318,
+    "largest_drop": 0.0,
+    "bricks_min_margin": [
+     0.532,
+     "blue"
+    ],
+    "protan_orange_p10": 0.129,
+    "protan_places": 28,
+    "protan_worst_at": [
+     678,
+     413
+    ],
+    "protan_min": 0.126,
+    "jewels": {
+     "coloured_px_pct": 99.6,
+     "mean_chroma": 0.096,
+     "second_at_walls_x": 0.39,
+     "second_at_walls_worst_window": [
+      1.31,
+      441
+     ],
+     "first_jewel_hue": 275,
+     "first_share": 0.754,
+     "second_jewel_hue": 151,
+     "second_share": 0.173,
+     "apart_deg": 124,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      12.4,
+      2.7,
+      2.3,
+      7.3,
+      6.9,
+      68.3,
+      0.1,
+      0.0
+     ]
+    },
+    "ghost_median": 0.028,
+    "ghost_worst": [
+     0.030013706535100937,
+     [
+      520,
+      500
+     ]
+    ],
+    "ghost_isolated_pegs": 6,
+    "print": {
+     "median": 0.0,
+     "p90": 0.0094,
+     "worst": [
+      0.0284,
+      [
+       182,
+       412
+      ]
+     ],
+     "samples": 59,
+     "mode": "pegs",
+     "hue_median": 0.001
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 39.4,
+ "verdict": "PASS"
+}

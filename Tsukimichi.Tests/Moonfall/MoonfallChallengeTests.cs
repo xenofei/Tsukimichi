@@ -86,12 +86,12 @@ public sealed class MoonfallChallengeTests
     public void A_run_sets_the_balls_oranges_and_companion_and_a_score_challenge_is_met_at_its_target()
     {
         var campaigns = MoonfallCampaigns.LoadBuiltIn();
-        var challenge = Make(MoonfallChallengeKind.Score, ["base-03"], target: 1, balls: 7, oranges: 35) with { Companion = MoonfallCompanion.Yshtola };
+        var challenge = Make(MoonfallChallengeKind.Score, ["base-03"], target: 1, balls: 7, oranges: 27) with { Companion = MoonfallCompanion.Yshtola };
         var run = new MoonfallChallengeRun(challenge, campaigns, MoonfallCompanion.Cid, 11);
         Assert.Equal(MoonfallCompanion.Yshtola, run.Companion);
         var game = run.StartLevel();
         Assert.Equal(7, game.BallsLeft);
-        Assert.Equal(35, game.OrangesLeft);
+        Assert.Equal(27, game.OrangesLeft);
         Assert.Equal(MoonfallPower.Fireball, game.Power);
         Assert.Equal(3, game.LevelNumber);
         PlayOut(game, Angles);
@@ -201,11 +201,17 @@ public sealed class MoonfallChallengeTests
     }
 
     [Fact]
-    public void The_greedy_player_suggests_the_third_quartile_of_its_wins_rounded_up()
+    public void The_greedy_player_suggests_the_score_a_fifth_of_its_games_win_at_or_above()
     {
-        var games = new[] { 100_000L, 210_000, 300_001, 400_000 }.Select(static s => new MoonfallGreedyGame(true, 10, 0, s, 0))
-            .Append(new MoonfallGreedyGame(false, 12, 2, 900_000, 0)).ToList();
-        Assert.Equal(310_000, MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", games)));
+        // Ten games, six won: a fifth of them is two, so the Ace is the second-best win, rounded to the nearest 10,000.
+        var wins = new[] { 100_000L, 210_000, 254_999, 300_001, 400_000, 180_000 }.Select(static s => new MoonfallGreedyGame(true, 10, 0, s, 0));
+        var losses = Enumerable.Repeat(new MoonfallGreedyGame(false, 12, 2, 900_000, 0), 4);
+        Assert.Equal(300_000, MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", wins.Concat(losses).ToList())));
+
+        // Fewer wins than a fifth: the lowest win.
+        var few = new[] { new MoonfallGreedyGame(true, 10, 0, 254_999, 0) }.Concat(Enumerable.Repeat(new MoonfallGreedyGame(false, 12, 2, 5, 0), 9)).ToList();
+        Assert.Equal(250_000, MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", few)));
         Assert.Null(MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", [new MoonfallGreedyGame(false, 9, 1, 5, 0)])));
+        Assert.Equal(0.20, MoonfallAces.AceShare);
     }
 }

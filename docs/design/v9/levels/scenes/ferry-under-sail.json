@@ -1,0 +1,132 @@
+{
+ "name": "ferry-under-sail",
+ "about": "Our own painting: the Vesper Bay ferry mid-strait by night under full sail, bound for Limsa Lominsa, the far coasts low on either side (painters/ferry.py; shipped as a JPEG).",
+ "source": {
+  "kind": "painting",
+  "painter": "ferry",
+  "params": {}
+ },
+ "ceilingExempt": [[150, 104, 64]],
+ "veil": 0.22,
+ "dress": {
+  "palette": {
+   "name": "Violet night and rose horizon (the strait)",
+   "sky": "#16124A",
+   "deep": "#060818",
+   "jewel1": "#4C3CC4",
+   "jewel2": "#B0566E",
+   "warm": "#FFB45E",
+   "rim": "#C9C0FF"
+  },
+  "jewel": {
+   "bands": [[0, "#4C3CC4"], [340, "#4038B4"], [600, "#30289A"]],
+   "valueHues": [[0.08, "#24187A"], [0.45, "#D8D0FF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#B05A66",
+     "chroma": 0.14,
+     "mask": [["y", 130, 310], ["not-poly", "ship", 10], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [40, 18],
+   "regionQuiet": 0.3
+  },
+  "framing": [
+   {
+    "kind": "rope",
+    "a": [75, 44],
+    "b": [230, 30],
+    "sag": 16,
+    "width": 1.8
+   },
+   {
+    "kind": "rope",
+    "a": [570, 30],
+    "b": [725, 44],
+    "sag": 16,
+    "width": 1.8
+   },
+   {
+    "kind": "rope",
+    "a": [75, 120],
+    "b": [180, 34],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [620, 34],
+    "b": [725, 120],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "festoon",
+    "spans": [[60, 118, 34], [118, 172, 24], [172, 214, 14]],
+    "col": "#2A1E50"
+   },
+   {
+    "kind": "festoon",
+    "spans": [[586, 628, 14], [628, 682, 24], [682, 740, 34]],
+    "col": "#2A1E50"
+   },
+   {
+    "kind": "outcrop",
+    "points": [[60, 520], [96, 530], [124, 552], [146, 580], [160, 600]],
+    "seed": 81,
+    "rough": 8
+   },
+   {
+    "kind": "outcrop",
+    "points": [[640, 600], [662, 574], [690, 548], [720, 530], [740, 524]],
+    "seed": 83,
+    "rough": 8
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16144A",
+   "rim": "#C9C0FF",
+   "rimK": 0.0,
+   "seed": 19
+  },
+  "lights": [
+   {
+    "points": [[296, 424], [388, 424], [480, 424]],
+    "col": "#FFB45E",
+    "r": 1.1,
+    "k": 0.6,
+    "halo": 4,
+    "hk": 0.18
+   }
+  ]
+ },
+ "tone": [
+  {
+   "mask": [["y", 370, 290]],
+   "mul": 0.8
+  }
+ ],
+ "runtime": {
+  "motion": {
+   "stars": 36,
+   "mist": [
+    {
+     "y": [516, 592],
+     "speed": 5,
+     "alpha": 0.11,
+     "cell": 120,
+     "seed": 11,
+     "colour": "#C8C0E8"
+    }
+   ],
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "ship", 30], ["disc", 150, 104, 40, -8]]
+  },
+  "flicker": [0]
+ },
+ "features": {
+  "star sky": [[70, 36], [730, 36], [730, 300], [660, 306], [600, 316], [560, 326], [214, 326], [170, 318], [110, 308], [70, 302]]
+ }
+}

@@ -106,7 +106,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Level.Id == key);
         var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
         Assert.NotNull(painting);
-        return (level, MoonfallSceneBuilder.Build(recipe, level, painting, 1, fallback, check: true));
+        return (level, MoonfallSceneBuilder.Build(recipe, level, painting, 1, fallback, check: true, plates: MoonfallSceneKit.Plates(recipe)));
     });
 
     [Theory]
@@ -239,6 +239,42 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
     private static readonly Vector3 Lum = new(0.2126f, 0.7152f, 0.0722f);
 
     /// <summary>Each kind's face (the median over its variants of the 80th-percentile luma in 0.85 r, unlit, at 1x).</summary>
+    /// <summary>The 640 × 480 window's board scale against 1x: its content height, 441 px, over the board's 600 units.</summary>
+    private const float SmallWindowScale = 0.735f;
+
+    /// <summary>
+    /// Each kind's brick face: the 80th-percentile luma of its unlit sprite's middle (the part that repeats along a brick,
+    /// between its two caps), opaque pixels only, the median over nothing (a brick has one sprite a kind).
+    /// </summary>
+    private static Dictionary<PegColour, float> BrickFaces()
+    {
+        var folder = MoonfallArtTests.ArtFolder();
+        var atlas = MoonfallAtlas.Parse(File.ReadAllText(Path.Combine(folder, "atlas.json"))).Atlas!;
+        var png = MoonfallPng.Decode(File.ReadAllBytes(Path.Combine(folder, atlas.OneXFile)), out _)!.Value;
+        var faces = new Dictionary<PegColour, float>();
+        foreach (var kind in new[] { PegColour.Blue, PegColour.Orange, PegColour.Green, PegColour.Purple })
+        {
+            var r = atlas.Brick(kind, false);
+            var lum = new List<float>();
+            for (var y = (int)r.Y; y < (int)(r.Y + r.H); y++)
+            {
+                for (var x = (int)(r.X + (r.H / 2)); x < (int)(r.X + r.W - (r.H / 2)); x++)
+                {
+                    var o = ((y * png.Width) + x) * 4;
+                    if (png.Rgba[o + 3] >= 128)
+                    {
+                        lum.Add(Vector3.Dot(new Vector3(png.Rgba[o], png.Rgba[o + 1], png.Rgba[o + 2]) / 255f, Lum));
+                    }
+                }
+            }
+
+            lum.Sort();
+            faces[kind] = lum[(int)(lum.Count * 0.8)];
+        }
+
+        return faces;
+    }
+
     private static Dictionary<PegColour, float> Faces()
     {
         var folder = MoonfallArtTests.ArtFolder();
@@ -333,6 +369,38 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         }
     }
 
+    /// <summary>The 90th percentile of <paramref name="y"/> within <paramref name="reach"/> of a brick's spot, 3-11 units outside the brick's edge (<paramref name="alone"/>: its own clearance).</summary>
+    private static float BrickRingP90(MoonfallPlane y, Vector4 board, float s, MoonfallClearance alone, Vector2 spot, float reach)
+    {
+        var values = new List<float>();
+        for (var py = (int)((spot.Y - reach - board.Y) * s); py <= (int)((spot.Y + reach - board.Y) * s); py++)
+        {
+            for (var px = (int)((spot.X - reach - board.X) * s); px <= (int)((spot.X + reach - board.X) * s); px++)
+            {
+                if ((uint)px >= (uint)y.Width || (uint)py >= (uint)y.Height)
+                {
+                    continue;
+                }
+
+                var bx = ((px + 0.5f) / s) + board.X;
+                var by = ((py + 0.5f) / s) + board.Y;
+                var d = alone.At(bx, by);
+                if (d > 3 && d < 11 && Vector2.Distance(new Vector2(bx, by), spot) <= reach)
+                {
+                    values.Add(y.Data[(py * y.Width) + px]);
+                }
+            }
+        }
+
+        if (values.Count == 0)
+        {
+            return 0f;
+        }
+
+        values.Sort();
+        return values[(int)(values.Count * 0.9)];
+    }
+
     private static float RingP90(MoonfallPlane y, Vector4 board, float s, float x, float yc, float r)
     {
         var values = new List<float>();
@@ -366,19 +434,74 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
     [MemberData(nameof(Levels))]
     public void Every_peg_reads_against_its_scene_and_the_scene_keeps_under_its_ceiling(string id)
     {
+        var (level, layers) = Scene1x(id);
+        ReadsAndKeepsUnderTheCeiling(id, level, layers);
+    }
+
+    /// <summary>Levels whose scene the spoiler shield can swap for its story-safe variant (a recipe with a fallback).</summary>
+    public static IEnumerable<object[]> SafeLevels() =>
+        MoonfallSceneKit.ShippedScenes().Where(static s => s.Recipe.Fallback is not null).Select(static s => new object[] { s.Level.Id });
+
+    [Theory]
+    [MemberData(nameof(SafeLevels))]
+    public void Every_peg_reads_against_its_story_safe_scene(string id)
+    {
+        // The shield's own variant (MoonfallSceneBuilder.StorySafe, as MoonfallGameArt draws it): the recipe's dress over
+        // its placeless fallback picture, whole and ungraded (UX runtime round 1, m4).
+        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Level.Id == id);
+        var safe = MoonfallSceneBuilder.StorySafe(recipe)!;
+        Assert.DoesNotContain(safe.Paint, static l => l is MoonfallPlate);
+        var picture = MoonfallSceneKit.Picture(safe.Source.Path);
+        Assert.NotNull(picture);
+        var layers = MoonfallSceneBuilder.Build(safe, level, picture, 1, check: true, plates: MoonfallSceneKit.Plates(safe));
+        Assert.True(layers.Report!.Ok, $"{id} safe: {string.Join(", ", layers.Report.Fails)}");
+        ReadsAndKeepsUnderTheCeiling(id + " safe", level, layers);
+    }
+
+    private void ReadsAndKeepsUnderTheCeiling(string id, MoonfallLevel level, MoonfallSceneLayers layers)
+    {
         // F6: each kind's face stands at least 0.20 above the 90th percentile of the veiled scene 2-9 units round every
-        // place it can be dealt to (movers along their path, with their own veil), at 1x and at 0.8x (the 640 window).
+        // place it can be dealt to (movers along their path, with their own veil), and each brick's (every kind it may
+        // be dealt) 3-11 units outside its edge, at 1x and at 0.735x (the 640 window's board).
         // The value ceiling: the scene behind the board keeps its 99th-percentile luma at 0.46 or less, and no piece
         // comes within a moon's radius and 18 units.
-        var (level, layers) = Scene1x(id);
         var faces = Faces();
         var veiled = VeiledLuma(level, layers);
         var board = layers.Base.Board;
         var small = new MoonfallImage(new MoonfallPlane(veiled.Width, veiled.Height), veiled.Copy(), new MoonfallPlane(veiled.Width, veiled.Height));
-        var at08 = MoonfallFilters.Resize(small, (int)(veiled.Width * 0.8f), (int)(veiled.Height * 0.8f)).G;
+        var atSmall = MoonfallFilters.Resize(small, (int)(veiled.Width * SmallWindowScale), (int)(veiled.Height * SmallWindowScale)).G;
+        var brickFaces = BrickFaces();
+        var bricks = level.Pegs.Where(static p => p.Shape != PegShape.Round).Select(static p => (Piece: p, Alone: MoonfallClearance.For(new MoonfallLevel("t", "t", [p])))).ToList();
         var worst = new Dictionary<string, (float Margin, float X, float Y)>(StringComparer.Ordinal);
-        foreach (var (plane, s, tier) in new[] { (veiled, 1f, "1x"), (at08, 0.8f, "0.8x") })
+        Span<Vector2> spots = stackalloc Vector2[64];
+        foreach (var (plane, s, tier) in new[] { (veiled, 1f, "1x"), (atSmall, SmallWindowScale, "0.735x") })
         {
+            // A brick: every kind it may be dealt, against the veiled scene 3-11 units outside its edge, round each spot
+            // along its middle (UX runtime round 1, m3).
+            foreach (var (brick, alone) in bricks)
+            {
+                var n = MoonfallVeil.BrickSpots(brick.Shape, (float)brick.X, (float)brick.Y, (float)brick.X2, (float)brick.Y2, (float)brick.Radius,
+                    (float)(brick.StartDegrees * Math.PI / 180), (float)(brick.SweepDegrees * Math.PI / 180), spots);
+                for (var j = 0; j < n; j++)
+                {
+                    var p90 = BrickRingP90(plane, board, s, alone, spots[j], (float)(brick.Thickness / 2) + 11);
+                    foreach (var kind in brickFaces.Keys)
+                    {
+                        if ((kind == PegColour.Orange && !brick.CanBeOrange) || (kind == PegColour.Green && !brick.CanBeGreen))
+                        {
+                            continue;
+                        }
+
+                        var key = $"{kind} brick {tier}";
+                        var margin = brickFaces[kind] - p90;
+                        if (!worst.TryGetValue(key, out var w) || margin < w.Margin)
+                        {
+                            worst[key] = (margin, spots[j].X, spots[j].Y);
+                        }
+                    }
+                }
+            }
+
             foreach (var peg in level.Pegs.Where(static p => p.Shape == PegShape.Round))
             {
                 foreach (var (x, y) in MoonfallClearance.Path(peg))
@@ -439,6 +562,148 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         {
             Assert.True(MoonfallClearance.For(level).At(m.X, m.Y) >= m.R + MoonfallSceneBuilder.MoonKeep);
         }
+    }
+
+    [Theory]
+    [MemberData(nameof(Levels))]
+    public void What_the_recipe_asks_for_survives_its_level(string id)
+    {
+        // A silent drop passed before (critic runtime round 1, m4): every Fever moon a recipe names, every mist band (with
+        // some cover in it), and at least half the stars it asks for are built; every star sits in the recipe's sky
+        // (MotionRecipe.StarWhere) and out of every moon's disc (game designer runtime round 1, M1); no part is dropped.
+        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Level.Id == id);
+        var (_, layers) = Scene1x(id);
+        output.WriteLine($"{id}: moon {layers.Moon is not null}/{recipe.Moon is not null}, mist {layers.Mist.Count}/{recipe.Motion.Mist.Count}, stars {layers.Stars.Count}/{recipe.Motion.Stars}, dropped {layers.Dropped}");
+        Assert.Equal(recipe.Moon is not null, layers.Moon is not null);
+        Assert.Equal(recipe.Motion.Mist.Count, layers.Mist.Count);
+        foreach (var m in layers.Mist)
+        {
+            var cover = 0.0;
+            for (var i = 3; i < m.Tile.Pixels.Length; i += 4)
+            {
+                cover += m.Tile.Pixels[i] / 255.0;
+            }
+
+            Assert.True(cover / (m.Tile.Width * m.Tile.Height) >= 0.12, $"{id}: a mist band with almost no mist ({cover / (m.Tile.Width * m.Tile.Height):0.000})");
+        }
+
+        Assert.True(layers.Stars.Count * 2 >= recipe.Motion.Stars, $"{id}: {layers.Stars.Count} of {recipe.Motion.Stars} stars");
+        Assert.Equal(0, layers.Dropped);
+        var moons = MoonfallSceneBuilder.MoonDiscs(recipe);
+        MoonfallPlane? sky = null;
+        if (recipe.Motion.StarWhere.Count > 0)
+        {
+            // The scene as it stood when the stars were picked: the base layer over the opening (the sky is inside it).
+            var px = new MoonfallImage(800, 600);
+            var b = layers.Base;
+            for (var y = 0; y < b.Height; y++)
+            {
+                for (var x = 0; x < b.Width; x++)
+                {
+                    var i = ((y + (int)b.Board.Y) * 800) + x + (int)b.Board.X;
+                    var o = ((y * b.Width) + x) * 4;
+                    (px.R.Data[i], px.G.Data[i], px.B.Data[i]) = (b.Pixels[o] / 255f, b.Pixels[o + 1] / 255f, b.Pixels[o + 2] / 255f);
+                }
+            }
+
+            sky = MoonfallSceneBuilder.EvaluateMask(recipe.Motion.StarWhere, layers.Clearance!, px, 1);
+        }
+
+        foreach (var star in layers.Stars)
+        {
+            Assert.All(moons, m => Assert.True(Vector2.Distance(new Vector2(star.X, star.Y), new Vector2(m.X, m.Y)) >= m.Z, $"{id}: a star at ({star.X:0}, {star.Y:0}) on a moon"));
+            if (sky is not null)
+            {
+                Assert.True(sky.Sample(star.X, star.Y) >= MoonfallSceneBuilder.StarMaskLeast - 0.05f, $"{id}: a star at ({star.X:0}, {star.Y:0}) outside its sky");
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Levels))]
+    public void Every_star_keeps_off_the_framing_at_both_tiers(string id)
+    {
+        // A sky pixel beside a dark rope or branch is a bright local maximum, so stars lined the framing's edges at 2x
+        // (critic runtime round 2, m9): no star within 4 units of the framing's cover (over 0.05), at either tier.
+        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Level.Id == id);
+        var plates = MoonfallSceneKit.Plates(recipe);
+        var coverPlate = recipe.Light.OfType<MoonfallPlate>().FirstOrDefault(static p => p.Cover);
+        if (recipe.Motion.Stars == 0 || coverPlate is null)
+        {
+            return;
+        }
+
+        var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
+        foreach (var tier in new[] { 1, 2 })
+        {
+            var layers = tier == 1 ? Scene1x(id).Layers : MoonfallSceneBuilder.Build(recipe, level, painting!, 2, fallback, plates: plates);
+            var cover = plates[coverPlate.Picture];
+            cover = cover.Width == 800 * tier ? cover : MoonfallFilters.Resize(cover, 800 * tier, 600 * tier);
+            Assert.True(layers.Stars.Count * 2 >= recipe.Motion.Stars, $"{id} {tier}x: {layers.Stars.Count} of {recipe.Motion.Stars} stars");
+            var reach = (int)MathF.Ceiling((MoonfallSceneBuilder.StarFramingKeep * tier) - 1);
+            foreach (var star in layers.Stars)
+            {
+                int cx = (int)(star.X * tier), cy = (int)(star.Y * tier);
+                for (var y = Math.Max(0, cy - reach); y <= Math.Min((600 * tier) - 1, cy + reach); y++)
+                {
+                    for (var x = Math.Max(0, cx - reach); x <= Math.Min((800 * tier) - 1, cx + reach); x++)
+                    {
+                        var i = (y * cover.Width) + x;
+                        var c = 1 - ((cover.R.Data[i] + cover.G.Data[i] + cover.B.Data[i]) / 3f);
+                        Assert.True(c <= 0.06f, $"{id} {tier}x: a star at ({star.X:0}, {star.Y:0}) on the framing's edge ({x / (float)tier:0}, {y / (float)tier:0})");
+                    }
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Levels))]
+    public void A_glint_shows_only_where_its_light_keeps_clear_of_every_piece(string id)
+    {
+        var (level, layers) = Scene1x(id);
+        var clearance = MoonfallClearance.For(level);
+        foreach (var track in layers.Glints)
+        {
+            var shown = 0;
+            for (var t = 0.0; t < 60; t += 0.05)
+            {
+                var d = MoonfallMotion.GlintAlong(t, track.Length, track.Speed, track.Every, track.Offset, still: false);
+                if (d < 0)
+                {
+                    continue;
+                }
+
+                var at = track.At(d);
+                if (MoonfallMotion.GlintClear(clearance, at) * MoonfallMotion.GlintFade(d, track.Length) <= 0)
+                {
+                    continue;
+                }
+
+                shown++;
+                Assert.True(clearance.At(at.X, at.Y) >= MoonfallMotion.PegKeepOut + MoonfallMotion.GlintReach, $"{id}: a glint at ({at.X:0}, {at.Y:0})");
+            }
+
+            Assert.True(shown > 0, $"{id}: a glint that never shows");
+            Assert.Equal(-1f, MoonfallMotion.GlintAlong(3, track.Length, track.Speed, track.Every, track.Offset, still: true));
+        }
+    }
+
+    [Fact]
+    public void The_lamps_flicker_at_two_hertz_or_less_and_join_at_their_loop()
+    {
+        // GD m3 / UX n2: the flicker read as fast jitter at 2 and 3.5 Hz. Two sines at 1.3 and 1.9 Hz: its rate of change
+        // stays under 2 pi (0.06 x 1.3 + 0.04 x 1.9) a second, and it joins without a step at its 10 s loop.
+        var worst = 0f;
+        for (var t = 0.0; t < 20; t += 0.001)
+        {
+            worst = MathF.Max(worst, MathF.Abs(MoonfallMotion.Flicker(t + 0.001, 0.7f, false) - MoonfallMotion.Flicker(t, 0.7f, false)) / 0.001f);
+        }
+
+        Assert.True(worst <= 2 * MathF.PI * ((0.06f * 1.3f) + (0.04f * 1.9f)) + 0.01f, $"flicker rate {worst:0.000}");
+        Assert.Equal(MoonfallMotion.Flicker(0, 0.7f, false), MoonfallMotion.Flicker(10, 0.7f, false), 3);
+        Assert.Equal(9.5f, MoonfallMotion.BeamLoop);
+        Assert.Equal(0.30f, MoonfallSceneBuilder.BeamBreath);
     }
 
     // ---- Still, Simple and Full ----
@@ -511,6 +776,59 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         Assert.False(MoonfallPegMarks.Inside(MoonfallPegMark.Leaf, 0f, 0f));
         Assert.True(MoonfallPegMarks.Inside(MoonfallPegMark.Star, 0f, 0f));
         Assert.False(MoonfallPegMarks.Inside(MoonfallPegMark.StarRim, 0f, 0f));
+    }
+
+    [Fact]
+    public void Peg_marks_sit_on_every_brick_inside_its_face()
+    {
+        // A brick takes purple and green as a peg does (and orange where it may): its mark sits once, at its middle,
+        // inside its thickness, so the mark (which keeps within 0.9 of its box, the star's rim 1.05) stays on the brick.
+        var campaigns = MoonfallCampaigns.LoadBuiltIn();
+        var bricks = 0;
+        foreach (var level in campaigns.Base.Levels)
+        {
+            var game = new MoonfallGame(level, 5, 1);
+            for (var i = 0; i < game.PegCount; i++)
+            {
+                var piece = game.Peg(i);
+                var (centre, half) = MoonfallPegMarks.Place(piece);
+                if (piece.Shape == PegShape.Round)
+                {
+                    Assert.Equal(new Vector2((float)piece.X, (float)piece.Y), centre);
+                    Assert.Equal((float)piece.Radius, half);
+                    continue;
+                }
+
+                bricks++;
+                Assert.Equal((float)(piece.Thickness / 2), half, 4);
+                var clearance = MoonfallClearance.For(new MoonfallLevel("t", "t", [level.Pegs[i]]));
+                Assert.True(clearance.At(centre.X, centre.Y) <= -half * 0.9f, $"{level.Id} brick {i}: its mark's centre is not on its middle line");
+                foreach (var a in new[] { 0, 45, 90, 135, 180, 225, 270, 315 })
+                {
+                    var r = half * 0.9f;
+                    var x = centre.X + (r * MathF.Cos(a * MathF.PI / 180));
+                    var y = centre.Y + (r * MathF.Sin(a * MathF.PI / 180));
+                    Assert.True(clearance.At(x, y) < 0.75f, $"{level.Id} brick {i}: its mark leaves the brick at ({x:0.0}, {y:0.0})");
+                }
+            }
+        }
+
+        Assert.True(bricks >= 30, $"only {bricks} bricks");
+
+        // At the 640 window (0.735 px a unit at 1x's board) a brick's mark spans at least 10 px, so its shape reads
+        // (UX runtime round 2, m1); a round peg's is unchanged.
+        var level2 = campaigns.Base.Levels.First(static l => l.Pegs.Any(static p => p.Shape != PegShape.Round));
+        var g = new MoonfallGame(level2, 5, 1);
+        for (var i = 0; i < g.PegCount; i++)
+        {
+            var piece = g.Peg(i);
+            var (_, small) = MoonfallPegMarks.Place(piece, SmallWindowScale);
+            Assert.True(small * 2 * SmallWindowScale >= (piece.Shape == PegShape.Round ? 2 * piece.Radius * SmallWindowScale - 0.01 : 10), $"{level2.Id} piece {i}: a {small * 2 * SmallWindowScale:0.0} px mark");
+            if (piece.Shape == PegShape.Round)
+            {
+                Assert.Equal((float)piece.Radius, small);
+            }
+        }
     }
 
     [Fact]
@@ -669,7 +987,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
     {
         var host = new FakeHost(new Dictionary<string, MoonfallImage>(), pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () => art.Chrome is not null && art.SceneState is not MoonfallSceneState.Building);
         Assert.Equal(MoonfallChromeArt.Textures.Count, art.Chrome!.Missing.Count);
         Assert.False(art.Chrome.FrameReady);
@@ -689,7 +1007,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         game["ui/uld/TripleTriadResultCrown_hr1.tex"] = Flat(700, 256, 0.7f);
         var host = new FakeHost(game, pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () => art.ChromeTexture is not null);
         var missing = Assert.Single(art.Chrome!.Missing);
         Assert.StartsWith("ui/uld/TripleTriadResultCrown_hr1.tex (700 x 256", missing, StringComparison.Ordinal);
@@ -706,16 +1024,16 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         var host = new FakeHost(AllUiTextures(), pictures: true);
         using (var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn()))
         {
-            var level = LevelTaking("airship-road");
+            var level = LevelTaking("rhotano-wonders");
             Until(art, host, level, () => art.SceneState is MoonfallSceneState.Ready or MoonfallSceneState.Failed);
             Assert.Equal(MoonfallSceneState.Ready, art.SceneState);
-            Assert.Equal("airship-road", art.Scene!.Layers.Name);
+            Assert.Equal("rhotano-wonders", art.Scene!.Layers.Name);
         }
 
         // Neither the painting nor any picture: the scene fails (logged once) and the board shows the night sky.
         var bare = new FakeHost(AllUiTextures(), pictures: false);
         using var art2 = new MoonfallGameArt<Tex>(bare, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level2 = LevelTaking("airship-road");
+        var level2 = LevelTaking("rhotano-wonders");
         Until(art2, bare, level2, () => art2.SceneState is MoonfallSceneState.Failed);
         for (var i = 0; i < 10; i++)
         {
@@ -724,7 +1042,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         }
 
         Assert.Null(art2.Scene);
-        Assert.Single(bare.Warnings, static w => w.Contains("scene airship-road", StringComparison.Ordinal));
+        Assert.Single(bare.Warnings, static w => w.Contains("scene rhotano-wonders", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -732,7 +1050,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
     {
         var host = new FakeHost(AllUiTextures(), pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () =>
         {
             art.Card(MoonfallPower.Wings);
@@ -755,7 +1073,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         game[MoonfallCards.CardPath(87058)] = Flat(MoonfallCards.CardWidth, MoonfallCards.CardHeight, 0.6f);
         var host = new FakeHost(game, pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () => art.ChromeTexture is not null && art.Scene is not null && art.Card(MoonfallPower.Wings) is not null);
         var held = art.HeldBytes();
         Assert.True(held.Chrome > 0 && held.Cards > 0 && held.Scene > 0);
@@ -792,7 +1110,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         foreach (var (level, recipe) in MoonfallSceneKit.ShippedScenes())
         {
             var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
-            var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, 2, fallback);
+            var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, 2, fallback, plates: MoonfallSceneKit.Plates(recipe));
             var enamel = chrome.Grain is { } g ? (long)(g.Width / 2) * (g.Height / 2) * 4 : 0;
             output.WriteLine($"{level.Id} ({recipe.Name}) at 2x: {layers.Bytes / MiB:0.00} MiB of layers + {enamel / MiB:0.00} MiB enamel");
             worstScene = Math.Max(worstScene, layers.Bytes + enamel);

@@ -1,0 +1,213 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "vesper-twin-lanterns",
+ "source": {
+  "picture": "vesper-twin-lanterns"
+ },
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "palette": {
+  "bands": [[0, "#8E4A6A"], [200, "#A84A5A"], [350, "#B4504E"], [600, "#8E3C40"]],
+  "chroma": 1.1,
+  "floor": 0.04,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#4A1E30"], [0.45, "#FFD4CC"]],
+  "regions": [
+   {
+    "hue": "#2A9EA8",
+    "chroma": 0.12,
+    "where": [
+     {
+      "y": [240, 130]
+     },
+     {
+      "near": [40, 18],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [40, 18],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ],
+  "spare": [
+   [
+    {
+     "disc": [196, 240, 12, 4]
+    }
+   ],
+   [
+    {
+     "disc": [604, 240, 12, 4]
+    }
+   ]
+  ]
+ },
+ "light": [
+  {
+   "kind": "shafts",
+   "origin": [-60, -80],
+   "angles": [40, 48, 56, 64],
+   "widths": [30, 22, 36, 24],
+   "k": 0.06,
+   "colour": "#D6D8FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-twin-lanterns-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-twin-lanterns-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-twin-lanterns-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-twin-lanterns-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "lights": [
+  {
+   "x": 389.022,
+   "y": 474.551,
+   "size": 0.9644,
+   "colour": "#FFD27A",
+   "core": 1.4,
+   "k": 0.8,
+   "halo": 5,
+   "haloK": 0.22,
+   "flicker": true
+  },
+  {
+   "x": 551.094,
+   "y": 443.113,
+   "size": 0.9471,
+   "colour": "#FFD27A",
+   "core": 1.4,
+   "k": 0.8,
+   "halo": 5,
+   "haloK": 0.22,
+   "flicker": true
+  },
+  {
+   "x": 430.06,
+   "y": 383.162,
+   "size": 0.9873,
+   "colour": "#FFD27A",
+   "core": 1.4,
+   "k": 0.8,
+   "halo": 5,
+   "haloK": 0.22,
+   "flicker": true
+  },
+  {
+   "x": 156.195,
+   "y": 395.282,
+   "size": 0.8418,
+   "colour": "#FFD27A",
+   "core": 1.4,
+   "k": 0.8,
+   "halo": 5,
+   "haloK": 0.22,
+   "flicker": true
+  },
+  {
+   "x": 148.046,
+   "y": 506.182,
+   "size": 0.836,
+   "colour": "#FFD27A",
+   "core": 1.4,
+   "k": 0.8,
+   "halo": 5,
+   "haloK": 0.22,
+   "flicker": true
+  },
+  {
+   "x": 196.0,
+   "y": 240.0,
+   "size": 1.0,
+   "colour": "#FFB45E",
+   "core": 1.6,
+   "k": 0.7,
+   "halo": 6,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 604.0,
+   "y": 240.0,
+   "size": 1.0,
+   "colour": "#FFB45E",
+   "core": 1.6,
+   "k": 0.7,
+   "halo": 6,
+   "haloK": 0.2,
+   "flicker": true
+  }
+ ],
+ "veil": 0.28,
+ "motion": {
+  "dust": 12,
+  "stars": 24,
+  "mist": [
+   {
+    "y": [532, 592],
+    "speed": 3,
+    "alpha": 0.11,
+    "cell": 140,
+    "seed": 12,
+    "colour": "#E0B8C8"
+   }
+  ],
+  "starWhere": [
+   {
+    "y": [340, 326]
+   },
+   {
+    "poly": [[296.0, 170.0], [504.0, 170.0], [504.0, 352.0], [296.0, 352.0]],
+    "blur": 12.0,
+    "invert": true
+   },
+   {
+    "poly": [[168.0, 196.0], [224.0, 196.0], [224.0, 348.0], [168.0, 348.0]],
+    "blur": 10.0,
+    "invert": true
+   },
+   {
+    "poly": [[576.0, 196.0], [632.0, 196.0], [632.0, 348.0], [576.0, 348.0]],
+    "blur": 10.0,
+    "invert": true
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#1C1650",
+  "deep": "#060818",
+  "jewel1": "#B4504E",
+  "jewel2": "#2A9EA8"
+ }
+}
