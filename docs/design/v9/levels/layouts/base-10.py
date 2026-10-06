@@ -17,8 +17,10 @@ stars (110, 200) and (690, 200), each left in up to a fifth of lost games; the U
 48 against the outermost pair at y 456); and the two blue stars seen through the gate, (350, 250) and (450, 250), about
 2 per 48. The right corner star once sat behind a blue star on the launcher's line to it (critic N21): that star moved
 from (660, 170) to (640, 150), off the line, but the right field still shielded it ((640, 150) took 13 first touches, the
-corner star 3 against its mirror's 15: critic runtime round 1, m5). The right field is now the left's mirror: (660, 150)
-for (140, 150), and (660, 120), which had no mirror, is gone, so both corner stars are fair first-touch shots. The palette turns warm for the stage's last board:
+corner star 3 against its mirror's 15: critic runtime round 1, m5). The upper fields round the corner stars now mirror
+each other: (660, 150) for (140, 150), and (660, 120), which had no mirror, is gone, so both corner stars are fair
+first-touch shots (15 of 681 each). The lower pair (130, 300) and (680, 300) is older and 10 units off a mirror (the mirror
+of 130 is 670); it shields neither corner star, so it stays. The palette turns warm for the stage's last board:
 a true rose over the water and the lower sky, the high sky's lapis second (game designer n2 and G8). The stage's last level, back at Vesper
 Bay's own gate: the twins' own board, and the stage's hardest.
 """

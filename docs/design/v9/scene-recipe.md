@@ -201,8 +201,8 @@ Keep framing to the corners and the walls: the open middle must stay open (F2).
 |---|---|---|
 | `dust` | 0–120 | Motes drifting in the moving beams; needs a moving shaft. Drawn only 8 units clear of every piece |
 | `stars` | 0–120 | Twinkles on the scene's own bright points in `starRegion` (default 75, 41, 725, 330), never within a moon's radius and a half (or 8 units, if more) of any moon the recipe paints or names for Fever |
-| `starWhere` | mask | The sky the stars may sit in (none: all of `starRegion`): a star needs it at 0.9 or more, so draw it over open sky and keep it off the subject (a `poly` of the sky, a `not-poly` of the subject). A recipe asking for stars keeps at least half of them, or its level's test fails |
-| `glints` | ≤ 4 | `{ "points" (2–256), "smooth" (8), "speed" (36, 10–120 units/s), "every" (12, 2–60 s), "offset" (0–60 s), "colour" (#FFE6B0) }`: a glint of light running slowly along a path (a chart's road), one pass every `every` seconds. It is light: it shows only where its whole light (4 units) keeps 2.5 units from every piece, fading in 3 units further |
+| `starWhere` | mask | The sky the stars may sit in (none: all of `starRegion`): a star needs it at 0.9 or more, so draw it over open sky and keep it off the subject (a `poly` of the sky, a `not-poly` of the subject). Whatever the mask, no star sits within 4 units of the framing (a sky pixel beside a rope or branch is a bright local maximum). A recipe asking for stars keeps at least half of them at both tiers, or its level's test fails |
+| `glints` | ≤ 4 | `{ "points" (2–256), "smooth" (8), "speed" (36, 10–120 units/s), "every" (12, 2–60 s), "offset" (0–60 s), "colour" (#FFE6B0) }`: a glint of light running slowly along a path (a chart's road), one pass every `every` seconds (give two tracks offsets that do not overlap, so one runs at a time). It is light: it shows only where its whole light (4 units) keeps 2.5 units from every piece, dimming in over 10 units further so it fades under the pegs rather than winking; its peak stays under the peg faces'. The story-safe variant drops it (it follows the painting's roads) |
 | `mist` | ≤ 3 layers | `{ "y": [y0, y1], "speed" (4, 1–10 units/s), "alpha" (0.07, ≤ 0.2), "cell" (120), "seed", "colour" }`. A periodic tile that wraps at its width; a band that crosses a piece within 2.5 units is not made (a level's test fails when a recipe's band is not made, or its tile holds almost no mist: pick a seed whose band has cover) |
 
 **The motion budget:** dust, stars and fireflies together at most **120** a board.
@@ -248,8 +248,9 @@ A recipe is written against a level's layout (level-method.md §2), not on its o
 
 ## Fallbacks
 
-- The game texture is missing or changed: the `fallback` picture is drawn whole and ungraded, with the recipe's dress but
-  its `paint` plates (drawn on the painting, they belong to its place); no fallback: the night sky. Logged once.
+- The game texture is missing or changed: the recipe's story-safe variant is drawn (`MoonfallSceneBuilder.StorySafe`, the
+  same as the shield's below): the `fallback` picture whole and ungraded, with the recipe's dress but its `paint` plates
+  and glints (drawn on the painting, they belong to its place); no fallback: the night sky. Logged once.
 - The spoiler shield hides the scene's own place (its stage open, `MoonfallPlaces`): the same thing happens, on purpose. The
   `fallback` picture is drawn whole and ungraded **with the recipe's dress kept: its paint, framing, lights, palette regions
   and motion all survive**, but for the plates in `paint`, which are drawn on the painting itself (a chart's engraved
@@ -293,6 +294,9 @@ the dress, and that the gate's statistic fails it with any one part left out (th
 Waking Sands and Vesper Bay are Western Thanalan, the Sagolii Southern Thanalan), and every converted recipe declares
 `fallback: moon-road-night`, so the shield swaps it for the recipe over that placeless painting
 (`MoonfallSceneBuilder.StorySafe`). MoonfallRender's `--hide-zone "<zone>"` hides one area so that variant can be looked at.
+The Moon Road's stages are set nowhere and never veiled, but a stage name that names a place (`MoonfallPlaces.OfStageName`:
+"The Waking Sands" and "Vesper Bay", Western Thanalan; "Mor Dhona's Glass" and "Silvertear by Night", Mor Dhona) prints as
+the shield's placeholder until the story reaches that place.
 
 **The recipes no level takes.** `airship-road`, `holy-see` and `lantern-night` were the placeholder levels' scenes; no
 shipped level takes them since 1.23.0. They stay: MoonfallRender stages the approved pilots base-p1 and base-p2 on the

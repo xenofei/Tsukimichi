@@ -159,11 +159,21 @@ public sealed class MoonfallModes
     public bool LevelVeiled(string? id) =>
         MoonfallStages.TryPlace(id, out var place) && MoonfallStages.StageOf(place.Campaign, place.Index) is { } stage && StageVeiled(stage);
 
-    /// <summary>The stage's name as the menus print it: the shield's placeholder for its place while it is veiled.</summary>
+    /// <summary>
+    /// The stage's name as the menus print it: the shield's placeholder for its place while it is veiled, and for the place
+    /// its name names while the story has not reached it (The Moon Road's "The Waking Sands", "Vesper Bay"; the stage
+    /// itself stays open: <see cref="MoonfallPlaces.OfStageName"/>).
+    /// </summary>
     public string StageName(MoonfallStage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        return StageVeiled(stage) ? Shield.Placeholder(MoonfallPlaces.OfStage(stage)) : stage.Name;
+        if (StageVeiled(stage))
+        {
+            return Shield.Placeholder(MoonfallPlaces.OfStage(stage));
+        }
+
+        var named = MoonfallPlaces.OfStageName(stage);
+        return Shield.Hides(named) ? Shield.Placeholder(named) : stage.Name;
     }
 
     /// <summary>

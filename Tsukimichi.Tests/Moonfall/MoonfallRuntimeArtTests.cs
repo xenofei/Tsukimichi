@@ -621,6 +621,44 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
 
     [Theory]
     [MemberData(nameof(Levels))]
+    public void Every_star_keeps_off_the_framing_at_both_tiers(string id)
+    {
+        // A sky pixel beside a dark rope or branch is a bright local maximum, so stars lined the framing's edges at 2x
+        // (critic runtime round 2, m9): no star within 4 units of the framing's cover (over 0.05), at either tier.
+        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Level.Id == id);
+        var plates = MoonfallSceneKit.Plates(recipe);
+        var coverPlate = recipe.Light.OfType<MoonfallPlate>().FirstOrDefault(static p => p.Cover);
+        if (recipe.Motion.Stars == 0 || coverPlate is null)
+        {
+            return;
+        }
+
+        var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
+        foreach (var tier in new[] { 1, 2 })
+        {
+            var layers = tier == 1 ? Scene1x(id).Layers : MoonfallSceneBuilder.Build(recipe, level, painting!, 2, fallback, plates: plates);
+            var cover = plates[coverPlate.Picture];
+            cover = cover.Width == 800 * tier ? cover : MoonfallFilters.Resize(cover, 800 * tier, 600 * tier);
+            Assert.True(layers.Stars.Count * 2 >= recipe.Motion.Stars, $"{id} {tier}x: {layers.Stars.Count} of {recipe.Motion.Stars} stars");
+            var reach = (int)MathF.Ceiling((MoonfallSceneBuilder.StarFramingKeep * tier) - 1);
+            foreach (var star in layers.Stars)
+            {
+                int cx = (int)(star.X * tier), cy = (int)(star.Y * tier);
+                for (var y = Math.Max(0, cy - reach); y <= Math.Min((600 * tier) - 1, cy + reach); y++)
+                {
+                    for (var x = Math.Max(0, cx - reach); x <= Math.Min((800 * tier) - 1, cx + reach); x++)
+                    {
+                        var i = (y * cover.Width) + x;
+                        var c = 1 - ((cover.R.Data[i] + cover.G.Data[i] + cover.B.Data[i]) / 3f);
+                        Assert.True(c <= 0.06f, $"{id} {tier}x: a star at ({star.X:0}, {star.Y:0}) on the framing's edge ({x / (float)tier:0}, {y / (float)tier:0})");
+                    }
+                }
+            }
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(Levels))]
     public void A_glint_shows_only_where_its_light_keeps_clear_of_every_piece(string id)
     {
         var (level, layers) = Scene1x(id);
@@ -776,6 +814,21 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         }
 
         Assert.True(bricks >= 30, $"only {bricks} bricks");
+
+        // At the 640 window (0.735 px a unit at 1x's board) a brick's mark spans at least 10 px, so its shape reads
+        // (UX runtime round 2, m1); a round peg's is unchanged.
+        var level2 = campaigns.Base.Levels.First(static l => l.Pegs.Any(static p => p.Shape != PegShape.Round));
+        var g = new MoonfallGame(level2, 5, 1);
+        for (var i = 0; i < g.PegCount; i++)
+        {
+            var piece = g.Peg(i);
+            var (_, small) = MoonfallPegMarks.Place(piece, SmallWindowScale);
+            Assert.True(small * 2 * SmallWindowScale >= (piece.Shape == PegShape.Round ? 2 * piece.Radius * SmallWindowScale - 0.01 : 10), $"{level2.Id} piece {i}: a {small * 2 * SmallWindowScale:0.0} px mark");
+            if (piece.Shape == PegShape.Round)
+            {
+                Assert.Equal((float)piece.Radius, small);
+            }
+        }
     }
 
     [Fact]

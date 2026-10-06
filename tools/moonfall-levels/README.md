@@ -247,7 +247,7 @@ are authoring data, not needed at runtime. The level file names the scene by `sc
 squeezed crop, `poly`, `line` and `land` mask terms, the palette's `spare`, `tone`, plates, `beamsOnly` shafts; see
 `scene-recipe.md`, "From the level pipeline"). A game painting ships nothing of Square Enix's: the runtime cuts, erases and
 grades it, and our dress over it ships as plates; our own painting ships undressed (no grain) as a 2x picture. The
-palette, glows, the moving beams (the shafts' 15%), the small lights (lanterns flicker) and the recipe's `runtime` block
+palette, glows, the moving beams (the shafts' 30%), the small lights (lanterns flicker) and the recipe's `runtime` block
 (`motion`, `fireflies`, `flicker`, `feverMoon`) stay runtime parts, so every level keeps ambient motion. The selftest holds
 that the dress rebuilt from the plates equals the dress (exact) and catches the plates with the cover left out.
 
@@ -259,7 +259,13 @@ gamut moved three second jewels most, and their recipes bring the approved look 
 not the teal 200 the kept gamut gave #30B888: `#6AAC5D` at 0.252 and a lightness tone of 1.2 on the water, since the
 clip had raised its lightness), 2-1's sea mist (`#56AE6C`, tone 1.16: hue 154 against the approved 156, so F7 holds
 against 1-5's 202; critic M1) and 2-3's base jewel (chroma 1.5, floor 0.05, region `#4FAF71`: mean chroma 0.066 and 77
-degrees apart, UX m1). Round 2's per-peg coin on 2-1 fails the print check again in this form (p90 0.050).
+degrees apart, UX m1). Round 2's per-peg coin on 2-1 fails the print check again in this form (p90 0.050). Runtime
+round 2's fold-in lifts 1-2's lower sea toward its approved lightness with a second tone (1.7, ramped over y 480-560).
+
+What ships is this lightness-kept form. `docs/design/v9/levels/runtime/approved-vs-shipped-base-NN.jpg` sets each level's
+round-6 approved composite beside the pipeline's composite in the shipped form and the engine's own render. Where the
+shipped form still differs most from the approved look (1-5's aurora, 2-4, 1-4 and 2-3; critic runtime rounds 1 and 2,
+m1), the owner's look at those sheets is pending.
 
 The runtime's own scene-recipe format (`moonfall-scene` version 1: `docs/design/v9/scene-recipe.md` on main, files in
 `Tsukimichi.Core/Moonfall/Levels/scenes/<name>.json`) has since landed on main. It covers the same ground under other

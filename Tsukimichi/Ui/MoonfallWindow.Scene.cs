@@ -138,8 +138,8 @@ public sealed partial class MoonfallWindow
                 var a = MoonfallMotion.GlintFade(d, track.Length) * MoonfallMotion.GlintClear(glintClear, at) * fade;
                 if (a > 0.01f)
                 {
-                    Put(p, soft, at.X, at.Y, MoonfallMotion.GlintReach / 4f, Ink(track.Colour, 0.5f * a));
-                    Put(p, soft, at.X, at.Y, MoonfallMotion.GlintReach * 0.4f / 4f, Ink(Vector3.One, 0.8f * a));
+                    Put(p, soft, at.X, at.Y, MoonfallMotion.GlintReach / 4f, Ink(track.Colour, MoonfallMotion.GlintHaloK * a));
+                    Put(p, soft, at.X, at.Y, MoonfallMotion.GlintReach * 0.4f / 4f, Ink(Vector3.One, MoonfallMotion.GlintCoreK * a));
                 }
             }
         }
@@ -358,7 +358,7 @@ public sealed partial class MoonfallWindow
                 continue;
             }
 
-            var (centre, half) = MoonfallPegMarks.Place(peg);
+            var (centre, half) = MoonfallPegMarks.Place(peg, v.Size(1));
             var min = v.Map(centre.X - half, centre.Y - half);
             var max = v.Map(centre.X + half, centre.Y + half);
             if (mark == MoonfallPegMark.Star)

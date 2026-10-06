@@ -166,6 +166,14 @@ public static partial class MoonfallSceneBuilder
             lap.Restart();
         }
 
+        // A fallback picture stands in for a missing painting exactly as the spoiler shield's story-safe variant does (the
+        // same recipe, ungraded, without the plates drawn on the painting, without glints along its roads), under the
+        // recipe's own name: one stand-in, whichever way it is reached (critic runtime round 2, n-c).
+        if (fallback && StorySafe(recipe) is { } safe)
+        {
+            recipe = safe with { Name = recipe.Name };
+        }
+
         clearance ??= MoonfallClearance.For(level);
         var ctx = new MoonfallDressContext(s, clearance) { Plates = plates };
         Lap("clearance");
@@ -173,8 +181,9 @@ public static partial class MoonfallSceneBuilder
         var px = Cut(recipe.Source, source, s, fallback);
         if (UsesLand(recipe))
         {
-            // A map's land comes from its own painting; a fallback picture has none, so a land term finds no land there.
-            var cut1 = fallback ? null : s == 1 ? px.Copy() : Cut(recipe.Source, source, 1);
+            // A map's land comes from its own painting (a game texture); a picture standing in for it has none, so a land
+            // term finds no land there.
+            var cut1 = fallback || recipe.Source.Kind != MoonfallSourceKind.Game ? null : s == 1 ? px.Copy() : Cut(recipe.Source, source, 1);
             var lands = new Dictionary<(float, int), MoonfallPlane>();
             ctx.Land = (threshold, grow) =>
             {
@@ -197,13 +206,6 @@ public static partial class MoonfallSceneBuilder
 
         foreach (var layer in recipe.Paint)
         {
-            // A plate under the palette is drawn on the painting itself (a chart's engraved roads): it belongs to the place,
-            // so over a fallback picture it is left out, as the spoiler shield's story-safe recipe leaves it (critic m8).
-            if (fallback && layer is MoonfallPlate)
-            {
-                continue;
-            }
-
             ApplyLight(ctx, px, layer, still: true, beams: null);
         }
 
@@ -808,6 +810,72 @@ public static partial class MoonfallSceneBuilder
         return moons.Select(static m => new Vector3(m.X, m.Y, MathF.Max(m.R * 1.5f, m.R + 8))).Distinct().ToList();
     }
 
+    /// <summary>How far a star keeps from the framing (cover over 0.05), units: a sky pixel beside a dark rope or branch is a
+    /// bright local maximum, so stars lined the framing's edges (critic runtime round 2, m9).</summary>
+    public const float StarFramingKeep = 4f;
+
+    /// <summary>Where the framing's cover (over 0.05) is within <see cref="StarFramingKeep"/> units, at the scene's scale.</summary>
+    private static bool[] NearCover(MoonfallDressContext ctx)
+    {
+        var w = ctx.W;
+        var h = ctx.H;
+        var r = (int)MathF.Ceiling(StarFramingKeep * ctx.S);
+        var rows = new bool[w * h];
+        for (var y = 0; y < h; y++)
+        {
+            var last = -1_000_000;
+            for (var x = 0; x < w; x++)
+            {
+                if (ctx.Cover.Data[(y * w) + x] > 0.05f)
+                {
+                    last = x;
+                }
+
+                rows[(y * w) + x] = x - last <= r;
+            }
+
+            last = 1_000_000;
+            for (var x = w - 1; x >= 0; x--)
+            {
+                if (ctx.Cover.Data[(y * w) + x] > 0.05f)
+                {
+                    last = x;
+                }
+
+                rows[(y * w) + x] |= last - x <= r;
+            }
+        }
+
+        // The square's column pass (a square of side 2r + 1 holds the disc of radius r).
+        var near = new bool[w * h];
+        for (var x = 0; x < w; x++)
+        {
+            var last = -1_000_000;
+            for (var y = 0; y < h; y++)
+            {
+                if (rows[(y * w) + x])
+                {
+                    last = y;
+                }
+
+                near[(y * w) + x] = y - last <= r;
+            }
+
+            last = 1_000_000;
+            for (var y = h - 1; y >= 0; y--)
+            {
+                if (rows[(y * w) + x])
+                {
+                    last = y;
+                }
+
+                near[(y * w) + x] |= last - y <= r;
+            }
+        }
+
+        return near;
+    }
+
     /// <summary>
     /// A mask (<see cref="MoonfallMaskTerm"/>s) over <paramref name="px"/> at <paramref name="s"/> pixels a unit, against
     /// <paramref name="clearance"/>; a <c>land</c> term finds no land here (the tests read a star mask with it).
@@ -835,6 +903,7 @@ public static partial class MoonfallSceneBuilder
 
         var sky = motion.StarWhere.Count > 0 ? Mask(ctx, motion.StarWhere, 1f, () => MoonfallGrade.Lightness(px)) : null;
         var moons = MoonDiscs(recipe);
+        var nearFraming = NearCover(ctx);
 
         var luma = new MoonfallPlane(px.Width, px.Height);
         for (var i = 0; i < luma.Data.Length; i++)
@@ -852,7 +921,7 @@ public static partial class MoonfallSceneBuilder
                 var i = (y * ctx.W) + x;
                 var v = luma.Data[i];
                 var loc = v - local.Data[i];
-                if (loc < 0.035f || v < 0.12f || ctx.Cover.Data[i] > 0.05f)
+                if (loc < 0.035f || v < 0.12f || nearFraming[i])
                 {
                     continue;
                 }

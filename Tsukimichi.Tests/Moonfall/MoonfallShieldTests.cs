@@ -539,6 +539,36 @@ public sealed class MoonfallShieldTests
     }
 
     [Fact]
+    public void The_Moon_Roads_stage_names_that_name_a_place_follow_the_shield_while_their_stages_stay_open()
+    {
+        // The owner's standing answer: Moonfall follows the shield (critic runtime round 2, n-e). "The Waking Sands" and
+        // "Vesper Bay" name Western Thanalan, "Mor Dhona's Glass" and "Silvertear by Night" Mor Dhona: before the story
+        // reaches the place the name prints as the shield's placeholder, and the stage stays open, never veiled.
+        var stages = MoonfallStages.Of(MoonfallCampaignKind.Base);
+        var shield = new MoonfallShield(static zone => zone is "Western Thanalan" or "Mor Dhona", static zone => "Placeholder " + zone);
+        var modes = new MoonfallModes(MoonfallCampaigns.LoadBuiltIn(), new MoonfallProgress(), MoonfallStory.Everyone, []) { Shield = shield };
+        foreach (var (number, place) in new[] { (1, "Western Thanalan"), (2, "Western Thanalan"), (9, "Mor Dhona"), (10, "Mor Dhona") })
+        {
+            var stage = stages[number - 1];
+            Assert.Equal("Placeholder " + place, modes.StageName(stage));
+            Assert.False(modes.StageVeiled(stage));
+            Assert.Equal(new MoonfallPlace(MoonfallPlaces.ARealmReborn, place), MoonfallPlaces.OfStageName(stage));
+        }
+
+        Assert.Equal(stages[2].Name, modes.StageName(stages[2]));
+        Assert.Equal(MoonfallLevelState.Open, modes.Slot(MoonfallCampaignKind.Base, 0).State);
+
+        // An open shield prints the names.
+        var open = new MoonfallModes(MoonfallCampaigns.LoadBuiltIn(), new MoonfallProgress(), MoonfallStory.Everyone, []);
+        Assert.Equal("The Waking Sands", open.StageName(stages[0]));
+        Assert.Equal("Vesper Bay", open.StageName(stages[1]));
+
+        // The Far Shore's names follow their stages' places, as before.
+        var far = MoonfallStages.Of(MoonfallCampaignKind.Expansion)[0];
+        Assert.Equal(MoonfallPlaces.OfStage(far), MoonfallPlaces.OfStageName(far));
+    }
+
+    [Fact]
     public void A_scene_whose_place_alone_is_past_the_story_falls_back_and_a_veiled_stages_scene_hides()
     {
         var level = MoonfallCampaigns.LoadBuiltIn().Base.Levels[0];

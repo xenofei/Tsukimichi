@@ -47,20 +47,26 @@ public static class MoonfallPegMarks
         _ => MoonfallPegMark.None,
     };
 
+    /// <summary>The least a brick's mark box spans on screen, pixels: at the 640 window a brick's 10-unit thickness is 7 px,
+    /// where the star and the crescent shrink to a dot (UX runtime round 2, m1); a round peg's mark is 12-13 px there.</summary>
+    public const float MinBrickMarkPixels = 11f;
+
     /// <summary>
     /// Where a piece's mark is drawn, board units: a round peg's over its face (its radius); a brick's once, upright, at the
     /// middle of its middle line, sized to its thickness (a line brick's midpoint; a curved brick's at half its sweep), so
-    /// a purple or green brick is told from a blue one as a peg is (UX runtime round 1, M1).
+    /// a purple or green brick is told from a blue one as a peg is (UX runtime round 1, M1), and never under
+    /// <see cref="MinBrickMarkPixels"/> across at <paramref name="pixelsPerUnit"/> (it may then overhang the brick a little).
     /// </summary>
-    public static (Vector2 Centre, float HalfSize) Place(in MoonfallPegView piece)
+    public static (Vector2 Centre, float HalfSize) Place(in MoonfallPegView piece, float pixelsPerUnit = float.MaxValue)
     {
+        var floor = pixelsPerUnit > 0 ? MinBrickMarkPixels / 2 / pixelsPerUnit : 0f;
         switch (piece.Shape)
         {
             case PegShape.Line:
-                return (new Vector2((float)((piece.X + piece.X2) / 2), (float)((piece.Y + piece.Y2) / 2)), (float)(piece.Thickness / 2));
+                return (new Vector2((float)((piece.X + piece.X2) / 2), (float)((piece.Y + piece.Y2) / 2)), MathF.Max((float)(piece.Thickness / 2), floor));
             case PegShape.Arc:
                 var t = piece.StartRadians + (piece.SweepRadians / 2);
-                return (new Vector2((float)(piece.X + (piece.Radius * Math.Cos(t))), (float)(piece.Y + (piece.Radius * Math.Sin(t)))), (float)(piece.Thickness / 2));
+                return (new Vector2((float)(piece.X + (piece.Radius * Math.Cos(t))), (float)(piece.Y + (piece.Radius * Math.Sin(t)))), MathF.Max((float)(piece.Thickness / 2), floor));
             default:
                 return (new Vector2((float)piece.X, (float)piece.Y), (float)piece.Radius);
         }

@@ -131,6 +131,34 @@ public static class MoonfallPlaces
     /// <summary>The scenes tagged here, by name (every shipped recipe must be one; a test holds it).</summary>
     public static IReadOnlyDictionary<string, MoonfallPlace> Scenes => SceneTable;
 
+    /// <summary>
+    /// The places The Moon Road's stage names name (by stage number): its stages are set nowhere in particular, so they are
+    /// never veiled, but a name that names a place the story has not reached prints as the shield's placeholder (the
+    /// owner's standing answer: Moonfall follows the shield; critic runtime round 2, n-e).
+    /// </summary>
+    private static readonly Dictionary<int, MoonfallPlace> BaseNamePlaces = new()
+    {
+        // 1 The Waking Sands and 2 Vesper Bay: Western Thanalan.
+        [1] = new(ARealmReborn, "Western Thanalan"),
+        [2] = new(ARealmReborn, "Western Thanalan"),
+
+        // 9 Mor Dhona's Glass and 10 Silvertear by Night (Silvertear Falls): Mor Dhona.
+        [9] = new(ARealmReborn, "Mor Dhona"),
+        [10] = new(ARealmReborn, "Mor Dhona"),
+    };
+
+    /// <summary>
+    /// The place <paramref name="stage"/>'s name names: a Far Shore stage's own place (<see cref="OfStage"/>), and for The
+    /// Moon Road the place its name names, if any (its stage itself stays set nowhere).
+    /// </summary>
+    public static MoonfallPlace OfStageName(MoonfallStage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        return stage.Campaign == MoonfallCampaignKind.Base
+            ? BaseNamePlaces.GetValueOrDefault(stage.Number, MoonfallPlace.Nowhere)
+            : OfStage(stage);
+    }
+
     /// <summary>Where <paramref name="stage"/> is set: a Far Shore stage's place, <see cref="MoonfallPlace.Nowhere"/> for The Moon Road's.</summary>
     public static MoonfallPlace OfStage(MoonfallStage stage)
     {

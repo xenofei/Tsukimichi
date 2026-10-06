@@ -263,11 +263,28 @@ public sealed class MoonfallScenePipelinePartsTests
 
         var safe = MoonfallSceneBuilder.StorySafe(recipe)!;
         Assert.Equal("test-flat~safe", safe.Name);
+        Assert.Empty(safe.Motion.Glints);
         Assert.Equal((MoonfallSourceKind.Picture, "test-night"), (safe.Source.Kind, safe.Source.Path));
         Assert.Null(safe.Grade);
         Assert.Empty(safe.Paint);
         Assert.Single(safe.Light);
         Assert.Null(MoonfallSceneBuilder.StorySafe(recipe with { Fallback = null }));
+    }
+
+    [Fact]
+    public void A_missing_painting_is_drawn_as_the_shields_story_safe_scene()
+    {
+        // One stand-in, whichever way it is reached (critic runtime round 2, n-c): the builder's fallback path over the
+        // fallback picture equals the story-safe recipe over it, pixel for pixel, under the recipe's own name.
+        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(static s => s.Recipe.Name == "thanalan-road-chart");
+        var picture = MoonfallSceneKit.Picture(recipe.Fallback!)!;
+        var plates = MoonfallSceneKit.Plates(recipe);
+        var missing = MoonfallSceneBuilder.Build(recipe, level, picture, 1, fallback: true, plates: plates);
+        // (under one name: the grain's seed follows the name, and the shield's variant is called "~safe" for its cache key)
+        var safe = MoonfallSceneBuilder.Build(MoonfallSceneBuilder.StorySafe(recipe)! with { Name = recipe.Name }, level, picture, 1, plates: plates);
+        Assert.Equal("thanalan-road-chart", missing.Name);
+        Assert.Equal(safe.Base.Pixels, missing.Base.Pixels);
+        Assert.Empty(missing.Glints);
     }
 
     [Fact]

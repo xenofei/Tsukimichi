@@ -175,13 +175,23 @@ public static class MoonfallMotion
     public static float GlintFade(float along, float length) =>
         along < 0 ? 0f : MoonfallColor.Smooth(0, 24, along) * MoonfallColor.Smooth(length, length - 24, along);
 
-    /// <summary>How much of a glint shows at <paramref name="at"/>: none unless its whole light keeps <see cref="PegKeepOut"/> from every piece, full 3 units further.</summary>
+    /// <summary>How far a glint's light dims as it nears a piece, units: over about a third of a second at its speed, so it
+    /// fades under the pegs rather than winking (game designer runtime round 2, g1).</summary>
+    public const float GlintDim = 10f;
+
+    /// <summary>How much of a glint shows at <paramref name="at"/>: none unless its whole light keeps <see cref="PegKeepOut"/> from every piece, full <see cref="GlintDim"/> units further.</summary>
     public static float GlintClear(MoonfallClearance clearance, Vector2 at)
     {
         ArgumentNullException.ThrowIfNull(clearance);
         var keep = PegKeepOut + GlintReach;
-        return MoonfallFramingCheck.Opening(at.X, at.Y) ? MoonfallColor.Smooth(keep, keep + 3, clearance.At(at.X, at.Y)) : 0f;
+        return MoonfallFramingCheck.Opening(at.X, at.Y) ? MoonfallColor.Smooth(keep, keep + GlintDim, clearance.At(at.X, at.Y)) : 0f;
     }
+
+    /// <summary>A glint's halo and core strength at full light: its peak stays under the peg faces' (UX runtime round 2, m2).</summary>
+    public const float GlintHaloK = 0.35f;
+
+    /// <inheritdoc cref="GlintHaloK"/>
+    public const float GlintCoreK = 0.4f;
 
     /// <summary>
     /// Dust mote <paramref name="index"/> at <paramref name="seconds"/>: its place over the

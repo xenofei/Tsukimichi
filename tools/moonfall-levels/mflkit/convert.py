@@ -515,7 +515,7 @@ def recomposed(recipe, level, S=1):
 
 def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09")):
     """The converter proves itself (every checker does): the dress rebuilt from the parts the converter ships equals the
-    dress (OKLab max 0.002 at 1x, on a chart with routes and ticks, a game painting with cloth and lantern posts, and our
+    dress (OKLab max 0.002 at 2x, on a chart with routes and ticks, a game painting with cloth and lantern posts, and our
     own painting), and the same rebuild with the framing's cover left out (the cloth laid over the scene, not in place of
     it) is caught (over the gate's 0.02); the mask terms convert as the runtime reads them."""
     from .dress import dress
@@ -524,8 +524,9 @@ def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09")):
     for lid in levels:
         level = _level(lid)
         recipe = load_recipe(level["scene"])
-        sc, X, (P, parts, glows) = recomposed(recipe, level)
-        d, _ = dress(recipe, sc, level, 1)
+        # measured at 2x, the tier whose rule judges them (critic runtime round 2, n-a: 1x's p99 cannot see one part)
+        sc, X, (P, parts, glows) = recomposed(recipe, level, S=2)
+        d, _ = dress(recipe, sc, level, 2)
         good = compare(d, X)[0]
         cases.append((f"{lid}: the dress rebuilt from its plates (max {good:.4f})", good <= 0.002, True))
         lights = small_lights(recipe, level)
@@ -534,7 +535,7 @@ def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09")):
         def bad_case(what, **kw):
             args = dict(parts=parts, glows=glows, lights=lights)
             args.update(kw)
-            bad = compare(d, rebuild(recipe, level, P, args["parts"], args["glows"], args["lights"]))
+            bad = compare(d, rebuild(recipe, level, P, args["parts"], args["glows"], args["lights"], S=2))
             cases.append((f"{lid}: {what} (max {bad[0]:.4f}, p99.9 {bad[1]:.4f})", passes(bad, 2), False))
         if (recipe.get("dress") or {}).get("framing"):
             bad_case("the plates without the framing's cover", parts=dict(parts, K=np.ones_like(parts["K"])))

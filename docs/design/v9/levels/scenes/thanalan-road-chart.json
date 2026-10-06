@@ -195,14 +195,14 @@
    {
     "overlay": 0,
     "speed": 30,
-    "every": 16,
+    "every": 30,
     "offset": 0
    },
    {
     "overlay": 1,
     "speed": 30,
-    "every": 16,
-    "offset": 8
+    "every": 30,
+    "offset": 15
    }
   ]
  }

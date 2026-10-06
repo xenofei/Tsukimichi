@@ -16,8 +16,8 @@ public static partial class MoonfallSceneBuilder
     /// <summary>
     /// A recipe's story-safe variant (the spoiler shield's, when only the scene's own place is past the story): its
     /// declared fallback picture taken whole and ungraded, under its own name (so its own cache key), with its dress kept
-    /// but for the plates under the palette, which are drawn on the painting itself and so show its place; null for a
-    /// recipe with no fallback (it hides).
+    /// but for the plates under the palette and the glints along its roads, which belong to the painting itself and so
+    /// show its place; null for a recipe with no fallback (it hides). A missing painting is drawn the same way.
     /// </summary>
     public static MoonfallSceneRecipe? StorySafe(MoonfallSceneRecipe recipe)
     {
@@ -31,6 +31,9 @@ public static partial class MoonfallSceneBuilder
                 Grade = null,
                 Fallback = null,
                 Paint = recipe.Paint.Where(static l => l is not MoonfallPlate).ToList(),
+
+                // A glint runs along the painting's roads: without the painting it would wander the sky (UX round 2, n1).
+                Motion = recipe.Motion with { Glints = [] },
             };
     }
 
