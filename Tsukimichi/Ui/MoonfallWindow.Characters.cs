@@ -122,6 +122,7 @@ public sealed partial class MoonfallWindow
     private void PlayWith(MoonfallCompanion companion)
     {
         quickCompanion = companion;
+        quickCompanionChosen = true;
         Open(MoonfallScreen.QuickPlay);
     }
 
