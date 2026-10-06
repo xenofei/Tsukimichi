@@ -51,6 +51,8 @@ public sealed partial class MoonfallWindow
     private string[] stopTips = [];
     private string[] stopTipLines = [];
     private bool[] stopComing = [];
+    private bool[] stopVeiled = [];
+    private string[] panelVeiledLines = [];
 
     /// <summary>The area the selected stage hides while it is set past the player's story (what "Reveal this name" reveals); null otherwise.</summary>
     private string? panelVeiledZone;
@@ -87,6 +89,17 @@ public sealed partial class MoonfallWindow
     }
 
     /// <summary>
+    /// A stage past the player's story: a cool slate veil over its ring's face (desaturated under an indigo wash),
+    /// unlike the progress drain, so a veiled stop never looks more open than a sealed one.
+    /// </summary>
+    private static void StoryVeil(in MenuPen m, double x, double y, float r)
+    {
+        var c = m.V.Map(x, y);
+        m.Dl.AddCircleFilled(c, m.V.Size(r * 1.04), Ink(MoonfallColor.Hex("#5A6488"), 0.45f), 32);
+        m.Dl.AddCircleFilled(c, m.V.Size(r * 1.04), Ink(MoonfallColor.Hex("#141A3A"), 0.45f), 32);
+    }
+
+    /// <summary>
     /// The spoiler shield's mark (Tsukimichi's eye-slash, as on the Spoilers help and settings), drawn small at
     /// <paramref name="x"/>,<paramref name="y"/> on a dark disc: a stage set past the player's story. Not the padlock,
     /// which is Moonfall's own progress.
@@ -97,6 +110,17 @@ public sealed partial class MoonfallWindow
         var v = m.V;
         dl.AddCircleFilled(v.Map(x, y), v.Size(s * 1.25), Ink(MoonfallColor.Hex("#0A0E22"), 0.95f), 24);
         var ink = Ink(MoonfallColor.Hex("#C9CFE6"));
+        if (v.Size(s) < 7f)
+        {
+            // Small (640): the almond and the slash alone, at 1.5 px, so it still reads as an eye struck through.
+            dl.PathArcTo(v.Map(x, y + (s * 0.6)), v.Size(s * 1.0), MathF.PI * 1.2f, MathF.PI * 1.8f, 10);
+            dl.PathStroke(ink, ImDrawFlags.None, 1.5f);
+            dl.PathArcTo(v.Map(x, y - (s * 0.6)), v.Size(s * 1.0), MathF.PI * 0.2f, MathF.PI * 0.8f, 10);
+            dl.PathStroke(ink, ImDrawFlags.None, 1.5f);
+            dl.AddLine(v.Map(x - (s * 0.75), y - (s * 0.75)), v.Map(x + (s * 0.75), y + (s * 0.75)), ink, 1.5f);
+            return;
+        }
+
         var w = MathF.Max(1f, v.Size(s * 0.16));
 
         // The eye: two arcs meeting at its corners, and the pupil.
@@ -194,6 +218,17 @@ public sealed partial class MoonfallWindow
         dl.AddImage(chart.Handle, a, b, c0, c1, Ink(new Vector3(1f - dim)));
     }
 
+    /// <summary>The map, open on <paramref name="stage"/> (a stage the road waits at, past the player's story).</summary>
+    private void OpenMapAt(MoonfallStage stage)
+    {
+        mapCampaign = stage.Campaign;
+        mapStage = stage.Number - 1;
+        if (flow.Current != MoonfallScreen.Map)
+        {
+            Open(MoonfallScreen.Map);
+        }
+    }
+
     private void EnsureMapSelection()
     {
         if (mapCampaign == MoonfallCampaignKind.Expansion && !farOpen)
@@ -270,7 +305,7 @@ public sealed partial class MoonfallWindow
             CampaignTabs(m, 430, 16, 200, 34, 24);
             MenuText(m, MoonfallFace.Axis, 14, m.W - 30, 33, mapCount, Ink2, Anchor.Right, edge: 0f);
             StagePanel(m, 900, 84, 1248, 456);
-            Legend(m, 900, 470, 1248, 580);
+            Legend(m, 900, 470, 1248, anyVeiled ? 580 : 548);
             StopTooltip(m);
         }
     }
@@ -397,13 +432,21 @@ public sealed partial class MoonfallWindow
                     break;
             }
 
+            if (look.Veiled)
+            {
+                StoryVeil(m, at.X, at.Y, r);
+            }
+
+            // The shield's mark (past the story) and the padlock (not reached) at the ring's foot; both when both hold.
+            var markSize = Math.Max(r * 0.36, small ? 7.0 : 5.0);
+            if (look.Veiled)
+            {
+                ShieldMark(m, at.X + (r * 0.95), at.Y + (r * 0.9), markSize);
+            }
+
             if (look.Padlock)
             {
-                Padlock(m, at.X + (r * 0.95), at.Y + (r * 0.9), Math.Max(r * 0.36, 5.0));
-            }
-            else if (look.Veiled)
-            {
-                ShieldMark(m, at.X + (r * 0.95), at.Y + (r * 0.9), Math.Max(r * 0.36, 5.0));
+                Padlock(m, at.X + (r * (look.Veiled ? -0.95 : 0.95)), at.Y + (r * 0.9), Math.Max(r * 0.36, 5.0));
             }
 
             if (look.Pip)
@@ -464,15 +507,32 @@ public sealed partial class MoonfallWindow
         StageFace(m, view, x0 + 64, y0 + 76, 34, 0.45f);
         MenuText(m, MoonfallFace.Axis, 14, x0 + 122, y0 + 46, panelStage, GoldInk, edge: 0f);
         // A veiled stage's name is the shield's placeholder: the same slot and size, in the secondary tone, with its hover and reveal.
-        var nameW = MenuText(m, MoonfallFace.Jupiter, 32, x0 + 122, y0 + 74, panelName, panelVeiledZone is null ? Cream : Ink2, edge: 1f, maxWidth: 210);
+        // Set in Axis while veiled, so the placeholder's number reads as a figure ("area 1", not Jupiter's "I").
+        var nameW = panelVeiledZone is null
+            ? MenuText(m, MoonfallFace.Jupiter, 32, x0 + 122, y0 + 74, panelName, Cream, edge: 1f, maxWidth: 210)
+            : MenuText(m, MoonfallFace.Axis, 22, x0 + 122, y0 + 74, panelName, Ink2, edge: 1f, maxWidth: 210);
         if (panelVeiledZone is { } zone)
         {
-            ShieldPlaceholder(m, x0 + 122, y0 + 58, x0 + 122 + Math.Min(nameW, 210), y0 + 90, zone, panelName);
+            ShieldPlaceholder(m, x0 + 122, y0 + 60, x0 + 122 + Math.Min(nameW, 210), y0 + 88, zone, panelName);
         }
 
         MenuText(m, MoonfallFace.Axis, 14.5f, x0 + 122, y0 + 100, panelCarrier, Tint(accent, 0.3f), edge: 0f, maxWidth: 210);
         CrestRule(m, x0 + 174, y0 + 140, 296, false, 0.36);
-        for (var i = 0; i < view.Levels.Count; i++)
+        if (panelVeiledZone is not null)
+        {
+            // Past the story: the five codes on one row, then why and how it opens, printed (not only on hover).
+            for (var i = 0; i < view.Levels.Count; i++)
+            {
+                MenuText(m, MoonfallFace.Trump, 19, x0 + 40 + (i * 62), y0 + 168, panelCodes[i], Ink3, edge: 0.6f);
+            }
+
+            for (var i = 0; i < panelVeiledLines.Length && i < 5; i++)
+            {
+                MenuText(m, MoonfallFace.Axis, 14.5f, x0 + 26, y0 + 204 + (i * 21), panelVeiledLines[i], Ink2, edge: 0f);
+            }
+        }
+
+        for (var i = 0; i < view.Levels.Count && panelVeiledZone is null; i++)
         {
             var slot = view.Levels[i];
             var yy = y0 + 168 + (i * 29);
@@ -511,11 +571,28 @@ public sealed partial class MoonfallWindow
             }
         }
 
-        if (MenuButton(m, "##mfStagePlay", x0 + 74, y0 + 316, x0 + 274, y0 + 354, panelPlay, 28, isDefault: true, style: PanelPlayStyle,
-            tooltip: panelPlayable || panelComing ? null : panelVeiledZone is not null ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageSealedTooltip))
+        if (MenuButton(m, "##mfStagePlay", x0 + 74, y0 + 316, x0 + 274, y0 + 354, panelPlay, 28, isDefault: true, style: PanelPlayStyle, tooltip: PanelPlayTip))
         {
-            PlayStage(view);
+            PlayOrReveal(view);
         }
+    }
+
+    /// <summary>The stage Play's reason when it cannot play: the veil's (with its reveal) or the padlock's.</summary>
+    private string? PanelPlayTip => panelPlayable || panelComing ? null : panelVeiledZone is not null ? Strings.MoonfallStageVeiledPillTip : Strings.MoonfallStageSealedTooltip;
+
+    /// <summary>
+    /// The stage's Play: on a stage past the player's story, pressing it (mouse, keyboard or gamepad) opens the shield's
+    /// own "Reveal this name" menu for the stage's place, so the reveal never needs a right-click.
+    /// </summary>
+    private void PlayOrReveal(MoonfallStageView view)
+    {
+        if (panelVeiledZone is { } zone)
+        {
+            ShieldText.RequestMenu(SpoilerKind.Area, zone, panelName);
+            return;
+        }
+
+        PlayStage(view);
     }
 
     private static readonly string[] rowIds = MakeIds("##mfRow", MoonfallCharacters.LevelsPerStage);
@@ -533,23 +610,28 @@ public sealed partial class MoonfallWindow
             OpenLevels(mapStage, -1);
         }
 
-        if (hovered || nav)
+        // The head opens level select only on a stage that has one to open; elsewhere it offers nothing (a veiled
+        // name's hover is the shield's own).
+        var headOpens = view.State is MoonfallStageState.Open or MoonfallStageState.Done;
+        if ((hovered || nav) && headOpens)
         {
             m.Dl.AddRectFilled(m.V.Map(x0 + 10, y0 + 8), m.V.Map(x1 - 10, y0 + 56), Ink(MoonfallColor.Hex("#9DC0FF"), 0.10f), m.V.Size(6));
-            if (nav)
-            {
-                FocusOutline(m.Dl, m.V.Map(x0 + 10, y0 + 8), m.V.Map(x1 - 10, y0 + 56), m.V.Size(6));
-            }
-
             if (hovered)
             {
                 UiMetrics.Tooltip(Strings.MoonfallSeeLevelsTooltip);
             }
         }
 
+        if (nav)
+        {
+            FocusOutline(m.Dl, m.V.Map(x0 + 10, y0 + 8), m.V.Map(x1 - 10, y0 + 56), m.V.Size(6));
+        }
+
         StageFace(m, view, x0 + 32, y0 + 38, 18, 0.4f);
         MenuText(m, MoonfallFace.Axis, 12.5f, x0 + 62, y0 + 22, panelStage, GoldInk, edge: 0f);
-        var nameW = MenuText(m, MoonfallFace.Jupiter, 21, x0 + 62, y0 + 44, panelName, panelVeiledZone is null ? Cream : Ink2, edge: 1f, maxWidth: (float)(x1 - x0 - 74));
+        var nameW = panelVeiledZone is null
+            ? MenuText(m, MoonfallFace.Jupiter, 21, x0 + 62, y0 + 44, panelName, Cream, edge: 1f, maxWidth: (float)(x1 - x0 - 74))
+            : MenuText(m, MoonfallFace.Axis, 15, x0 + 62, y0 + 44, panelName, Ink2, edge: 1f, maxWidth: (float)(x1 - x0 - 74));
         if (panelVeiledZone is { } zone)
         {
             ShieldPlaceholder(m, x0 + 62, y0 + 33, x0 + 62 + Math.Min(nameW, x1 - x0 - 74), y0 + 55, zone, panelName);
@@ -564,10 +646,9 @@ public sealed partial class MoonfallWindow
             OpenLevels(mapStage, -1);
         }
 
-        if (MenuButton(m, "##mfStagePlay", x0 + (sealedStage ? 12 : 100), y0 + 82, x1 - 12, y0 + 112, panelPlay, 20, isDefault: true, style: PanelPlayStyle,
-            tooltip: panelPlayable || panelComing ? null : panelVeiledZone is not null ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageSealedTooltip))
+        if (MenuButton(m, "##mfStagePlay", x0 + (sealedStage ? 12 : 100), y0 + 82, x1 - 12, y0 + 112, panelPlay, 20, isDefault: true, style: PanelPlayStyle, tooltip: PanelPlayTip))
         {
-            PlayStage(view);
+            PlayOrReveal(view);
         }
     }
 
@@ -586,8 +667,13 @@ public sealed partial class MoonfallWindow
                 Medallion(m, power, x, y, r, back: true);
                 break;
             default:
-                Medallion(m, power, x, y, r, glow: look.Drained ? 0f : glow, drained: look.Drained);
+                Medallion(m, power, x, y, r, glow: look.Drained || look.Veiled ? 0f : glow, drained: look.Drained);
                 break;
+        }
+
+        if (look.Veiled)
+        {
+            StoryVeil(m, x, y, r);
         }
     }
 
@@ -635,9 +721,15 @@ public sealed partial class MoonfallWindow
         MenuText(m, MoonfallFace.Axis, 14, x0 + 158, y0 + 56, Strings.MoonfallLegendNotMet, Ink2, edge: 0f);
         PickStar(m, x0 + 260, y0 + 56, 9, false);
         MenuText(m, MoonfallFace.Axis, 14, x0 + 276, y0 + 56, Strings.MoonfallLegendPick, Ink2, edge: 0f);
-        ShieldMark(m, x0 + 26, y0 + 88, 7);
-        MenuText(m, MoonfallFace.Axis, 14, x0 + 44, y0 + 88, Strings.MoonfallLegendStory, Ink2, edge: 0f);
+        if (anyVeiled)
+        {
+            ShieldMark(m, x0 + 26, y0 + 88, 7);
+            MenuText(m, MoonfallFace.Axis, 14, x0 + 44, y0 + 88, Strings.MoonfallLegendStory, Ink2, edge: 0f);
+        }
     }
+
+    /// <summary>A stop of the map's campaign is set past the player's story (the legend's shield row shows only then).</summary>
+    private bool anyVeiled;
 
     /// <summary>The stop under the mouse or the focus explains itself (1280): its stage, name, state and power, and why it shows as it does.</summary>
     private void StopTooltip(in MenuPen m)
@@ -654,7 +746,7 @@ public sealed partial class MoonfallWindow
         var h = 12 + (20 * lines);
         dl.AddRectFilled(v.Map(X, Y), v.Map(X + W, Y + h), Ink(MoonfallColor.Hex("#070A1C"), 0.94f), v.Size(4));
         GiltBand(m.C, X, Y, X + W, Y + h, 0.22);
-        MenuText(m, MoonfallFace.Axis, 14, X + 12, Y + 16, stopTips[hoveredStop], Cream, edge: 0f, maxWidth: (float)(W - 24));
+        MenuText(m, MoonfallFace.Axis, 14, X + 12, Y + 16, stopTips[hoveredStop], stopVeiled[hoveredStop] ? Ink2 : Cream, edge: 0f, maxWidth: (float)(W - 24));
         if (lines > 1)
         {
             MenuText(m, MoonfallFace.Axis, 14, X + 12, Y + 36, stopTipLines[hoveredStop], Ink2, edge: 0f, maxWidth: (float)(W - 24));
@@ -679,6 +771,8 @@ public sealed partial class MoonfallWindow
         stopTips = new string[stages.Count];
         stopTipLines = new string[stages.Count];
         stopComing = new bool[stages.Count];
+        stopVeiled = new bool[stages.Count];
+        anyVeiled = false;
         var cleared = modes.CampaignOpen(mapCampaign) ? progress.Cleared(mapCampaign) : -1;
         for (var i = 0; i < stages.Count; i++)
         {
@@ -696,8 +790,13 @@ public sealed partial class MoonfallWindow
                 _ => Strings.MoonfallStageNotReached,
             };
             var power = MoonfallCompanions.TryGet(view.Stage.Companion, out var info) ? Strings.MoonfallPowerName(info.Power) : Strings.MoonfallYourPick;
-            stopTips[i] = string.Format(c, Strings.MoonfallStopTipFormat, view.Stage.Number, StageNameShown(view.Stage), state, power);
-            stopTipLines[i] = view.State == MoonfallStageState.Veiled ? Strings.MoonfallStageVeiledLine
+            // A veiled stop's tip leaves its name out (a tooltip cannot answer as a placeholder must).
+            stopVeiled[i] = view.State == MoonfallStageState.Veiled;
+            anyVeiled |= stopVeiled[i];
+            stopTips[i] = stopVeiled[i]
+                ? string.Format(c, Strings.MoonfallStopTipVeiledFormat, view.Stage.Number, power)
+                : string.Format(c, Strings.MoonfallStopTipFormat, view.Stage.Number, StageNameShown(view.Stage), state, power);
+            stopTipLines[i] = view.State == MoonfallStageState.Veiled ? (view.Reached ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageVeiledSealedLine)
                 : view.Companion == MoonfallCompanionState.NotMet && !view.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
                 : view.State == MoonfallStageState.Sealed && !stopComing[i] ? Strings.MoonfallStopSealedLine
                 : string.Empty;
@@ -738,7 +837,9 @@ public sealed partial class MoonfallWindow
         panelPlay = sel.State == MoonfallStageState.Veiled ? Strings.MoonfallStageVeiledButton : selComing ? Strings.MoonfallLevelsComing : sel.State == MoonfallStageState.Sealed ? Strings.MoonfallNotReached : Strings.MoonfallChooseLevel;
 
         // At 640 the panel's state line stands in for the legend and the stop's tooltip.
-        panelState = sel.State == MoonfallStageState.Veiled ? (m.Small ? Strings.MoonfallStageVeiledShort : Strings.MoonfallStageVeiledLine)
+        var veiledLine = sel.Reached ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageVeiledSealedLine;
+        panelVeiledLines = sel.State == MoonfallStageState.Veiled && !m.Small ? Wrap(m, MoonfallFace.Axis, 14.5f, veiledLine, 300f) : [];
+        panelState = sel.State == MoonfallStageState.Veiled ? (m.Small ? Strings.MoonfallStageVeiledShort : veiledLine)
             : sel.Companion == MoonfallCompanionState.NotMet && !sel.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
             : sel.State == MoonfallStageState.Sealed && !selComing ? Strings.MoonfallStopSealedLine
             : panelCarrier;
@@ -861,6 +962,22 @@ public sealed partial class MoonfallWindow
     }
 
     /// <summary><paramref name="text"/> as it fits <paramref name="room"/> pixels at <paramref name="px"/>: whole, or cut short with an ellipsis.</summary>
+    /// <summary>Whether <paramref name="text"/> ends on an article or a small linking word, which a cut never ends on ("Above the…").</summary>
+    private static bool EndsOnSmallWord(ReadOnlySpan<char> text)
+    {
+        var at = text.LastIndexOf(' ');
+        var word = at < 0 ? text : text[(at + 1)..];
+        foreach (var small in (ReadOnlySpan<string>)["the", "a", "an", "of", "to", "in", "on", "and", "by"])
+        {
+            if (word.Equals(small, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private string FitLine(MoonfallFace face, float px, string text, float room)
     {
         if (MeasureText(face, px, text) <= room)
@@ -871,7 +988,7 @@ public sealed partial class MoonfallWindow
         // At a word's end first ("Above the..."), and only within a word when no whole word fits.
         for (var n = text.Length - 1; n > 1; n--)
         {
-            if (text[n] == ' ' && text[n - 1] != ' ')
+            if (text[n] == ' ' && text[n - 1] != ' ' && !EndsOnSmallWord(text.AsSpan(0, n)))
             {
                 var words = string.Concat(text.AsSpan(0, n), "...");
                 if (MeasureText(face, px, words) <= room)

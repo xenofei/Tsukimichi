@@ -360,7 +360,12 @@ public sealed class MoonfallGameArt<T> : IDisposable
             {
                 if (thumbBuilds.TryGetValue(id, out var build))
                 {
-                    if (build.IsCompletedSuccessfully && build.Result is { } pixels)
+                    if (build.IsCompleted && thumbLevels.TryGetValue(id, out var built) && !string.Equals(thumbBuiltWith.GetValueOrDefault(id), PickScene(built)?.Name, StringComparison.Ordinal))
+                    {
+                        // The veil changed while it built (a scene now hidden, or one now shown): never landed, made again.
+                        thumbBuilds.Remove(id);
+                    }
+                    else if (build.IsCompletedSuccessfully && build.Result is { } pixels)
                     {
                         thumbs[id] = (Upload(pixels, "Moonfall thumbnail " + id), null, asked);
                     }
@@ -368,6 +373,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
                 else if (thumbBuilding is null && thumbLevels.TryGetValue(id, out var level))
                 {
                     // One at a time: the menus' thumbnails never take more of the machine than one scene build.
+                    thumbBuiltWith[id] = PickScene(level)?.Name;
                     thumbBuilding = BuildThumb(level);
                     thumbBuilds[id] = thumbBuilding;
                 }
@@ -586,30 +592,75 @@ public sealed class MoonfallGameArt<T> : IDisposable
     }
 
     /// <summary>
-    /// The spoiler shield's veil over scenes (the owner's decision: Moonfall follows the shield): true for a level whose
-    /// scene must not show (its stage, or the scene's own place, is past the player's story). Such a level is drawn on
-    /// the plain night sky everywhere: on the board, in thumbnails and in scenes built ahead. Null veils nothing.
-    /// Call <see cref="VeilChanged"/> when what it veils may have changed.
+    /// The spoiler shield's veil over scenes (the owner's decision: Moonfall follows the shield): how a level's scene
+    /// shows. <see cref="MoonfallSceneHide.Hidden"/> (a stage past the player's story): no scene art, the plain night
+    /// sky. <see cref="MoonfallSceneHide.Fallback"/> (only the scene's own place is past the story): the recipe over its
+    /// declared story-safe fallback picture, as when the game's painting is missing. Applied everywhere: the board, the
+    /// thumbnails and the scenes built ahead. Null veils nothing. Call <see cref="VeilChanged"/> when what it veils may
+    /// have changed.
     /// </summary>
-    public Func<MoonfallLevel, MoonfallSceneRecipe, bool>? HidesScene { get; set; }
+    public Func<MoonfallLevel, MoonfallSceneRecipe, MoonfallSceneHide>? HidesScene { get; set; }
 
-    /// <summary>The scene <paramref name="level"/> is drawn on, after the veil: null for none (or a veiled one).</summary>
+    /// <summary>Each recipe's story-safe variant: its declared fallback picture, ungraded, under its own name (its own cache key).</summary>
+    private readonly Dictionary<string, MoonfallSceneRecipe> safeRecipes = new(StringComparer.Ordinal);
+
+    /// <summary>The thumbnail builds' recipes, so a build the veil overtook is never landed.</summary>
+    private readonly Dictionary<string, string?> thumbBuiltWith = new(StringComparer.Ordinal);
+
+    /// <summary>The scene <paramref name="level"/> is drawn on, after the veil: null for none (or a hidden one).</summary>
     private MoonfallSceneRecipe? PickScene(MoonfallLevel level)
     {
         var recipe = MoonfallSceneRecipeLoader.Pick(recipes, level);
-        return recipe is not null && HidesScene is { } veil && veil(level, recipe) ? null : recipe;
+        if (recipe is null || HidesScene is not { } veil)
+        {
+            return recipe;
+        }
+
+        return veil(level, recipe) switch
+        {
+            MoonfallSceneHide.Hidden => null,
+            MoonfallSceneHide.Fallback => SafeRecipe(recipe),
+            _ => recipe,
+        };
     }
 
-    /// <summary>Whether <paramref name="level"/>'s scene (or the picture its file names) is veiled by the spoiler shield.</summary>
+    /// <summary>
+    /// The recipe drawn over its declared fallback picture (a shipped painting of no story place), the way the builder
+    /// draws it when the game's painting is missing; null for a recipe with no fallback (it hides).
+    /// </summary>
+    private MoonfallSceneRecipe? SafeRecipe(MoonfallSceneRecipe recipe)
+    {
+        if (recipe.Fallback is not { } picture)
+        {
+            return null;
+        }
+
+        if (!safeRecipes.TryGetValue(recipe.Name, out var safe))
+        {
+            safe = recipe with
+            {
+                Name = recipe.Name + "~safe",
+                Source = new MoonfallSceneSource(MoonfallSourceKind.Picture, picture, false, 0, 0, false, null),
+                Grade = null,
+                Fallback = null,
+            };
+            safeRecipes[recipe.Name] = safe;
+        }
+
+        return safe;
+    }
+
+    /// <summary>Whether <paramref name="level"/>'s scene is hidden or replaced by the spoiler shield.</summary>
     public bool SceneVeiled(MoonfallLevel level)
     {
         ArgumentNullException.ThrowIfNull(level);
-        return HidesScene is { } veil && MoonfallSceneRecipeLoader.Pick(recipes, level) is { } recipe && veil(level, recipe);
+        return HidesScene is { } veil && MoonfallSceneRecipeLoader.Pick(recipes, level) is { } recipe && veil(level, recipe) != MoonfallSceneHide.Shown;
     }
 
     /// <summary>
     /// What the veil hides may have changed (a reveal, a story step): the per-level picks are made again, and a thumbnail
-    /// that was veiled is built afresh when next asked.
+    /// built with another scene than the one it now takes is made afresh when next asked (one still building is checked
+    /// as it lands).
     /// </summary>
     public void VeilChanged()
     {
@@ -618,9 +669,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         palettes.Clear();
         foreach (var (id, build) in thumbBuilds)
         {
-            // Built while veiled (no scene), or built with a scene the veil now hides: made again when next asked.
-            var nowVeiled = thumbLevels.TryGetValue(id, out var level) && SceneVeiled(level);
-            if ((build.IsCompleted && (!build.IsCompletedSuccessfully || build.Result is null)) || nowVeiled)
+            if (build.IsCompleted && thumbLevels.TryGetValue(id, out var level) && !string.Equals(thumbBuiltWith.GetValueOrDefault(id), PickScene(level)?.Name, StringComparison.Ordinal))
             {
                 thumbVeiled.Add(id);
             }
@@ -628,11 +677,6 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
         foreach (var id in thumbVeiled)
         {
-            if (thumbBuilds.TryGetValue(id, out var build) && !build.IsCompleted)
-            {
-                continue;
-            }
-
             thumbBuilds.Remove(id);
             if (thumbs.Remove(id, out var held))
             {

@@ -128,6 +128,44 @@ internal static class Render
         var storyArg = Arg(args, "--story");
         var reach = storyArg is not null ? byte.Parse(storyArg, CultureInfo.InvariantCulture) : screen == "far" ? MoonfallPlaces.Shadowbringers : (byte?)null;
         var shield = reach is { } r ? StoryShield(r) : null;
+        if (reach is not null)
+        {
+            // A story staged by expansion has met everyone the shield places in A Realm Reborn (the twins included).
+            story = MoonfallStory.Everyone;
+        }
+
+        // --far-built: the Far Shore's 60 levels stand in (copies of base-01), so its road can be walked;
+        // --far-won N: The Moon Road won and the Far Shore's first N levels won (the road's frontier, stepping over veils).
+        if (args.Contains("--far-built"))
+        {
+            var shape = campaigns.Base.Levels[0];
+            var far = Enumerable.Range(0, MoonfallStages.ExpansionLevels).Select(i => shape with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, i) }).ToList();
+            campaigns = new MoonfallCampaigns(campaigns.Base, new MoonfallCampaign(MoonfallCampaignKind.Expansion, far), []);
+        }
+
+        if (Arg(args, "--far-won") is { } farWon)
+        {
+            progress.BaseCleared = MoonfallStages.BaseLevels;
+            var won = int.Parse(farWon, CultureInfo.InvariantCulture);
+            for (var i = 0; i < won; i++)
+            {
+                progress.Levels[MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, i)] = new MoonfallLevelRecord { Cleared = true, Best = 120_000 };
+            }
+
+            progress.ExpansionCleared = won;
+        }
+
+        // --far-walk: The Moon Road won, then the Far Shore walked as Continue leads (stepping over veiled stages) until
+        // nothing is left to play: the road waits at the first stage past the story.
+        if (args.Contains("--far-walk"))
+        {
+            progress.BaseCleared = MoonfallStages.BaseLevels;
+            var walker = new MoonfallModes(campaigns, progress, story ?? MoonfallStory.Everyone, []) { Shield = shield ?? MoonfallShield.Open };
+            for (var guard = 0; guard < 200 && walker.Continue() is { } next; guard++)
+            {
+                progress.RecordLevel(MoonfallStages.LevelId(next.Campaign, next.Index), won: true, score: 120_000);
+            }
+        }
         var temp = Path.Combine(Path.GetTempPath(), "moonfall-render-progress.json");
         var window = new MoonfallWindow(campaigns, progress, temp, static () => MoonfallPauseReason.None, null, artHost,
             Path.Combine(repo, "Tsukimichi", "assets", "moonfall"), gameHost, fonts, options, story, null, aces, shield)
@@ -174,6 +212,9 @@ internal static class Render
         // Let the art load (manifest, sheets, the game's UI art, the scene's build and its uploads): frames until it has.
         void Settle()
         {
+            // The board's clock is held while the art loads, so a staged moment is the same however long that takes.
+            window.HoldBoardForRender = true;
+            using var release = new HoldRelease(window);
             for (var i = 0; i < 12 || (!window.ArtSettledForRender && i < 3000); i++)
             {
                 Frame(1f / 60f);
@@ -424,11 +465,17 @@ internal static class Render
     /// A stand-in for the spoiler shield whose story has reached expansion <paramref name="reach"/>: it hides an area
     /// Moonfall tags with a later era and prints the shield's placeholder shape for it ("Endwalker area 2").
     /// </summary>
+    /// <summary>Lets the board's clock run again when a settle ends.</summary>
+    private readonly struct HoldRelease(MoonfallWindow window) : IDisposable
+    {
+        public void Dispose() => window.HoldBoardForRender = false;
+    }
+
     private static MoonfallShield StoryShield(byte reach)
     {
         string[] expansions = ["A Realm Reborn", "Heavensward", "Stormblood", "Shadowbringers", "Endwalker", "Dawntrail"];
         var eras = new Dictionary<string, (byte Era, int Number)>(StringComparer.Ordinal);
-        foreach (var place in MoonfallStages.Of(MoonfallCampaignKind.Expansion).Select(MoonfallPlaces.OfStage).Concat(MoonfallPlaces.Scenes.Values))
+        foreach (var place in MoonfallStages.Of(MoonfallCampaignKind.Expansion).Select(MoonfallPlaces.OfStage).Concat(MoonfallPlaces.Scenes.Values).Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)))
         {
             if (place.Zone is { } zone && !eras.ContainsKey(zone))
             {

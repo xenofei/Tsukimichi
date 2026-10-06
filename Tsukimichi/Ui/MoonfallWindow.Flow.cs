@@ -358,6 +358,13 @@ public sealed partial class MoonfallWindow
     private void LeaveBoard()
     {
         flow.Leave();
+        if (playKind == MoonfallPlayKind.Adventure && game is { } g && LevelOver(g) && tallyVeil is { } waiting)
+        {
+            // The tally said the road waits at a stage past the story: the map opens on it.
+            mapCampaign = waiting.Campaign;
+            mapStage = waiting.Number - 1;
+        }
+
         EndBoard();
     }
 
@@ -421,13 +428,34 @@ public sealed partial class MoonfallWindow
         SaveInBackground();
     }
 
+    private (MoonfallCampaignKind Campaign, int Index, int Epoch) adventureNextFor = (MoonfallCampaignKind.Base, -1, -1);
+    private int? adventureNext;
+    private MoonfallStage? adventureVeil;
+    private MoonfallLevel? adventureNextLevel;
+
+    /// <summary>
+    /// Adventure's next level after the one played (stepping over stages set past the player's story), worked out once
+    /// per level and progress; <see cref="adventureVeil"/> is the first veiled stage stepped over, if any.
+    /// </summary>
+    private int? AdventureNext()
+    {
+        if (adventureNextFor != (campaign, levelIndex, progressEpoch))
+        {
+            adventureNextFor = (campaign, levelIndex, progressEpoch);
+            adventureNext = modes.NextLevel(campaign, levelIndex, out adventureVeil);
+            adventureNextLevel = adventureNext is { } n ? modes.Slot(campaign, n).Level : null;
+        }
+
+        return adventureNext;
+    }
+
     /// <summary>The next level the tally offers, or null: Adventure's next reached level, Quick Play's next reached one, a challenge run's next level.</summary>
     private bool HasNext(MoonfallGame g)
     {
         switch (playKind)
         {
             case MoonfallPlayKind.Adventure:
-                return g.Phase == MoonfallPhase.Won && levelIndex + 1 < MoonfallStages.LevelCount(campaign) && modes.Slot(campaign, levelIndex + 1).Reached;
+                return g.Phase == MoonfallPhase.Won && AdventureNext() is not null;
             case MoonfallPlayKind.QuickPlay:
                 return NextQuickLevel() is not null;
             case MoonfallPlayKind.Challenge:
@@ -462,10 +490,11 @@ public sealed partial class MoonfallWindow
         switch (playKind)
         {
             case MoonfallPlayKind.Adventure:
-                var pick = MoonfallStages.StageOf(campaign, levelIndex + 1) is { PlayerPicks: true }
+                var nextIndex = AdventureNext() ?? levelIndex + 1;
+                var pick = MoonfallStages.StageOf(campaign, nextIndex) is { PlayerPicks: true }
                     ? (adventurePick != MoonfallCompanion.None ? adventurePick : MoonfallCompanions.Carrying(game?.Power ?? MoonfallPower.None))
                     : MoonfallCompanion.None;
-                if (!PlayAdventure(campaign, levelIndex + 1, pick))
+                if (!PlayAdventure(campaign, nextIndex, pick))
                 {
                     LeaveBoard();
                 }
@@ -496,7 +525,7 @@ public sealed partial class MoonfallWindow
 
         return playKind switch
         {
-            MoonfallPlayKind.Adventure => modes.Slot(campaign, levelIndex + 1).Level,
+            MoonfallPlayKind.Adventure => AdventureNext() is not null ? adventureNextLevel : null,
             MoonfallPlayKind.QuickPlay => NextQuickLevel() is { } id ? campaigns.Find(id) : null,
             MoonfallPlayKind.Challenge => challengeRun?.Current,
             _ => null,

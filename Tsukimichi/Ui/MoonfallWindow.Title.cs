@@ -40,6 +40,10 @@ public sealed partial class MoonfallWindow
     private string titleContinueWith = string.Empty;
     private string titleContinueSmall = string.Empty;
     private MoonfallLevel? titleContinueLevel;
+    private MoonfallStage? titleVeiledStage;
+    private string? titleVeiledZone;
+    private string[] titleVeiledLines = [];
+    private (int Views, float Scale) titleVeiledLinesFor = (-1, 0f);
     private MoonfallPower titleContinuePower;
     private string versionText = string.Empty;
 
@@ -94,8 +98,11 @@ public sealed partial class MoonfallWindow
             ? string.Create(CultureInfo.InvariantCulture, $"{version.Major}.{version.Minor}.{version.Build}")
             : string.Empty;
 
-        // Adventure: where the road stands.
-        var at = continuePlace ?? new MoonfallLevelPlace(MoonfallCampaignKind.Base, Math.Min(progress.BaseCleared, MoonfallStages.BaseLevels - 1));
+        // Adventure: where the road stands (the real place, a veiled one included; the Far Shore once The Moon Road is won).
+        var nextPlace = modes.Next();
+        var at = nextPlace?.Place ?? (farOpen
+            ? new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, Math.Min(progress.ExpansionCleared, MoonfallStages.ExpansionLevels - 1))
+            : new MoonfallLevelPlace(MoonfallCampaignKind.Base, Math.Min(progress.BaseCleared, MoonfallStages.BaseLevels - 1)));
         var stages = MoonfallStages.Of(at.Campaign).Count;
         titleAdventureSub = string.Format(c, Strings.MoonfallTitleAdventureSubFormat, Strings.MoonfallCampaignName(at.Campaign), at.Stage, stages);
 
@@ -124,7 +131,22 @@ public sealed partial class MoonfallWindow
         // The Continue card.
         titleContinueLevel = null;
         titleContinuePower = MoonfallPower.None;
-        if (continuePlace is { } next && modes.Slot(next.Campaign, next.Index) is { Level: { } level } slot)
+        titleVeiledStage = null;
+        titleVeiledZone = null;
+        if (nextPlace is { Veiled: true } veiled && MoonfallStages.StageOf(veiled.Place.Campaign, veiled.Place.Index) is { } waiting)
+        {
+            // The road waits at a stage set past the player's story: its placeholder (with its hover and reveal), why,
+            // and the map opened on it.
+            titleVeiledStage = waiting;
+            titleVeiledZone = modes.VeiledZone(waiting);
+            titleContinueCode = string.Empty;
+            titleContinueName = StageNameShown(waiting);
+            titleContinueLine = Strings.MoonfallTitleVeiledLine;
+            titleContinue = Strings.MoonfallScreenMap;
+            titleContinueWith = string.Empty;
+            titleContinueSmall = string.Format(c, Strings.MoonfallTitleVeiledSmallFormat, titleContinueName);
+        }
+        else if (continuePlace is { } next && modes.Slot(next.Campaign, next.Index) is { Level: { } level } slot)
         {
             titleContinueLevel = level;
             titleContinueCode = LevelCode(next.Index);
@@ -166,8 +188,26 @@ public sealed partial class MoonfallWindow
     private void DrawTitle(in MenuPen m)
     {
         var dl = m.Dl;
-        // The backdrop: Sohm Al, graded; the night stands in while it builds.
-        if (gameArt?.Backdrop(MoonfallBackdrop.Title) is { } backdrop)
+        // The backdrop: Sohm Al, graded; the night stands in while it builds. Sohm Al is Heavensward's: while the shield
+        // hides it, the title is drawn over the chart (no story place), as a hidden scene is (the backdrop policy).
+        if (titleBackdropHidden)
+        {
+            if (gameArt?.Backdrop(MoonfallBackdrop.Chart) is { } chart)
+            {
+                Cover(dl, chart.Handle, m.AreaMin, m.AreaMax, Vector2.Zero, Vector2.One, MoonfallBackdrops.ChartWidth / (float)MoonfallBackdrops.ChartHeight);
+                dl.AddRectFilled(m.AreaMin, m.AreaMax, Ink(MoonfallColor.Hex("#04050E"), 0.35f));
+            }
+            else
+            {
+                if (gameArt is not null)
+                {
+                    menuArtPending++;
+                }
+
+                JewelNight(m);
+            }
+        }
+        else if (gameArt?.Backdrop(MoonfallBackdrop.Title) is { } backdrop)
         {
             Cover(dl, backdrop.Handle, m.AreaMin, m.AreaMax, Vector2.Zero, Vector2.One, MoonfallBackdrops.TitleWidth / (float)MoonfallBackdrops.TitleHeight);
         }
@@ -279,7 +319,13 @@ public sealed partial class MoonfallWindow
             Continue();
         }
 
-        MenuText(m, MoonfallFace.Axis, 12.5f, 320, y + 54, titleContinueSmall, Ink2, Anchor.Centre, edge: 1f, maxWidth: 420);
+        var sw = MenuText(m, MoonfallFace.Axis, 12.5f, 320, y + 54, titleContinueSmall, Ink2, Anchor.Centre, edge: 1f, maxWidth: 420);
+        if (titleVeiledZone is { } zone)
+        {
+            // The line holds the placeholder: it answers with the shield's hover and reveal.
+            var half = Math.Min(sw, 420) / 2;
+            ShieldPlaceholder(m, 320 - half, y + 46, 320 + half, y + 62, zone, titleContinueName);
+        }
         y += 72;
         if (MenuButton(m, "##mfAdventure", 214, y, 426, y + 34, Strings.MoonfallScreenAdventure, 24))
         {
@@ -323,7 +369,7 @@ public sealed partial class MoonfallWindow
     private bool DuelOpen => duelOpponents.Count > 0 && QuickLevels().Count > 0;
 
     /// <summary>Why Duel is locked (on hover and on focus); null while it is open.</summary>
-    private string? DuelLockedWhy => DuelOpen ? null : QuickLevels().Count == 0 ? Strings.MoonfallDuelLockedTooltip : Strings.MoonfallTitleDuelNone;
+    private string? DuelLockedWhy => DuelOpen ? null : QuickLevels().Count == 0 ? Strings.MoonfallDuelLockedTooltip : Strings.MoonfallDuelNoOpponentTooltip;
 
     private Vector3? ContinueAccent() => MoonfallCards.For(titleContinuePower)?.Accent;
 
@@ -362,6 +408,27 @@ public sealed partial class MoonfallWindow
                 MenuText(m, MoonfallFace.Axis, 14, tx, y0 + 128, titleContinueWith, Cream, edge: 0f, maxWidth: (float)tw);
             }
         }
+        else if (titleVeiledZone is { } zone)
+        {
+            // The road waits at a stage past the player's story: its placeholder (in Axis, its digits plain, with the
+            // shield's hover and reveal), the shield's mark, and why.
+            if (titleVeiledLinesFor != (menuViewsKey.GetHashCode(), v.Scale))
+            {
+                titleVeiledLinesFor = (menuViewsKey.GetHashCode(), v.Scale);
+                titleVeiledLines = Wrap(m, MoonfallFace.Axis, 14, titleContinueLine, (float)(x1 - x0 - 60));
+            }
+
+            MenuText(m, MoonfallFace.Axis, 14, (x0 + x1) / 2, y0 + 40, Strings.MoonfallContinueCaps, GoldInk, Anchor.Centre, edge: 0f);
+            var nw = MenuText(m, MoonfallFace.Axis, 22, (x0 + x1) / 2, y0 + 72, titleContinueName, Ink2, Anchor.Centre, edge: 1f, maxWidth: (float)(x1 - x0 - 80));
+            var half = Math.Min(nw, x1 - x0 - 80) / 2;
+            ShieldMark(m, ((x0 + x1) / 2) - half - 16, y0 + 72, 8);
+            ShieldPlaceholder(m, ((x0 + x1) / 2) - half, y0 + 60, ((x0 + x1) / 2) + half, y0 + 84, zone, titleContinueName);
+            var lines = titleVeiledLines;
+            for (var i = 0; i < lines.Length; i++)
+            {
+                MenuText(m, MoonfallFace.Axis, 14, (x0 + x1) / 2, y0 + 108 + (i * 20), lines[i], Ink2, Anchor.Centre, edge: 0f);
+            }
+        }
         else
         {
             MenuText(m, MoonfallFace.Jupiter, 28, (x0 + x1) / 2, y0 + 70, titleContinueName, Cream, Anchor.Centre, edge: 1f, maxWidth: (float)(x1 - x0 - 48));
@@ -374,9 +441,15 @@ public sealed partial class MoonfallWindow
         }
     }
 
-    /// <summary>Continue: Adventure's next level, straight onto the board; with none shipped yet, the map.</summary>
+    /// <summary>Continue: Adventure's next level, straight onto the board; with none shipped yet, the map; at a stage past the story, the map open on it.</summary>
     private void Continue()
     {
+        if (titleVeiledStage is { } waiting)
+        {
+            OpenMapAt(waiting);
+            return;
+        }
+
         if (continuePlace is { } next)
         {
             var pick = MoonfallStages.StageOf(next.Campaign, next.Index) is { PlayerPicks: true } ? FirstAvailable() : MoonfallCompanion.None;

@@ -123,13 +123,19 @@ public sealed partial class MoonfallWindow : Window
         }
     }
 
-    private bool VeilsScene(MoonfallLevel level, MoonfallSceneRecipe recipe) => modes.SceneVeiled(level, recipe.Name);
+    private MoonfallSceneHide VeilsScene(MoonfallLevel level, MoonfallSceneRecipe recipe) => modes.SceneHide(level, recipe.Name);
 
     /// <summary>
     /// The session whose spoiler shield the placeholders answer to (its hover, and its right-click "Reveal this name");
     /// set by the plugin. Null (the offline renderer) draws the placeholders without the menu.
     /// </summary>
     internal SessionState? ShieldSession { get; set; }
+
+    /// <summary>The offline renderer: the board's clock is held (while the art loads), so a staged moment renders the same every run.</summary>
+    internal bool HoldBoardForRender { get; set; }
+
+    /// <summary>The title's painting (Sohm Al) is past the player's story: the chart stands in.</summary>
+    private bool titleBackdropHidden;
 
     /// <summary>The shield version the menus' words and the scene veil were made for.</summary>
     private int shieldSeen = int.MinValue;
@@ -145,6 +151,7 @@ public sealed partial class MoonfallWindow : Window
 
         shieldSeen = version;
         gameArt?.VeilChanged();
+        titleBackdropHidden = modes.Shield.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title));
 
         // The menus' views and words are made per progress epoch: a shield change remakes them as a win does.
         progressEpoch++;
@@ -281,8 +288,9 @@ public sealed partial class MoonfallWindow : Window
             outsidePress = false;
         }
 
-        // The board's clock runs while it is not paused; after the level ends it runs on for the tally's count-up.
-        if (!pause.Paused)
+        // The board's clock runs while it is not paused; after the level ends it runs on for the tally's count-up. (The
+        // offline renderer holds it while the art loads, so a staged moment renders the same every run.)
+        if (!pause.Paused && !HoldBoardForRender)
         {
             if (!LevelOver(g))
             {
@@ -552,9 +560,11 @@ public sealed partial class MoonfallWindow : Window
             RefreshDuelNames(d);
             RefreshPlainDuel(d);
             var youWidth = ImGui.CalcTextSize(plainDuelYou).X;
+            TextSinkForRender?.Invoke(plainDuelYou);
             dl.AddText(new Vector2(right - youWidth, y), Theme.U32(Theme.Gold), plainDuelYou);
             right -= youWidth + gap;
             var foeWidth = ImGui.CalcTextSize(plainDuelFoe).X;
+            TextSinkForRender?.Invoke(plainDuelFoe);
             dl.AddText(new Vector2(right - foeWidth, y), Theme.U32(Theme.Surface.Text), plainDuelFoe);
             right -= foeWidth + gap;
             turn = DuelTurnText(d);
@@ -566,25 +576,30 @@ public sealed partial class MoonfallWindow : Window
             right -= scoreWidth + gap;
         }
 
-        dl.PushClipRect(at, new Vector2(right, at.Y + height), true);
-        if (turn.Length > 0)
+        // Whole parts only, in priority order, until one does not fit: a duel's turn first, then the balls, the oranges
+        // and the multiplier (game state), then the level's code and name; in a level, the code and name lead.
+        var levelName = playLevel is null ? string.Empty : PlayLevelName(playLevel);
+        ReadOnlySpan<string> parts = duel is not null
+            ? [turn, ballsText, orangesText, multiplierText, stageText, levelName]
+            : [stageText, levelName, ballsText, orangesText, multiplierText];
+        for (var i = 0; i < parts.Length; i++)
         {
-            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Gold), turn);
-            x += ImGui.CalcTextSize(turn).X + gap;
-        }
-
-        foreach (var part in (ReadOnlySpan<string>)[stageText, playLevel is null ? string.Empty : PlayLevelName(playLevel), ballsText, orangesText, multiplierText])
-        {
+            var part = parts[i];
             if (part.Length == 0)
             {
                 continue;
             }
 
-            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.Text), part);
-            x += ImGui.CalcTextSize(part).X + gap;
-        }
+            var w = ImGui.CalcTextSize(part).X;
+            if (x + w > right)
+            {
+                break;
+            }
 
-        dl.PopClipRect();
+            TextSinkForRender?.Invoke(part);
+            dl.AddText(new Vector2(x, y), Theme.U32(i == 0 && duel is not null ? Theme.Gold : Theme.Surface.Text), part);
+            x += w + gap;
+        }
         ImGui.SetCursorScreenPos(at);
         ImGui.Dummy(new Vector2(width, height));
         return height;

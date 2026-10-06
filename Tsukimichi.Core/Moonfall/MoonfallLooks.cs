@@ -137,7 +137,8 @@ public static class MoonfallLooks
         return new MoonfallStopLook(
             face,
             Drained: sealedStop && face == MoonfallStopFace.Portrait,
-            Padlock: sealedStop && face != MoonfallStopFace.PickStar,
+            // A veiled stage the road has not come to yet is closed twice over: the padlock beside the shield's mark.
+            Padlock: (sealedStop || (veiled && !view.Reached)) && face != MoonfallStopFace.PickStar,
             Pip: view.State == MoonfallStageState.Done,
             Glow: view.Here && !veiled,
             Dim: sealedStop || veiled,

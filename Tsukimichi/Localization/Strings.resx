@@ -17188,7 +17188,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall map: a stop's state in its hover line, for a stage set past the player's story (the spoiler shield).</comment>
   </data>
   <data name="MoonfallStageVeiledLine" xml:space="preserve">
-    <value>Set past your story: it opens when your story gets there, or when you reveal the place (right-click its name).</value>
+    <value>Set past your story. Right-click its name, or press its button, to reveal the place for this session.</value>
     <comment>Moonfall map: why a stage set past the player's story is closed, and how it opens (the spoiler shield's reveal).</comment>
   </data>
   <data name="MoonfallStageVeiledButton" xml:space="preserve">
@@ -17220,7 +17220,43 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall duel HUD: the caption while the twins' ball is in play.</comment>
   </data>
   <data name="MoonfallStageVeiledShort" xml:space="preserve">
-    <value>Opens when your story gets there</value>
+    <value>Right-click its name to reveal it</value>
     <comment>Moonfall map at the small size: the stage panel's line for a stage set past the player's story (the spoiler shield).</comment>
+  </data>
+  <data name="MoonfallTitleVeiledLine" xml:space="preserve">
+    <value>The road waits at a stage set past your story. It opens when your story gets there, or reveal its place on the map for this session.</value>
+    <comment>Moonfall title: the Continue card when Adventure's next stage is set past the player's story (the spoiler shield).</comment>
+  </data>
+  <data name="MoonfallTitleVeiledSmallFormat" xml:space="preserve">
+    <value>The road waits past your story: {0}</value>
+    <comment>Moonfall title at the small size: the line under Continue when the next stage is past the player's story. {0} is the stage's placeholder name ("Endwalker area 1").</comment>
+  </data>
+  <data name="MoonfallTallyVeiledFormat" xml:space="preserve">
+    <value>Stage {0} is set past your story: Map opens on it.</value>
+    <comment>Moonfall tally: why there is no Next after a win, when the road waits at a stage past the player's story. {0} is the stage's number.</comment>
+  </data>
+  <data name="MoonfallStageVeiledSealedLine" xml:space="preserve">
+    <value>Set past your story, and not reached yet: win the stages before it too. Right-click its name to reveal the place for this session.</value>
+    <comment>Moonfall map: a stage both past the player's story and not yet reached in Moonfall.</comment>
+  </data>
+  <data name="MoonfallStageVeiledPillTip" xml:space="preserve">
+    <value>Set past your story. Press to reveal its place for this session.</value>
+    <comment>Moonfall map: the reason on a stage's closed Play button when the stage is past the player's story; pressing it opens the reveal.</comment>
+  </data>
+  <data name="MoonfallStopTipVeiledFormat" xml:space="preserve">
+    <value>Stage {0} · past your story · {1}</value>
+    <comment>Moonfall map: a veiled stop's hover line (its name left out). {0} is the stage's number, {1} its power.</comment>
+  </data>
+  <data name="MoonfallChallengeVeiledLineFormat" xml:space="preserve">
+    <value>Runs through stage {0}, set past your story. Press Play to open it on the map, where its place can be revealed.</value>
+    <comment>Moonfall challenges: a challenge that runs through a stage past the player's story. {0} is the stage's number.</comment>
+  </data>
+  <data name="MoonfallJoinsVeiledFormat" xml:space="preserve">
+    <value>Joins on The Far Shore, stage {0} (past your story)</value>
+    <comment>Moonfall companions: the joins line of a companion whose Far Shore stage is past the player's story (the stage's name left out). {0} is the stage's number.</comment>
+  </data>
+  <data name="MoonfallDuelNoOpponentTooltip" xml:space="preserve">
+    <value>Meet a companion in Adventure first: a duel is played against one.</value>
+    <comment>Moonfall title: why Duel is locked when no companion has been met.</comment>
   </data>
 </root>

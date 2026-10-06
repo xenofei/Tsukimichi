@@ -496,7 +496,8 @@ public sealed partial class MoonfallWindow
             UiMetrics.Tooltip(tooltip);
         }
 
-        if (clicked && !inert)
+        // A Veiled entry answers a press (its caller opens the shield's reveal); Locked and Waiting do nothing.
+        if (clicked && (!inert || style == MenuStyle.Veiled))
         {
             SoundClick();
             return true;

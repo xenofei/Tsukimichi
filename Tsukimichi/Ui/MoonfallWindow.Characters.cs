@@ -173,8 +173,11 @@ public sealed partial class MoonfallWindow
         charName = selLook.Named ? sel.Name : Strings.MoonfallNotYetMet;
         charRole = Wrap(m, MoonfallFace.Axis, small ? 12 : 15, selLook.Named ? lore.Role : Strings.MoonfallNotMetRole, textWidth);
         charQuote = selLook.Named ? Wrap(m, MoonfallFace.Axis, small ? 12 : 17.5f, "“" + lore.Line + "”", textWidth) : [];
-        var stageName = StageNameShown(MoonfallStages.Of(sel.Campaign)[sel.Stage - 1]);
-        charJoins = sel.Campaign == MoonfallCampaignKind.Expansion
+        var joinStage = MoonfallStages.Of(sel.Campaign)[sel.Stage - 1];
+        var stageName = StageNameShown(joinStage);
+        // A stage past the story is left unnamed here (this line cannot answer as a placeholder must).
+        charJoins = modes.StageVeiled(joinStage) ? string.Format(c, Strings.MoonfallJoinsVeiledFormat, sel.Stage)
+            : sel.Campaign == MoonfallCampaignKind.Expansion
             ? string.Format(c, Strings.MoonfallJoinsFarShoreFormat, sel.Stage, stageName)
             : string.Format(c, Strings.MoonfallJoinsFormat, sel.Stage, stageName);
         charDoes = Wrap(m, MoonfallFace.Axis, small ? 12.5f : 17, lore.Does, small ? 258f : 280f);

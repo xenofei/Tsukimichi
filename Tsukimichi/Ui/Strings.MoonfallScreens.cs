@@ -552,6 +552,33 @@ static partial class Strings
     /// <summary>Moonfall map at the small size: the stage panel&#x27;s line for a stage set past the player&#x27;s story (the spoiler shield).</summary>
     public static string MoonfallStageVeiledShort => Loc.Get("MoonfallStageVeiledShort");
 
+    /// <summary>Moonfall title: the Continue card when Adventure&#x27;s next stage is set past the player&#x27;s story (the spoiler shield).</summary>
+    public static string MoonfallTitleVeiledLine => Loc.Get("MoonfallTitleVeiledLine");
+
+    /// <summary>Moonfall title at the small size: the line under Continue when the next stage is past the player&#x27;s story. {0} is the stage&#x27;s placeholder name (&quot;Endwalker area 1&quot;).</summary>
+    public static string MoonfallTitleVeiledSmallFormat => Loc.Get("MoonfallTitleVeiledSmallFormat");
+
+    /// <summary>Moonfall tally: why there is no Next after a win, when the road waits at a stage past the player&#x27;s story. {0} is the stage&#x27;s number.</summary>
+    public static string MoonfallTallyVeiledFormat => Loc.Get("MoonfallTallyVeiledFormat");
+
+    /// <summary>Moonfall map: a stage both past the player&#x27;s story and not yet reached in Moonfall.</summary>
+    public static string MoonfallStageVeiledSealedLine => Loc.Get("MoonfallStageVeiledSealedLine");
+
+    /// <summary>Moonfall map: the reason on a stage&#x27;s closed Play button when the stage is past the player&#x27;s story; pressing it opens the reveal.</summary>
+    public static string MoonfallStageVeiledPillTip => Loc.Get("MoonfallStageVeiledPillTip");
+
+    /// <summary>Moonfall map: a veiled stop&#x27;s hover line (its name left out). {0} is the stage&#x27;s number, {1} its power.</summary>
+    public static string MoonfallStopTipVeiledFormat => Loc.Get("MoonfallStopTipVeiledFormat");
+
+    /// <summary>Moonfall challenges: a challenge that runs through a stage past the player&#x27;s story. {0} is the stage&#x27;s number.</summary>
+    public static string MoonfallChallengeVeiledLineFormat => Loc.Get("MoonfallChallengeVeiledLineFormat");
+
+    /// <summary>Moonfall companions: the joins line of a companion whose Far Shore stage is past the player&#x27;s story (the stage&#x27;s name left out). {0} is the stage&#x27;s number.</summary>
+    public static string MoonfallJoinsVeiledFormat => Loc.Get("MoonfallJoinsVeiledFormat");
+
+    /// <summary>Moonfall title: why Duel is locked when no companion has been met.</summary>
+    public static string MoonfallDuelNoOpponentTooltip => Loc.Get("MoonfallDuelNoOpponentTooltip");
+
     /// <summary>A duel opponent's difficulty.</summary>
     public static string MoonfallDifficultyName(MoonfallAiDifficulty difficulty) => difficulty switch
     {

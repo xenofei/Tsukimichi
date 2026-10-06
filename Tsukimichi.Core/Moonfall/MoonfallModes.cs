@@ -67,7 +67,29 @@ public readonly record struct MoonfallLevelSlot(string Id, MoonfallLevelPlace Pl
 /// <param name="Companion">How its companion shows (<see cref="MoonfallCompanionState.Available"/> on the stage where the player picks).</param>
 /// <param name="Here">It holds the next level to play (the "here" glow).</param>
 /// <param name="Levels">Its five levels.</param>
-public sealed record MoonfallStageView(MoonfallStage Stage, MoonfallStageState State, MoonfallCompanionState Companion, bool Here, IReadOnlyList<MoonfallLevelSlot> Levels);
+/// <param name="Reached">
+/// Moonfall's progress has come to it (the road's frontier, stepping over veiled stages, is at or past its first level).
+/// A <see cref="MoonfallStageState.Veiled"/> stage not yet reached is closed twice over: past the story and not reached.
+/// </param>
+public sealed record MoonfallStageView(MoonfallStage Stage, MoonfallStageState State, MoonfallCompanionState Companion, bool Here, IReadOnlyList<MoonfallLevelSlot> Levels, bool Reached = true);
+
+/// <summary>How a level's scene shows under the spoiler shield.</summary>
+public enum MoonfallSceneHide : byte
+{
+    /// <summary>As its recipe has it.</summary>
+    Shown,
+
+    /// <summary>The scene's own place is past the story (its stage is not): the recipe over its declared story-safe fallback picture.</summary>
+    Fallback,
+
+    /// <summary>Its stage is past the story: no scene art at all, the night sky.</summary>
+    Hidden,
+}
+
+/// <summary>Where Adventure goes next (the title's Continue): a level to play, or the first stage it steps over because it is set past the player's story.</summary>
+/// <param name="Place">The level: the next to play, or the first of the veiled stage.</param>
+/// <param name="Veiled">The place is on a stage past the player's story: nothing ahead can be played until it opens.</param>
+public readonly record struct MoonfallNext(MoonfallLevelPlace Place, bool Veiled);
 
 /// <summary>A level ready to start: what <see cref="MoonfallGame"/> is made with.</summary>
 /// <param name="Mode">How it is played.</param>
@@ -154,10 +176,73 @@ public sealed class MoonfallModes
     /// Whether <paramref name="level"/>'s scene, the recipe <paramref name="sceneName"/>, must not show: its stage is
     /// veiled, or the scene itself is set past the player's story (<see cref="MoonfallPlaces.OfScene"/>).
     /// </summary>
-    public bool SceneVeiled(MoonfallLevel level, string? sceneName)
+    public bool SceneVeiled(MoonfallLevel level, string? sceneName) => SceneHide(level, sceneName) != MoonfallSceneHide.Shown;
+
+    /// <summary>
+    /// How <paramref name="level"/>'s scene, the recipe <paramref name="sceneName"/>, shows: hidden outright on a veiled
+    /// stage (no scene art), over the recipe's story-safe fallback when only the scene's own place is past the story.
+    /// </summary>
+    public MoonfallSceneHide SceneHide(MoonfallLevel level, string? sceneName)
     {
         ArgumentNullException.ThrowIfNull(level);
-        return LevelVeiled(level.Id) || (MoonfallPlaces.OfScene(sceneName) is { } place && Shield.Hides(place));
+        return LevelVeiled(level.Id) ? MoonfallSceneHide.Hidden
+            : MoonfallPlaces.OfScene(sceneName) is { } place && Shield.Hides(place) ? MoonfallSceneHide.Fallback
+            : MoonfallSceneHide.Shown;
+    }
+
+    /// <summary>
+    /// The road's frontier in <paramref name="campaign"/> (the owner's "step over it"): the first level neither won nor on a
+    /// veiled stage. Adventure steps over a veiled stage, whose levels wait unwon until the story or a reveal opens it;
+    /// "all won" and the campaign's count still need them. The level count when every level is won or veiled.
+    /// </summary>
+    public int Frontier(MoonfallCampaignKind campaign)
+    {
+        var count = MoonfallStages.LevelCount(campaign);
+        for (var i = Progress.Cleared(campaign); i < count; i++)
+        {
+            if (Progress.IsCleared(MoonfallStages.LevelId(campaign, i)))
+            {
+                continue;
+            }
+
+            if (MoonfallStages.StageOf(campaign, i) is { } stage && StageVeiled(stage))
+            {
+                continue;
+            }
+
+            return i;
+        }
+
+        return count;
+    }
+
+    /// <summary>Whether Moonfall's progress has come to <paramref name="stage"/>: its campaign is open and the frontier is at or past its first level.</summary>
+    public bool StageReached(MoonfallStage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        return CampaignOpen(stage.Campaign) && stage.FirstLevelIndex <= Frontier(stage.Campaign);
+    }
+
+    /// <summary>
+    /// Adventure's level after <paramref name="index"/> (the tally's Next): the next reached level, stepping over veiled
+    /// stages; null when there is none. <paramref name="steppedOver"/> is the first veiled stage passed on the way, if any.
+    /// </summary>
+    public int? NextLevel(MoonfallCampaignKind campaign, int index, out MoonfallStage? steppedOver)
+    {
+        steppedOver = null;
+        for (var i = index + 1; i < MoonfallStages.LevelCount(campaign); i++)
+        {
+            var slot = Slot(campaign, i);
+            if (slot.State == MoonfallLevelState.Veiled)
+            {
+                steppedOver ??= MoonfallStages.StageOf(campaign, i);
+                continue;
+            }
+
+            return slot.Reached ? i : null;
+        }
+
+        return null;
     }
 
     // ---- Adventure ----
@@ -174,7 +259,7 @@ public sealed class MoonfallModes
         var state = MoonfallStages.StageOf(campaign, index) is { } stage && StageVeiled(stage) ? MoonfallLevelState.Veiled
             : level is null ? MoonfallLevelState.Missing
             : Progress.IsCleared(id) ? MoonfallLevelState.Cleared
-            : CampaignOpen(campaign) && index <= Progress.Cleared(campaign) ? MoonfallLevelState.Open
+            : CampaignOpen(campaign) && index <= Frontier(campaign) ? MoonfallLevelState.Open
             : MoonfallLevelState.Sealed;
         return new MoonfallLevelSlot(id, new MoonfallLevelPlace(campaign, index), level, state, Progress.Best(id), Progress.IsAced(id), AceOf(id));
     }
@@ -182,7 +267,9 @@ public sealed class MoonfallModes
     /// <summary>The campaign's stages as the map shows them.</summary>
     public IReadOnlyList<MoonfallStageView> Stages(MoonfallCampaignKind campaign)
     {
-        var next = Continue();
+        var next = Next()?.Place;
+        var frontier = Frontier(campaign);
+        var open = CampaignOpen(campaign);
         var views = new List<MoonfallStageView>();
         foreach (var stage in MoonfallStages.Of(campaign))
         {
@@ -198,14 +285,23 @@ public sealed class MoonfallModes
                 : MoonfallStageState.Sealed;
             var companion = stage.PlayerPicks ? MoonfallCompanionState.Available : CompanionState(stage.Companion);
             var here = next is { } n && n.Campaign == campaign && MoonfallCharacters.Stage(n.Index) == stage.Number;
-            views.Add(new MoonfallStageView(stage, state, companion, here, slots));
+            var reached = open && stage.FirstLevelIndex <= frontier;
+            views.Add(new MoonfallStageView(stage, state, companion, here, slots, state != MoonfallStageState.Sealed && (state != MoonfallStageState.Veiled || reached)));
         }
 
         return views;
     }
 
     /// <summary>The next level Adventure plays (the title's Continue card): the first open one, The Moon Road first; null when every shipped level is won or the next is not shipped yet.</summary>
-    public MoonfallLevelPlace? Continue()
+    public MoonfallLevelPlace? Continue() => Next() is { Veiled: false } next ? next.Place : null;
+
+    /// <summary>
+    /// Where Adventure goes next: the frontier's level when it can be played (stepping over veiled stages); otherwise,
+    /// when a stage set past the player's story is what stands between the player and more of the road, that stage's
+    /// first level, <see cref="MoonfallNext.Veiled"/>. Null when every shipped level is won, or the next is not built yet
+    /// and nothing is veiled.
+    /// </summary>
+    public MoonfallNext? Next()
     {
         foreach (var campaign in (ReadOnlySpan<MoonfallCampaignKind>)[MoonfallCampaignKind.Base, MoonfallCampaignKind.Expansion])
         {
@@ -214,10 +310,25 @@ public sealed class MoonfallModes
                 continue;
             }
 
-            var index = Progress.Cleared(campaign);
-            if (index < MoonfallStages.LevelCount(campaign))
+            var count = MoonfallStages.LevelCount(campaign);
+            var index = Frontier(campaign);
+            if (index < count && Slot(campaign, index).State == MoonfallLevelState.Open)
             {
-                return Slot(campaign, index).State == MoonfallLevelState.Open ? new MoonfallLevelPlace(campaign, index) : null;
+                return new MoonfallNext(new MoonfallLevelPlace(campaign, index), false);
+            }
+
+            // Nothing to play ahead: the first stage it stepped over, if any, is where the road waits.
+            for (var i = Progress.Cleared(campaign); i < count; i++)
+            {
+                if (!Progress.IsCleared(MoonfallStages.LevelId(campaign, i)) && MoonfallStages.StageOf(campaign, i) is { } stage && StageVeiled(stage))
+                {
+                    return new MoonfallNext(new MoonfallLevelPlace(campaign, stage.FirstLevelIndex), true);
+                }
+            }
+
+            if (index < count)
+            {
+                return null;
             }
         }
 

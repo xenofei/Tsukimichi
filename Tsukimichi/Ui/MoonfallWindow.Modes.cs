@@ -51,6 +51,7 @@ public sealed partial class MoonfallWindow
     private string challengeCompanionLine = string.Empty;
     private string challengePlay = string.Empty;
     private string challengePickLine = string.Empty;
+    private MoonfallStage? challengeVeil;
     private (int Views, int Opponent, MoonfallAiDifficulty Difficulty, int Level, MoonfallCompanion Companion, bool Small) duelWordsKey = (-1, -1, MoonfallAiDifficulty.Novice, -1, MoonfallCompanion.None, false);
     private string duelRecord = string.Empty;
     private string duelLevelLine = string.Empty;
@@ -516,8 +517,16 @@ public sealed partial class MoonfallWindow
         }
 
         if (MenuButton(m, "##mfChallengePlay", rx1 - (small ? 190 : 260), ry1 - (small ? 46 : 70), rx1 - (small ? 14 : 30), ry1 - (small ? 12 : 22), challengePlay, small ? 22 : 34,
-            isDefault: true, style: open2 ? MenuStyle.Normal : selState switch { MoonfallChallengeState.Veiled => MenuStyle.Veiled, MoonfallChallengeState.Unavailable => MenuStyle.Waiting, _ => MenuStyle.Locked }))
+            isDefault: true, style: open2 ? MenuStyle.Normal : selState switch { MoonfallChallengeState.Veiled => MenuStyle.Veiled, MoonfallChallengeState.Unavailable => MenuStyle.Waiting, _ => MenuStyle.Locked },
+            tooltip: selState == MoonfallChallengeState.Veiled ? challengeBest : null))
         {
+            if (selState == MoonfallChallengeState.Veiled && challengeVeil is { } waiting)
+            {
+                // The stage it runs through is past the story: the map opens on it, where its place can be revealed.
+                OpenMapAt(waiting);
+                return;
+            }
+
             PlaySelectedChallenge();
         }
     }
@@ -563,6 +572,16 @@ public sealed partial class MoonfallWindow
         }
 
         var (sel, selState) = challengeList[challengeSel];
+        challengeVeil = null;
+        foreach (var id in sel.LevelIds)
+        {
+            if (modes.LevelVeiled(id) && MoonfallStages.TryPlace(id, out var veiledAt))
+            {
+                challengeVeil = MoonfallStages.StageOf(veiledAt.Campaign, veiledAt.Index);
+                break;
+            }
+        }
+
         challengeText = Wrap(m, MoonfallFace.Axis, m.Small ? 12.5f : 17, sel.Text, m.Small ? 270f : 500f);
         challengeRules = string.Format(c, Strings.MoonfallChallengeRulesFormat, ChallengeKindName(sel.Kind), sel.Balls, sel.Oranges);
         var codes = new List<string>(sel.LevelIds.Count);
@@ -577,7 +596,7 @@ public sealed partial class MoonfallWindow
         {
             MoonfallChallengeState.Sealed => Strings.MoonfallChallengesSealedTooltip,
             MoonfallChallengeState.Unavailable => Strings.MoonfallChallengeUnavailableLine,
-            MoonfallChallengeState.Veiled => Strings.MoonfallStageVeiledLine,
+            MoonfallChallengeState.Veiled => string.Format(c, Strings.MoonfallChallengeVeiledLineFormat, challengeVeil?.Number ?? 0),
             _ when record is { Done: true } => string.Format(c, Strings.MoonfallChallengeDoneFormat, record.Best.ToString("N0", c)),
             _ when record is { Best: > 0 } => string.Format(c, Strings.MoonfallBestFormat, record.Best.ToString("N0", c)),
             _ => Strings.MoonfallChallengeNotTried,

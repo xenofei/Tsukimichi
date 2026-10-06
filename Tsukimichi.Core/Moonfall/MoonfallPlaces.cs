@@ -90,6 +90,17 @@ public static class MoonfallPlaces
         ["moon-road-night"] = MoonfallPlace.Nowhere,
     };
 
+    /// <summary>
+    /// Where each menu backdrop is set (the backdrop policy, <c>moonfall-modes.md</c>): the menus follow the same rule
+    /// as the scenes. The title's painting is Sohm Al, Heavensward's peak in Dravania; while the shield hides it the title
+    /// is drawn over the chart (Eorzea's world map, no story place).
+    /// </summary>
+    public static MoonfallPlace OfBackdrop(Art.MoonfallBackdrop backdrop) => backdrop switch
+    {
+        Art.MoonfallBackdrop.Title => new(Heavensward, "The Dravanian Forelands"),
+        _ => MoonfallPlace.Nowhere,
+    };
+
     /// <summary>The scenes tagged here, by name (every shipped recipe must be one; a test holds it).</summary>
     public static IReadOnlyDictionary<string, MoonfallPlace> Scenes => SceneTable;
 

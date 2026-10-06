@@ -25,7 +25,7 @@ public sealed class MoonfallShieldTests
             }
         }
 
-        foreach (var (_, place) in MoonfallPlaces.Scenes)
+        foreach (var place in MoonfallPlaces.Scenes.Values.Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)))
         {
             if (place.Zone is { } zone)
             {
@@ -200,6 +200,144 @@ public sealed class MoonfallShieldTests
         var sharlayan = level with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, MoonfallStages.Of(MoonfallCampaignKind.Expansion)[8].FirstLevelIndex) };
         Assert.True(Everything(StoryAt(MoonfallPlaces.Shadowbringers)).SceneVeiled(sharlayan, "moon-road-night"));
         Assert.False(Everything(StoryAt(MoonfallPlaces.Endwalker)).SceneVeiled(sharlayan, "moon-road-night"));
+    }
+
+    /// <summary>The Moon Road won and nothing of the Far Shore yet, every Far Shore level built.</summary>
+    private static MoonfallModes FarShoreStart(MoonfallShield shield) =>
+        new(Full(), new MoonfallProgress { BaseCleared = MoonfallStages.BaseLevels }, MoonfallStory.Everyone, MoonfallChallenges.LoadBuiltIn().Challenges) { Shield = shield };
+
+    /// <summary>Plays Adventure as Continue leads it, winning each level, until it has nothing left to play.</summary>
+    private static void WalkTheRoad(MoonfallModes modes)
+    {
+        for (var guard = 0; guard < 200 && modes.Continue() is { } next; guard++)
+        {
+            var start = modes.Adventure(next.Campaign, next.Index, MoonfallCompanion.Minfilia);
+            Assert.NotNull(start);
+            modes.Progress.RecordLevel(start.LevelId, won: true, score: 100_000);
+        }
+    }
+
+    [Theory]
+    [InlineData(MoonfallPlaces.ARealmReborn)]
+    [InlineData(MoonfallPlaces.Heavensward)]
+    [InlineData(MoonfallPlaces.Stormblood)]
+    [InlineData(MoonfallPlaces.Shadowbringers)]
+    [InlineData(MoonfallPlaces.Endwalker)]
+    [InlineData(MoonfallPlaces.Dawntrail)]
+    public void Adventure_steps_over_a_veiled_stage_so_every_stage_the_story_allows_is_reached_at_each_era(byte reach)
+    {
+        // The owner's "step over it": walking the Far Shore with nothing revealed wins every stage not set past the
+        // story, whatever veiled stage stands before it; the veiled ones wait, unwon.
+        var modes = FarShoreStart(StoryAt(reach));
+        WalkTheRoad(modes);
+        var veiledLeft = new List<int>();
+        foreach (var view in modes.Stages(MoonfallCampaignKind.Expansion))
+        {
+            var past = MoonfallPlaces.OfStage(view.Stage) is { Zone: not null } place && place.Era > reach;
+            if (past)
+            {
+                Assert.Equal(MoonfallStageState.Veiled, view.State);
+                Assert.All(view.Levels, slot => Assert.False(modes.Progress.IsCleared(slot.Id)));
+                veiledLeft.Add(view.Stage.Number);
+            }
+            else
+            {
+                Assert.True(view.State == MoonfallStageState.Done, $"stage {view.Stage.Number} {view.Stage.Name} was not reached at era {reach}");
+            }
+        }
+
+        // Before Endwalker, from Heavensward, the moogle's Storm Post (stage 11, the Churning Mists) is reached.
+        if (reach is >= MoonfallPlaces.Heavensward and < MoonfallPlaces.Endwalker)
+        {
+            Assert.DoesNotContain(11, veiledLeft);
+        }
+
+        // The Far Shore is not complete while a veiled stage waits, and Continue's sibling points at the first of them.
+        Assert.Equal(veiledLeft.Count == 0, modes.Progress.ExpansionCleared == MoonfallStages.ExpansionLevels);
+        var waiting = modes.Next();
+        if (veiledLeft.Count > 0)
+        {
+            Assert.Equal(new MoonfallNext(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, (veiledLeft[0] - 1) * MoonfallCharacters.LevelsPerStage), true), waiting);
+            Assert.Null(modes.Continue());
+            Assert.True(modes.Stages(MoonfallCampaignKind.Expansion)[veiledLeft[0] - 1].Here);
+        }
+        else
+        {
+            Assert.Null(waiting);
+        }
+    }
+
+    [Fact]
+    public void Continue_points_at_the_next_playable_stage_past_a_veiled_one_and_the_tally_steps_over_it()
+    {
+        // At Stormblood, stage 7 (Il Mheg) is past the story: with stages 1 to 6 won, Continue goes on to stage 8.
+        var modes = FarShoreStart(StoryAt(MoonfallPlaces.Stormblood));
+        for (var i = 0; i < 6 * MoonfallCharacters.LevelsPerStage; i++)
+        {
+            modes.Progress.RecordLevel(MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, i), won: true, score: 100_000);
+        }
+
+        Assert.Equal(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, 7 * MoonfallCharacters.LevelsPerStage), modes.Continue());
+        var views = modes.Stages(MoonfallCampaignKind.Expansion);
+        Assert.Equal(MoonfallStageState.Veiled, views[6].State);
+        Assert.True(views[6].Reached);
+        Assert.False(MoonfallLooks.Stop(views[6]).Padlock);
+        Assert.True(views[7].Here);
+
+        // The tally after 6-5 offers 8-1, stepping over stage 7.
+        Assert.Equal(7 * MoonfallCharacters.LevelsPerStage, modes.NextLevel(MoonfallCampaignKind.Expansion, (6 * MoonfallCharacters.LevelsPerStage) - 1, out var steppedOver));
+        Assert.Equal(7, steppedOver?.Number);
+
+        // A veiled stage the road has not come to yet carries the padlock beside the shield's mark.
+        Assert.False(views[8].Reached);
+        Assert.True(MoonfallLooks.Stop(views[8]).Veiled);
+        Assert.True(MoonfallLooks.Stop(views[8]).Padlock);
+    }
+
+    [Fact]
+    public void A_veiled_stage_at_the_end_of_the_road_is_what_continue_reports_not_road_goes_on()
+    {
+        // At Shadowbringers with all but the Endwalker stages won, nothing is left to play: Continue has no level, and
+        // its sibling reports the first veiled stage (9), so the title says the road waits past the story.
+        var modes = FarShoreStart(StoryAt(MoonfallPlaces.Shadowbringers));
+        WalkTheRoad(modes);
+        Assert.Null(modes.Continue());
+        Assert.Equal(new MoonfallNext(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, 8 * MoonfallCharacters.LevelsPerStage), true), modes.Next());
+
+        // After 8-5 the tally steps over stages 9 and 10 to 11-1 (Storm Post, reached). After 11-5 it has no Next: it
+        // steps over stage 12 to the road's end, and names the veiled stage.
+        Assert.Equal(10 * MoonfallCharacters.LevelsPerStage, modes.NextLevel(MoonfallCampaignKind.Expansion, (8 * MoonfallCharacters.LevelsPerStage) - 1, out var over));
+        Assert.Equal(9, over?.Number);
+        Assert.Null(modes.NextLevel(MoonfallCampaignKind.Expansion, (11 * MoonfallCharacters.LevelsPerStage) - 1, out var veil));
+        Assert.Equal(12, veil?.Number);
+
+        // A reveal of Old Sharlayan opens stage 9: Continue goes there.
+        var revealed = new MoonfallModes(modes.Campaigns, modes.Progress, MoonfallStory.Everyone, modes.Challenges) { Shield = StoryAt(MoonfallPlaces.Shadowbringers, "Old Sharlayan") };
+        Assert.Equal(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, 8 * MoonfallCharacters.LevelsPerStage), revealed.Continue());
+    }
+
+    [Fact]
+    public void A_scene_whose_place_alone_is_past_the_story_falls_back_and_a_veiled_stages_scene_hides()
+    {
+        var level = MoonfallCampaigns.LoadBuiltIn().Base.Levels[0];
+        var modes = Everything(StoryAt(MoonfallPlaces.ARealmReborn));
+        Assert.Equal(MoonfallSceneHide.Fallback, modes.SceneHide(level, "lantern-night"));
+        Assert.Equal(MoonfallSceneHide.Shown, modes.SceneHide(level, "moon-road-night"));
+        var sharlayan = level with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, MoonfallStages.Of(MoonfallCampaignKind.Expansion)[8].FirstLevelIndex) };
+        Assert.Equal(MoonfallSceneHide.Hidden, modes.SceneHide(sharlayan, "moon-road-night"));
+
+        // Every scene the shield can hide declares a story-safe fallback of no place.
+        foreach (var (name, recipe) in MoonfallSceneRecipeLoader.LoadBuiltIn())
+        {
+            if (MoonfallPlaces.OfScene(name) is { Zone: not null })
+            {
+                Assert.True(recipe.Fallback is { } fallback && MoonfallPlaces.OfScene(fallback) is null or { Zone: null }, $"{name} has no story-safe fallback");
+            }
+        }
+
+        // The title's backdrop is tagged too (Sohm Al, Heavensward): the menus follow the same rule.
+        Assert.Equal(MoonfallPlaces.Heavensward, MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title).Era);
+        Assert.Equal(MoonfallPlace.Nowhere, MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Chart));
     }
 
     [Fact]

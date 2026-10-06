@@ -36,6 +36,11 @@ public sealed class MoonfallShieldGameDataTests(UnlockIndexFixture fixture, ITes
                 yield return (zone, place.Era, "scene " + name);
             }
         }
+
+        if (MoonfallPlaces.OfBackdrop(Core.Moonfall.Art.MoonfallBackdrop.Title) is { Zone: { } titleZone } title)
+        {
+            yield return (titleZone, title.Era, "the title's backdrop");
+        }
     }
 
     /// <summary>The first main scenario quest of <paramref name="expansion"/> in story order; the story's length past the last.</summary>

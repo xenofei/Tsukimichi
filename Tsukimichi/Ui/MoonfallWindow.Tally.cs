@@ -32,6 +32,9 @@ public sealed partial class MoonfallWindow
     // The tally's words, made once as the level ends (no string a frame).
     private string tallyBanner = string.Empty;
     private string tallyNote = string.Empty;
+
+    /// <summary>The stage past the player's story the road waits at, when the tally has no Next because of it: Map opens on it.</summary>
+    private MoonfallStage? tallyVeil;
     private string? tallyNext;
     private string? tallyAgain;
     private string tallyHome = string.Empty;
@@ -68,6 +71,7 @@ public sealed partial class MoonfallWindow
         tallyTextsLanguage = Localization.Loc.Version;
         var won = g.Phase == MoonfallPhase.Won;
         tallyNext = null;
+        tallyVeil = null;
         tallyNote = string.Empty;
         switch (playKind)
         {
@@ -118,8 +122,14 @@ public sealed partial class MoonfallWindow
                 if (HasNext(g))
                 {
                     tallyNext = playKind == MoonfallPlayKind.Adventure
-                        ? string.Format(CultureInfo.CurrentCulture, Strings.MoonfallNextCodeFormat, LevelCode(levelIndex + 1))
+                        ? string.Format(CultureInfo.CurrentCulture, Strings.MoonfallNextCodeFormat, LevelCode(AdventureNext() ?? levelIndex + 1))
                         : Strings.MoonfallNextLevel;
+                }
+                else if (won && playKind == MoonfallPlayKind.Adventure && AdventureNext() is null && adventureVeil is { } veil)
+                {
+                    // No Next because the road waits at a stage past the player's story: say so, and Map opens on it.
+                    tallyVeil = veil;
+                    tallyNote = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallTallyVeiledFormat, veil.Number);
                 }
                 else if (won && playKind == MoonfallPlayKind.Adventure)
                 {
