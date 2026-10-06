@@ -30,8 +30,8 @@ def build(b):
         b.place(x, y, r=9, orange=True, green=False, tag="masthead")
     # the lead bird (512, 118) is blue: it sits in the chart's green-teal top band, where an orange separates least
     # for protan eyes (UX round 4 m6; round 5 G4: no mask term may single it out); the right wing's (558, 156) is blue
-    # too, the skill shot left in over a third of lost games (game designer G17); the open sea's (331, 418) and
-    # (160, 406) take their places (tuned on a 3456-game tuning block, seeds 20001-23456)
+    # too, the skill shot left in over a third of lost games (game designer G17); the open sea's (331, 418) takes one
+    # place, and a blue star at (300, 140) holds the ramp (tuned on a 3456-game tuning block, seeds 20001-23456)
     for k, (x, y) in enumerate(b.f("flock")):
         b.place(x, y, r=7, orange=k in (4, 7, 8, 9, 10, 11, 13), tag="bird")
     wx, wy, wr = b.features["whirlpool"]

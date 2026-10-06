@@ -54,7 +54,10 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    real recipes: a NaN quietBlur, a `dist` term in a region and in a keep mask, regionQuiet 1.5, 2-3 with round 5's
    disc on its lead bird, a keep disc and a tone disc on a peg (all refused), and the ten as shipped (all pass); a
    16-unit slot between bricks of odd and even sample counts; a step of 0.8 on one block and of 0.6 over 6912 games
-   (not resolved) against one of 0.95 (resolved).
+   (not resolved) against one of 0.95 (resolved). Round 6: the guard's bypasses of a centre rule, all on the real 2-3
+   at its lead bird (round 5's disc nudged 20 units, a not-poly octagon, a keep box, a one-point `near` keep, a small
+   glow, a tone box, a lens of four large discs: all refused); a second jewel only at the walls in one window (F7); a
+   held-out step of 1.2 that pools to 0.7, and a finale gap of 2.7 over 6912 games (not resolved).
 1. **Pre-flight** (`mflkit/author.py`): bounds, launcher, bucket, overlaps, saddles (still pegs, and the movers of one
    drift group among themselves), cradles, notches (3.5-17 between bricks), wall pinches, the wedge band (a peg 13-16 above a brick), level
    decks (line bricks under 10 degrees: chained over 30 units, or one alone of 20 or more), cups by geometry, movers'
@@ -86,17 +89,21 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 6. **The scene**: graded from its recipe (cached in `build/scenes`); refuses a 99th-percentile luma over 0.465 (a
    painted moon may be exempted with `ceilingExempt`).
 7. **The dress** (`mflkit/dress.py`), refused first if its structural guard (`dress.lint`) faults: the quiet's blur
-   below 40 or not a number, `regionQuiet` outside 0-1, a `dist` term in a jewel region or keep mask, or a `disc` term
-   in a jewel region, keep mask or `tone` centred within 12 units of a piece's edge and reaching less than 100 (a disc
-   at a peg's scale on a peg is a coin, whatever it is for: round 5, 2-3's disc on its lead bird). Then the **framing rules** F2, F3a (and its pixel backstop), F3b, F3c, F3d, F5.
+   below 40 or not a number, `regionQuiet` outside 0-1, a `dist` term in a jewel region or keep mask; by coverage, not
+   centre, a jewel region, keep mask or `tone` whose positional terms (`disc`, `x`, `y`, `poly`, `not-poly`, `near` and
+   any product of them, drawn at 1x; `luma` and painting-derived masks are left out, since they follow the painting)
+   single out a shape under 100 units across that covers a piece (the shape is the drawn mask over 0.5, or under 0.5
+   for an inverted term, whichever is smaller); and a glow of radius under 100 that reaches a piece. A shape at a
+   peg's scale over a peg is a coin, whatever it is for (rounds 5 and 6: 2-3's disc on its lead bird, and its
+   bypasses). Then the **framing rules** F2, F3a (and its pixel backstop), F3b, F3c, F3d, F5.
 8. **Colours**: the engine's own deal at seed 1 (the engine reads `canBeGreen`); a green dealt to a never-green piece
    is refused as an engine fault.
 9. **Composites** at 2x and 1x, and **readability**: F6 for every kind at its worst placement, the faces measured at
    each scale (1x and 0.8x), against the same board undressed (margin 0.20, drop at most 0.02); F7 two jewels by
    mean-hue distance (60 degrees or more, the second 15% or more of the coloured pixels, and at most 1.5 times as
-   much of it in the 50-unit strips along the walls as their share of the area: game designer round 4, G18; the
-   same figure in 100-unit tall windows is reported, not gated, `second_at_walls_worst_window`: it reads 0.4-6.4
-   across the ten, highest where a painted feature such as 1-2's lit water meets a wall); F9 protan orange separation
+   much of it in the 50-unit strips along the walls as their share of the area: game designer round 4, G18; and at
+   most 5 times in any 100-unit tall window, `second_at_walls_worst_window` [figure, the window's centre y]: round 4's
+   wall strips read 5.7-6.5 there, and 1-2's unfaded green water 6.4 until round 6, UX m9); F9 protan orange separation
    over every candidate, movers at four moments of their cycle and orange-able bricks along their length (p10 0.12, or
    0.101, the lowest approved pilot); the ghost check (on the cleared board with its baked veil, the disc round an
    isolated peg: median distance 0.066 or less, the pilots' highest; this is the board in play); the print check
@@ -114,11 +121,16 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    the plain spread) zeroed most pegs and passed that coin on 2-2 (critic M1, UX m5).
    **What the print check cannot see**, so the structural guard and the eye must: one peg singled out (a board's
    median and p90 do not move for it, and the approved pilots' own worst single pegs reach 0.086 and 0.19, so no
-   worst-peg limit can be set: round 5's disc on 2-3 measured 0.088); `tone`, which is graded into the scene the dress
-   is compared with; weaker hue coins on the most textured boards (syn03, a/b +0.021 each, passes on 1-1, 1-4 and 2-2); and
-   lightness coins on textured game paintings (L -0.03 passes on 1-4 and 2-3, where it is hard to see). The dress can
-   still draw a coin through any term the guard does not know; the guard covers the quiet, `dist` and peg-scale
-   `disc` terms, which are every per-peg route the recipes have.
+   worst-peg limit can be set: round 5's disc on 2-3 measured 0.088); a coin round a minority of the pegs (the rule is
+   a median: a syn05-strength coin round only the 28 candidates passes on 1-1, 2-2 and 2-3, and round the top 45% of
+   pegs on 1-1, 1-4 and 2-3; a coin that marks the candidates is the worst kind, since it tells the player where the
+   oranges may fall: critic N23, UX m7); `tone`, which is graded into the scene the dress is compared with; hue coins
+   on 1-4 up to ΔE 0.05 in any direction, and weaker ones elsewhere (syn03, a/b +0.021 each, passes on 1-1, 1-4 and
+   2-2); and lightness coins on textured game paintings (L -0.03 passes on 1-4 and 2-3, up to 0.05 on 1-4). The guard
+   refuses the routes the dress has to such a print by their shape (the quiet's blur, `dist`, and any positional mask,
+   tone or glow at a peg's scale over a piece); a print through a term the guard does not know (a new primitive, a
+   painting-derived mask shaped like a coin) is caught by neither, so a new dress primitive needs a guard rule and a
+   bypass self-test before it ships.
 10. If everything passed: `docs/design/v9/levels/json/<id>.json`, `composites/<id>.png` (and `@2x` if asked), our
     paintings as JPEG in `scenes/assets/`. The report, pass or fail, goes to `report/<id>.json`, with the ramp.
 
@@ -152,14 +164,16 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 - **The ramp**, measured on held-out games at each level's own number (432 at least): stage 1 runs from about 30 down to 21, stage 2 from
   about 27 down to 20, and each finale is its stage's hardest, at least 2.5 per 48 below its 4th level. Difficulty
   comes from the subject's places, never from low oranges in the bucket's approach (the cheap-difficulty gate). A
-  step of 0.5 cannot be resolved on one held-out block, so `stage` plays both levels of any step under 1.0 on 5184
-  more fresh seeds (the shipped files in `json/`) and the step must hold by one standard error over all 6912 games:
-  the step less its standard error at least 0.5, so a step under about 0.9 fails however lucky a block is (game
-  designer rounds 4 and 5, G19 and G20). Open steps by design rather than by re-measuring.
+  step of 0.5 cannot be resolved on one held-out block, so `stage` plays every level of the stage on 5184 more fresh
+  seeds (the shipped files in `json/`) and judges every step and the finale gap on the pooled 6912 games by one
+  standard error: the step less it at least 0.5, the gap less it at least 2.5 (game designer rounds 4-6, G19, G20 and
+  G22; critic N22). It prints the pooled figures. Open steps by design rather than by re-measuring.
 - **A finale takes its difficulty from the whole board, not its bottom** (game designer G11; the owner's answer,
   6 October 2026: recommendation taken). 2-5's reflected heads are candidates at their two upper moons only and the
-  reflected arch at its two outer moons; six sky stars carry the other oranges. Lost games leaving an orange at y 430
-  or lower fell from about 80% (round 5) to 55%, with no single holdout over 26%.
+  reflected arch at the U's second pair (y 486); six sky stars carry the other oranges. Lost games leaving an orange
+  at y 430 or lower fell from about 80% (round 5) to about 55%. The corner stars are a fair pair since round 6 (the
+  right one no longer sits behind a blue star on the launcher's line: critic N21, game designer G24); what carries the
+  gap is recorded in `layouts/base-10.py`.
 - **Paintings**: never the same painting twice in a row, and a painting that belongs to a later stage's home stays
   there (stage 4, Ul'dah, keeps the Thanalan painting beyond 1-4's crop; stage 5 keeps the Merlthor chart and the east
   of the La Noscea painting). Our own paintings are fine; keep the campaign's share of game paintings near two thirds.
@@ -238,7 +252,9 @@ and `scale 0.5`): `dress.py` draws the quiet in exactly that form, so F9 and the
 draws (UX round 3, G3; UX round 4 re-derived it from main's C# and matched the pipeline exactly at 1x and to
 OKLab 0.014 at 2x, the residue being how the clearance is resampled near the foot). Our `masks` (rim-fill), `tone`,
 the `poly`, `not-poly` and feature-`near` mask terms, and a `keepMask` made of several ramps inverted as a whole (1-5's
-dome house; the runtime inverts each term on its own) have no counterpart there yet. The converter's gate is a direct
+dome house; the runtime inverts each term on its own) have no counterpart there yet. The runtime refuses a negative
+feather, so a `disc` with one (2-2's region, `["disc", 292, 128, 60, -20]`) converts to the same disc with a positive
+feather and `invert`: 1 - Smooth(80, 40, d) = Smooth(40, 80, d), exact (UX round 6, n14). The converter's gate is a direct
 comparison, not the print check: render each converted level with `tools/Tsukimichi.MoonfallRender` and compare it
 with this pipeline's dressed scene pixel for pixel (OKLab distance, the maximum, or at least the 99.9th percentile, at
 most about 0.02: critic rounds 4 and 5, M1 and N17; a 99th percentile would pass a local term mis-scaled at a peg's

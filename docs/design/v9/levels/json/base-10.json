@@ -437,8 +437,8 @@
       "canBeGreen": true
     },
     {
-      "x": 660.0,
-      "y": 170.0,
+      "x": 640.0,
+      "y": 150.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
@@ -614,6 +614,20 @@
     {
       "x": 500.0,
       "y": 180.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 350.0,
+      "y": 250.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 450.0,
+      "y": 250.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true

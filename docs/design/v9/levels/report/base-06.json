@@ -459,7 +459,7 @@
      "second_at_walls_x": 0.69,
      "second_at_walls_worst_window": [
       2.12,
-      391
+      441
      ],
      "first_jewel_hue": 271,
      "first_share": 0.772,
@@ -509,6 +509,6 @@
   }
  },
  "fails": [],
- "seconds": 34.7,
+ "seconds": 31.8,
  "verdict": "PASS"
 }

@@ -7,10 +7,16 @@ Technique: above the waterline the gate's arch wears a crown of brick (never gre
 are short dotted runs just outside their faces, and each lantern's head is a ring of five moons over a dotted post.
 Below the waterline the same figure stands mirrored, drawn with slow slide movers that drift 12 units and back, so the
 reflection ripples while the gate stands still. The mirrored arch hangs (concave up), so it is dotted, never brick.
-Both lantern heads are candidates; each reflected head only at its two upper moons, and the reflected arch at its two
-outer moons, so the finale's difficulty comes from the whole board, not its bottom (game designer G11, the owner's
-answer of 6 October 2026: recommendation taken). Six stars in the sky lanes take the other oranges; more stars, the far
-shore's low hills and two ripple marks of brick in the still water fill the rest. The palette turns warm for the stage's last board:
+Both lantern heads are candidates; each reflected head only at its two upper moons, and the reflected arch at the U's
+second pair (y 486), so the finale's difficulty comes from the whole board, not its bottom (game designer G11, the
+owner's answer of 6 October 2026: recommendation taken). Six stars in the sky lanes take the other oranges; more stars,
+the far shore's low hills and two ripple marks of brick in the still water fill the rest.
+
+What carries the finale's gap (game designer round 6, G24; measured on the tuning block, seeds 20001-23456): the corner
+stars (110, 200) and (690, 200), each left in up to a fifth of lost games; the U's second pair at y 486 (about 1.5 per
+48 against the outermost pair at y 456); and the two blue stars seen through the gate, (350, 250) and (450, 250), about
+2 per 48. The right corner star once sat behind a blue star on the launcher's line to it (critic N21): that star moved
+from (660, 170) to (640, 150), off the line, so both corner stars are fair shots. The palette turns warm for the stage's last board:
 a true rose over the water and the lower sky, the high sky's lapis second (game designer n2 and G8). The stage's last level, back at Vesper
 Bay's own gate: the twins' own board, and the stage's hardest.
 """
@@ -40,7 +46,7 @@ def build(b):
     for k in range(7):
         a = math.radians(200 + 140 * k / 6)
         x, y = cx + R * math.cos(a), mirror(cy + R * math.sin(a))
-        b.slide(x, y, RIPPLE, 0, PERIOD, r=9, orange=k in (1, 5), tag="arch reflection")   # the U's outer moons only
+        b.slide(x, y, RIPPLE, 0, PERIOD, r=9, orange=k in (1, 5), tag="arch reflection")   # the U's second pair only
     for (x, top, foot) in b.features["pillars"]:
         side = -1 if x < cx else 1
         b.slide(x + side * 30, mirror(top + 44), RIPPLE, 0, PERIOD, r=9, orange=True, tag="pillar reflection")
@@ -52,7 +58,7 @@ def build(b):
                     orange=k in (2, 3), green=False, tag="lantern reflection")    # its two upper moons
     # the night sky and the far shore: stars, and the shore's low hills dotted either side
     SKY = {(110, 200), (690, 200), (250, 290), (550, 290), (220, 150), (580, 150)}     # the stars that are candidates
-    for (x, y) in ((240, 190), (560, 190), (660, 170), (130, 300), (680, 300), (250, 290), (550, 290), (140, 150),
+    for (x, y) in ((240, 190), (560, 190), (640, 150), (130, 300), (680, 300), (250, 290), (550, 290), (140, 150),
                    (660, 120)):
         b.place(x, y, r=8, orange=(x, y) in SKY, tag="star")
     for line in ([(92, 332), (150, 338)], [(650, 338), (708, 332)]):
@@ -65,4 +71,6 @@ def build(b):
         b.arc(x, y + 30, 30, 235, 70, t=10, tag="ripple")
     for (x, y) in ((220, 150), (580, 150), (110, 200), (690, 200), (300, 180), (500, 180)):     # high stars
         b.place(x, y, r=8, orange=(x, y) in SKY, tag="star")
+    for (x, y) in ((350, 250), (450, 250)):        # two stars seen through the gate, blue, last so the deal stays
+        b.place(x, y, r=8, tag="star")
     b.greens_in_reach()

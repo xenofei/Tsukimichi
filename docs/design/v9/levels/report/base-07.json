@@ -478,7 +478,7 @@
      0.59,
      "orange"
     ],
-    "protan_orange_p10": 0.131,
+    "protan_orange_p10": 0.133,
     "protan_places": 28,
     "protan_worst_at": [
      649,
@@ -488,18 +488,18 @@
     "jewels": {
      "coloured_px_pct": 99.1,
      "mean_chroma": 0.068,
-     "second_at_walls_x": 1.43,
+     "second_at_walls_x": 0.33,
      "second_at_walls_worst_window": [
-      3.36,
-      166
+      0.46,
+      216
      ],
      "first_jewel_hue": 284,
-     "first_share": 0.796,
-     "second_jewel_hue": 1,
-     "second_share": 0.204,
-     "apart_deg": 76,
+     "first_share": 0.833,
+     "second_jewel_hue": 360,
+     "second_share": 0.167,
+     "apart_deg": 75,
      "bins_pct": [
-      16.2,
+      12.2,
       0.0,
       0.0,
       0.0,
@@ -508,9 +508,9 @@
       0.0,
       0.0,
       3.9,
-      54.9,
-      20.9,
-      4.2
+      58.2,
+      21.3,
+      4.5
      ]
     },
     "ghost_median": 0.025,
@@ -524,12 +524,12 @@
     "ghost_isolated_pegs": 7,
     "print": {
      "median": 0.0,
-     "p90": 0.0039,
+     "p90": 0.0025,
      "worst": [
-      0.0232,
+      0.014,
       [
-       620,
-       150
+       180,
+       210
       ]
      ],
      "samples": 55,
@@ -541,6 +541,6 @@
   }
  },
  "fails": [],
- "seconds": 38.0,
+ "seconds": 35.3,
  "verdict": "PASS"
 }

@@ -505,19 +505,19 @@
     "protan_min": 0.108,
     "jewels": {
      "coloured_px_pct": 95.8,
-     "mean_chroma": 0.075,
-     "second_at_walls_x": 1.16,
+     "mean_chroma": 0.073,
+     "second_at_walls_x": 0.77,
      "second_at_walls_worst_window": [
-      4.51,
-      191
+      1.91,
+      216
      ],
      "first_jewel_hue": 263,
-     "first_share": 0.764,
-     "second_jewel_hue": 353,
-     "second_share": 0.236,
-     "apart_deg": 91,
+     "first_share": 0.78,
+     "second_jewel_hue": 351,
+     "second_share": 0.22,
+     "apart_deg": 89,
      "bins_pct": [
-      14.1,
+      11.8,
       0.0,
       0.0,
       0.0,
@@ -525,10 +525,10 @@
       0.0,
       0.0,
       0.3,
-      68.0,
-      8.0,
-      4.5,
-      5.0
+      69.5,
+      8.2,
+      4.8,
+      5.4
      ]
     },
     "ghost_median": 0.056,
@@ -542,7 +542,7 @@
     "ghost_isolated_pegs": 8,
     "print": {
      "median": 0.0,
-     "p90": 0.0182,
+     "p90": 0.0164,
      "worst": [
       0.0374,
       [
@@ -559,6 +559,6 @@
   }
  },
  "fails": [],
- "seconds": 40.1,
+ "seconds": 33.3,
  "verdict": "PASS"
 }

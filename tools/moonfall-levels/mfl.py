@@ -109,7 +109,8 @@ def cmd_build(args):
 
 def cmd_stage(args):
     """The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp (1728 games, about +-0.55 per 48), the
-    random player, the jewels; it faults neighbours with the same jewels and a finale that is not the hardest."""
+    random player, the jewels; then every level pooled over 6912 games; it faults neighbours with the same jewels, a step
+    or a finale gap not resolved by one standard error, and a stage outside its band."""
     n = int(args[0])
     reps = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
     reps = sorted([r for r in reps if r["stage"] == n], key=lambda r: r["number"])
@@ -126,27 +127,29 @@ def cmd_stage(args):
               f"{ramp48:>8} {c.get('play', {}).get('random_won', '-'):>7} "
               f"{str(pair[0]) + '/' + str(pair[1]):>10} {r['source']}")
         rows.append((r["id"], c.get("play", {}).get("ramp_per_48"), pair))
-    # a step under CONFIRM_STEP cannot be resolved on one held-out block: both levels are played on CONFIRM_GAMES more
-    # fresh seeds (after the held-out block) and the step must hold by one standard error over all of them (game
-    # designer rounds 4 and 5, G19 and G20). The shipped file is played, not the build copy (critic N16).
+    # every level is played on CONFIRM_GAMES more fresh seeds (after the held-out block), and every step and the finale
+    # gap are judged on the pooled games by one standard error (game designer rounds 4-6, G19, G20 and G22; critic
+    # N22). The shipped file is played, not the build copy (critic N16).
+    from concurrent.futures import ThreadPoolExecutor
     from mflkit import stagecheck
     pooled, games = {}, {}
-    for k in range(1, len(rows)):
-        (a, ra, _), (b, rb, _) = rows[k - 1], rows[k]
-        if ra is None or rb is None or ra - rb >= stagecheck.CONFIRM_STEP:
-            continue
-        for lid, held in ((a, ra), (b, rb)):
-            if lid in pooled:
-                continue
-            num = next(r["number"] for r in reps if r["id"] == lid)
-            pl = engine.play(paths.JSON_OUT / f"{lid}.json", num, stagecheck.CONFIRM_GAMES,
-                             first=engine.RAMP_GAMES + engine.HELD_GAMES)
-            n = engine.HELD_GAMES + stagecheck.CONFIRM_GAMES
-            pooled[lid] = round((held * engine.HELD_GAMES + pl["ramp_per_48"] * stagecheck.CONFIRM_GAMES) / n, 2)
-            games[lid] = n
-            print(f"  {lid}: held-out {held}, {stagecheck.CONFIRM_GAMES} fresh {pl['ramp_per_48']}, pooled {pooled[lid]} "
-                  f"per 48 over {n} games")
+    total = engine.HELD_GAMES + stagecheck.CONFIRM_GAMES
+
+    def confirm(row):
+        lid, held, _pair = row
+        num = next(r["number"] for r in reps if r["id"] == lid)
+        pl = engine.play(paths.JSON_OUT / f"{lid}.json", num, stagecheck.CONFIRM_GAMES,
+                         first=engine.RAMP_GAMES + engine.HELD_GAMES)
+        return lid, held, pl["ramp_per_48"]
+    with ThreadPoolExecutor(5) as ex:
+        for lid, held, fresh in ex.map(confirm, [r for r in rows if r[1] is not None]):
+            pooled[lid] = round((held * engine.HELD_GAMES + fresh * stagecheck.CONFIRM_GAMES) / total, 2)
+            games[lid] = total
+            print(f"  {lid}: held-out {held}, {stagecheck.CONFIRM_GAMES} fresh {fresh}, pooled {pooled[lid]} per 48 "
+                  f"(+-{stagecheck.se48(pooled[lid], total):.2f}) over {total} games")
     rows = [(lid, pooled.get(lid, ramp), pair) for (lid, ramp, pair) in rows]
+    steps = [f"{ra - rb:.2f} +- {stagecheck.step_se(ra, rb, total, total):.2f}" for (_a, ra, _), (_b, rb, _) in zip(rows, rows[1:])]
+    print(f"  pooled steps: {', '.join(steps)}")
     allr = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
     last = [r for r in allr if r["stage"] == n - 1]
     before = None
@@ -187,7 +190,7 @@ def cmd_stuck(args):
     import subprocess
     from collections import Counter
     lid = args[0]
-    path = paths.BUILD / "json" / f"{lid}.json"
+    path = paths.JSON_OUT / f"{lid}.json"            # the shipped file (critic N24)
     meta = __import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL
     n = str(meta["number"])
     out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n, "1", str(engine.SWEEP_STEP)], capture_output=True, text=True).stdout
@@ -211,7 +214,7 @@ def cmd_dead(args):
     import re
     import subprocess
     lid = args[0]
-    path = paths.BUILD / "json" / f"{lid}.json"
+    path = paths.JSON_OUT / f"{lid}.json"            # the shipped file (critic N24)
     n = str(__import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL["number"])
     out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n, "1", str(engine.SWEEP_STEP)],
                          capture_output=True, text=True).stdout

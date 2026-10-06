@@ -38,9 +38,11 @@ Set between known cases, all self-tested (round 4, critic M1 and UX m5; round 5,
 median 0-0.003, p90 0-0.032 and hue 0-0.0074, the ten levels as built p90 at most 0.034 and hue at most 0.0143; round
 2's per-peg quiet (`[22, 12]`, no blur) put back on the real boards measures median 0.010-0.088 on most, and on the
 textured 1-4 and 2-1, where the median stays near 0, p90 0.074 and 0.045 (2-1 is the narrowest margin); UX's syn05 hue
-coin measures hue 0.029-0.046 on all ten. What it cannot see (README, step 9): one peg singled out, `tone`, weaker hue
-coins and lightness coins on the most textured boards. Those routes are closed by their shape instead
-(`dress.lint`: the quiet's blur pinned, no `dist` term, no peg-scale `disc` on a piece), not by this check.
+coin measures hue 0.029-0.046 on all ten. What it cannot see (README, step 9): one peg singled out, a coin round a
+minority of the pegs (the candidates alone, say), `tone`, hue coins on 1-4 up to OKLab 0.05, weaker hue coins and
+lightness coins on the most textured boards. The dress's routes to such prints are closed by their shape instead
+(`dress.lint`: the quiet's blur pinned, no `dist` term, no positional mask, tone or glow at a peg's scale over a
+piece), not by this check.
 """
 import math
 
@@ -57,6 +59,7 @@ KINDS = ("blue", "orange", "green", "purple")
 PILOT_FACES = {"blue": 0.689, "orange": 0.620, "green": 0.718, "purple": 0.593}
 F6_MIN, F6_DROP, F7_SECOND, F7_CHROMA, F7_APART = 0.20, 0.02, 0.15, 0.06, 60.0
 F7_WALLS = 1.5               # the second jewel in the wall strips at most 1.5 times their share of the area (G18)
+F7_WALL_WINDOW = 5.0         # and in any 100-unit tall window (UX round 6, m9: round 4's strips read 5.7-6.5)
 F9_MIN, F9_PILOT = 0.12, 0.101
 GHOST_MAX = 0.066
 PRINT_MED, PRINT_P90 = 0.006, 0.040
@@ -129,16 +132,17 @@ def jewels(sc2):
     strip = np.zeros(C.shape, bool)
     strip[:, :100], strip[:, W - 100:] = True, True
     wall_x = float(sec_px[strip].sum() / max(sec_px.sum(), 1) / strip.mean())
-    # reported, not gated: the same figure chroma-weighted in 100-unit tall windows, the worst window holding 5% or
-    # more of the second jewel (UX round 5 n9, critic N18: a leak confined to a corner is diluted by the full height;
-    # at round 6 it reads 0.4-6.4 across the ten, the highest where a painted feature meets a wall, so no limit is set)
+    # the same figure chroma-weighted in 100-unit tall windows, the worst window holding 5% or more of the second jewel
+    # (UX rounds 5 and 6, n9 and m9; critic N18: a leak confined to a corner is diluted by the full height). Reported as
+    # [figure, the window's centre y in board units] and gated at F7_WALL_WINDOW
     wgt = np.zeros(C.shape, np.float32)
     wgt[sec_px] = C[sec_px]
     wtot, worst_win = float(wgt.sum()), (0.0, None)
     for y0 in range(0, C.shape[0] - 199, 50):
         ww, ss = wgt[y0:y0 + 200], strip[y0:y0 + 200]
         if wtot > 0 and ww.sum() >= 0.05 * wtot:
-            worst_win = max(worst_win, (float(ww[ss].sum() / ww.sum() / ss.mean()), (y0 + 82) // 2), key=lambda t: t[0])
+            worst_win = max(worst_win, (float(ww[ss].sum() / ww.sum() / ss.mean()), (y0 + 82) // 2 + 50),
+                            key=lambda t: t[0])
     return {"coloured_px_pct": round(float(col.mean()) * 100, 1), "mean_chroma": round(float(C[col].mean()), 3),
             "second_at_walls_x": round(wall_x, 2),
             "second_at_walls_worst_window": [round(worst_win[0], 2), worst_win[1]],
@@ -159,6 +163,10 @@ def f7_fails(jw):
     if jw.get("second_at_walls_x", 0) > F7_WALLS:
         out.append(f"the second jewel sits at the walls: {jw['second_at_walls_x']} times the strips' share of the area "
                    f"({F7_WALLS}; fade the region within 60 units of the walls)")
+    wwin = jw.get("second_at_walls_worst_window", [0, None])
+    if wwin[0] > F7_WALL_WINDOW:
+        out.append(f"the second jewel sits at the walls in the window round y {wwin[1]}: {wwin[0]} times the strips' "
+                   f"share ({F7_WALL_WINDOW}; fade the region within 60 units of the walls)")
     return out
 
 
@@ -372,6 +380,22 @@ def _syn_coin(img1, level, da, db, dL=0.0):
     return np.clip(oklab_to_srgb(lab), 0, 1).astype(np.float32)
 
 
+def _corner_img():
+    """A lapis board (2x) with a rose band in the middle of its upper part and rose only in the wall strips lower down."""
+    from r2lib import oklab_to_srgb
+    lab = np.zeros((1200, 1600, 3), np.float32)
+    lab[..., 0] = 0.35
+
+    def paint(sl, hd):
+        a = np.radians(hd)
+        lab[sl + (1,)], lab[sl + (2,)] = 0.09 * np.cos(a), 0.09 * np.sin(a)
+    paint((slice(None), slice(None)), 255)
+    paint((slice(0, 800), slice(650, 1250)), 345)
+    paint((slice(900, 1100), slice(150, 250)), 345)
+    paint((slice(900, 1100), slice(1350, 1450)), 345)
+    return np.clip(oklab_to_srgb(lab), 0, 1)
+
+
 def selftest(verbose=True):
     """Synthetic boards: a bright ground round the pegs must fail F6 and a dark one pass; one hue, and two hues 32
     degrees apart, must fail F7 and two jewels pass; orange on an orange ground must fail F9 and on lapis pass; a dark
@@ -446,6 +470,8 @@ def selftest(verbose=True):
              ("F7: two jewels 90 degrees apart", not f7_fails(jewels(hue_img([255, 345, 255]))), True),
              ("F7: a second jewel on the middle third measures its share of the measured window (533 of 1300 px)",
               abs(jewels(hue_img([255, 345, 255]))["second_share"] - 533 / 1300) < 0.02, True),
+             ("F7: a second jewel in the middle above, and only at the walls in one lower window (UX m9)",
+              not [f for f in f7_fails(jewels(_corner_img())) if "window" in f], False),
              ("F7: the second jewel only along the walls (game designer G18)",
               not [f for f in f7_fails(jewels(hue_img([345] * 5 + [255] * 22 + [345] * 5))) if "walls" in f], False),
              ("F9: orange on an orange ground", orange_on((0.55, 0.30, 0.12)) >= F9_PILOT, False),
@@ -517,7 +543,27 @@ def selftest(verbose=True):
            ("2-3 with a keep disc on a peg (UX m6's wrong fix)", lv8,
             with_(r8, lambda j, r: j.update(keepMasks=[[["disc", 512, 118, 14, 4]]]))),
            ("2-3 with a tone disc on a peg (critic N14)", lv8,
-            with_(r8, lambda j, r: r.setdefault("tone", []).append({"mask": [["disc", 330, 418, 50, 30]], "mul": 0.85})))]
+            with_(r8, lambda j, r: r.setdefault("tone", []).append({"mask": [["disc", 331, 418, 30, 10]], "mul": 0.85}))),
+           # round 6's bypasses of the centre rule (critic N20, UX m8, game designer G23), all at the lead bird (512, 118)
+           ("2-3 with round 5's disc nudged 20 units off the bird (UX m8, GD G23)", lv8,
+            with_(r8, lambda j, r: j["regions"][0]["mask"].append(["disc", 515.5, 137.7, 34, -12]))),
+           ("2-3 with a not-poly octagon round the bird (critic N20)", lv8,
+            with_(r8, lambda j, r: (r["features"].update(octo=[[512 + 34 * math.cos(math.radians(45 * k)),
+                                                                 118 + 34 * math.sin(math.radians(45 * k))] for k in range(8)]),
+                                    j["regions"][0]["mask"].append(["not-poly", "octo", 24])))),
+           ("2-3 with a keep box round the bird (critic N20)", lv8,
+            with_(r8, lambda j, r: j.update(keepMasks=[[["x", 482, 494], ["x", 542, 530], ["y", 88, 100], ["y", 148, 136]]]))),
+           ("2-3 with a one-point `near` keep mask on the bird (critic N20, UX m8)", lv8,
+            with_(r8, lambda j, r: (r["features"].update(spot={"points": [[512, 118], [512.5, 118]]}),
+                                    j.update(keepMasks=[[["near", "spot", 22, 46]]])))),
+           ("2-3 with a small glow on the bird (critic N20, UX m8)", lv8,
+            with_(r8, lambda j, r: r["dress"].setdefault("glows", []).append({"x": 512, "y": 118, "r": 22, "k": 0.22}))),
+           ("2-3 with a tone box on the bird (critic N20)", lv8,
+            with_(r8, lambda j, r: r.setdefault("tone", []).append(
+                {"mask": [["x", 482, 494], ["x", 542, 530], ["y", 88, 100], ["y", 148, 136]], "mul": 0.8}))),
+           ("2-3 with a lens of four large discs under the bird (critic N20)", lv8,
+            with_(r8, lambda j, r: j["regions"][0]["mask"].extend(
+                [["disc", 607, 118, 100, 4], ["disc", 417, 118, 100, 4], ["disc", 512, 213, 100, 4], ["disc", 512, 23, 100, 4]])))]
     for name, lv, rec in bad:
         cases.append((f"lint: {name}", not _lint(rec, lv), False))
     for i in range(1, 11):

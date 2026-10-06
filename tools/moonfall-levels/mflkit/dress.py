@@ -249,7 +249,8 @@ def auto_lights(ctx, n=9, box=(90, 380, 712, 516), seed=5, halo=5.0, wander=(9, 
 
 
 # ------------------------------------------------------------------------------------------------ the dress
-PEG_SCALE_NEAR, PEG_SCALE_REACH = 12.0, 100.0   # a disc centred this close to a piece's edge, reaching less than this
+PEG_SCALE = 100.0           # a positional mask, glow or tone smaller than this (board units) that reaches a piece
+POSITIONAL = ("x", "y", "disc", "poly", "not-poly", "near")     # the mask terms that draw a shape where the author puts it
 
 
 def _piece_points(level):
@@ -266,14 +267,70 @@ def _piece_points(level):
     return pts
 
 
+def _footprint(pts):
+    """Every piece's footprint at 1x (a mover along its path, a brick along its length) as a boolean board."""
+    from PIL import ImageDraw
+    im = Image.new("L", (800, 600), 0)
+    dr = ImageDraw.Draw(im)
+    for (x, y, r) in pts:
+        dr.ellipse([x - r, y - r, x + r, y + r], fill=255)
+    return np.asarray(im) > 0
+
+
+class _Shape:
+    """What mask_of needs to draw positional terms at 1x."""
+
+    def __init__(self, features):
+        self.S, self.features = 1, features or {}
+
+
+def _singled(spec, features):
+    """The part of the board a mask's positional terms single out, at 1x: their product thresholded at 0.5, or its
+    complement when that is the smaller (an inverted term singles out its hole). None when the mask has no positional
+    term (luma and painting-derived masks follow the painting)."""
+    terms = [t for t in spec if t[0] in POSITIONAL]
+    if not terms:
+        return None
+    X, Y = D.grid(1)
+    m = mask_of(terms, _Shape(features), X, Y, np.zeros_like(X)) > 0.5
+    return m if m.sum() <= (~m).sum() else ~m
+
+
+def _small_at_piece(sing, foot):
+    """The extent (board units) of the smallest connected part of `sing` that overlaps a piece, if under PEG_SCALE."""
+    from PIL import ImageDraw
+    hit = sing & foot
+    if not hit.any():
+        return None
+    im = Image.fromarray((sing * 255).astype(np.uint8))
+    worst = None
+    ys, xs = np.nonzero(hit)
+    seen = np.zeros_like(sing)
+    for (y, x) in zip(ys[::7], xs[::7]):
+        if seen[y, x]:
+            continue
+        work = im.copy()
+        ImageDraw.floodfill(work, (int(x), int(y)), 128, thresh=0)
+        comp = np.asarray(work) == 128
+        seen |= comp
+        cy, cx = np.nonzero(comp)
+        ext = max(cx.max() - cx.min() + 1, cy.max() - cy.min() + 1)
+        if ext < PEG_SCALE and (worst is None or ext < worst):
+            worst = ext
+    return worst
+
+
 def lint(recipe, level):
-    """The structural guard on the dress (round 5: game designer G21, UX G4 and m7, critic M2, N13, N14 and N18). The
-    print check judges a board's median and 90th percentile, so it cannot see one peg singled out, and it compares the
-    dress with the graded scene, so it cannot see `tone` at all; these rules refuse such terms by their shape instead:
+    """The structural guard on the dress (rounds 5 and 6: game designer G21 and G23, UX G4, m7 and m8, critic M2 and
+    N13, N14, N18 and N20). The print check judges a board's median and 90th percentile, so it cannot see one peg singled
+    out, and it compares the dress with the graded scene, so it cannot see `tone` at all; these rules refuse such terms by
+    their shape instead:
     - the quiet's blur pinned at QUIET_BLUR_MIN (NaN refused too), and `regionQuiet` within 0-1 (the runtime's scale);
     - no `dist` term in a jewel region or keep mask: it is the unblurred clearance, a coin round every peg;
-    - no `disc` term in a jewel region, keep mask or `tone` centred within PEG_SCALE_NEAR of a piece's edge and reaching
-      less than PEG_SCALE_REACH (a disc at a peg's scale on a peg is a coin, whatever it is for).
+    - by coverage, not centre: in a jewel region, keep mask or `tone`, the part the positional terms (disc, x, y, poly,
+      not-poly, near, and any product of them) single out must not be smaller than PEG_SCALE across where it covers a
+      piece (a disc nudged off a peg, a box, a one-point `near` or a lens of large discs are all coins round it);
+    - a glow smaller than PEG_SCALE in radius must not reach a piece.
     The problems, empty if none."""
     P = []
     name = recipe.get("name")
@@ -292,19 +349,22 @@ def lint(recipe, level):
         if any(term[0] == "dist" for term in spec):
             P.append(f"{name}: a `dist` term in a {where} (the unblurred clearance: a coin round every peg)")
     masks += [("tone", tn.get("mask", [])) for tn in recipe.get("tone", [])]
-    pts = None
+    pts = _piece_points(level)
+    foot = _footprint(pts)
     for where, spec in masks:
-        for term in spec:
-            if term[0] != "disc":
-                continue
-            _, cx, cy, r, f = term
-            if r + abs(f) >= PEG_SCALE_REACH:
-                continue
-            pts = _piece_points(level) if pts is None else pts
-            near = min(math.hypot(cx - x, cy - y) - pr for (x, y, pr) in pts)
-            if near < PEG_SCALE_NEAR:
-                P.append(f"{name}: the {where} term {term} is centred {max(near, 0):.1f} from a piece's edge at a peg's "
-                         f"scale (reach {r + abs(f):g} < {PEG_SCALE_REACH:g}): a coin round that piece")
+        sing = _singled(spec, recipe.get("features"))
+        if sing is None:
+            continue
+        ext = _small_at_piece(sing, foot)
+        if ext is not None:
+            P.append(f"{name}: the {where} {spec} singles out a shape {ext} units across over a piece (under "
+                     f"{PEG_SCALE:g}): a coin round it")
+    for g in (recipe.get("dress") or {}).get("glows", []):
+        if g.get("r", 0) < PEG_SCALE:
+            near = min(math.hypot(g["x"] - x, g["y"] - y) - pr for (x, y, pr) in pts)
+            if near < g["r"]:
+                P.append(f"{name}: a glow of radius {g['r']:g} at ({g['x']}, {g['y']}) reaches a piece ({near:.1f} from "
+                         f"its edge): a halo round it")
     return P
 
 
