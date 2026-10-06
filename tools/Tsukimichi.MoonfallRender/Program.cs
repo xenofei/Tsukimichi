@@ -224,17 +224,18 @@ internal static class Render
                 Frame(1f / 60f);
             }
 
+            var allocFrames = Arg(args, "--alloc-frames") is { } af ? int.Parse(af, CultureInfo.InvariantCulture) : 600;
             using var listener = new AllocListener();
             listener.On = true;
             var before = GC.GetAllocatedBytesForCurrentThread();
-            for (var i = 0; i < 600; i++)
+            for (var i = 0; i < allocFrames; i++)
             {
                 Frame(1f / 60f);
             }
 
             var bytes = GC.GetAllocatedBytesForCurrentThread() - before;
             listener.On = false;
-            Console.WriteLine($"alloc: {bytes} bytes over 600 frames ({levelName} {moment} {w} x {h})");
+            Console.WriteLine($"alloc: {bytes} bytes over {allocFrames} frames ({screen} {w} x {h})");
             foreach (var (type, n) in listener.Types.OrderByDescending(static kv => kv.Value))
             {
                 Console.WriteLine($"  ~{n * 100} KB {type}");
@@ -356,8 +357,8 @@ internal static class Render
     private static void StageDuel(MoonfallWindow window, Action<float, bool> frame)
     {
         var d = window.DuelForRender ?? throw new InvalidOperationException("no duel");
-        window.AimForRender = -0.32;
-        d.Shoot(-0.32);
+        window.AimForRender = 24.0;
+        d.Shoot(24.0);
         for (var k = 0; k < 60 * 30 && (d.PlayersTurn || !d.Opponent.Thinking); k++)
         {
             frame(1f / 60f, false);
@@ -368,7 +369,7 @@ internal static class Render
         }
 
         // A few ticks into its thought.
-        for (var k = 0; k < 8 && d.Opponent.Thinking; k++)
+        for (var k = 0; k < 40 && d.Opponent.Thinking; k++)
         {
             frame(1f / 60f, false);
         }
@@ -432,6 +433,12 @@ internal static class Render
             // The staged win reaches an Ace and beats an earlier best, so ACED and NEW BEST show (the mock's callout).
             aces["base-13"] = 100_000;
             progress.Levels["base-13"] = new MoonfallLevelRecord { Best = 60_000 };
+        }
+
+        if (screen == "far")
+        {
+            // The Far Shore open: every level of The Moon Road won (its proposed stage names on the map).
+            progress.BaseCleared = MoonfallStages.BaseLevels;
         }
 
         if (screen == "challenges")

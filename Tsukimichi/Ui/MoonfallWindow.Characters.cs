@@ -259,10 +259,11 @@ public sealed partial class MoonfallWindow
 
     private MoonfallLevel? FirstShippedLevel(MoonfallCompanionInfo info)
     {
-        var stage = MoonfallStages.Of(info.Campaign)[info.Stage - 1];
-        foreach (var id in stage.LevelIds)
+        // Asked every frame the detail shows: an index walk (no enumerator), and the campaigns' lookup by id.
+        var ids = MoonfallStages.Of(info.Campaign)[info.Stage - 1].LevelIds;
+        for (var i = 0; i < ids.Count; i++)
         {
-            if (campaigns.Find(id) is { } level)
+            if (campaigns.Find(ids[i]) is { } level)
             {
                 return level;
             }

@@ -211,6 +211,12 @@ public sealed partial class MoonfallWindow
             TitleLarge(m);
         }
 
+        // Continue's board is built ahead while the title shows, so it opens with its scene.
+        if (titleContinueLevel is { } next)
+        {
+            gameArt?.Warm(next, BoardTwoX(m));
+        }
+
         PegMarksHint(m);
         MenuText(m, MoonfallFace.Axis, small ? 14 : 12, small ? 16 : 40, small ? 466 : 776, versionText, Ink3, edge: 1f);
     }

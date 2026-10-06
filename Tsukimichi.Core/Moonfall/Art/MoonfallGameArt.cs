@@ -166,6 +166,11 @@ public sealed class MoonfallGameArt<T> : IDisposable
     private readonly Dictionary<string, Task<MoonfallRgba?>> thumbBuilds = new(StringComparer.Ordinal);
     private readonly Dictionary<string, MoonfallLevel> thumbLevels = new(StringComparer.Ordinal);
     private Task<MoonfallRgba?>? thumbBuilding;
+
+    // The keys walked each frame, copied into lists kept for the session (a frame allocates nothing).
+    private readonly List<string> thumbKeys = [];
+    private readonly List<MoonfallBackdrop> backdropKeys = [];
+    private readonly List<MoonfallPower> cardKeys = [];
     private bool warmAskedTwoX;
 
     /// <param name="host">The game's files, textures, frame counter and log.</param>
@@ -313,7 +318,9 @@ public sealed class MoonfallGameArt<T> : IDisposable
             return;
         }
 
-        foreach (var id in thumbs.Keys.ToArray())
+        thumbKeys.Clear();
+        thumbKeys.AddRange(thumbs.Keys);
+        foreach (var id in thumbKeys)
         {
             var (upload, texture, asked) = thumbs[id];
             if (host.Frame - asked > BackdropKeepFrames)
@@ -413,16 +420,19 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
         if (!backdropBuilds.ContainsKey(which))
         {
-            backdropBuilds[which] = Task.Run(async () =>
-            {
-                var painting = await host.ReadGameTexture(MoonfallBackdrops.PathOf(which)).ConfigureAwait(false);
-                return painting is null ? null : MoonfallBackdrops.Build(which, painting);
-            });
+            backdropBuilds[which] = BuildBackdrop(which);
         }
 
         backdrops[which] = (null, null, host.Frame);
         return null;
     }
+
+    /// <summary>Reads and grades a backdrop off the framework thread (its own method: the asking path captures nothing, so a frame allocates nothing).</summary>
+    private Task<MoonfallRgba?> BuildBackdrop(MoonfallBackdrop which) => Task.Run(async () =>
+    {
+        var painting = await host.ReadGameTexture(MoonfallBackdrops.PathOf(which)).ConfigureAwait(false);
+        return painting is null ? null : MoonfallBackdrops.Build(which, painting);
+    });
 
     /// <summary>What the menus' backdrops hold on the GPU now.</summary>
     public long BackdropBytes()
@@ -446,7 +456,9 @@ public sealed class MoonfallGameArt<T> : IDisposable
             return;
         }
 
-        foreach (var which in backdrops.Keys.ToArray())
+        backdropKeys.Clear();
+        backdropKeys.AddRange(backdrops.Keys);
+        foreach (var which in backdropKeys)
         {
             var (upload, texture, asked) = backdrops[which];
             if (host.Frame - asked > BackdropKeepFrames)
@@ -698,7 +710,9 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
     private void Cards()
     {
-        foreach (var power in cards.Keys.ToArray())
+        cardKeys.Clear();
+        cardKeys.AddRange(cards.Keys);
+        foreach (var power in cardKeys)
         {
             var (upload, texture) = cards[power];
             if (texture is not null)
@@ -910,8 +924,12 @@ public sealed class MoonfallGameArt<T> : IDisposable
             fallback = true;
         }
 
-        return painting is null ? null : MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check);
+        // The pieces' clearance depends on the level alone: worked out once, then shared by its tiers and its thumbnail.
+        var clearance = clearances.GetOrAdd(level.Id, static (_, l) => MoonfallClearance.For(l), level);
+        return painting is null ? null : MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check, clearance);
     });
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, MoonfallClearance> clearances = new(StringComparer.Ordinal);
 
     private static bool SameRecipe(string a, string b) => string.Equals(a[..a.LastIndexOf('@')], b[..b.LastIndexOf('@')], StringComparison.Ordinal);
 

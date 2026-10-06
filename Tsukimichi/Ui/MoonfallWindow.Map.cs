@@ -168,6 +168,17 @@ public sealed partial class MoonfallWindow
         Road(m, stages);
         Stops(m, stages);
 
+        // The selected stage's open level is built ahead, so Play opens onto its scene.
+        var levels = stages[mapStage].Levels;
+        for (var i = 0; i < levels.Count; i++)
+        {
+            if (levels[i].State == MoonfallLevelState.Open && levels[i].Level is { } open)
+            {
+                gameArt?.Warm(open, BoardTwoX(m));
+                break;
+            }
+        }
+
         // The header: the journal's frame across the top, Back, the campaigns' tabs and the count.
         Panel(m, m.Left - 8, m.Top - 8, m.Right + 8, head - 4, null, 0.36, corners: false);
         if (small)
@@ -778,6 +789,12 @@ public sealed partial class MoonfallWindow
         }
 
         PlayStrip(m, view, accent);
+
+        // The selected level is built ahead while level select shows, so Play opens onto its scene.
+        if (view.Levels[Math.Clamp(levelsSel, 0, view.Levels.Count - 1)] is { Reached: true, Level: { } selected })
+        {
+            gameArt?.Warm(selected, BoardTwoX(m));
+        }
     }
 
     private static readonly string[] tileIds = MakeIds("##mfTile", MoonfallCharacters.LevelsPerStage);

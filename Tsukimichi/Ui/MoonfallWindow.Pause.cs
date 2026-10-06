@@ -34,7 +34,10 @@ public sealed partial class MoonfallWindow
         var min = view.Map(400 - 13, 20 - 13);
         var max = view.Map(400 + 13, 20 + 13);
         ImGui.SetCursorScreenPos(min);
-        if (ImGui.InvisibleButton("##mfPauseCrest", Vector2.Max(max - min, Vector2.One)))
+        ImGuiP.PushItemFlag(ImGuiItemFlags.NoNav, true);
+        var pressed = ImGui.InvisibleButton("##mfPauseCrest", Vector2.Max(max - min, Vector2.One));
+        ImGuiP.PopItemFlag();
+        if (pressed)
         {
             TogglePause(g);
         }
@@ -319,7 +322,7 @@ public sealed partial class MoonfallWindow
         }
 
         MenuText(m, MoonfallFace.Axis, note, lx, y + (small ? 22 : 30), Strings.MoonfallPegMarksTooltip, Ink2, edge: 0f, maxWidth: width);
-        PegMarkSamples(m, rx - (small ? 120 : 170), y + (small ? 26 : 36), small ? 9f : 12f);
+        PegMarkSamples(m, lx + (small ? 140 : 200), y, small ? 8f : 11f);
         _ = y1;
     }
 

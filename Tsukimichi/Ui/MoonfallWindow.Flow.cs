@@ -149,6 +149,11 @@ public sealed partial class MoonfallWindow
                 mapStage = -1;
                 Open(MoonfallScreen.Map);
                 return true;
+            case "far":
+                mapCampaign = MoonfallCampaignKind.Expansion;
+                mapStage = -1;
+                Open(MoonfallScreen.Map);
+                return true;
             case "levels":
                 mapCampaign = MoonfallCampaignKind.Base;
                 mapStage = -1;

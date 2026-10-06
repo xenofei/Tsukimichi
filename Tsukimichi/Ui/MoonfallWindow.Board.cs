@@ -172,7 +172,10 @@ public sealed partial class MoonfallWindow
         }
         else
         {
+            // The mouse's alone: never a keyboard or gamepad focus, so no key held for the game can shoot.
+            ImGuiP.PushItemFlag(ImGuiItemFlags.NoNav, true);
             clicked = ImGui.InvisibleButton("##moonfallBoard", size);
+            ImGuiP.PopItemFlag();
             hovered = ImGui.IsItemHovered();
 
             // A click shoots only if its press began while aiming (MoonfallBoardPress): a hold for the flippers that
