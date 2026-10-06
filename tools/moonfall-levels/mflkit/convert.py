@@ -123,7 +123,7 @@ def small_lights(recipe, level, S=1):
     return out
 
 
-def split_dress(recipe, sc, level, S):
+def split_dress(recipe, sc, level, S, still=BEAMS_STILL):
     """(P, parts): the palette's output and the plates (see the module's docstring), at S. A: the shafts' still share and
     the chart's neat-line light (screened); T: the chart's ticks (multiplied); K: one less the framing's coverage
     (multiplied); C: the framing's colour premultiplied (added); R: the rim and snow (screened). Glows and small lights
@@ -137,7 +137,7 @@ def split_dress(recipe, sc, level, S):
     A = np.zeros((h, w, 3), np.float32)
     for sh in d.get("shafts", []):
         A = D.shafts(A, S, origin=tuple(sh.get("origin", (-140, -220))), angles=tuple(sh["angles"]),
-                     widths=tuple(sh["widths"]), k=min(0.08, sh.get("k", 0.07)) * BEAMS_STILL, col=sh.get("col", "#BFD2FF"),
+                     widths=tuple(sh["widths"]), k=min(0.08, sh.get("k", 0.07)) * still, col=sh.get("col", "#BFD2FF"),
                      seed=sh.get("seed", 3), reach=sh.get("reach", 900.0), sway=0.0, near=sh.get("near", 150.0))
     T = np.ones((h, w), np.float32)
     for e in d.get("extras", []):
@@ -383,12 +383,10 @@ def write(level_id, S=2):
     rt = runtime_recipe(recipe, level)
     sizes = {}
     RUNTIME_SCENES.mkdir(parents=True, exist_ok=True)
-    text = json.dumps(rt, indent=1, ensure_ascii=False)
     from .scene import dump_recipe
     path = RUNTIME_SCENES / f"{recipe['name']}.json"
     dump_recipe(rt, path)
     sizes[path.name] = path.stat().st_size
-    del text
     if recipe["source"]["kind"] == "painting":
         sizes[f"{recipe['name']}@2x.png"] = _png(picture(recipe, S), PICTURES / f"{recipe['name']}@2x.png")
     p_plates, l_plates = plate_names(recipe)
@@ -408,7 +406,8 @@ def write(level_id, S=2):
 
 # ------------------------------------------------------------------------------------------------ the gate
 def reference(level_id, S=2):
-    """The pipeline's dressed scene for the level, grain off (float RGB at S)."""
+    """The pipeline's dressed scene for the level, grain off, its jewel drawn as the game draws it (lightness kept:
+    dress.runtime_gamut) (float RGB at S)."""
     from .dress import dress, runtime_gamut
     from .scene import load_recipe
     level = _level(level_id)
@@ -456,3 +455,86 @@ def check(level_id, S, scratch):
     diff = np.clip(d / 0.05, 0, 1)
     Image.fromarray((diff * 255).astype(np.uint8), "L").save(scratch / f"{level_id}-diff@{S}x.png")
     return figs, worst
+
+
+def recomposed(recipe, level, S=1):
+    """The dress rebuilt from its runtime parts at S, with the shafts whole (the beams' share at rest): the plates over the
+    palette's output, the glows, then the small lights as the runtime draws them. It must equal the dress."""
+    from .dress import Ctx
+    sc = graded(recipe, S)
+    P, parts = split_dress(recipe, sc, level, S, still=1.0)
+    X = recompose(P, parts, (recipe.get("dress") or {}).get("glows", []), S)
+    lc = Ctx(level, S, recipe.get("features"))
+    for li in small_lights(recipe, level):
+        X = D.points(lc, X, [(li["x"], li["y"], li["size"])], li["colour"], r=li["core"], k=li["k"], halo=li["halo"],
+                     hk=li["haloK"])
+    return sc, np.clip(X, 0, 1), parts
+
+
+def selftest(verbose=True, levels=("base-01", "base-06", "base-09")):
+    """The converter proves itself (every checker does): the dress rebuilt from the parts the converter ships equals the
+    dress (OKLab max 0.002 at 1x, on a chart with routes and ticks, a game painting with cloth and lantern posts, and our
+    own painting), and the same rebuild with the framing's cover left out (the cloth laid over the scene, not in place of
+    it) is caught (over the gate's 0.02); the mask terms convert as the runtime reads them."""
+    from .dress import dress
+    from .scene import load_recipe
+    cases = []
+    for lid in levels:
+        level = _level(lid)
+        recipe = load_recipe(level["scene"])
+        sc, X, parts = recomposed(recipe, level)
+        d, _ = dress(recipe, sc, level, 1)
+        good = compare(d, X)[0]
+        cases.append((f"{lid}: the dress rebuilt from its plates (max {good:.4f})", good <= 0.002, True))
+        if (recipe.get("dress") or {}).get("framing"):
+            bad_parts = dict(parts, K=np.ones_like(parts["K"]))
+            P, _ = split_dress(recipe, sc, level, 1, still=1.0)
+            bad = compare(d, recompose(P, bad_parts, (recipe.get("dress") or {}).get("glows", []), 1))[0]
+            cases.append((f"{lid}: the plates without the framing's cover (max {bad:.4f})", bad <= GATE, False))
+    r = {"name": "t", "features": {"f": [[0, 0], [10, 0], [10, 10]]}, "masks": {"land": {"kind": "rim-fill", "threshold": 0.7, "grow": 4}}}
+    terms = mask_terms([["disc", 1, 2, 30, -20], ["poly", "f", 10], ["not-poly", "f"], ["near", "f", 8, 30], ["luma", 0.2, 0.3],
+                        ["not-mask", "land", 12]], r)
+    want = [{"disc": [1, 2, 30, 20], "invert": True}, {"poly": [[0, 0], [10, 0], [10, 10]], "blur": 5.0},
+            {"poly": [[0, 0], [10, 0], [10, 10]], "blur": 4.0, "invert": True}, {"line": [30, 8], "points": [[0, 0], [10, 0], [10, 10]]},
+            {"lum": [0.2, 0.3], "blur": 3}, {"land": [0.7, 4], "blur": 6.0, "invert": True}]
+    cases.append(("mask terms: a negative feather, poly, not-poly, a feature's band, luma, a rim-fill", terms == want, True))
+    try:
+        mask_terms([["dist", 10, 20]], r)
+        refused = False
+    except ValueError:
+        refused = True
+    cases.append(("mask terms: a `dist` term has no runtime form", refused, True))
+    ok = True
+    for name, got, want_ in cases:
+        ok &= got == want_
+        if verbose:
+            print(f"  {'ok ' if got == want_ else 'BAD'} convert: {name}: {got}, expected {want_}")
+    return ok
+
+
+def gate(level_ids, scratch, tiers=(2, 1), log=print):
+    """The converter's gate on these levels: the runtime's bare scene against the pipeline's (grain off). Fails at 2x when
+    both the max and the 99.9th percentile exceed GATE (a picture is exact only at 2x; at 1x the runtime cuts and grades
+    a game painting at 1x and downsizes our 2x pictures and plates, where the pipeline's own 1x is its 2x scene downsized,
+    so 1x is reported, not judged). The gate first proves itself: the pipeline's scene against itself passes, and against
+    the pipeline's clipped jewel (the form the game does not draw) it fails."""
+    from .dress import dress
+    from .scene import load_recipe
+    level = _level(level_ids[0])
+    recipe = load_recipe(level["scene"])
+    ref = reference(level_ids[0], 1)
+    clipped, _ = dress(recipe, graded(recipe, 1), level, 1)
+    same, other = compare(ref, ref), compare(ref, clipped)
+    proof = same[0] == 0 and min(other[0], other[1]) > GATE
+    log(f"gate proof on {level_ids[0]}: itself max {same[0]:.4f}; the clipped jewel max {other[0]:.4f} p99.9 {other[1]:.4f}: "
+        f"{'ok' if proof else 'BAD'}")
+    rows, ok = [], proof
+    for lid in level_ids:
+        for S in tiers:
+            figs, worst = check(lid, S, scratch)
+            passed = S != 2 or min(figs[0], figs[1]) <= GATE
+            ok &= passed
+            rows.append((lid, S, figs, worst, passed))
+            log(f"{lid} {S}x: max {figs[0]:.4f} p99.9 {figs[1]:.4f} p99 {figs[2]:.4f} mean {figs[3]:.4f}, worst at "
+                f"({worst[0]:g}, {worst[1]:g}){'' if S == 2 else ' (reported)'}{'' if passed else '  FAIL'}")
+    return ok, rows

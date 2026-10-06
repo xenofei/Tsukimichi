@@ -29,16 +29,20 @@ recipe. `CheckSet` (a test runs it) refuses two default recipes and a level list
 
 The build runs in this order. Each step reads the result of the one before.
 
-1. **Cut**: the painting is padded (`pad`, `padMode`), mirrored if asked, cropped (`crop`, 4:3) and resampled (Lanczos)
-   to the board at the tier's scale: 1 px a unit (800 × 600) or 2 px a unit at the 2× tier.
+1. **Cut**: the painting's `erase` boxes are filled from their surroundings, then it is padded (`pad`, `padMode`),
+   mirrored if asked, cropped (`crop`, 4:3) and resampled (Lanczos) to the board at the tier's scale: 1 px a unit
+   (800 × 600) or 2 px a unit at the 2× tier. A `land` mask term reads the painting cut at 1 px a unit, ungraded.
 2. **Grade** (`grade`): day for night in OKLab. Skipped for a picture already painted in the night's values, and for a
    fallback picture.
-3. **Paint** (`paint`): light layers painted *under* the palette, so they take its colour (a moon, a route, a glow).
+3. **Paint** (`paint`): light layers painted *under* the palette, so they take its colour (a moon, a route, a glow),
+   a `tone` (a region of the painting shaded) and plates drawn on the painting (a chart's engraved roads).
 4. **Vignette** and **grain**.
 5. **Palette** (`palette`): the jewel grade. It changes OKLab hue and chroma only; lightness is kept exactly (F1). A colour
    pushed outside sRGB gives up chroma, never lightness.
-6. **Light** (`light`): layers added *over* the palette (shafts, glows, aurora, the compass rose). A shaft with
-   `"moving": true` is baked at 85% and its other 15% becomes the two drifting beam layers.
+6. **Light** (`light`): layers added *over* the palette (shafts, glows, aurora, the compass rose, plates). A shaft with
+   `"moving": true` is baked at 85% and its other 15% becomes the two drifting beam layers; with `"beamsOnly": true` its
+   85% is already in a plate and only the beams are made. A plate marked `cover` is framing: the framing rules, Fever's
+   sky and the moon's front take it as the silhouettes' coverage.
 7. **Framing** (`framing`): the silhouettes. Each element that would come within 6.5 units of a piece is dropped whole,
    and a hard clamp behind that keeps every framing pixel 6 units clear.
 8. **Small lights** (`lights`), **fireflies**, **stars**: each placed clear of every piece or dropped (a light keeps
@@ -48,8 +52,9 @@ The build runs in this order. Each step reads the result of the one before.
     each round peg carries its own veil as a sprite drawn under it in play, at its place that frame (a mover's too), and
     each brick a row of the same sprites along its middle line, all fading with their piece as it clears. So nothing
     piece-shaped is ever baked into the scene, and a cleared peg or brick leaves no dark place behind.
-11. **Layers**: the scene over the opening, the margins' blurred backdrop (with the rails' enamel), the beams, the open
-    sky for Fever, the framing in front of the moon, the mist tiles.
+11. **Layers**: the scene over the opening, the margins' blurred backdrop (with the rails' enamel), the beams (kept
+    behind the framing: none where it covers), the open sky for Fever, the framing in front of the moon (cut to the framing
+    that stands there; none when nothing does), the mist tiles.
 
 ## Top level
 
@@ -95,6 +100,8 @@ Exactly one of:
 | `pad` | `[top, left]` | `[0, 0]` | Pixels added before the crop (0–1024) |
 | `padMode` | `"edge"` or `"reflect"` | `"edge"` | |
 | `crop` | `[x, y, w, h]` | the whole | In the padded painting's pixels; at least 16 × 12 and 4:3 within 0.02 |
+| `squeeze` | bool | false | The crop may be up to a quarter from 4:3 either way, and the painting is squeezed to the board (the level pipeline resamples any crop: 2-1 takes Limsa's whole height) |
+| `erase` | `[[x, y, w, h], …]` (≤ 16, w and h 1–1024) | none | Boxes in the source's own pixels (before mirror and pad) filled from a 12-pixel ring round them, diffused in and feathered 3 px: a map's exit arrows leave plain parchment |
 
 ## `grade` (the night grade)
 
@@ -118,7 +125,8 @@ the light), `bandK` 0–2 (the restored mid band).
 | `keep` | 0–1 | 0.30 | How much of the source's own colour stays |
 | `keepHigh` | 0–1 | 0.75 | Highlights stay cool moonstone |
 | `where` | mask | everywhere | Where the palette applies |
-| `regions` | list (≤ 6) | `[]` | A second jewel: `{ "hue", "chroma" 0–0.2, "weight" 0–1, "where": mask }` |
+| `regions` | list (≤ 6) | `[]` | A second jewel: `{ "hue", "chroma" 0–0.3, "weight" 0–1, "where": mask }` (the level pipeline's approved second jewels reach 0.28) |
+| `spare` | list of masks (≤ 4) | none | Places the palette leaves alone (a lamp's warm window, a creature's own colour): `where` is multiplied by one less their union (the largest at each pixel) |
 
 ### Masks (`where`)
 
@@ -131,8 +139,12 @@ A list of at most 6 terms, multiplied together. Each term names one of:
 | `x` | `[a, b]` | Board x runs from a to b (either order) |
 | `disc` | `[x, y, r, feather]` | Inside the disc |
 | `near` | `[a, b]` | Near the pieces: 1 within b units of a piece's edge, 0 beyond a |
+| `poly` | `[[x, y], …]` (3–64) | Inside the closed polygon (drawn at twice the tier, a sub-pixel inside when its centre is, then averaged); `blur` softens its edge |
+| `line` | `[a, b]` and `points` `[[x, y], …]` (2–64) | Near the polyline: 1 within b units of it, 0 beyond a (a coast, a road) |
+| `land` | `[threshold, grow]` | A map's land: on the painting cut at 1 px a unit, OKLab lightness (blurred 1.5 px) under `threshold` is a wall, grown `grow` whole pixels; what a flood from the board's four corners cannot reach is land (doubled bilinearly at 2×). None on a fallback picture. `blur` softens it |
 
-Options on a term: `blur` (0–40 units, before the smoothstep, for `lum` and `near`), `invert` (bool), `scale` (0–1).
+Options on a term: `blur` (0–40 units: before the smoothstep for `lum` and `near`, the edge's softening for `poly` and
+`land`), `invert` (bool), `scale` (0–1).
 
 ## `paint` and `light` layers
 
@@ -149,6 +161,11 @@ Each is an object with a `kind`:
 | `compassRose` | `x` (138), `y` (112), `r` (58, 10–160) |
 | `neatline` | `inset` (2, 0.5–12) |
 | `route` | `points` (2–256 [x, y]), `smooth` (8), `colour` (#D9BE82), `width` (2.2), `dash` (5), `gap` (4.5), `alpha` (0.6). Kept 6 units off every piece (feathered to 9) |
+| `tone` | `where` (a mask, required), `mul` (1, 0–2). Paint only: the painting times `1 − (1 − mul) × where` (a chart's unwalked desert receding) |
+| `plate` | `picture` (a scene name, required), `blend` (`screen`, `multiply` or `add`, required), `cover` (false; multiply only). One of our own pictures laid whole: `<picture>.png` or `@2x.png` in `Tsukimichi/assets/moonfall/scenes/` (800 × 600 or 1600 × 1200, resampled to the tier). `screen` is light (black is nothing), `multiply` shade (white is nothing; with `cover` one less it is the framing's coverage), `add` a silhouette's colour premultiplied by its coverage (black is nothing). A plate the caller cannot read is left out and counted in `dropped` |
+
+A `shafts` layer may also say `"beamsOnly": true` (with `"moving": true`, in `light`): its still share is drawn in a
+plate, so only its drifting beams are made.
 
 ## `framing` (silhouettes)
 
@@ -231,11 +248,38 @@ A recipe is written against a level's layout (level-method.md §2), not on its o
   no fallback: the night sky. Logged once.
 - The spoiler shield hides the scene's own place (its stage open, `MoonfallPlaces`): the same thing happens, on purpose. The
   `fallback` picture is drawn whole and ungraded **with the recipe's dress kept: its paint, framing, lights, palette regions
-  and motion all survive**. So a recipe that can be hidden must keep its dress free of any place: no landmark silhouette,
-  no framing shape that names somewhere; only the painting may depict the place. A test holds that every recipe the
-  shield can hide declares a `fallback` of no place.
+  and motion all survive**, but for the plates in `paint`, which are drawn on the painting itself (a chart's engraved
+  roads) and so show its place; a `land` term finds no land on a fallback. So a recipe that can be hidden must keep its
+  dress free of any place: no landmark silhouette, no framing shape that names somewhere; only the painting (and what
+  is drawn on it) may depict the place. A test holds that every recipe the shield can hide declares a `fallback` of no
+  place.
 - The recipe is refused: the level keeps its picture (or the night sky); the reason is logged at load.
 - Nothing here can crash the plugin: every read, grade and build runs off the framework thread and fails to a fallback.
+
+## From the level pipeline
+
+The levels from `docs/design/v9/levels/` (stages 1 and 2 of The Moon Road) have their recipes written by the level
+pipeline's converter (`py -3 tools/moonfall-levels/mfl.py convert --all`, `mflkit/convert.py`), one recipe per level, named
+as the pipeline's scene. Edit the pipeline's recipe and convert again; do not edit these by hand. What it writes:
+
+- A game painting: its source (crop, `erase`, `squeeze`), the night grade with the pipeline's sky (`skyTop` 0.30), the
+  moon's glow and `tone` in `paint`, the chart's engraved roads as two `paint` plates (`-route-cut` multiplied,
+  `-route` screened), and `fallback: moon-road-night`.
+- Our own painting: `{"picture": "<scene>"}`, shipped at 2× only (the builder cuts it to the tier), undressed and without
+  its grain (the recipe's `grain` adds it); no grade.
+- The palette with every mask the pipeline draws (`poly`, `line`, `land`, `spare`) and its quiet as `near` terms.
+- In `light`: the glows, a `beamsOnly` moving shaft per shaft, and the plates `-light` (the shafts' still 85% and the
+  neat-line's gilt, screened), `-ticks` (the chart's ticks, multiplied), `-cover` (one less the framing's coverage,
+  multiplied, `cover`), `-cloth` (the cloth and silhouettes premultiplied, added), `-rim` (rim and snow, screened).
+- The small lights as `lights` (the pipeline's auto-placed and lantern-post lights resolved to points; lanterns flicker),
+  and the pipeline recipe's `runtime` block: `motion`, `fireflies`, which lights flicker, `feverMoon`.
+
+**The converter's gate** (`mfl.py convert --all --check`): MoonfallRender's bare scene (`--scene-only 2 --no-grain`: the
+base layer with the beams at rest, before the veil and the pieces) against the pipeline's dressed scene with no grain and
+its jewel drawn as the game draws it (lightness kept), OKLab over the opening: the max or the 99.9th percentile at most
+0.02 at 2× (pictures and plates are exact at 2×; at 1× the runtime cuts and grades a game painting at 1× and downsizes the
+2× pictures, where the pipeline's 1× is its 2× scene downsized, so 1× is reported, not judged). The gate first shows it
+fails the pipeline's clipped jewel. `mfl.py selftest` holds that the dress rebuilt from the plates equals the dress.
 
 ## Checking a recipe
 

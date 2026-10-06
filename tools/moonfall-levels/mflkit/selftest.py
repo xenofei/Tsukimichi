@@ -112,9 +112,10 @@ def engine_cases(verbose=True):
 
 
 def run(verbose=True):
+    from . import convert
     results = {"preflight": author.selftest(verbose), "framecheck": frames.selftest(verbose),
                "readcheck": readability.selftest(verbose), "stage": stagecheck.selftest(verbose),
-               "engine": engine_cases(verbose)}
+               "engine": engine_cases(verbose), "convert": convert.selftest(verbose)}
     if verbose:
         print("self-test:", ", ".join(f"{k} {'ok' if v else 'FAILED'}" for k, v in results.items()))
     return all(results.values())

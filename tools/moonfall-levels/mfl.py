@@ -10,6 +10,8 @@
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
   sources                       write docs/design/v9/levels/sources.json from the recipes
+  convert <level-id>... | --all the runtime recipe and pictures for each level (Tsukimichi.Core scenes, plugin assets)
+        [--check]               only the converter's gate: the game's bare scene against the pipeline's (MoonfallRender)
 
 See README.md next to this file.
 """
@@ -281,7 +283,32 @@ def cmd_ease(args):
     return 0
 
 
-COMMANDS = {"selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
+def cmd_convert(args):
+    import subprocess
+    from mflkit import convert
+    ids = level_ids() if "--all" in args else [a for a in args if not a.startswith("--")]
+    if not ids:
+        print("convert <level-id>... | --all [--check]")
+        return 2
+    if "--check" not in args:
+        total = 0
+        for lid in ids:
+            name, sizes = convert.write(lid)
+            pngs = sum(v for k, v in sizes.items() if k.endswith(".png"))
+            total += pngs
+            print(f"{lid}: {name}, pictures {pngs / 1024:.0f} KB ({', '.join(k for k in sizes if k.endswith('.png')) or 'none'})")
+        print(f"pictures written: {total / 1024:.0f} KB")
+        return 0
+    subprocess.run(["dotnet", "build", str(convert.RENDER), "-c", "Release", "--nologo", "-v", "q"], check=True)
+    scratch = paths.BUILD / "convert"
+    scratch.mkdir(parents=True, exist_ok=True)
+    ok, rows = convert.gate(ids, scratch)
+    print(f"converter gate: {'PASS' if ok else 'FAIL'} ({sum(1 for r in rows if r[1] == 2 and r[4])} of "
+          f"{sum(1 for r in rows if r[1] == 2)} at 2x within {convert.GATE}); diffs in {scratch}")
+    return 0 if ok else 1
+
+
+COMMANDS = {"convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "sources": cmd_sources}
 
 if __name__ == "__main__":

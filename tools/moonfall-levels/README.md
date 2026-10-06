@@ -25,6 +25,8 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane |
 | `py -3 tools/moonfall-levels/mfl.py ease <id> [tags] [--pick N] [--skip tags]` | A scratch copy with every (tagged) peg a candidate, 864 games: each place ranked by how often it is the orange left behind; `--pick` proposes the N most readily cleared places that keep the spread rule and stay above y 430 |
 | `py -3 tools/moonfall-levels/mfl.py sources` | Writes `docs/design/v9/levels/sources.json`: every game file a scene reads, and which level uses it |
+| `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all` | The converter (`mflkit/convert.py`): each level's runtime recipe (`Tsukimichi.Core/Moonfall/Levels/scenes/<scene>.json`), our painting undressed at 2x and the dress's plates (`Tsukimichi/assets/moonfall/scenes/`) |
+| `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all --check` | The converter's gate: the game's bare scene (MoonfallRender `--scene-only`) against this pipeline's dressed scene; diffs in `build/convert/` |
 
 ## What `build` does, in order
 
@@ -241,22 +243,42 @@ parameters); for our own paintings it is `{"kind": "painting", "painter": "<name
 `scenes/assets/`. `masks` and `tone` are ours, applied after the grade (a map's unwalked desert receding). `features`
 are authoring data, not needed at runtime. The level file names the scene by `scene` (format v2: a name, not a path).
 
+**The converter** (`mfl.py convert`, levels runtime round). The runtime format grew this pipeline's parts (erase boxes, a
+squeezed crop, `poly`, `line` and `land` mask terms, the palette's `spare`, `tone`, plates, `beamsOnly` shafts; see
+`scene-recipe.md`, "From the level pipeline"). A game painting ships nothing of Square Enix's: the runtime cuts, erases and
+grades it, and our dress over it ships as plates; our own painting ships undressed (no grain) as a 2x picture. The
+palette, glows, the moving beams (the shafts' 15%), the small lights (lanterns flicker) and the recipe's `runtime` block
+(`motion`, `fireflies`, `flicker`, `feverMoon`) stay runtime parts, so every level keeps ambient motion. The selftest holds
+that the dress rebuilt from the plates equals the dress (exact) and catches the plates with the cover left out.
+
+**The jewel's gamut** (found by the converter's gate). `dress2.jewel` clips each sRGB channel of a colour pushed out of
+gamut, which moves its lightness; the runtime keeps the lightness and gives up chroma (`MoonfallColor.ToSrgbKeepingLightness`,
+F1). With the approved levels' chroma (up to 1.8) that differs by OKLab 0.04-0.07 at the 99th percentile (1-4: mean chroma
+0.0735 clipped, 0.0636 kept). The pipeline still builds and checks the levels in the clipped form they were approved in;
+`dress.runtime_gamut()` draws the game's form, and the converter's gate uses it. All ten levels pass every build check in
+the game's form too (a scratch build); the print check's round-2 per-peg coin on 2-1 then measures p90 0.030 and hue
+median 0.021, under its limits (0.040, 0.022), so that known-bad self-test case would need a new coin before the pipeline
+switches. Which form the pipeline checks in is the owner's call.
+
 The runtime's own scene-recipe format (`moonfall-scene` version 1: `docs/design/v9/scene-recipe.md` on main, files in
 `Tsukimichi.Core/Moonfall/Levels/scenes/<name>.json`) has since landed on main. It covers the same ground under other
 names (`palette` for `jewel`, `light` for shafts and glows, `"picture"` sources as PNG in
 `Tsukimichi/assets/moonfall/scenes/`) and draws the veil per piece at play time, so the baked veil the ghost check
-guards against never reaches the game. These recipes need a converter to that format before the levels ship: the
+guards against never reaches the game. The converter (above) writes these recipes in that format: the
 jewel's `regions` map onto `palette.regions`, and its quiet maps one to one onto a `near` mask term `[a, b]` with
 `blur` = `quietBlur` (each region's `where` gets it with `invert` and `scale` = `regionQuiet`, 0.6 by default; the palette's `where` with `invert`
 and `scale 0.5`): `dress.py` draws the quiet in exactly that form, so F9 and the print measured here are what the game
 draws (UX round 3, G3; UX round 4 re-derived it from main's C# and matched the pipeline exactly at 1x and to
 OKLab 0.014 at 2x, the residue being how the clearance is resampled near the foot). Our `masks` (rim-fill), `tone`,
 the `poly`, `not-poly` and feature-`near` mask terms, and a `keepMask` made of several ramps inverted as a whole (1-5's
-dome house; the runtime inverts each term on its own) have no counterpart there yet. The runtime refuses a negative
+dome house) map onto the runtime's `land`, `tone`, `poly` (`not-poly` inverted), `line` and the palette's `spare` (a
+union, inverted as a whole). The runtime refuses a negative
 feather, so a `disc` with one (2-2's region, `["disc", 292, 128, 60, -20]`) converts to the same disc with a positive
 feather and `invert`: 1 - Smooth(80, 40, d) = Smooth(40, 80, d), exact (UX round 6, n14). The converter's gate is a direct
 comparison, not the print check: render each converted level with `tools/Tsukimichi.MoonfallRender` and compare it
 with this pipeline's dressed scene pixel for pixel (OKLab distance, the maximum, or at least the 99.9th percentile, at
 most about 0.02: critic rounds 4 and 5, M1 and N17; a 99th percentile would pass a local term mis-scaled at a peg's
 scale, since dropping round 5's disc on 2-3 moved it by only 0.018, and the formula's own residue is 0.014 at most). The two formulas are meant to be identical, so any difference is the converter's fault, and the print check
-and F9 measured here then stand for the game.
+and F9 measured here then stand for the game (once they are measured in the game's gamut: see "The jewel's gamut").
+`mfl.py convert --all --check` runs it at 2x (the gate) and 1x (reported); the runtime-round figures, all ten at 2x:
+max 0.007-0.036, 99.9th percentile 0.005-0.012.

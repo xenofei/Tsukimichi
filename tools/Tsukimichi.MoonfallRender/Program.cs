@@ -13,7 +13,7 @@ using LuminaGameData = Lumina.GameData;
 
 // Moonfall's offline renderer (see the project file):
 //   Tsukimichi.MoonfallRender <out.png> [--screen title|map|levels|characters|quickplay|challenges|duel|options|play|pause|tally|duelhud]
-//                              [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally]
+//                              [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally|cleared]
 //                              [--marks] [--hint] [--reduce-motion] [--decoration full|simple|off] [--no-game-art] [--seconds N]
 //   Tsukimichi.MoonfallRender <out.png> --level base-01 --scene-only 1|2 [--no-grain] [--upto paint|palette]   (the level's bare scene)
 // The board is the plugin's own window, drawn by its own code under a headless ImGui, rasterized to the PNG.
@@ -44,7 +44,7 @@ internal static class Render
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("usage: Tsukimichi.MoonfallRender <out.png> [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally] [--marks] [--reduce-motion] [--no-game-art]");
+            Console.Error.WriteLine("usage: Tsukimichi.MoonfallRender <out.png> [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally|cleared] [--marks] [--reduce-motion] [--no-game-art]");
             return 2;
         }
 
@@ -411,6 +411,30 @@ internal static class Render
                 g.TriggerForTest(g.Power, green);
                 window.RibbonForRender("LONG SHOT", "+25,000");
                 Run(0.7);
+                break;
+            }
+
+            case "cleared":
+            {
+                // The board cleared but its lowest orange: every other piece lit, the ball dropped by the wall, the turn
+                // ended, so the scene shows as it does when the pieces are gone (no Fever, no tally).
+                var keep = Enumerable.Range(0, g.PegCount).Where(i => g.Peg(i).Colour == PegColour.Orange && !g.Peg(i).Cleared).OrderBy(i => g.Peg(i).Y).Last();
+
+                // The shot first (it starts the turn's list of pieces hit), then every piece lit on it.
+                g.PlaceBall(MoonfallRules.LeftWall + 8, 590, 0, 200);
+                foreach (var i in Enumerable.Range(0, g.PegCount).Where(i => i != keep && !g.Peg(i).Cleared))
+                {
+                    g.LightForTest(i);
+                }
+
+                // The pieces pop one by one in the order they were lit: wait for the last, then for the next ball.
+                for (var k = 0; k < 60 * 240 && (k < 2 || g.Phase != MoonfallPhase.Aiming || Enumerable.Range(0, g.PegCount).Any(i => i != keep && !g.Peg(i).Cleared)); k++)
+                {
+                    frame(1f / 60f, false);
+                }
+
+                window.AimForRender = -0.35;
+                Run(1.5);
                 break;
             }
 
