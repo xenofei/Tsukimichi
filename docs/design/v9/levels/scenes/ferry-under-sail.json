@@ -1,0 +1,83 @@
+{
+ "name": "ferry-under-sail",
+ "about": "Our own painting: the Vesper Bay ferry mid-strait by night under full sail, bound for Limsa Lominsa, the far coasts low on either side (painters/ferry.py; shipped as a JPEG).",
+ "source": {
+  "kind": "painting",
+  "painter": "ferry",
+  "params": {}
+ },
+ "ceilingExempt": [[150, 104, 64]],
+ "veil": 0.24,
+ "dress": {
+  "palette": {
+   "name": "Violet night and rose horizon (the strait)",
+   "sky": "#16124A",
+   "deep": "#060818",
+   "jewel1": "#4C3CC4",
+   "jewel2": "#B0566E",
+   "warm": "#FFB45E",
+   "rim": "#C9C0FF"
+  },
+  "jewel": {
+   "bands": [[0, "#4C3CC4"], [340, "#4038B4"], [600, "#30289A"]],
+   "valueHues": [[0.08, "#24187A"], [0.45, "#D8D0FF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#A8587E",
+     "chroma": 0.08,
+     "mask": [["y", 130, 310], ["not-poly", "ship", 10]]
+    }
+   ],
+   "quiet": [22, 12]
+  },
+  "framing": [
+   {
+    "kind": "rope",
+    "a": [75, 44],
+    "b": [230, 30],
+    "sag": 16,
+    "width": 1.8
+   },
+   {
+    "kind": "rope",
+    "a": [570, 30],
+    "b": [725, 44],
+    "sag": 16,
+    "width": 1.8
+   },
+   {
+    "kind": "rope",
+    "a": [75, 120],
+    "b": [180, 34],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [620, 34],
+    "b": [725, 120],
+    "sag": 10,
+    "width": 1.4
+   },
+   {
+    "kind": "festoon",
+    "spans": [[60, 118, 34], [118, 172, 24], [172, 214, 14]],
+    "col": "#2A1E50"
+   },
+   {
+    "kind": "festoon",
+    "spans": [[586, 628, 14], [628, 682, 24], [682, 740, 34]],
+    "col": "#2A1E50"
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16144A",
+   "rim": "#C9C0FF",
+   "rimK": 0.0,
+   "seed": 19
+  }
+ }
+}

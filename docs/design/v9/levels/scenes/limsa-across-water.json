@@ -1,11 +1,11 @@
 {
  "name": "limsa-across-water",
- "about": "Limsa Lominsa as the ferry for Vesper Bay casts off: the great tree-grown tower and the lamplit bridges on their arches over the sea mist, from the west half of the game's own La Noscea loading-screen painting at its high-resolution size, night graded.",
+ "about": "Limsa Lominsa's great tree-grown tower, its canopy over the lamplit bridge and the sea mist, from the west of the game's own La Noscea loading-screen painting at its high-resolution size, night graded. Stage 5 keeps the painting's east (the white castle and the far towers) for its own crop.",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base01_hr1.tex",
   "mirror": false,
-  "crop": [420, 380, 2200, 1650],
+  "crop": [60, 330, 1660, 1530],
   "grade": {
    "gamma": 1.7,
    "exposure": 0.7,
@@ -16,47 +16,46 @@
  },
  "veil": 0.44,
  "features": {
-  "deck": {
-   "points": [[214, 356], [540, 382]]
+  "canopy": {
+   "points": [[310, 318], [301, 303], [296, 288], [294, 272], [296, 256], [301, 241], [310, 226], [321, 213], [335, 202], [352, 192], [370, 186], [390, 181], [410, 180], [430, 181], [450, 186], [468, 192], [485, 202], [499, 213], [510, 226], [519, 241], [524, 256], [526, 272], [524, 288]]
   },
-  "deck lamps": {
-   "points": [[226, 314], [420, 330]]
+  "house windows": [[500, 312], [528, 346]],
+  "bridge deck": {
+   "points": [[470, 388], [690, 382]]
   },
-  "roof lamps": {
-   "points": [[440, 276], [556, 276]]
-  },
-  "main arch": {
-   "circle": [575, 500, 95],
-   "from": 205,
-   "sweep": 130
+  "bridge lamps": {
+   "points": [[486, 350], [700, 346]]
   },
   "west arch": {
-   "circle": [380, 522, 70],
-   "from": 210,
-   "sweep": 120
-  },
-  "castle edge": {
-   "points": [[566, 140], [566, 330]]
-  },
-  "canopy edge": {
-   "points": [[282, 214], [292, 256], [300, 296]]
-  },
-  "cloud a": {
-   "circle": [352, 262, 52],
+   "circle": [548, 478, 52],
    "from": 215,
    "sweep": 110
   },
-  "cloud b": {
-   "circle": [474, 250, 52],
+  "east arch": {
+   "circle": [656, 478, 52],
    "from": 215,
    "sweep": 110
   },
-  "mist lights": [[140, 470], [250, 486], [470, 470]],
-  "tower lights": [[120, 330], [160, 380], [210, 420], [110, 420], [150, 290], [240, 250]],
-  "pier": {
-   "points": [[470, 404], [470, 450]]
+  "west spire": {
+   "points": [[168, 262], [168, 440]]
   },
-  "castle windows": [[640, 330], [690, 370], [700, 250], [650, 260]]
+  "middle spire": {
+   "points": [[252, 206], [252, 330]]
+  },
+  "trunk lights": [[262, 444], [300, 470], [356, 452]],
+  "swell": {
+   "points": [[96, 492], [250, 486], [420, 498], [560, 486], [700, 494]]
+  },
+  "tree lanterns": [[398, 296], [322, 352]],
+  "far spire": {
+   "points": [[128, 330], [128, 450]]
+  },
+  "near spire": {
+   "points": [[212, 300], [212, 400]]
+  },
+  "mist lights": {
+   "points": [[200, 452], [380, 456]]
+  }
  },
  "dress": {
   "palette": {
@@ -76,8 +75,8 @@
    "regions": [
     {
      "hex": "#2AA8A8",
-     "chroma": 0.08,
-     "mask": [["y", 420, 500]]
+     "chroma": 0.11,
+     "mask": [["y", 400, 480]]
     }
    ],
    "quiet": [22, 12]
@@ -94,8 +93,20 @@
   "framing": [
    {
     "kind": "festoon",
+    "spans": [[60, 118, 34], [118, 172, 24], [172, 214, 14]],
+    "col": "#2A1E58"
+   },
+   {
+    "kind": "festoon",
     "spans": [[586, 628, 14], [628, 682, 24], [682, 740, 34]],
     "col": "#2A1E58"
+   },
+   {
+    "kind": "rope",
+    "a": [214, 37],
+    "b": [300, 30],
+    "sag": 10,
+    "width": 1.4
    },
    {
     "kind": "rope",
@@ -105,10 +116,22 @@
     "width": 1.4
    },
    {
+    "kind": "outcrop",
+    "points": [[60, 500], [96, 512], [124, 536], [150, 566], [170, 600]],
+    "seed": 61,
+    "rough": 10
+   },
+   {
+    "kind": "outcrop",
+    "points": [[630, 600], [664, 562], [694, 532], [720, 512], [740, 504]],
+    "seed": 63,
+    "rough": 10
+   },
+   {
     "kind": "lantern_post",
-    "x": 86,
+    "x": 700,
     "base": 600,
-    "height": 70
+    "height": 50
    }
   ],
   "silhouette": {
@@ -125,7 +148,7 @@
     "r": 2.4,
     "k": 0.95,
     "halo": 12,
-    "hk": 0.35
+    "hk": 0.17
    }
   ]
  }

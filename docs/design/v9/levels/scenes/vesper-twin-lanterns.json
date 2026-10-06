@@ -10,24 +10,24 @@
  "features": {},
  "dress": {
   "palette": {
-   "name": "Amethyst night and rose water (the twins)",
+   "name": "Rose water and lapis sky (the twins)",
    "sky": "#1C1650",
    "deep": "#060818",
-   "jewel1": "#5A3FC0",
-   "jewel2": "#A8607E",
+   "jewel1": "#9A4274",
+   "jewel2": "#2E5AC0",
    "warm": "#FFB45E",
    "rim": "#C9B8FF"
   },
   "jewel": {
-   "bands": [[0, "#5440C8"], [350, "#4A38B8"], [600, "#3A2C98"]],
-   "valueHues": [[0.08, "#2A1E7A"], [0.45, "#D6CCFF"]],
+   "bands": [[0, "#6A3A8E"], [200, "#9A4072"], [350, "#A8465E"], [600, "#86344E"]],
+   "valueHues": [[0.08, "#4A1E5E"], [0.45, "#FFD0E4"]],
    "chroma": 1.1,
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#9C6886",
-     "chroma": 0.05,
-     "mask": [["y", 346, 366]]
+     "hex": "#2E5AC0",
+     "chroma": 0.08,
+     "mask": [["y", 260, 140]]
     }
    ],
    "quiet": [22, 12],
@@ -50,11 +50,11 @@
     "kind": "frond",
     "x": 74,
     "y": 604,
-    "length": 150,
+    "length": 200,
     "angle": -78,
     "droop": 0.1,
-    "leaf": 20,
-    "n": 12,
+    "leaf": 26,
+    "n": 16,
     "style": "willow",
     "seed": 61,
     "width": 1.6
@@ -63,11 +63,11 @@
     "kind": "frond",
     "x": 96,
     "y": 606,
-    "length": 120,
+    "length": 170,
     "angle": -66,
     "droop": 0.14,
-    "leaf": 18,
-    "n": 10,
+    "leaf": 24,
+    "n": 14,
     "style": "willow",
     "seed": 62,
     "width": 1.4
@@ -76,11 +76,11 @@
     "kind": "frond",
     "x": 726,
     "y": 604,
-    "length": 150,
+    "length": 200,
     "angle": -102,
     "droop": 0.1,
-    "leaf": 20,
-    "n": 12,
+    "leaf": 26,
+    "n": 16,
     "style": "willow",
     "seed": 63,
     "width": 1.6
@@ -89,14 +89,40 @@
     "kind": "frond",
     "x": 704,
     "y": 606,
-    "length": 120,
+    "length": 170,
     "angle": -114,
     "droop": 0.14,
-    "leaf": 18,
-    "n": 10,
+    "leaf": 24,
+    "n": 14,
     "style": "willow",
     "seed": 64,
     "width": 1.4
+   },
+   {
+    "kind": "frond",
+    "x": 74,
+    "y": 40,
+    "length": 150,
+    "angle": 60,
+    "droop": 0.2,
+    "leaf": 20,
+    "n": 12,
+    "style": "willow",
+    "seed": 65,
+    "width": 1.5
+   },
+   {
+    "kind": "frond",
+    "x": 726,
+    "y": 40,
+    "length": 150,
+    "angle": 120,
+    "droop": 0.2,
+    "leaf": 20,
+    "n": 12,
+    "style": "willow",
+    "seed": 66,
+    "width": 1.5
    }
   ],
   "silhouette": {

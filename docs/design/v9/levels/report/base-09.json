@@ -1,258 +1,339 @@
 {
  "id": "base-09",
- "name": "The Strait of Merlthor",
+ "name": "The Ferry Under Sail",
  "stage": 2,
  "number": 9,
- "scene": "merlthor-strait",
- "subject": "the strait between Vesper Bay and Limsa Lominsa, and the island of Vylbrand",
- "technique": "terrain in outline (an island and a coast) with a ferry lane",
- "source": "ui/loadingimage/-nowloading_base05_hr1.tex",
+ "scene": "ferry-under-sail",
+ "subject": "the Vesper Bay ferry under full sail in the strait at night",
+ "technique": "a vessel's rigging over a moving sea (slide movers)",
+ "source": "our painting (ferry)",
  "checks": {
   "preflight": {
-   "problems": [
-    "26 orange candidates (28 to 35: the 25 and 3-7 more, so the deal varies)"
-   ],
-   "pieces": 62,
-   "pegs": 62,
+   "problems": [],
+   "pieces": 75,
+   "pegs": 75,
    "bricks": 0,
-   "movers": 0,
-   "orange_candidates": 26,
-   "never_green": 20,
+   "movers": 18,
+   "orange_candidates": 28,
+   "never_green": 11,
    "skipped_while_tracing": [
     [
      [
-      330,
-      129
+      404,
+      276
      ],
-     "vylbrand coast",
+     "yardarm",
+     "-4.0 from the peg at (404, 290)"
+    ],
+    [
+     [
+      546,
+      259
+     ],
+     "stay",
+     "2.5 from the peg at (536, 276)"
+    ],
+    [
+     [
+      616,
+      333
+     ],
+     "stay",
+     "12.5 from the peg at (612, 362)"
+    ],
+    [
+     [
+      40,
+      313
+     ],
+     "coast",
      "off the board (walls, launcher's swing or bucket)"
     ],
     [
      [
-      151,
-      394
+      80,
+      315
      ],
-     "vylbrand coast",
-     "9.1 from the peg at (156, 368)"
+     "coast",
+     "off the board (walls, launcher's swing or bucket)"
     ],
     [
      [
-      135,
-      362
+      738,
+      311
      ],
-     "vylbrand coast",
-     "4.1 from the peg at (156, 368)"
+     "coast",
+     "off the board (walls, launcher's swing or bucket)"
     ],
     [
      [
-      134,
-      327
+      690,
+      468
      ],
-     "vylbrand coast",
-     "-5.9 from the peg at (140, 317)"
-    ],
-    [
-     [
-      136,
-      291
-     ],
-     "vylbrand coast",
-     "8.0 from the peg at (140, 317)"
-    ],
-    [
-     [
-      368,
-      343
-     ],
-     "thanalan coast",
-     "-7.9 from the peg at (372, 352)"
-    ],
-    [
-     [
-      364,
-      378
-     ],
-     "thanalan coast",
-     "9.7 from the peg at (372, 352)"
-    ],
-    [
-     [
-      363,
-      414
-     ],
-     "thanalan coast",
-     "10.1 from the peg at (388, 403)"
-    ],
-    [
-     [
-      340,
-      400
-     ],
-     "ferry lane",
-     "-1.3 from the peg at (356, 403)"
-    ],
-    [
-     [
-      370,
-      388
-     ],
-     "road home",
-     "6.6 from the peg at (388, 403)"
-    ],
-    [
-     [
-      400,
-      404
-     ],
-     "road home",
-     "-5.3 from the peg at (388, 403)"
-    ],
-    [
-     [
-      112,
-      236
-     ],
-     "ship",
-     "12.1 from the peg at (135, 255)"
-    ],
-    [
-     [
-      96,
-      300
-     ],
-     "ship",
-     "wall pinch 11.5"
-    ],
-    [
-     [
-      230,
-      490
-     ],
-     "sea and land",
-     "13.6 from the peg at (200, 500)"
+     "swell",
+     "mover: wall pinch 11.5"
     ]
    ]
   },
   "loader": {
    "ok": true,
    "output": [
-    "OK   base-09.json  id=base-09 \"The Strait of Merlthor\"  pieces=62 (round 62, bricks 0, movers 0)  mayBeOrange=26",
-    "     still round pegs 62: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
-    "     rows used y 91..500"
+    "OK   base-09.json  id=base-09 \"The Ferry Under Sail\"  pieces=75 (round 75, bricks 0, movers 18)  mayBeOrange=28",
+    "     still round pegs 57: closest surfaces 14.1 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 120..500"
    ]
   },
   "sweep": {
    "angles": 171,
-   "pegs_median": 5,
-   "pegs_mean": 5.4,
-   "pegs_max": 15,
-   "oranges_mean": 2.13,
-   "no_hit": 12,
-   "stuck": 2,
-   "stuck_share": 0.012,
+   "pegs_median": 9,
+   "pegs_mean": 9.4,
+   "pegs_max": 18,
+   "oranges_mean": 3.49,
+   "no_hit": 0,
+   "stuck": 1,
+   "stuck_share": 0.006,
    "long_flights": 0,
-   "bucket": 44,
-   "unreached": [
-    15
-   ],
-   "pieces": 62
+   "bucket": 21,
+   "unreached": [],
+   "pieces": 75
   },
   "reach": {
-   "rounds": 2,
-   "never": [
-    15
-   ]
+   "rounds": 1,
+   "never": []
   },
   "play": {
-   "greedy_won": 25,
+   "greedy_won": 22,
    "games": 48,
    "oranges_left_when_lost": [
     2,
-    2,
-    2,
+    5,
     1,
-    3,
-    4,
-    6,
-    2,
-    2,
     1,
     1,
     2,
-    2,
-    3,
-    4,
-    2,
-    1,
     7,
+    8,
+    1,
+    2,
+    2,
+    1,
+    1,
+    5,
+    2,
+    1,
     3,
-    7,
+    5,
+    1,
     4,
+    1,
+    2,
     4,
-    2
+    1,
+    3,
+    1
    ],
    "ramp_games": 432,
-   "ramp_won": 173,
-   "ramp_per_48": 19.2,
-   "shots_mean": 14.2,
-   "stuck_fires": 12,
+   "ramp_won": 208,
+   "ramp_per_48": 23.1,
+   "shots_mean": 13.9,
+   "stuck_fires": 2,
    "random_won": 0,
-   "random_oranges_mean": 16.6,
+   "random_oranges_mean": 18.6,
    "holdouts": [
     {
      "at": [
-      290,
-      488
+      672,
+      432
      ],
-     "share_of_lost_games": 0.45
+     "share_of_lost_games": 0.29
     },
     {
      "at": [
-      487,
-      493
+      700,
+      380
      ],
-     "share_of_lost_games": 0.4
+     "share_of_lost_games": 0.18
     },
     {
      "at": [
-      454,
-      493
+      319,
+      399
      ],
-     "share_of_lost_games": 0.39
+     "share_of_lost_games": 0.18
     },
     {
      "at": [
-      287,
-      442
+      232,
+      440
      ],
-     "share_of_lost_games": 0.24
+     "share_of_lost_games": 0.17
     },
     {
      "at": [
-      443,
-      461
+      198,
+      333
      ],
-     "share_of_lost_games": 0.23
+     "share_of_lost_games": 0.15
     },
     {
      "at": [
-      497,
-      461
+      698,
+      313
      ],
-     "share_of_lost_games": 0.19
+     "share_of_lost_games": 0.13
+    },
+    {
+     "at": [
+      612,
+      362
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "at": [
+      536,
+      276
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "at": [
+      463,
+      402
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "at": [
+      130,
+      250
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "at": [
+      119,
+      320
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "at": [
+      250,
+      270
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "at": [
+      154,
+      456
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "at": [
+      206,
+      404
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "at": [
+      246,
+      372
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "at": [
+      340,
+      288
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "at": [
+      650,
+      260
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "at": [
+      470,
+      270
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "at": [
+      518,
+      196
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "at": [
+      620,
+      190
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "at": [
+      658,
+      316
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "at": [
+      276,
+      290
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "at": [
+      404,
+      290
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "at": [
+      470,
+      152
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "at": [
+      386,
+      212
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "at": [
+      294,
+      212
+     ],
+     "share_of_lost_games": 0.0
     }
    ]
   },
   "ceiling": {
-   "p99_luma": 0.351,
+   "p99_luma": 0.427,
    "limit": 0.465
   },
   "framecheck": {
    "report": {
-    "cover_pct": 0.4,
+    "cover_pct": 1.24,
     "middle_pct": 0.0,
     "in_swing_px": 0,
-    "min_clearance": 35.4,
+    "min_clearance": 71.77,
     "longest_rim_run": 0.0,
     "longest_rim_at": null,
     "straight_run": null,
@@ -260,7 +341,7 @@
     "lights_too_close": [],
     "lights_per_band_max": 0,
     "lights_nearest": 99,
-    "darkened_min_clearance": 35.4,
+    "darkened_min_clearance": 124.1,
     "elements_dropped_for_clearance": 0
    },
    "fails": []
@@ -268,7 +349,7 @@
   "colours": {
    "seed": 1,
    "counts": {
-    "blue": 34,
+    "blue": 47,
     "green": 2,
     "orange": 25,
     "purple": 1
@@ -278,147 +359,139 @@
    "report": {
     "faces": {
      "1x": {
-      "blue": 0.685,
-      "orange": 0.617,
-      "green": 0.706,
-      "purple": 0.578
+      "blue": 0.68,
+      "orange": 0.614,
+      "green": 0.711,
+      "purple": 0.593
      },
      "0.8x": {
-      "blue": 0.676,
-      "orange": 0.607,
-      "green": 0.708,
-      "purple": 0.57
+      "blue": 0.677,
+      "orange": 0.61,
+      "green": 0.706,
+      "purple": 0.593
      }
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.403,
+      "worst": 0.317,
       "at": [
-       306,
-       102
+       340,
+       254
       ],
-      "undressed": 0.412,
-      "drop": 0.009
+      "undressed": 0.313,
+      "drop": -0.004
      },
      "orange 1x": {
-      "worst": 0.335,
+      "worst": 0.263,
       "at": [
-       306,
-       102
+       404,
+       290
       ],
-      "undressed": 0.344,
-      "drop": 0.009
+      "undressed": 0.257,
+      "drop": -0.006
      },
      "green 1x": {
-      "worst": 0.424,
+      "worst": 0.349,
       "at": [
-       306,
-       102
+       340,
+       254
       ],
-      "undressed": 0.433,
-      "drop": 0.009
+      "undressed": 0.344,
+      "drop": -0.005
      },
      "purple 1x": {
-      "worst": 0.296,
+      "worst": 0.23,
       "at": [
-       306,
-       102
+       340,
+       254
       ],
-      "undressed": 0.306,
-      "drop": 0.01
+      "undressed": 0.226,
+      "drop": -0.004
      },
      "blue 0.8x": {
-      "worst": 0.396,
+      "worst": 0.314,
       "at": [
-       306,
-       102
+       470,
+       236
       ],
-      "undressed": 0.408,
-      "drop": 0.012
+      "undressed": 0.31,
+      "drop": -0.004
      },
      "orange 0.8x": {
-      "worst": 0.327,
+      "worst": 0.256,
       "at": [
-       306,
-       102
+       404,
+       290
       ],
-      "undressed": 0.338,
-      "drop": 0.011
+      "undressed": 0.253,
+      "drop": -0.003
      },
      "green 0.8x": {
-      "worst": 0.428,
+      "worst": 0.343,
       "at": [
-       306,
-       102
+       470,
+       236
       ],
-      "undressed": 0.44,
-      "drop": 0.012
+      "undressed": 0.339,
+      "drop": -0.004
      },
      "purple 0.8x": {
-      "worst": 0.29,
+      "worst": 0.23,
       "at": [
-       306,
-       102
+       470,
+       236
       ],
-      "undressed": 0.301,
-      "drop": 0.011
+      "undressed": 0.226,
+      "drop": -0.004
      }
     },
-    "worst_margin": 0.29,
-    "largest_drop": 0.012,
+    "worst_margin": 0.23,
+    "largest_drop": -0.003,
     "bricks_min_margin": null,
-    "protan_orange_p10": 0.121,
-    "protan_places": 26,
+    "protan_orange_p10": 0.147,
+    "protan_places": 112,
     "protan_worst_at": [
-     362,
-     271
+     672,
+     432
     ],
-    "protan_min": 0.118,
+    "protan_min": 0.143,
     "jewels": {
-     "coloured_px_pct": 97.3,
-     "mean_chroma": 0.077,
-     "first_jewel_hue": 270,
-     "first_share": 0.782,
-     "second_jewel_hue": 212,
-     "second_share": 0.217,
-     "apart_deg": 58,
+     "coloured_px_pct": 99.4,
+     "mean_chroma": 0.087,
+     "first_jewel_hue": 287,
+     "first_share": 0.795,
+     "second_jewel_hue": 351,
+     "second_share": 0.205,
+     "apart_deg": 64,
      "bins_pct": [
       0.0,
       0.0,
       0.0,
       0.0,
-      0.1,
       0.0,
-      10.4,
-      11.2,
-      32.4,
-      45.8,
       0.0,
-      0.0
+      0.0,
+      0.0,
+      0.0,
+      72.5,
+      7.0,
+      20.5
      ]
     },
-    "ghost_median": 0.054,
+    "ghost_median": 0.04,
     "ghost_worst": [
-     0.06011716276407242,
+     0.10039076209068298,
      [
-      560,
-      470
+      404,
+      290
      ]
     ],
-    "ghost_isolated_pegs": 3
+    "ghost_isolated_pegs": 4
    },
-   "fails": [
-    "F7 the jewels' hues are 58 degrees apart (60)"
-   ]
+   "fails": []
   }
  },
- "fails": [
-  "preflight: 26 orange candidates (28 to 35: the 25 and 3-7 more, so the deal varies)",
-  "sweep: 12 first-shot angles hit nothing (every aim should meet a piece)",
-  "reach: pieces [15] are never reached, even once everything before them clears",
-  "play: cheap difficulty, low oranges decide losses: [{'at': [290, 488], 'share_of_lost_games': 0.45}, {'at': [487, 493], 'share_of_lost_games': 0.4}, {'at': [454, 493], 'share_of_lost_games': 0.39}]",
-  "readcheck: F7 the jewels' hues are 58 degrees apart (60)"
- ],
- "seconds": 20.4,
- "verdict": "REFUSED"
+ "fails": [],
+ "seconds": 124.2,
+ "verdict": "PASS"
 }

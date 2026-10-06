@@ -1,9 +1,15 @@
 {
  "(our own painting) cactuar": [
-  "base-02 \"The Cactuar\": scene sagolii-cactuar"
+  "base-03 \"The Cactuar\": scene sagolii-cactuar"
  ],
  "(our own painting) crystal": [
   "base-05 \"The Crystal's Call\": scene crystal-call"
+ ],
+ "(our own painting) ferry": [
+  "base-09 \"The Ferry Under Sail\": scene ferry-under-sail"
+ ],
+ "(our own painting) horizon": [
+  "base-02 \"Horizon by Night\": scene horizon-by-night"
  ],
  "(our own painting) moonpath": [
   "base-07 \"Moonpath on the Bay\": scene vesper-moonpath"
@@ -12,15 +18,13 @@
   "base-10 \"Twin Lanterns\": scene vesper-twin-lanterns"
  ],
  "ui/loadingimage/-nowloading_base01_hr1.tex": [
-  "base-06 \"Limsa Across the Water\": scene limsa-across-water, crop [420, 380, 2200, 1650] (read from the install at load, graded, never shipped)"
+  "base-06 \"Limsa Across the Water\": scene limsa-across-water, crop [60, 330, 1660, 1530] (read from the install at load, graded, never shipped)"
  ],
  "ui/loadingimage/-nowloading_base02_hr1.tex": [
-  "base-03 \"Ul'dah Across the Sands\": scene uldah-gilt-towers, crop [2240, 120, 1600, 1200], mirrored (read from the install at load, graded, never shipped)",
   "base-04 \"The Gilded Dome\": scene uldah-gilded-dome, crop [800, 0, 2080, 1560], mirrored (read from the install at load, graded, never shipped)"
  ],
  "ui/loadingimage/-nowloading_base05_hr1.tex": [
-  "base-08 \"The Kraken's Sea\": scene rhotano-wonders, crop [1080, 1300, 960, 720] (read from the install at load, graded, never shipped)",
-  "base-09 \"The Strait of Merlthor\": scene merlthor-strait, crop [0, 1200, 960, 720] (read from the install at load, graded, never shipped)"
+  "base-08 \"The Kraken's Sea\": scene rhotano-wonders, crop [1080, 1300, 960, 720] (read from the install at load, graded, never shipped)"
  ],
  "ui/map/w1f1/00/w1f100_m.tex": [
   "base-01 \"Road to Horizon\": scene thanalan-road-chart, crop [284, 340, 1429, 1071] (read from the install at load, graded, never shipped)"

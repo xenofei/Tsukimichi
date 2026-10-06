@@ -62,7 +62,7 @@
       "x": 224.5,
       "y": 228.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -83,7 +83,7 @@
       "x": 167.5,
       "y": 228.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -111,7 +111,7 @@
       "x": 632.5,
       "y": 228.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -132,7 +132,7 @@
       "x": 575.5,
       "y": 228.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -309,7 +309,7 @@
       "x": 178.4,
       "y": 437.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -322,7 +322,7 @@
       "x": 213.6,
       "y": 437.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -387,7 +387,7 @@
       "x": 586.4,
       "y": 437.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -400,7 +400,7 @@
       "x": 621.6,
       "y": 437.7,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -461,27 +461,55 @@
       "x": 250.0,
       "y": 290.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
       "x": 550.0,
       "y": 290.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 120.0,
-      "y": 360.0,
+      "x": 140.0,
+      "y": 150.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 690.0,
-      "y": 360.0,
+      "x": 660.0,
+      "y": 120.0,
       "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 96.0,
+      "y": 332.4,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 125.8,
+      "y": 335.5,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 650.0,
+      "y": 338.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 679.8,
+      "y": 334.9,
+      "r": 7,
       "canBeOrange": false,
       "canBeGreen": true
     },
@@ -514,13 +542,6 @@
       "canBeGreen": true
     },
     {
-      "x": 300.0,
-      "y": 500.0,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
       "x": 400.0,
       "y": 440.0,
       "r": 8,
@@ -540,6 +561,34 @@
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
+    },
+    {
+      "x": 110.0,
+      "y": 440.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 690.0,
+      "y": 440.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 220.0,
+      "y": 150.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 580.0,
+      "y": 150.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     }
   ],
   "bricks": [
@@ -552,7 +601,7 @@
       "sweep": 45.6,
       "thickness": 12,
       "canBeOrange": false,
-      "canBeGreen": true
+      "canBeGreen": false
     },
     {
       "kind": "arc",
@@ -563,7 +612,7 @@
       "sweep": 45.6,
       "thickness": 12,
       "canBeOrange": false,
-      "canBeGreen": true
+      "canBeGreen": false
     },
     {
       "kind": "arc",
@@ -573,6 +622,28 @@
       "start": 294.4,
       "sweep": 45.6,
       "thickness": 12,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "kind": "arc",
+      "x": 278.0,
+      "y": 528.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "kind": "arc",
+      "x": 530.0,
+      "y": 528.0,
+      "r": 30.0,
+      "start": 235.0,
+      "sweep": 70.0,
+      "thickness": 10,
       "canBeOrange": false,
       "canBeGreen": true
     }

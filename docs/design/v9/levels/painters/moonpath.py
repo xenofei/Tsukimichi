@@ -52,8 +52,8 @@ def paint(S=1):
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
     X, Y = (xx + 0.5) / S, (yy + 0.5) / S
     mx, my, mr = MOON
-    # ---- the sky: indigo, paling toward the horizon and round the moon
-    sky = ramp(np.clip(Y / HORIZON, 0, 1), [(0, "#07071C"), (0.5, "#121236"), (1.0, "#2A2858")])
+    # ---- the sky: a rose dusk, paling toward the horizon and round the moon (the jewel keeps it rose)
+    sky = ramp(np.clip(Y / HORIZON, 0, 1), [(0, "#10081A"), (0.5, "#24122E"), (1.0, "#46243E")])
     d_moon = np.sqrt((X - mx) ** 2 + (Y - my) ** 2)
     sky = screen(sky, hexc("#C8C8F2") * (np.exp(-(d_moon / 150) ** 2) * 0.20 + np.exp(-(d_moon / 520) ** 2) * 0.07)[..., None])
     sky = strokes(sky, (Y < HORIZON).astype(np.float32), S, lambda x, y: 0.1 * math.sin(x / 80), int(4000 * S * S),
