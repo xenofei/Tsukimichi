@@ -7,7 +7,8 @@ branch of code; here it is data, the recipe's `dress` object, so the plugin can 
     "jewel":   {"bands": [[y, "#hex"], ...], "valueHues": [[L, "#hex"], ...], "chroma": 0.9, "floor": 0.03,
                 "keep": 0.30, "keepHi": 0.75, "mix": 0.5,
                 "regions": [{"hex": "#..", "chroma": 0.1, "mask": [["y", 400, 470], ["luma", 0.3, 0.42, 3], ...]}],
-                "quiet": [40, 18], "quietBlur": 40},     # quieten colour round the layout (F9): runtime `near` form
+                "quiet": [40, 18], "quietBlur": 40,      # quieten colour round the layout (F9): runtime `near` form
+                "regionQuiet": 0.6},                     # how much of the quiet the regions take (the term's scale)
     "shafts":  [{"origin": [x, y], "angles": [...], "widths": [...], "k": 0.07, "col": "#..", "reach": 900, "near": 150}],
     "glows":   [{"x":.., "y":.., "r":.., "col": "#..", "k": 0.05}],
     "framing": [{"kind": "frond", ...}, {"kind": "pines", ...}, ...],
@@ -35,8 +36,10 @@ WALL_L, WALL_R, TOP, FOOT = D.WALL_L, D.WALL_R, D.TOP, D.FOOT
 # the clearance (capped at MoonfallClearance.Far) blurred by `quietBlur` units (40 at most, the format's limit), then
 # the smoothstep `quiet: [a, b]`; a region keeps 1 - 0.6 of it (`near` with invert and scale 0.6) and the jewel
 # 1 - 0.5 (the palette's `where`). Blurring the distance first is what keeps it from printing a coin round a lone peg
-# (round-2 supervision G1); drawing it exactly as the runtime will is round 3's UX G3.
-QUIET_BLUR, QUIET_BLUR_MAX, CLEARANCE_FAR = 40.0, 40.0, 96.0
+# (round-2 supervision G1); drawing it exactly as the runtime will is round 3's UX G3. The blur is pinned at 40: the
+# quiet is the dress's only per-peg term, and with less blur it prints a coin round every peg (critic round 4, M1), so
+# a recipe asking for less is refused rather than drawn.
+QUIET_BLUR, QUIET_BLUR_MIN, QUIET_BLUR_MAX, CLEARANCE_FAR = 40.0, 40.0, 40.0, 96.0
 QUIET_REGION, QUIET_KEEP = 0.6, 0.5
 
 
@@ -246,8 +249,10 @@ def auto_lights(ctx, n=9, box=(90, 380, 712, 516), seed=5, halo=5.0, wander=(9, 
 
 
 # ------------------------------------------------------------------------------------------------ the dress
-def dress(recipe, sc, level, S, t=0.0):
-    """The dressed scene (float RGB at S) and the context (framing coverage, rim light, small lights)."""
+def dress(recipe, sc, level, S, t=0.0, unpinned=False):
+    """The dressed scene (float RGB at S) and the context (framing coverage, rim light, small lights). `unpinned` is
+    for the self-tests alone: it lets a known-bad quiet (less than QUIET_BLUR_MIN of blur, a per-peg coin) be drawn so
+    the print check can be shown to catch it."""
     d = recipe.get("dress") or {}
     ctx = Ctx(level, S, recipe.get("features"))
     ctx.recipe = recipe
@@ -261,9 +266,15 @@ def dress(recipe, sc, level, S, t=0.0):
         if j.get("quiet"):
             a, b = j["quiet"]
             sigma = min(float(j.get("quietBlur", QUIET_BLUR)), QUIET_BLUR_MAX)
+            if sigma < QUIET_BLUR_MIN and not unpinned:
+                raise ValueError(f"{recipe.get('name')}: quietBlur {sigma:g} (the quiet's blur is pinned at "
+                                 f"{QUIET_BLUR_MIN:g}: less prints a coin round every peg)")
             dist = np.minimum(ctx.dist_at_S().astype(np.float32), CLEARANCE_FAR)
             near = smooth(a, b, blur(dist, sigma * S) if sigma > 0.3 else dist)
-            regions = [(rm * (1 - QUIET_REGION * near), hx, cr) for (rm, hx, cr) in regions]
+            # a region takes `regionQuiet` of it (0.6 by default): less keeps a region from surviving only where the
+            # layout is not, which prints the layout's envelope on the cleared board (game designer round 4, G18)
+            rq = float(j.get("regionQuiet", QUIET_REGION))
+            regions = [(rm * (1 - rq * near), hx, cr) for (rm, hx, cr) in regions]
             keepm = 1 - QUIET_KEEP * near
         keeps = ([j["keepMask"]] if j.get("keepMask") else []) + list(j.get("keepMasks", []))
         if keeps:

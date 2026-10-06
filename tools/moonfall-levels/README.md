@@ -46,12 +46,15 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    oranges that decide losses (one, and in share); the colours gate on a green dealt where it may not go. Round 3:
    a 12.8-unit slot between bricks, a chain of short level bricks, movers whose common cycle outlasts a game; the
    print check's ring and wide-disc shapes and the six approved pilots as known-good; a stage much easier than its
-   band, one palette swapped round, the previous stage's last level.
+   band, one palette swapped round, the previous stage's last level. Round 4: a 15-unit slot; crossing slides of
+   periods 10 and 10.04 (whose common cycle is 2510 s, not 10); round 2's per-peg coin put back on the real 2-2, 2-1
+   and 1-4 (known-bad for the print check; 2-1 and 1-4 run where their game textures are fetched); a recipe asking
+   for less quiet blur than 40 (refused); a second jewel only along the walls (F7).
 1. **Pre-flight** (`mflkit/author.py`): bounds, launcher, bucket, overlaps, saddles (still pegs, and the movers of one
-   drift group among themselves), cradles, notches (3.5-14 between bricks), wall pinches, the wedge band (a peg 13-16 above a brick), level
+   drift group among themselves), cradles, notches (3.5-17 between bricks), wall pinches, the wedge band (a peg 13-16 above a brick), level
    decks (line bricks under 10 degrees: chained over 30 units, or one alone of 20 or more), cups by geometry, movers'
-   clearance along their paths (against movers of another period over real time, the periods' common cycle, or
-   every pair of phases when that cycle is longer than 240 s),
+   clearance along their paths (against movers of another period over real time, the common cycle of their exact
+   periods, or every pair of phases when that cycle is longer than 240 s),
    every orange candidate (movers' paths and bricks too) in a direct flight's reach, the spread rule (10 per
    200 x 200), 28-35 candidates (the deal's 25 and 3-7 more, so the deal varies), 60-160 pieces, format v2's greens (8
    or more sure greens; every greenable peg, brick and mover in reach), the bucket's lane (pegs and bricks: at most 5,
@@ -64,7 +67,9 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 5. **Play**: mfcheck's greedy player at the level's own number: seeds 1-48 are the rule's games (refuses below 5
    wins); the ramp is measured on 1728 held-out games, seeds 865-2592 (per 48, about +-0.55). Tune on seeds 1-864
    (`ease`, scratch variants) and never on the held-out block: a layout kept because it hit its target on fixed seeds
-   carries their luck (about 0.8 per 48 easier on fresh seeds: game designer round 3, G10). Holdouts are counted by piece (a mover by
+   carries their luck (about 0.8 per 48 easier on fresh seeds: game designer round 3, G10). Accept or reject a
+   variant on the tuning seeds too: the held-out figure reports, it does not decide (critic round 4, N12; round 4's
+   2-3 and 2-5 calls were made on it; the critic's third block of fresh seeds showed no bias from that, +0.09). Holdouts are counted by piece (a mover by
    its home). Refuses cheap difficulty (`engine.cheap`): an orange at home at y 430 or lower left in 25% or more of
    lost games, or low oranges more than 1.5 times their share of the candidates among the oranges left. (A cap on the
    low share of the deal itself was tried and dropped: the approved pilot base-p2 has 35% of its candidates that low.)
@@ -75,15 +80,20 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    is refused as an engine fault.
 9. **Composites** at 2x and 1x, and **readability**: F6 for every kind at its worst placement, the faces measured at
    each scale (1x and 0.8x), against the same board undressed (margin 0.20, drop at most 0.02); F7 two jewels by
-   mean-hue distance (60 degrees or more, the second 15% or more of the coloured pixels); F9 protan orange separation
+   mean-hue distance (60 degrees or more, the second 15% or more of the coloured pixels, and at most 1.5 times as
+   much of it in the 50-unit strips along the walls as their share of the area: game designer round 4, G18); F9 protan orange separation
    over every candidate, movers at four moments of their cycle and orange-able bricks along their length (p10 0.12, or
    0.101, the lowest approved pilot); the ghost check (on the cleared board with its baked veil, the disc round an
    isolated peg: median distance 0.066 or less, the pilots' highest; this is the board in play); the print check
    (what stays when the pieces clear: the dress's own change, dressed minus undressed, with no pieces and no veil,
    round every peg (a mover at its home), 5-12 units out against 20-36 and 5-20 against 45-70, the median over eight
-   sectors so an edge crossing a peg does not count, counted only where it exceeds 1.2 times the painting's fine grain;
-   the board's median at most 0.010 and its 90th percentile at most 0.070, between the six approved pilots, which all
-   pass, and round 2's per-peg quiet; never vacuous).
+   sectors so an edge crossing a peg does not count, less 1.2 times the painting's own fine grain round the peg
+   (a robust spread, so stars do not inflate it); the board's median at most 0.006 and its 90th percentile at most
+   0.040; never vacuous). Set between known cases, all in the self-test: the six approved pilots pass (median at most
+   0.003, p90 at most 0.032) and the ten levels as built (p90 at most 0.034); round 2's per-peg quiet put back on the
+   real 2-2, 2-1 and 1-4 fails (2-2 on its median, 0.0105; the textured 2-1 and 1-4 on p90, 0.045 and 0.074; 2-1 is
+   the narrowest margin). Round 4 found its first form (an all-or-nothing grain rule on the plain spread) zeroed most
+   pegs and passed that coin on 2-2 (critic M1, UX m5).
 10. If everything passed: `docs/design/v9/levels/json/<id>.json`, `composites/<id>.png` (and `@2x` if asked), our
     paintings as JPEG in `scenes/assets/`. The report, pass or fail, goes to `report/<id>.json`, with the ramp.
 
@@ -116,7 +126,9 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 
 - **The ramp**, measured on held-out games at each level's own number (432 at least): stage 1 runs from about 30 down to 21, stage 2 from
   about 27 down to 20, and each finale is its stage's hardest, at least 2.5 per 48 below its 4th level. Difficulty
-  comes from the subject's places, never from low oranges in the bucket's approach (the cheap-difficulty gate).
+  comes from the subject's places, never from low oranges in the bucket's approach (the cheap-difficulty gate). A
+  step of 0.5 cannot be resolved on one held-out block, so `stage` plays both levels of any step under 1.0 on a second
+  block of 1728 fresh seeds and judges the step on the pooled figure (game designer round 4, G19).
 - **Paintings**: never the same painting twice in a row, and a painting that belongs to a later stage's home stays
   there (stage 4, Ul'dah, keeps the Thanalan painting beyond 1-4's crop; stage 5 keeps the Merlthor chart and the east
   of the La Noscea painting). Our own paintings are fine; keep the campaign's share of game paintings near two thirds.
@@ -129,7 +141,8 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 ## Lessons
 
 - A long, shallow deck of brick holds a resting ball (draw level decks dotted), and so does the flat apex of a
-  two-brick crown (open it at the keystone, 16 or more between the bricks, or stand a moon over it). A peg 13-16 units
+  two-brick crown (open it at the keystone, 17 or more between the bricks, or stand a moon over it; a wider slot lets
+  more balls through and eases the board: 2-1's from 16.7 to about 19 eased it by 1.2 per 48). A peg 13-16 units
   above a sloped brick wedges balls.
 - Oranges low on the board (below about y 440) or behind a moving ring are the ones the greedy player leaves.
 - **Blue pegs in the open sky make a board harder**, often by 0.5-1 per 48 each: removing nine sky stars eased 2-2 by
@@ -144,11 +157,17 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 - Two jewels within about 60 degrees of hue count as one; neighbours need 30 degrees in at least one jewel.
 - The jewel's quiet once took the region's colour out round each peg, and over a flat field (our own paintings above
   all) it printed a coin round every peg that stayed when the peg cleared. It is now drawn exactly as the runtime's
-  `near` mask term draws it: the clearance blurred by `quietBlur` (40 units, the format's most) before the smoothstep
+  `near` mask term draws it: the clearance blurred by `quietBlur` (40 units, the format's most, and pinned there:
+  `dress.py` refuses less, since with less blur the quiet is a per-peg term again) before the smoothstep
   `quiet: [a, b]`, so a lone peg gets no coin and a cluster quietens as one band. With the blur first, a narrow
   `[22, 12]` barely reaches a lone peg, so F9 may need a wider `[40, 18]` to `[60, 25]`; widen it until F9 holds,
   then lift the second jewel's chroma or area until F7's share does. Where a sky must hold one colour, paint it into
   our painting and keep the jewel band the same hue there.
+- With that quiet a region keeps its full colour wherever the layout is not, so a region running to the walls shows
+  as coloured light leaking in at the sides and the cleared board keeps the layout's envelope (game designer round 4,
+  G18). Fade every region within 60 units of the walls (`["x", 75, 135], ["x", 725, 665]` in its mask); F7 checks it.
+  Where a region still shows the layout's outline (2-4's sea), let it take less of the quiet (`regionQuiet` 0.3
+  rather than 0.6) at a lower chroma, and check F9.
 - A sky darkened in the grade (`tone`) shrinks the veil's step.
 
 ## The scene recipe
@@ -181,8 +200,13 @@ names (`palette` for `jewel`, `light` for shafts and glows, `"picture"` sources 
 `Tsukimichi/assets/moonfall/scenes/`) and draws the veil per piece at play time, so the baked veil the ghost check
 guards against never reaches the game. These recipes need a converter to that format before the levels ship: the
 jewel's `regions` map onto `palette.regions`, and its quiet maps one to one onto a `near` mask term `[a, b]` with
-`blur` = `quietBlur` (each region's `where` gets it with `invert` and `scale 0.6`; the palette's `where` with `invert`
+`blur` = `quietBlur` (each region's `where` gets it with `invert` and `scale` = `regionQuiet`, 0.6 by default; the palette's `where` with `invert`
 and `scale 0.5`): `dress.py` draws the quiet in exactly that form, so F9 and the print measured here are what the game
-draws (UX round 3, G3). Our `masks` (rim-fill), `tone`, and the `poly`, `not-poly` and feature-`near` mask terms have
-no counterpart there yet; when the converter exists, run the print check and F9 on `tools/Tsukimichi.MoonfallRender`
-output as its gate.
+draws (UX round 3, G3; UX round 4 re-derived it from main's C# and matched the pipeline exactly at 1x and to
+OKLab 0.014 at 2x, the residue being how the clearance is resampled near the foot). Our `masks` (rim-fill), `tone`,
+the `poly`, `not-poly` and feature-`near` mask terms, and a `keepMask` made of several ramps inverted as a whole (1-5's
+dome house; the runtime inverts each term on its own) have no counterpart there yet. The converter's gate is a direct
+comparison, not the print check: render each converted level with `tools/Tsukimichi.MoonfallRender` and compare it
+with this pipeline's dressed scene pixel for pixel (OKLab distance, 99th percentile at most about 0.015; critic round
+4, M1). The two formulas are meant to be identical, so any difference is the converter's fault, and the print check
+and F9 measured here then stand for the game.

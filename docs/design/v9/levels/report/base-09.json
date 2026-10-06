@@ -489,23 +489,24 @@
     "worst_margin": 0.285,
     "largest_drop": -0.005,
     "bricks_min_margin": null,
-    "protan_orange_p10": 0.141,
+    "protan_orange_p10": 0.134,
     "protan_places": 112,
     "protan_worst_at": [
-     698,
-     312
+     658,
+     316
     ],
-    "protan_min": 0.129,
+    "protan_min": 0.132,
     "jewels": {
      "coloured_px_pct": 99.5,
-     "mean_chroma": 0.082,
+     "mean_chroma": 0.079,
+     "second_at_walls_x": 0.27,
      "first_jewel_hue": 291,
-     "first_share": 0.817,
-     "second_jewel_hue": 15,
-     "second_share": 0.183,
-     "apart_deg": 84,
+     "first_share": 0.803,
+     "second_jewel_hue": 5,
+     "second_share": 0.197,
+     "apart_deg": 73,
      "bins_pct": [
-      13.8,
+      11.0,
       0.0,
       0.0,
       0.0,
@@ -514,9 +515,9 @@
       0.0,
       0.0,
       0.0,
-      57.7,
-      24.0,
-      4.5
+      60.3,
+      20.0,
+      8.7
      ]
     },
     "ghost_median": 0.065,
@@ -530,12 +531,12 @@
     "ghost_isolated_pegs": 4,
     "print": {
      "median": 0.0,
-     "p90": 0.0294,
+     "p90": 0.0145,
      "worst": [
-      0.0525,
+      0.0453,
       [
-       690,
-       430
+       130,
+       250
       ]
      ],
      "samples": 69,
@@ -546,6 +547,6 @@
   }
  },
  "fails": [],
- "seconds": 95.1,
+ "seconds": 118.1,
  "verdict": "PASS"
 }

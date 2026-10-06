@@ -416,40 +416,40 @@
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.474,
+      "worst": 0.472,
       "at": [
        84,
        334
       ],
       "undressed": 0.467,
-      "drop": -0.007
+      "drop": -0.005
      },
      "orange 1x": {
-      "worst": 0.407,
+      "worst": 0.405,
       "at": [
        84,
        334
       ],
       "undressed": 0.4,
-      "drop": -0.007
+      "drop": -0.005
      },
      "green 1x": {
-      "worst": 0.517,
+      "worst": 0.514,
       "at": [
        84,
        334
       ],
       "undressed": 0.51,
-      "drop": -0.007
+      "drop": -0.004
      },
      "purple 1x": {
-      "worst": 0.378,
+      "worst": 0.376,
       "at": [
        84,
        334
       ],
       "undressed": 0.371,
-      "drop": -0.007
+      "drop": -0.005
      },
      "blue 0.8x": {
       "worst": 0.414,
@@ -491,56 +491,57 @@
     "worst_margin": 0.318,
     "largest_drop": 0.0,
     "bricks_min_margin": [
-     0.546,
+     0.534,
      "blue"
     ],
-    "protan_orange_p10": 0.126,
+    "protan_orange_p10": 0.137,
     "protan_places": 28,
     "protan_worst_at": [
      678,
      413
     ],
-    "protan_min": 0.084,
+    "protan_min": 0.126,
     "jewels": {
-     "coloured_px_pct": 99.9,
-     "mean_chroma": 0.104,
-     "first_jewel_hue": 275,
-     "first_share": 0.719,
-     "second_jewel_hue": 150,
-     "second_share": 0.22,
-     "apart_deg": 125,
+     "coloured_px_pct": 99.8,
+     "mean_chroma": 0.098,
+     "second_at_walls_x": 0.93,
+     "first_jewel_hue": 273,
+     "first_share": 0.787,
+     "second_jewel_hue": 149,
+     "second_share": 0.166,
+     "apart_deg": 124,
      "bins_pct": [
       0.0,
       0.0,
       0.0,
       0.0,
-      17.6,
-      2.2,
-      2.2,
-      6.2,
+      13.3,
+      1.9,
+      1.3,
       4.7,
-      67.2,
-      0.0,
+      11.1,
+      67.6,
+      0.1,
       0.0
      ]
     },
-    "ghost_median": 0.026,
+    "ghost_median": 0.028,
     "ghost_worst": [
-     0.03435168415307999,
+     0.031064093112945557,
      [
-      300,
+      420,
       250
      ]
     ],
     "ghost_isolated_pegs": 7,
     "print": {
      "median": 0.0,
-     "p90": 0.0589,
+     "p90": 0.0095,
      "worst": [
-      0.0705,
+      0.0253,
       [
-       642,
-       415
+       146,
+       411
       ]
      ],
      "samples": 58,
@@ -551,6 +552,6 @@
   }
  },
  "fails": [],
- "seconds": 36.2,
+ "seconds": 32.7,
  "verdict": "PASS"
 }

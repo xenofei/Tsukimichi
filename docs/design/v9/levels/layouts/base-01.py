@@ -20,8 +20,8 @@ LEVEL = dict(id="base-01", name="Road to Horizon", stage=1, number=1, scene="tha
              subject="the road from the Waking Sands to Horizon and on toward Ul'dah",
              technique="a trail on a map")
 
-CANDS = {(108, 402), (150, 218), (121, 202), (608, 344), (179, 168), (179, 202), (340, 300), (267, 208), (267, 240),
-         (275, 288), (296, 191), (325, 208), (325, 240), (376, 236), (422, 238), (533, 398), (451, 221), (480, 238),
+CANDS = {(108, 402), (150, 218), (121, 202), (608, 344), (179, 168), (179, 202), (220, 204), (354, 331), (267, 208),
+         (267, 240), (275, 288), (296, 191), (325, 208), (325, 240), (376, 236), (422, 238), (451, 221), (480, 238),
          (480, 270), (504, 415), (519, 216), (519, 248), (548, 199), (548, 265), (577, 216), (632, 371), (664, 387),
          (699, 396)}
 STOPS = ["waking sands", "footfalls", "crescent cove", "horizon", "copperbell mines", "bridge", "scorpion crossing",
@@ -52,6 +52,8 @@ def build(b):
     # every first shot meets the chart (game designer m5): the west shore's southern point and two ships' lights
     for (x, y) in ((306, 362), (152, 318), (108, 402)):
         b.place(x, y, r=8, orange=(x, y) == (108, 402), tag="ship's light" if x < 200 else "west shore")
-    # the candidates (see the docstring): set last, by place
+    # the candidates (see the docstring): set last, by place. (533, 398) at the bridge is blue: it was left in a quarter
+    # of lost games and tied 1-1 with 1-2 (critic round 4, N9; the critic's swaps break the spread rule, so the road's
+    # (220, 204) and the west shore's (354, 331) take its place and (340, 300)'s, picked with `ease` on the tuning seeds)
     for p in b.pegs:
         p["canBeOrange"] = (round(p["x"]), round(p["y"])) in CANDS

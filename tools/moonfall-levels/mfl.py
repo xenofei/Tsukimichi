@@ -126,6 +126,23 @@ def cmd_stage(args):
               f"{ramp48:>8} {c.get('play', {}).get('random_won', '-'):>7} "
               f"{str(pair[0]) + '/' + str(pair[1]):>10} {r['source']}")
         rows.append((r["id"], c.get("play", {}).get("ramp_per_48"), pair))
+    # a step under CONFIRM_STEP cannot be resolved on one held-out block (+-0.55 per level): both levels are played on
+    # a second block of fresh seeds and the step is judged on the pooled figure (game designer round 4, G19)
+    CONFIRM_STEP = 1.0
+    pooled = {}
+    for k in range(1, len(rows)):
+        (a, ra, _), (b, rb, _) = rows[k - 1], rows[k]
+        if ra is None or rb is None or ra - rb >= CONFIRM_STEP:
+            continue
+        for lid, held in ((a, ra), (b, rb)):
+            if lid in pooled:
+                continue
+            num = next(r["number"] for r in reps if r["id"] == lid)
+            pl = engine.play(paths.BUILD / "json" / f"{lid}.json", num, engine.HELD_GAMES,
+                             first=engine.RAMP_GAMES + engine.HELD_GAMES)
+            pooled[lid] = round((held + pl["ramp_per_48"]) / 2, 2)
+            print(f"  {lid}: held-out {held}, a second fresh block {pl['ramp_per_48']}, pooled {pooled[lid]} per 48")
+    rows = [(lid, pooled.get(lid, ramp), pair) for (lid, ramp, pair) in rows]
     from mflkit import stagecheck
     allr = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
     last = [r for r in allr if r["stage"] == n - 1]

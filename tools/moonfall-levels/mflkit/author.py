@@ -44,7 +44,7 @@ def point_in_poly(x, y, poly):
     return inside
 
 BALL = 12.0
-NOTCH_MAX = 14.0              # a gap between bricks narrower than a dotted line's holds a ball (critic round 3, L11/B2)
+NOTCH_MAX = 17.0              # a gap between bricks narrower than this holds a ball (critic round 3 L11/B2; round 4 N11: 14-16 still trap)
 DECK_DEG = 10.0               # a line brick flatter than this is a deck (round 2, critic G5)
 LANE_WIDTH = 120              # units of the bucket lane's width the pieces in it may cover (critic L14)
 DOTTED_GAP = 14.0             # pegs on a dotted line: 14 or more between surfaces (34 centre to centre at r 10)
@@ -342,9 +342,11 @@ class Board(Layout):
 
     @staticmethod
     def common_cycle(a, c, cap=240.0):
-        """The time after which two movers' relative positions repeat (the LCM of their periods, at 0.1 s), capped."""
+        """The time after which two movers' relative positions repeat (the LCM of their exact periods, as written in
+        the level), capped. Exact, not rounded: periods 10 and 10.04 share a cycle of 2510 s, not 10 (critic round 4,
+        N10), so they fall to the every-pair-of-phases check."""
         from fractions import Fraction
-        pa, pc = Fraction(round(a["move"]["period"] * 10), 10), Fraction(round(c["move"]["period"] * 10), 10)
+        pa, pc = Fraction(str(a["move"]["period"])), Fraction(str(c["move"]["period"]))
         lcm = (pa.numerator * pc.numerator // math.gcd(pa.numerator, pc.numerator)) / math.gcd(pa.denominator, pc.denominator)
         return min(float(lcm), cap)
 
@@ -669,10 +671,16 @@ def selftest(verbose=True):
     cases.append(("a chain of four 15-unit level bricks (critic N7)", [q for q in faults(b) if "bricks [" in q], "level deck"))
     b = grid_board(); b.line(150, 160, 190, 140, t=12); b.line(214.8, 140, 254.8, 160, t=12)
     cases.append(("a 12.8-unit slot between two bricks (critic L11)", faults(b), "notch"))
+    b = grid_board(); b.line(150, 160, 190, 140, t=12); b.line(217, 140, 257, 160, t=12)
+    cases.append(("a 15-unit slot between two bricks (critic N11)", faults(b), "notch"))
     b = grid_board()
     b.peg(470, 150, r=9, move={"kind": "slide", "x": 570, "y": 150, "period": 10})
     b.peg(573, 150, r=9, move={"kind": "slide", "x": 673, "y": 150, "period": 10.1})
     cases.append(("slides of periods 10 and 10.1 that meet after 264 s (critic N4)", faults(b), "of each other"))
+    b = grid_board()
+    b.peg(480, 150, r=9, move={"kind": "slide", "x": 640, "y": 150, "period": 10})
+    b.peg(560, 66, r=9, move={"kind": "slide", "x": 560, "y": 156, "period": 10.04})
+    cases.append(("crossing slides of periods 10 and 10.04 that meet after 47 s (critic N10, E1)", faults(b), "of each other"))
     b = grid_board(); b.line(110, 548, 380, 548); b.line(420, 548, 690, 548)
     cases.append(("two long bricks across the bucket's lane (critic L14)", faults(b), "cover"))
     b = Board(); b.peg(400, 300, r=9, move={"kind": "orbit", "x": 400, "y": 340, "period": 12})

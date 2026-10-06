@@ -29,12 +29,15 @@ peg, as hue or as lightness, that the painting does not have and that shows. On 
 veil, the dress's own change (OKLab, dressed minus undressed: the painting's detail cancels), per peg (a mover at its
 home), sector by sector: 5-12 units outside the peg against 20-36 out, and 5-20 against 45-70 out (a ring between the
 first pair, or a wide disc, shows in the second); the median over eight sectors (an edge crossing the peg is not a
-print), the larger pair. A peg's print counts only where it exceeds 1.2 times the painting's own fine grain round it
-(the undressed scene less its 4-unit blur): a textured game painting hides what a flat night sky shows. Every peg
-counts, isolated or not; with fewer than three measurable the board as a whole is measured, so it is never vacuous.
-Rule: the median at most PRINT_MED and the 90th percentile at most PRINT_P90. Calibrated: the six approved pilots
-measure median 0 and p90 0-0.066 (they are self-test cases); round 2's per-peg quiet measured median 0.012-0.095 on the
-flat boards and p90 0.07-0.10 on the textured ones.
+print), the larger pair. A peg counts what its print exceeds 1.2 times the painting's own fine grain round it (the
+undressed scene less its 4-unit blur, as a robust spread so stars do not inflate it): a textured game painting hides
+part of what a flat night sky shows. Every peg counts, isolated or not; with fewer than three measurable the board as a
+whole is measured, so it is never vacuous. Rule: the median at most PRINT_MED and the 90th percentile at most
+PRINT_P90. Set between known cases, all self-tested (round 4, critic M1 and UX m5): the six approved pilots measure
+median 0-0.003 and p90 0-0.032, the ten levels as built p90 at most 0.034; round 2's per-peg quiet (`[22, 12]`, no
+blur) put back on the real boards measures median 0.010-0.088 on most, and on the textured 1-4 and 2-1, where the
+median stays near 0, p90 0.074 and 0.045. 2-1 is the narrowest margin. The dress itself cannot draw that coin any
+more (`dress.QUIET_BLUR_MIN`); this check guards the rest of the dress.
 """
 import math
 
@@ -50,9 +53,10 @@ KINDS = ("blue", "orange", "green", "purple")
 # the approved pilots' faces (rich2/supervisor/readcheck.json, the median of six boards): for a kind a deal leaves out
 PILOT_FACES = {"blue": 0.689, "orange": 0.620, "green": 0.718, "purple": 0.593}
 F6_MIN, F6_DROP, F7_SECOND, F7_CHROMA, F7_APART = 0.20, 0.02, 0.15, 0.06, 60.0
+F7_WALLS = 1.5               # the second jewel in the wall strips at most 1.5 times their share of the area (G18)
 F9_MIN, F9_PILOT = 0.12, 0.101
 GHOST_MAX = 0.066
-PRINT_MED, PRINT_P90 = 0.010, 0.070
+PRINT_MED, PRINT_P90 = 0.006, 0.040
 
 
 def down(px2, s):
@@ -112,7 +116,17 @@ def jewels(sc2):
         return float((np.degrees(math.atan2(np.sin(r).mean(), np.cos(r).mean())) + 360) % 360)
     h1, h2 = cmean(taken), cmean(win(second) - taken)
     apart = None if h1 is None or h2 is None else min(abs(h1 - h2), 360 - abs(h1 - h2))
+    # where the second jewel lies: its share in the 50-unit strips along the walls against their share of the area
+    # (game designer round 4, G18: with the runtime's quiet a region survives mainly where the layout is not, and at
+    # the walls it reads as coloured light leaking in, the layout's envelope)
+    W = C.shape[1]
+    sec_px = np.zeros(C.shape, bool)
+    sec_px[col] = np.isin((h // 30).astype(int), list(win(second) - taken))
+    strip = np.zeros(C.shape, bool)
+    strip[:, :100], strip[:, W - 100:] = True, True
+    wall_x = float(sec_px[strip].sum() / max(sec_px.sum(), 1) / strip.mean())
     return {"coloured_px_pct": round(float(col.mean()) * 100, 1), "mean_chroma": round(float(C[col].mean()), 3),
+            "second_at_walls_x": round(wall_x, 2),
             "first_jewel_hue": None if h1 is None else round(h1), "first_share": round(float(sum(bins[j] for j in taken) / tot), 3),
             "second_jewel_hue": None if h2 is None else round(h2),
             "second_share": round(float(sum(bins[j] for j in win(second) - taken) / tot), 3),
@@ -127,6 +141,9 @@ def f7_fails(jw):
         out.append(f"the jewels' hues are {jw['apart_deg']} degrees apart (60)")
     if jw["mean_chroma"] < F7_CHROMA:
         out.append(f"mean chroma {jw['mean_chroma']} (0.06)")
+    if jw.get("second_at_walls_x", 0) > F7_WALLS:
+        out.append(f"the second jewel sits at the walls: {jw['second_at_walls_x']} times the strips' share of the area "
+                   f"({F7_WALLS}; fade the region within 60 units of the walls)")
     return out
 
 
@@ -204,9 +221,11 @@ def dress_print(dressed1, undressed1, level):
     the peg against further out, for two pairs of bands (5-12 against 20-36 units from its edge, and 5-20 against
     45-70: a ring between the first pair or a wide disc both show in the second). Per pair the median over the sectors
     (so an edge that crosses the peg moves only the sectors it crosses; a disc moves them all), and the larger pair.
-    A print shows only where the ground is flat: a peg counts its print if it exceeds PRINT_TEXTURE times the undressed
-    painting's own fine grain round it (the undressed scene less its 4-unit blur: a textured game painting hides what
-    a flat night sky shows), else 0."""
+    A print shows only where the ground is flat: a peg counts what its print exceeds PRINT_TEXTURE times the undressed
+    painting's own fine grain round it (the undressed scene less its 4-unit blur, as a robust spread, 1.4826 times its
+    median absolute deviation, so point stars and sparkles do not inflate it): a textured game painting hides part of
+    what a flat night sky shows. The excess counts, not all or nothing (critic round 4 M1, UX m5: an all-or-nothing
+    rule on the plain spread zeroed most pegs and let round 2's coin through on 2-2)."""
     lab_d, lab_u = srgb_to_oklab(dressed1), srgb_to_oklab(undressed1)
     diff = lab_d - lab_u
     from r2lib import blur
@@ -240,8 +259,11 @@ def dress_print(dressed1, undressed1, level):
         if best is None:
             continue
         ring = (rr >= 5) & (rr <= 70) & ins
-        texture = float(np.linalg.norm(lu[ring].std(0))) if ring.sum() > 20 else 0.0
-        vals.append((best if best > PRINT_TEXTURE * texture else 0.0, (round(x), round(y))))
+        texture = 0.0
+        if ring.sum() > 20:
+            s = lu[ring]
+            texture = float(np.linalg.norm(1.4826 * np.median(np.abs(s - np.median(s, 0)), 0)))
+        vals.append((max(0.0, best - PRINT_TEXTURE * texture), (round(x), round(y))))
     if len(vals) >= 3:
         v = np.array([a for a, _ in vals])
         w = max(vals)
@@ -376,7 +398,9 @@ def selftest(verbose=True):
     cases = [("F6: pegs on a dark ground", w_dark >= F6_MIN, True), ("F6: pegs on a bright ground", w_bright >= F6_MIN, False),
              ("F7: one hue", not f7_fails(jewels(hue_img([255]))), False),
              ("F7: two hues 32 degrees apart (critic P9)", not f7_fails(jewels(hue_img([269, 301, 301]))), False),
-             ("F7: two jewels 90 degrees apart", not f7_fails(jewels(hue_img([255, 255, 345]))), True),
+             ("F7: two jewels 90 degrees apart", not f7_fails(jewels(hue_img([255, 345, 255]))), True),
+             ("F7: the second jewel only along the walls (game designer G18)",
+              not [f for f in f7_fails(jewels(hue_img([345] * 5 + [255] * 22 + [345] * 5))) if "walls" in f], False),
              ("F9: orange on an orange ground", orange_on((0.55, 0.30, 0.12)) >= F9_PILOT, False),
              ("F9: orange on lapis", orange_on((0.10, 0.16, 0.42)) >= F9_MIN, True),
              ("ghost: a dark disc printed round each peg", (board_with(True) or 0) <= GHOST_MAX, False),
@@ -399,6 +423,33 @@ def selftest(verbose=True):
         med, p90, _w, _n, _m = dress_print(_RL.load_rgb(v9 / "rich2" / "scenes" / f"{stem}.png"),
                                            _RL.load_rgb(v9 / "rich" / "scenes" / f"{stem}.png"), lv)
         cases.append((f"print: the approved pilot {pid} (median {med}, p90 {p90})", med <= PRINT_MED and p90 <= PRINT_P90, True))
+    # real boards with round 2's per-peg coin put back (quiet [22, 12], no blur: critic round 4 M1, UX m5): known-bad.
+    # 2-2 is our own painting and always runs; 2-1 and 1-4 are game art and run where the textures have been fetched
+    from . import scene as _scene
+    from .dress import dress as _dress
+    from .paths import JSON_OUT
+    for lid, name in (("base-07", "2-2"), ("base-06", "2-1"), ("base-04", "1-4")):
+        lv = _json.loads((JSON_OUT / f"{lid}.json").read_text(encoding="utf-8"))
+        rec = _scene.load_recipe(lv["scene"])
+        src = rec["source"]
+        if src["kind"] == "game" and not (_scene.CACHE / _scene.cache_name(src["texture"])).exists():
+            if verbose:
+                print(f"  --- readcheck: print: {name} with round 2's coin: not run (game texture not fetched)")
+            continue
+        coin = _json.loads(_json.dumps(rec))
+        coin["dress"]["jewel"]["quiet"], coin["dress"]["jewel"]["quietBlur"] = [22, 12], 0
+        und = _scene.graded(rec, 1)
+        dd, _c = _dress(coin, und, lv, 1, unpinned=True)
+        med, p90, _w, _n, _m = dress_print(np.clip(dd, 0, 1).astype(np.float32), und, lv)
+        cases.append((f"print: {name} with round 2's per-peg coin (median {med}, p90 {p90})",
+                      med <= PRINT_MED and p90 <= PRINT_P90, False))
+        if lid == "base-07":
+            try:
+                _dress(coin, und, lv, 1)
+                refused = False
+            except ValueError:
+                refused = True
+            cases.append(("dress: a recipe asking for less quiet blur than 40 is refused (critic round 4 M1)", not refused, False))
     ok = True
     for name, passed, want in cases:
         ok &= passed == want

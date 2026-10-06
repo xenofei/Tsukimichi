@@ -572,6 +572,7 @@
     "jewels": {
      "coloured_px_pct": 99.0,
      "mean_chroma": 0.082,
+     "second_at_walls_x": 0.63,
      "first_jewel_hue": 275,
      "first_share": 0.791,
      "second_jewel_hue": 215,
@@ -603,9 +604,9 @@
     "ghost_isolated_pegs": 5,
     "print": {
      "median": 0.0,
-     "p90": 0.018,
+     "p90": 0.015,
      "worst": [
-      0.0656,
+      0.0573,
       [
        618,
        176
@@ -619,6 +620,6 @@
   }
  },
  "fails": [],
- "seconds": 36.2,
+ "seconds": 35.8,
  "verdict": "PASS"
 }

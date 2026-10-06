@@ -29,13 +29,15 @@ def build(b):
     # two lanterns hung in the tree's crown, so a shot straight down meets the landmark
     for (x, y) in b.f("tree lanterns"):
         b.place(x, y, r=9, orange=True, green=False, tag="tree lantern")
-    # the bridge: deck and lamps (a procession); its arches' crowns of brick are open at the keystone (16 between the
-    # bricks, more than a ball), so no ball rests on an apex
-    b.trace("bridge deck", spacing=36, r=9, orange={1, 4}, tag="bridge deck")
+    # the bridge: deck and lamps (a procession); its arches' crowns of brick are open at the keystone (about 19 between
+    # the bricks, wider than the 17 a ball can still rest in: critic round 4, N11), so no ball rests on an apex
+    # (the deck's east end, 6, is a candidate and the air's (700, 320) blue: the wider keystone slot eased the board by
+    # about 1.2 per 48, and this buys it back on the tuning seeds)
+    b.trace("bridge deck", spacing=36, r=9, orange={1, 4, 6}, tag="bridge deck")
     b.trace("bridge lamps", spacing=36, r=9, orange={0, 2, 4}, tag="bridge lamp")
     for name in ("west arch", "east arch"):
         cx, cy, R, a0, sw = b.circle(name)
-        b.arc_bricks(cx, cy, R, a0, sw, n=2, gap_deg=math.degrees(27 / R), t=10, tag=name)
+        b.arc_bricks(cx, cy, R, a0, sw, n=2, gap_deg=math.degrees(30 / R), t=10, tag=name)
     # the city west of the tree: its dark spires, dotted
     b.trace("west spire", spacing=34, r=8, orange={1}, tag="west spire")
     b.trace("middle spire", spacing=34, r=8, orange={0, 2}, tag="middle spire")
@@ -47,8 +49,8 @@ def build(b):
     for run in ([(96, 492), (250, 486)], [(320, 492), (440, 498)], [(520, 488), (700, 494)]):
         b.trace(run, spacing=40, r=8, tag="swell")
     # the air between: a few moons, the open-water ones candidates
-    LIT = ((330, 400), (296, 420), (420, 410), (700, 320))
-    for (x, y) in LIT + ((600, 300), (470, 300)):
+    LIT = ((330, 400), (296, 420), (420, 410))
+    for (x, y) in LIT + ((700, 320), (600, 300), (470, 300)):
         b.place(x, y, r=8, orange=(x, y) in LIT, tag="air")
     for (x, y) in ((356, 342), (446, 346)):          # two more lanterns in the crown, in the dead lanes (critic G4)
         b.place(x, y, r=9, green=False, tag="tree lantern")
