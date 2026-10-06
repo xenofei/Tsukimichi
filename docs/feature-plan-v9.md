@@ -110,6 +110,10 @@ Rules new to this plan:
 - **The Far Shore (5 October 2026).**
   - **Stage names:** approved, with "The Floating Market" for stage 8. The full list is The Lantern Quay, The Twin Lights, The Skyward Deck, The Sunlit Isles, The Admiral's Sea, The Ferry in the Stars, The Floating Grove, The Floating Market, The Domes of Sharlayan, The Archon's Crossing, The Courier's Wake and The Sea of Sorrows.
   - **Spoilers:** any stage set past your story (Endwalker's Sharlayan and the moon, for example) follows the spoiler shield. It shows a masked name and a veiled preview, and opens when your story reaches it or when you reveal it.
+  - **A hidden stage in Adventure (6 October 2026): "Step over it."**
+    - Adventure moves on to the next stage your story allows.
+    - The hidden stage waits, marked on the map, and opens when your story reaches it or you reveal it.
+    - That keeps every story-safe stage, including the moogle's Storm Post, playable before Endwalker.
 
 ## Not doing
 
