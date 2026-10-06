@@ -107,6 +107,9 @@ Rules new to this plan:
   - the campaign names (10).
 
   Superseded: the original eleven characters (1), the cameos (17) and the bundled font (19). Gyobo (11) and the Loporrits (12) are moot now the cast is real FFXIV characters.
+- **The Far Shore (5 October 2026).**
+  - **Stage names:** approved, with "The Floating Market" for stage 8. The full list is The Lantern Quay, The Twin Lights, The Skyward Deck, The Sunlit Isles, The Admiral's Sea, The Ferry in the Stars, The Floating Grove, The Floating Market, The Domes of Sharlayan, The Archon's Crossing, The Courier's Wake and The Sea of Sorrows.
+  - **Spoilers:** any stage set past your story (Endwalker's Sharlayan and the moon, for example) follows the spoiler shield. It shows a masked name and a veiled preview, and opens when your story reaches it or when you reveal it.
 
 ## Not doing
 
