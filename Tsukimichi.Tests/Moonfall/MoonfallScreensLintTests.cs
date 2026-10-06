@@ -268,8 +268,38 @@ public sealed class MoonfallScreensLintTests
         var end = Member(Ui("MoonfallWindow.Flow.cs"), "private void EndBoard(");
         Assert.Contains("tallyVeil is { } waiting", end, StringComparison.Ordinal);
         Assert.Contains("mapStage = waiting.Number - 1;", end, StringComparison.Ordinal);
-        var plain = Ui("MoonfallWindow.Board.cs");
-        Assert.True(plain.IndexOf("if (tallyVeil is not null)", StringComparison.Ordinal) < plain.IndexOf("ImGui.SetItemDefaultFocus();", plain.IndexOf("if (tallyVeil is not null)", StringComparison.Ordinal), StringComparison.Ordinal));
+        var plain = Member(Ui("MoonfallWindow.Board.cs"), "private void DrawEnd(");
+        Assert.Contains("var homeFocus = !nextFocus && (!won || tallyAgain is null || tallyVeil is not null);", plain, StringComparison.Ordinal);
+        Assert.True(plain.IndexOf("if (homeFocus)", StringComparison.Ordinal) < plain.IndexOf("ImGui.SetItemDefaultFocus();", plain.IndexOf("if (homeFocus)", StringComparison.Ordinal), StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_new_tally_gives_its_default_press_the_keyboard_focus_as_a_new_menu_screen_does()
+    {
+        // SetItemDefaultFocus acts only on a window's appearing frame; the tally comes long after (UX m31). A new tally
+        // asks for the focus once, when nav is showing, and its default press takes it before its item, rich and plain.
+        var tally = Ui("MoonfallWindow.Tally.cs");
+        var prepare = Member(tally, "private void PrepareTally(");
+        Assert.Contains("tallyFocusAsked = ImGui.GetIO().NavVisible;", prepare, StringComparison.Ordinal);
+        Assert.True(prepare.IndexOf("if (!ReferenceEquals(tallyTextsFor, g))", StringComparison.Ordinal) < prepare.IndexOf("tallyFocusAsked = ", StringComparison.Ordinal));
+
+        var before = Member(tally, "private void TallyFocusBefore(");
+        Assert.Contains("if (isDefault && tallyFocusAsked)", before, StringComparison.Ordinal);
+        Assert.Contains("ImGui.SetKeyboardFocusHere();", before, StringComparison.Ordinal);
+        Assert.Contains("tallyFocusAsked = false;", before, StringComparison.Ordinal);
+
+        var pill = Member(tally, "private bool PillButton(");
+        Assert.True(pill.IndexOf("TallyFocusBefore(focus);", StringComparison.Ordinal) is >= 0 and var at && at < pill.IndexOf("ImGui.InvisibleButton(", StringComparison.Ordinal));
+
+        var plain = Member(Ui("MoonfallWindow.Board.cs"), "private void DrawEnd(");
+        foreach (var (focus, button) in (ReadOnlySpan<(string, string)>)[("TallyFocusBefore(againFocus);", "ImGui.Button(tallyAgainLabel"), ("TallyFocusBefore(homeFocus);", "ImGui.Button(tallyHomeLabel"), ("TallyFocusBefore(nextFocus);", "ImGui.Button(tallyNextLabel")])
+        {
+            var f = plain.IndexOf(focus, StringComparison.Ordinal);
+            Assert.True(f >= 0 && f < plain.IndexOf(button, StringComparison.Ordinal), focus);
+        }
+
+        // The menus' own rule, which this mirrors.
+        Assert.Contains("ImGui.SetKeyboardFocusHere();", Member(Ui("MoonfallWindow.Menu.cs"), "private void DefaultFocusBefore("), StringComparison.Ordinal);
     }
 
     [Fact]

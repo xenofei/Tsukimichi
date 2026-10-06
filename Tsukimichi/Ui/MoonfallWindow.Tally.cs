@@ -70,6 +70,13 @@ public sealed partial class MoonfallWindow
             return;
         }
 
+        // A new tally asks its default press for the keyboard focus, as a new menu screen does (EnteredScreen): ImGui's
+        // SetItemDefaultFocus acts only on a window's appearing frame, and this window has long been open (UX m31).
+        if (!ReferenceEquals(tallyTextsFor, g))
+        {
+            tallyFocusAsked = ImGui.GetIO().NavVisible;
+        }
+
         tallyTextsFor = g;
         tallyTextsLanguage = Localization.Loc.Version;
         var won = g.Phase == MoonfallPhase.Won;
@@ -489,6 +496,19 @@ public sealed partial class MoonfallWindow
         DrawText(dl, MoonfallFace.Axis, NamePx(v, small ? 13 : 10.5f, MoonfallFace.Axis), v.Map(mx - mr - 10, cy + 10), Anchor.Right, Ink(Tint(companion.Accent, 0.3f)), usesLine);
     }
 
+    /// <summary>A new tally's keyboard focus asked for (once, when nav is showing), given to its default press before its item.</summary>
+    private bool tallyFocusAsked;
+
+    /// <summary>Gives the new tally's default press the keyboard focus, before its item (the menus' <c>DefaultFocusBefore</c>).</summary>
+    private void TallyFocusBefore(bool isDefault)
+    {
+        if (isDefault && tallyFocusAsked)
+        {
+            ImGui.SetKeyboardFocusHere();
+            tallyFocusAsked = false;
+        }
+    }
+
     /// <summary>A button drawn as the Gold Saucer's gilt pill with its label in Jupiter; true when clicked. Focus adds the game's warm selection glow.</summary>
     private bool PillButton(in ChromePen c, double x0, double y0, double x1, double y1, string label, string id, bool focus)
     {
@@ -496,6 +516,7 @@ public sealed partial class MoonfallWindow
         var min = v.Map(x0, y0);
         var max = v.Map(x1, y1);
         ImGui.SetCursorScreenPos(min);
+        TallyFocusBefore(focus);
         var clicked = ImGui.InvisibleButton(id, Vector2.Max(max - min, Vector2.One));
         var hovered = ImGui.IsItemHovered();
         var navFocus = ImGui.GetIO().NavVisible && ImGui.IsItemFocused();

@@ -304,6 +304,64 @@ public sealed class MoonfallShieldTests
     }
 
     [Fact]
+    public void A_companion_is_reached_only_once_its_stage_has_a_level_built_and_reached()
+    {
+        // The Moon Road's stage 1 built and won, stage 2 not built: the frontier stands on 2-1 (Missing), and the twins
+        // stay dimmed, as the map says "Levels on their way" (GD m18). Shipping 2-1 opens it, and the twins with it.
+        var shape = MoonfallCampaigns.LoadBuiltIn().Base.Levels[0];
+        MoonfallModes Built(int baseLevels)
+        {
+            var levels = Enumerable.Range(0, baseLevels).Select(i => shape with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, i) }).ToList();
+            var campaigns = new MoonfallCampaigns(new MoonfallCampaign(MoonfallCampaignKind.Base, levels), new MoonfallCampaign(MoonfallCampaignKind.Expansion, []), []);
+            var progress = new MoonfallProgress();
+            for (var i = 0; i < MoonfallCharacters.LevelsPerStage; i++)
+            {
+                progress.RecordLevel(MoonfallStages.LevelId(MoonfallCampaignKind.Base, i), won: true, score: 100_000);
+            }
+
+            return new MoonfallModes(campaigns, progress, MoonfallStory.Everyone, []);
+        }
+
+        var stageOne = Built(MoonfallCharacters.LevelsPerStage);
+        Assert.Equal(MoonfallCharacters.LevelsPerStage, stageOne.Frontier(MoonfallCampaignKind.Base));
+        Assert.Equal(MoonfallLevelState.Missing, stageOne.Slot(MoonfallCampaignKind.Base, MoonfallCharacters.LevelsPerStage).State);
+        Assert.Equal(MoonfallCompanionState.MetNotReached, stageOne.CompanionState(MoonfallCompanion.Twins));
+
+        var twoOne = Built(MoonfallCharacters.LevelsPerStage + 1);
+        Assert.Equal(MoonfallLevelState.Open, twoOne.Slot(MoonfallCampaignKind.Base, MoonfallCharacters.LevelsPerStage).State);
+        Assert.Equal(MoonfallCompanionState.Available, twoOne.CompanionState(MoonfallCompanion.Twins));
+    }
+
+    [Fact]
+    public void Continue_goes_on_at_the_level_the_road_came_to_when_the_frontier_falls_back_onto_an_unbuilt_stage()
+    {
+        // Far Shore stages 1, 2, 5, 6 and 11 built; walked at A Realm Reborn to 11-1 (stages 3, 4 and 7 to 10 stepped
+        // over), 11-1 not played. The story reaches Heavensward: stage 3 unveils, unbuilt, and the frontier falls back
+        // onto 3-1 (Missing). 11-1 is still open by the reach mark, and Continue goes there (GD n15).
+        var shape = MoonfallCampaigns.LoadBuiltIn().Base.Levels[0];
+        var built = new[] { 1, 2, 5, 6, 11 };
+        var far = Enumerable.Range(0, MoonfallStages.ExpansionLevels)
+            .Where(i => built.Contains((i / MoonfallCharacters.LevelsPerStage) + 1))
+            .Select(i => shape with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, i) }).ToList();
+        var campaigns = new MoonfallCampaigns(Full().Base, new MoonfallCampaign(MoonfallCampaignKind.Expansion, far), []);
+        var arr = new MoonfallModes(campaigns, new MoonfallProgress { BaseCleared = MoonfallStages.BaseLevels }, MoonfallStory.Everyone, []) { Shield = StoryAt(MoonfallPlaces.ARealmReborn) };
+        var stormPost = 10 * MoonfallCharacters.LevelsPerStage;
+        for (var guard = 0; guard < 200 && arr.Continue() is { } next && next.Index < stormPost; guard++)
+        {
+            arr.Progress.RecordLevel(MoonfallStages.LevelId(next.Campaign, next.Index), won: true, score: 100_000);
+            arr.NoteReach();
+        }
+
+        Assert.Equal(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, stormPost), arr.Continue());
+        Assert.Equal(stormPost, arr.Progress.Reach(MoonfallCampaignKind.Expansion));
+        var heavensward = new MoonfallModes(campaigns, arr.Progress, MoonfallStory.Everyone, []) { Shield = StoryAt(MoonfallPlaces.Heavensward) };
+        Assert.Equal(2 * MoonfallCharacters.LevelsPerStage, heavensward.Frontier(MoonfallCampaignKind.Expansion));
+        Assert.Equal(MoonfallLevelState.Missing, heavensward.Slot(MoonfallCampaignKind.Expansion, 2 * MoonfallCharacters.LevelsPerStage).State);
+        Assert.Equal(new MoonfallNext(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, stormPost), false), heavensward.Next());
+        Assert.Equal(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, stormPost), heavensward.Continue());
+    }
+
+    [Fact]
     public void Winning_the_moon_roads_last_level_leads_on_to_the_far_shore_not_to_the_last_level_note()
     {
         // Base-55 won with the Far Shore built: Adventure's next within The Moon Road is none, but Next() is FS 1-1,

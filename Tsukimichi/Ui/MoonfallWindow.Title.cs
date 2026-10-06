@@ -191,8 +191,14 @@ public sealed partial class MoonfallWindow
     {
         var dl = m.Dl;
         // The backdrop by the story (the backdrop policy): Sohm Al (Heavensward), else Ul'dah's painting (A Realm Reborn),
-        // graded alike; the chart (no story place) only when neither can be shown or read; the night while it builds.
+        // each graded for the title; the chart (no story place) only when neither can be shown or read; the night while
+        // it builds. Sohm Al that cannot be read falls to Ul'dah when the shield shows it, before the chart (GD n13).
         var which = titleBackdrop;
+        if (which == MoonfallBackdrop.Title && titleEarlyShown && gameArt is not null && gameArt.BackdropFailed(which))
+        {
+            which = MoonfallBackdrop.TitleEarly;
+        }
+
         if (which != MoonfallBackdrop.Chart && gameArt is not null && gameArt.BackdropFailed(which))
         {
             which = MoonfallBackdrop.Chart;
@@ -237,6 +243,18 @@ public sealed partial class MoonfallWindow
             var clear = Ink(MoonfallColor.Hex("#04050E"), 0f);
             dl.AddRectFilledMultiColor(v.Map(100, 110), v.Map(320, 480), clear, dark, dark, clear);
             dl.AddRectFilledMultiColor(v.Map(320, 110), v.Map(540, 480), dark, clear, clear, dark);
+
+            // Above it, behind the logo, the scrim fades in from clear at 40 units, so it has no top edge on a pale
+            // painting (UX m30): slices keep the across ramp, each fading down from clear.
+            const int Slices = 8;
+            var ink = MoonfallColor.Hex("#04050E");
+            for (var k = 0; k < Slices; k++)
+            {
+                var t0 = k / (float)Slices;
+                var t1 = (k + 1) / (float)Slices;
+                dl.AddRectFilledMultiColor(v.Map(100 + (220 * t0), 40), v.Map(100 + (220 * t1), 110), clear, clear, Ink(ink, 0.5f * t1), Ink(ink, 0.5f * t0));
+                dl.AddRectFilledMultiColor(v.Map(320 + (220 * t0), 40), v.Map(320 + (220 * t1), 110), clear, clear, Ink(ink, 0.5f * (1 - t1)), Ink(ink, 0.5f * (1 - t0)));
+            }
             Moon(m, 86, 60, 22);
         }
 

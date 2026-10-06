@@ -140,8 +140,11 @@ public sealed partial class MoonfallWindow : Window
     /// <summary>The offline renderer: the board's clock is held (while the art loads), so a staged moment renders the same every run.</summary>
     internal bool HoldBoardForRender { get; set; }
 
-    /// <summary>The title's painting (Sohm Al) is past the player's story: the chart stands in.</summary>
+    /// <summary>The title's painting by the story: Sohm Al, else Ul'dah's, else (neither shown) the chart.</summary>
     private MoonfallBackdrop titleBackdrop = MoonfallBackdrop.Title;
+
+    /// <summary>The shield shows Ul'dah's painting: the title's fallback when Sohm Al cannot be read (GD n13).</summary>
+    private bool titleEarlyShown = true;
 
     /// <summary>The shield version the menus' words and the scene veil were made for.</summary>
     private int shieldSeen = int.MinValue;
@@ -158,8 +161,9 @@ public sealed partial class MoonfallWindow : Window
         shieldSeen = version;
         gameArt?.VeilChanged();
         // The title's painting by the story: Sohm Al, else Ul'dah (A Realm Reborn), else (neither shown) the chart.
+        titleEarlyShown = !modes.Shield.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly));
         titleBackdrop = !modes.Shield.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)) ? MoonfallBackdrop.Title
-            : !modes.Shield.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly)) ? MoonfallBackdrop.TitleEarly
+            : titleEarlyShown ? MoonfallBackdrop.TitleEarly
             : MoonfallBackdrop.Chart;
 
         // The menus' views and words are made per progress epoch: a shield change remakes them as a win does.

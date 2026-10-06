@@ -124,6 +124,35 @@ public sealed class MoonfallShieldGameDataTests(UnlockIndexFixture fixture, ITes
     }
 
     [GameDataFact]
+    public void A_fresh_character_of_any_city_sees_uldahs_title_and_not_sohm_al()
+    {
+        // The three cities' openers ("Close to Home", one per starting class): Gridania (Mother Miounne), Limsa Lominsa
+        // (Baderon) and Ul'dah (Momodi). A fresh character has one of them ready and the others locked out, as the game
+        // keeps another city's start (GD n16). For each, the real shield shows Ul'dah's painting and hides Sohm Al's, so
+        // the title is Ul'dah, never the chart.
+        uint[] openers = [65621, 65659, 65660, 65644, 65645, 66104, 66105, 66106];
+        Assert.All(openers, id => Assert.Contains(Story, q => q.RowId == id && q.Name == "Close to Home"));
+        foreach (var opener in openers)
+        {
+            var states = new Dictionary<uint, QuestState>();
+            foreach (var quest in Catalog.All)
+            {
+                states[quest.RowId] = QuestState.Blocked;
+            }
+
+            foreach (var other in openers)
+            {
+                states[other] = QuestState.Foreclosed;
+            }
+
+            states[opener] = QuestState.Ready;
+            var shield = MoonfallShield.FromMask(SpoilerMask.Build(Catalog, states, SpoilerOptions.Default, null, names: fixture.Unlocks.Names));
+            Assert.False(shield.Hides(MoonfallPlaces.OfBackdrop(Core.Moonfall.Art.MoonfallBackdrop.TitleEarly)), $"{opener}: Ul'dah hidden");
+            Assert.True(shield.Hides(MoonfallPlaces.OfBackdrop(Core.Moonfall.Art.MoonfallBackdrop.Title)), $"{opener}: Sohm Al shown");
+        }
+    }
+
+    [GameDataFact]
     public void The_far_shore_through_the_real_shield_veils_endwalkers_stages_until_their_story_or_a_reveal()
     {
         var far = MoonfallStages.Of(MoonfallCampaignKind.Expansion);

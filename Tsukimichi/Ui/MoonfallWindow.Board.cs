@@ -591,19 +591,37 @@ public sealed partial class MoonfallWindow
     private string[] tallyLines = [];
     private long tallyShown = -1;
 
+    private (string Note, float Wrap, float Font) plainNoteFor = (string.Empty, -1f, -1f);
+    private float plainNoteHeight;
+
+    /// <summary>The plain tally's note wrapped at <paramref name="wrap"/>: its height, measured when the note, the width or the font changes.</summary>
+    private float PlainNoteHeight(float wrap)
+    {
+        var key = (Note: tallyNote, Wrap: wrap, Font: ImGui.GetFontSize());
+        if (key != plainNoteFor)
+        {
+            plainNoteFor = key;
+            plainNoteHeight = ImGui.CalcTextSize(tallyNote, false, wrap).Y;
+        }
+
+        return plainNoteHeight;
+    }
+
     private void DrawEnd(ImDrawListPtr dl, Vector2 origin, Vector2 size, MoonfallGame g)
     {
         PrepareTally(g);
         var line = ImGui.GetTextLineHeightWithSpacing();
         var rows = TallyRows(g);
-        // A win's note (why there is no Next) takes a line of its own above the buttons.
-        var panel = new Vector2(MathF.Min(size.X - UiMetrics.Px(24f), UiMetrics.Px(420f)), line * (Math.Max(rows, 1) + 5.5f + (rows > 0 && tallyNoteOnWin ? 1.4f : 0f)));
+        // A win's note (why there is no Next) takes its own wrapped lines above the buttons, the panel growing by their height.
+        var width = MathF.Min(size.X - UiMetrics.Px(24f), UiMetrics.Px(420f));
+        var pad = UiMetrics.Px(16f);
+        var note = rows > 0 && tallyNoteOnWin ? (line * 0.4f) + PlainNoteHeight(width - (2 * pad)) : 0f;
+        var panel = new Vector2(width, (line * (Math.Max(rows, 1) + 5.5f)) + note);
         var min = origin + ((size - panel) * 0.5f);
         var max = min + panel;
         dl.AddRectFilled(origin, origin + size, Theme.WithAlpha(Theme.Scene.Scrim, 0.55f));
         dl.AddRectFilled(min, max, Theme.U32(Theme.Surface.Raised), UiMetrics.Px(8f));
         dl.AddRect(min, max, Theme.U32(Theme.Gold), UiMetrics.Px(8f), ImDrawFlags.None, UiMetrics.Hairline);
-        var pad = UiMetrics.Px(16f);
         var x = min.X + pad;
         var y = min.Y + pad;
 
@@ -637,10 +655,16 @@ public sealed partial class MoonfallWindow
             dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.TextSecondary), tallyNote);
         }
 
-        // The way on, in the rich tally's order: this level again, the mode's own screen, and the next level when there is one.
+        // The way on, in the rich tally's order: this level again, the mode's own screen, and the next level when there is
+        // one. The default press is the rich tally's too: Next; else Replay on a win; Map when the road waits, or no win.
         ImGui.SetCursorScreenPos(new Vector2(x, max.Y - pad - ImGui.GetFrameHeight()));
+        var won = TallyWon(g);
+        var nextFocus = tallyNext is not null;
+        var againFocus = !nextFocus && won && tallyVeil is null;
+        var homeFocus = !nextFocus && (!won || tallyAgain is null || tallyVeil is not null);
         if (tallyAgain is { } again)
         {
+            TallyFocusBefore(againFocus);
             if (ImGui.Button(tallyAgainLabel ?? again))
             {
                 SoundClick();
@@ -648,10 +672,16 @@ public sealed partial class MoonfallWindow
                 return;
             }
 
+            if (againFocus)
+            {
+                ImGui.SetItemDefaultFocus();
+            }
+
             ImGui.SameLine();
         }
 
         TextSinkForRender?.Invoke(tallyHome);
+        TallyFocusBefore(homeFocus);
         if (ImGui.Button(tallyHomeLabel))
         {
             SoundClick();
@@ -659,20 +689,24 @@ public sealed partial class MoonfallWindow
             return;
         }
 
-        if (tallyVeil is not null)
+        if (homeFocus)
         {
-            // The note says Map opens on the waiting stage: Map is the default press, not Replay.
+            // When the road waits, the note says Map opens on the waiting stage: Map is the default press, not Replay.
             ImGui.SetItemDefaultFocus();
         }
 
         if (tallyNext is { } next)
         {
             ImGui.SameLine();
+            TallyFocusBefore(nextFocus);
             if (ImGui.Button(tallyNextLabel ?? next))
             {
                 SoundClick();
                 Next();
+                return;
             }
+
+            ImGui.SetItemDefaultFocus();
         }
     }
 }

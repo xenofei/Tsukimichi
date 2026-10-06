@@ -331,8 +331,8 @@ public sealed class MoonfallModes
     public MoonfallLevelPlace? Continue() => Next() is { Veiled: false } next ? next.Place : null;
 
     /// <summary>
-    /// Where Adventure goes next: the frontier's level when it can be played (stepping over veiled stages); otherwise,
-    /// when a stage set past the player's story is what stands between the player and more of the road, that stage's
+    /// Where Adventure goes next: the frontier's level when it can be played (stepping over veiled stages); else the
+    /// level the road had come to (<see cref="MoonfallProgress.Reach"/>) when it is still open; otherwise, when a stage set past the player's story is what stands between the player and more of the road, that stage's
     /// first level, <see cref="MoonfallNext.Veiled"/>. Null when every shipped level is won, or the next is not built yet
     /// and nothing is veiled.
     /// </summary>
@@ -350,6 +350,14 @@ public sealed class MoonfallModes
             if (index < count && Slot(campaign, index).State == MoonfallLevelState.Open)
             {
                 return new MoonfallNext(new MoonfallLevelPlace(campaign, index), false);
+            }
+
+            // The frontier fell back onto a level not built yet (a story step unveiled an unbuilt stage): the level the road
+            // had come to (its high-water mark) is still open, so Adventure goes on there (GD n15).
+            var reach = Progress.Reach(campaign);
+            if (reach != index && reach < count && Slot(campaign, reach).State == MoonfallLevelState.Open)
+            {
+                return new MoonfallNext(new MoonfallLevelPlace(campaign, reach), false);
             }
 
             // Nothing to play ahead: the first stage the road stepped over (before the frontier) that has levels built is

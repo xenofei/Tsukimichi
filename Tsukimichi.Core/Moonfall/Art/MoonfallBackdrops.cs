@@ -13,7 +13,9 @@ public enum MoonfallBackdrop : byte
 
     /// <summary>
     /// The title for a story not yet in Heavensward (the owner's answer, 6 October 2026): Ul'dah
-    /// (<c>ui/loadingimage/-nowloading_base02.tex</c>), A Realm Reborn's, graded as the title is.
+    /// (<c>ui/loadingimage/-nowloading_base02.tex</c>), A Realm Reborn's: a pale sketch on paper, so given its own darker
+    /// night, its own crop (the city, not the loading screen's blurred lower band) and its own focus (the great dome right
+    /// of the modes).
     /// </summary>
     TitleEarly,
 }
@@ -58,7 +60,12 @@ public static class MoonfallBackdrops
     public static MoonfallRgba Build(MoonfallBackdrop backdrop, MoonfallImage painting)
     {
         ArgumentNullException.ThrowIfNull(painting);
-        var image = backdrop == MoonfallBackdrop.Chart ? Chart(painting) : Title(painting);
+        var image = backdrop switch
+        {
+            MoonfallBackdrop.Chart => Chart(painting),
+            MoonfallBackdrop.TitleEarly => TitleEarly(painting),
+            _ => Title(painting),
+        };
         return new MoonfallRgba(image.Width, image.Height, image.ToRgba(), new Vector4(0, 0, image.Width, image.Height));
     }
 
@@ -66,26 +73,46 @@ public static class MoonfallBackdrops
     /// screens2.title_background: the painting cropped to the 1280 × 800 design (its focus a third across, as the
     /// mocks frame the mountain right of the modes), night-graded, then jewel-graded with the sky toward amethyst.
     /// </summary>
-    public static MoonfallImage Title(MoonfallImage painting)
+    public static MoonfallImage Title(MoonfallImage painting) => TitleFrom(painting, top: 40f, height: 1010f, focus: 0.30f, new MoonfallNightGrade
+    {
+        Ceiling = 0.66f,
+        Knee = 0.40f,
+        Exposure = 0.95f,
+        Gamma = 1.6f,
+        SkyDrop = 0.25f,
+        SkyTop = 0.30f,
+        SkyBottom = 0.70f,
+    });
+
+    /// <summary>
+    /// The title before Heavensward: Ul'dah's painting, rows 40 to 800 (the city down to the white gate; below it the
+    /// loading screen's own blurred band), its centre (the great dome) half across, and a darker night than Sohm Al's,
+    /// because the sketch's paper sky is far paler: the 640 logo stands on it (UX m30).
+    /// </summary>
+    public static MoonfallImage TitleEarly(MoonfallImage painting) => TitleFrom(painting, top: 40f, height: 760f, focus: 0.50f, new MoonfallNightGrade
+    {
+        Ceiling = 0.42f,
+        Knee = 0.36f,
+        Exposure = 0.72f,
+        Gamma = 1.6f,
+        SkyDrop = 0.40f,
+        SkyTop = 0.30f,
+        SkyBottom = 0.60f,
+    });
+
+    /// <summary>
+    /// The painting cropped to the 1280 × 800 design from row <paramref name="top"/>, <paramref name="height"/> rows
+    /// tall, with the painting's centre <paramref name="focus"/> across the frame, night-graded, then jewel-graded.
+    /// </summary>
+    private static MoonfallImage TitleFrom(MoonfallImage painting, float top, float height, float focus, MoonfallNightGrade grade)
     {
         ArgumentNullException.ThrowIfNull(painting);
         // The design's crop is in the 1920 × 1080 painting's pixels; a painting of another size is cropped in proportion.
         var k = painting.Width / 1920f;
-        const float Ch = 1010f;
-        var cw = MathF.Min(1920f, Ch * TitleWidth / TitleHeight);
-        var x0 = Math.Clamp(960f - (cw * 0.30f), 0f, 1920f - cw);
-        var px = MoonfallFilters.Resample(painting, x0 * k, 40f * k, cw * k, MathF.Min(Ch * k, painting.Height - (40f * k)), TitleWidth, TitleHeight);
-        var night = MoonfallGrade.NightLab(px, new MoonfallNightGrade
-        {
-            Ceiling = 0.66f,
-            Knee = 0.40f,
-            Exposure = 0.95f,
-            Gamma = 1.6f,
-            SkyDrop = 0.25f,
-            SkyTop = 0.30f,
-            SkyBottom = 0.70f,
-        }, 1f);
-        return JewelTitle(night);
+        var cw = MathF.Min(1920f, height * TitleWidth / TitleHeight);
+        var x0 = Math.Clamp(960f - (cw * focus), 0f, 1920f - cw);
+        var px = MoonfallFilters.Resample(painting, x0 * k, top * k, cw * k, MathF.Min(height * k, painting.Height - (top * k)), TitleWidth, TitleHeight);
+        return JewelTitle(MoonfallGrade.NightLab(px, grade, 1f));
     }
 
     /// <summary>
