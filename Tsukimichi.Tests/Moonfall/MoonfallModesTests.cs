@@ -151,10 +151,10 @@ public sealed class MoonfallModesTests
         Assert.Equal(MoonfallLevelState.Sealed, modes.Slot(MoonfallCampaignKind.Expansion, 0).State);
 
         // The shipped campaign, where most ids are not authored yet.
-        var shipped = Modes(new MoonfallProgress { BaseCleared = 4 }, campaigns: MoonfallCampaigns.LoadBuiltIn());
-        Assert.Equal(MoonfallLevelState.Missing, shipped.Slot(MoonfallCampaignKind.Base, 4).State);
+        var shipped = Modes(new MoonfallProgress { BaseCleared = 10 }, campaigns: MoonfallCampaigns.LoadBuiltIn());
+        Assert.Equal(MoonfallLevelState.Missing, shipped.Slot(MoonfallCampaignKind.Base, 10).State);
         Assert.Null(shipped.Continue());
-        Assert.Null(shipped.Adventure(MoonfallCampaignKind.Base, 4));
+        Assert.Null(shipped.Adventure(MoonfallCampaignKind.Base, 10));
     }
 
     [Fact]

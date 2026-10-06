@@ -149,12 +149,12 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
     [Fact]
     public void A_thumbnail_the_veil_overtakes_mid_build_is_never_landed_and_is_rebuilt_story_safe()
     {
-        // Lantern night (Kugane) is built for a thumbnail with its scene shown; while its painting is still being read,
-        // the shield comes to hide the scene's place. The finished Kugane build is dropped unlanded, and the thumbnail is
+        // The Gilded Dome (Ul'dah) is built for a thumbnail with its scene shown; while its painting is still being read,
+        // the shield comes to hide the scene's place. The finished Ul'dah build is dropped unlanded, and the thumbnail is
         // built again over the recipe's story-safe fallback.
         // Every game painting reads as a solid magenta sentinel, so the test means the same with or without the game:
-        // the Kugane build (over the sentinel) and the story-safe one (over the fallback picture) land different pixels.
-        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Recipe.Name == "lantern-night");
+        // the Ul'dah build (over the sentinel) and the story-safe one (over the fallback picture) land different pixels.
+        var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Recipe.Name == "uldah-gilded-dome");
         var safe = SentinelThumb(level, MoonfallSceneHide.Fallback);
         Assert.NotEqual(safe, SentinelThumb(level, MoonfallSceneHide.Shown));
 
@@ -174,13 +174,13 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
 
         Assert.Equal(0, host.Uploaded.Count(static u => u.Name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal)));
 
-        // The veil falls, then the Kugane read completes.
+        // The veil falls, then the Ul'dah read completes.
         hide = MoonfallSceneHide.Fallback;
         art.VeilChanged();
         gate.SetResult();
         Until(() => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
 
-        // One thumbnail landed, and it was built from the fallback picture, never from the Kugane build.
+        // One thumbnail landed, and it was built from the fallback picture, never from the Ul'dah build.
         Assert.Single(host.Uploaded, static u => u.Name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal));
         Assert.Contains(recipe.Fallback!, host.Pictures);
         Assert.Equal(safe, Assert.Single(host.ThumbHashes));
@@ -208,12 +208,12 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
             Assert.NotNull(painting);
             foreach (var tier in new[] { 1, 2 })
             {
-                _ = MoonfallSceneBuilder.Build(recipe, level, painting!, tier, fallback);
+                _ = MoonfallSceneBuilder.Build(recipe, level, painting!, tier, fallback, plates: MoonfallSceneKit.Plates(recipe));
                 var runs = new List<(double Ms, MoonfallSceneLayers Layers)>();
                 for (var run = 0; run < 5; run++)
                 {
                     var sw = Stopwatch.StartNew();
-                    var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, tier, fallback);
+                    var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, tier, fallback, plates: MoonfallSceneKit.Plates(recipe));
                     runs.Add((sw.Elapsed.TotalMilliseconds, layers));
                 }
 

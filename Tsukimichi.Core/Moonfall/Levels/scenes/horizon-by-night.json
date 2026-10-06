@@ -1,0 +1,96 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "horizon-by-night",
+ "source": {
+  "picture": "horizon-by-night"
+ },
+ "grain": 0.008,
+ "palette": {
+  "bands": [[0, "#3E42C8"], [600, "#2E34A0"]],
+  "chroma": 1.2,
+  "floor": 0.05,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#1E2A8A"], [0.45, "#D0D8FF"]],
+  "regions": [
+   {
+    "hue": "#30B888",
+    "chroma": 0.28,
+    "where": [
+     {
+      "y": [388, 406]
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [40, 18],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [40, 18],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "shafts",
+   "origin": [-80, -90],
+   "angles": [40, 48, 56, 64],
+   "widths": [30, 22, 36, 24],
+   "k": 0.05,
+   "colour": "#D8DCFF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "horizon-by-night-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "horizon-by-night-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "horizon-by-night-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "horizon-by-night-rim",
+   "blend": "screen"
+  }
+ ],
+ "veil": 0.3,
+ "motion": {
+  "dust": 16,
+  "stars": 36
+ },
+ "chrome": {
+  "sky": "#141A4E",
+  "deep": "#070818",
+  "jewel1": "#3A40C0",
+  "jewel2": "#2AA8A0"
+ }
+}

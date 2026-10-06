@@ -41,6 +41,21 @@ public static partial class MoonfallSceneRecipeLoader
     /// <summary>The most a shaft may add (F4).</summary>
     public const float MaxShaftK = 0.08f;
 
+    /// <summary>
+    /// The most chroma a palette region may push. The level pipeline's approved second jewels reach 0.28 (1-2's sky); a
+    /// region's chroma is a target the gamut then trims (lightness kept), and the pipeline's F7 and F9 measure what it gives.
+    /// </summary>
+    public const float MaxRegionChroma = 0.3f;
+
+    /// <summary>How far a squeezed crop's shape may be from the board's 4:3 (a share of it, either way).</summary>
+    public const float MaxSqueeze = 0.25f;
+
+    /// <summary>The most erase boxes a source may name.</summary>
+    public const int MaxErase = 16;
+
+    /// <summary>The most points a <c>poly</c> or <c>line</c> mask term may hold.</summary>
+    public const int MaxMaskPoints = 64;
+
     private static readonly JsonDocumentOptions Options = new() { CommentHandling = JsonCommentHandling.Skip, AllowTrailingCommas = true };
 
     private static readonly string[] Styles = ["laurel", "oak", "fir", "fern", "willow"];
@@ -156,6 +171,13 @@ public static partial class MoonfallSceneRecipeLoader
 
         return problems;
     }
+
+    // A mask term's name and how many numbers it takes (-1: a poly's list of points).
+    private static readonly (MoonfallMaskKind Kind, string Name, int Count)[] TermNames =
+    [
+        (MoonfallMaskKind.Lum, "lum", 2), (MoonfallMaskKind.Y, "y", 2), (MoonfallMaskKind.X, "x", 2), (MoonfallMaskKind.Disc, "disc", 4), (MoonfallMaskKind.Near, "near", 2),
+        (MoonfallMaskKind.Poly, "poly", -1), (MoonfallMaskKind.Line, "line", 2), (MoonfallMaskKind.Land, "land", 2),
+    ];
 
     private sealed class Reader(List<string> errors)
     {
@@ -275,6 +297,21 @@ public static partial class MoonfallSceneRecipeLoader
                 errors.Add("paint: a moving shaft belongs in light (the palette would recolour what moves)");
             }
 
+            if (recipe.Light.OfType<MoonfallTone>().Any())
+            {
+                errors.Add("light: a tone belongs in paint (it shades the painting, under the palette)");
+            }
+
+            if (recipe.Paint.Concat(recipe.Light).OfType<MoonfallShafts>().Any(static s => s.BeamsOnly && !s.Moving))
+            {
+                errors.Add("a shaft with beamsOnly must be moving (only its moving share is made)");
+            }
+
+            if (recipe.Paint.Concat(recipe.Light).OfType<MoonfallPlate>().Any(static p => p.Cover && p.Blend != MoonfallPlateBlend.Multiply))
+            {
+                errors.Add("a plate marked cover must multiply (the framing's coverage is one less the plate)");
+            }
+
             var particles = recipe.Motion.Dust + recipe.Motion.Stars + (recipe.Fireflies?.Count ?? 0);
             if (particles > MaxParticles)
             {
@@ -330,17 +367,57 @@ public static partial class MoonfallSceneRecipeLoader
                 var box = Floats(c, "source.crop", 4, -4096, 4096);
                 if (box.Length == 4)
                 {
-                    if (!(box[2] >= 16 && box[3] >= 12) || MathF.Abs((box[2] / box[3]) - (4f / 3f)) > 0.02f)
+                    // A crop is the board's shape (4:3); "squeeze": true lets the painting be squeezed to it by up to a
+                    // quarter either way (the level pipeline's 2-1 takes Limsa's whole height into a squarer crop).
+                    var squeeze = Bool(s, "squeeze");
+                    var aspect = box[3] > 0 ? box[2] / box[3] / (4f / 3f) : 0f;
+                    var shaped = squeeze ? aspect is >= 1f - MaxSqueeze and <= 1f + MaxSqueeze : MathF.Abs((box[2] / box[3]) - (4f / 3f)) <= 0.02f;
+                    if (!(box[2] >= 16 && box[3] >= 12) || !shaped)
                     {
-                        errors.Add("source.crop's w and h must be at least 16 x 12 and 4:3, the board's shape");
+                        errors.Add(squeeze
+                            ? $"source.crop's w and h must be at least 16 x 12 and within {MaxSqueeze:P0} of 4:3 when squeezed"
+                            : "source.crop's w and h must be at least 16 x 12 and 4:3, the board's shape (or set squeeze)");
                     }
 
                     crop = (box[0], box[1], box[2], box[3]);
                 }
             }
 
+            var erase = new List<Vector4>();
+            if (s.TryGetProperty("erase", out var er) && er.ValueKind != JsonValueKind.Null)
+            {
+                if (er.ValueKind != JsonValueKind.Array || er.GetArrayLength() > MaxErase)
+                {
+                    errors.Add($"source.erase must be a list of at most {MaxErase} [x, y, w, h] boxes");
+                }
+                else
+                {
+                    var k = 0;
+                    foreach (var box in er.EnumerateArray())
+                    {
+                        var at = $"source.erase[{k++}]";
+                        var b = Floats(box, at, 4, 0, 8192);
+                        if (b.Length != 4)
+                        {
+                            continue;
+                        }
+
+                        if (!(b[2] >= 1 && b[3] >= 1 && b[2] <= 1024 && b[3] <= 1024))
+                        {
+                            errors.Add(at + "'s w and h must be 1 to 1024");
+                            continue;
+                        }
+
+                        erase.Add(new Vector4(b[0], b[1], b[2], b[3]));
+                    }
+                }
+            }
+
             return new MoonfallSceneSource(game is not null ? MoonfallSourceKind.Game : MoonfallSourceKind.Picture, game ?? picture!,
-                Bool(s, "mirror"), pad.Length == 2 ? (int)pad[0] : 0, pad.Length == 2 ? (int)pad[1] : 0, mode == "reflect", crop);
+                Bool(s, "mirror"), pad.Length == 2 ? (int)pad[0] : 0, pad.Length == 2 ? (int)pad[1] : 0, mode == "reflect", crop)
+            {
+                Erase = erase,
+            };
         }
 
         private MoonfallNightGrade? Grade(JsonElement root)
@@ -429,13 +506,31 @@ public static partial class MoonfallSceneRecipeLoader
                             continue;
                         }
 
-                        regions.Add(new MoonfallRegionRecipe(ColourV(r, "hue", at), Num(r, "chroma", 0.08f, 0f, 0.2f), Num(r, "weight", 1f, 0f, 1f), Mask(r, "where", at)));
+                        regions.Add(new MoonfallRegionRecipe(ColourV(r, "hue", at), Num(r, "chroma", 0.08f, 0f, MaxRegionChroma), Num(r, "weight", 1f, 0f, 1f), Mask(r, "where", at)));
+                    }
+                }
+            }
+
+            var spare = new List<IReadOnlyList<MoonfallMaskTerm>>();
+            if (p.TryGetProperty("spare", out var sp) && sp.ValueKind != JsonValueKind.Null)
+            {
+                if (sp.ValueKind != JsonValueKind.Array || sp.GetArrayLength() > 4)
+                {
+                    errors.Add("palette.spare must be a list of at most 4 masks");
+                }
+                else
+                {
+                    var k = 0;
+                    foreach (var m in sp.EnumerateArray())
+                    {
+                        spare.Add(MaskList(m, $"palette.spare[{k++}]"));
                     }
                 }
             }
 
             return new MoonfallPaletteRecipe
             {
+                Spare = spare,
                 Bands = bands,
                 ValueHues = Stops(p, "valueHues", "palette.valueHues", 0, 1),
                 Mix = Num(p, "mix", 0.5f, 0f, 1f),
@@ -448,24 +543,22 @@ public static partial class MoonfallSceneRecipeLoader
             };
         }
 
-        private List<MoonfallMaskTerm> Mask(JsonElement owner, string key, string at)
+        private List<MoonfallMaskTerm> Mask(JsonElement owner, string key, string at) =>
+            owner.TryGetProperty(key, out var list) ? MaskList(list, $"{at}.{key}") : [];
+
+        private List<MoonfallMaskTerm> MaskList(JsonElement list, string at)
         {
             var terms = new List<MoonfallMaskTerm>();
-            if (!owner.TryGetProperty(key, out var list))
-            {
-                return terms;
-            }
-
             if (list.ValueKind != JsonValueKind.Array || list.GetArrayLength() > 6)
             {
-                errors.Add($"{at}.{key} must be a list of at most 6 terms");
+                errors.Add($"{at} must be a list of at most 6 terms");
                 return terms;
             }
 
             var i = 0;
             foreach (var t in list.EnumerateArray())
             {
-                var here = $"{at}.{key}[{i++}]";
+                var here = $"{at}[{i++}]";
                 if (t.ValueKind != JsonValueKind.Object)
                 {
                     errors.Add(here + " must be an object");
@@ -473,13 +566,13 @@ public static partial class MoonfallSceneRecipeLoader
                 }
 
                 (MoonfallMaskKind Kind, string Name, int Count)? found = null;
-                foreach (var (kind, name, count) in new[] { (MoonfallMaskKind.Lum, "lum", 2), (MoonfallMaskKind.Y, "y", 2), (MoonfallMaskKind.X, "x", 2), (MoonfallMaskKind.Disc, "disc", 4), (MoonfallMaskKind.Near, "near", 2) })
+                foreach (var (kind, name, count) in TermNames)
                 {
                     if (t.TryGetProperty(name, out _))
                     {
                         if (found is not null)
                         {
-                            errors.Add(here + " names more than one of lum, y, x, disc, near");
+                            errors.Add(here + " names more than one of lum, y, x, disc, near, poly, line, land");
                         }
 
                         found = (kind, name, count);
@@ -488,17 +581,41 @@ public static partial class MoonfallSceneRecipeLoader
 
                 if (found is not { } f)
                 {
-                    errors.Add(here + " must name one of lum, y, x, disc, near");
+                    errors.Add(here + " must name one of lum, y, x, disc, near, poly, line, land");
                     continue;
                 }
 
-                var args = Floats(t.GetProperty(f.Name), here + "." + f.Name, f.Count, -1000, 2000);
+                float[] args = [];
+                Vector2[] points = [];
+                if (f.Kind == MoonfallMaskKind.Poly)
+                {
+                    points = Points(t.GetProperty(f.Name), here + ".poly", 3, MaxMaskPoints);
+                }
+                else
+                {
+                    args = Floats(t.GetProperty(f.Name), here + "." + f.Name, f.Count, -1000, 2000);
+                }
+
                 if (args.Length == f.Count && f.Kind == MoonfallMaskKind.Disc && !(args[2] > 0 && args[3] >= 0))
                 {
                     errors.Add(here + ".disc's r must be above 0 and its feather at least 0");
                 }
 
-                terms.Add(new MoonfallMaskTerm(f.Kind, args, Num(t, "blur", 0f, 0f, 40f), Bool(t, "invert"), Num(t, "scale", 1f, 0f, 1f)));
+                if (f.Kind == MoonfallMaskKind.Line)
+                {
+                    points = t.TryGetProperty("points", out var lp) ? Points(lp, here + ".points", 2, MaxMaskPoints) : [];
+                    if (points.Length < 2)
+                    {
+                        errors.Add(here + ".line needs points: 2 or more [x, y]");
+                    }
+                }
+
+                if (args.Length == f.Count && f.Kind == MoonfallMaskKind.Land && !(args[0] is > 0 and < 1 && args[1] >= 0 && args[1] <= 32 && args[1] == MathF.Floor(args[1])))
+                {
+                    errors.Add(here + ".land must be [threshold 0..1, grow 0..32 whole pixels]");
+                }
+
+                terms.Add(new MoonfallMaskTerm(f.Kind, args, Num(t, "blur", 0f, 0f, 40f), Bool(t, "invert"), Num(t, "scale", 1f, 0f, 1f)) { Points = points });
             }
 
             return terms;
@@ -539,7 +656,37 @@ public static partial class MoonfallSceneRecipeLoader
                         }
 
                         list.Add(new MoonfallShafts(Vec2(l, "origin", at, new(-140, -220)), angles, widths, Num(l, "k", 0.07f, 0f, MaxShaftK), ColourV(l, "colour", at, "#BFD2FF"),
-                            Int(l, "seed", 3, 0, 100_000), Num(l, "reach", 900f, 100f, 2000f), Num(l, "near", 150f, 0f, 1000f), Bool(l, "moving")));
+                            Int(l, "seed", 3, 0, 100_000), Num(l, "reach", 900f, 100f, 2000f), Num(l, "near", 150f, 0f, 1000f), Bool(l, "moving"))
+                        {
+                            BeamsOnly = Bool(l, "beamsOnly"),
+                        });
+                        break;
+                    case "tone":
+                        var where = Mask(l, "where", at);
+                        if (where.Count == 0)
+                        {
+                            errors.Add(at + ".where needs at least one term");
+                        }
+
+                        list.Add(new MoonfallTone(where, Num(l, "mul", 1f, 0f, 2f)));
+                        break;
+                    case "plate":
+                        var picture = Text(l, "picture");
+                        var blend = Text(l, "blend");
+                        if (!MoonfallLevelLoader.IsSceneName(picture))
+                        {
+                            errors.Add(at + ".picture must name a shipped picture (a scene name)");
+                            break;
+                        }
+
+                        if (blend is not ("screen" or "multiply" or "add"))
+                        {
+                            errors.Add(at + ".blend must be screen, multiply or add");
+                            break;
+                        }
+
+                        var mode = blend switch { "screen" => MoonfallPlateBlend.Screen, "multiply" => MoonfallPlateBlend.Multiply, _ => MoonfallPlateBlend.Add };
+                        list.Add(new MoonfallPlate(picture!, mode, Bool(l, "cover")));
                         break;
                     case "glow":
                         list.Add(new MoonfallGlow(Num(l, "x", 0, -800, 1600), Num(l, "y", 0, -600, 1200), Num(l, "r", 100, 1, 2000), ColourV(l, "colour", at), Num(l, "k", 0.05f, 0, 0.2f)));
@@ -569,7 +716,7 @@ public static partial class MoonfallSceneRecipeLoader
                             Num(l, "dash", 5f, 1f, 40f), Num(l, "gap", 4.5f, 1f, 40f), Num(l, "alpha", 0.6f, 0f, 1f)));
                         break;
                     default:
-                        errors.Add(at + ".kind must be shafts, glow, moonGlow, moon, aurora, nebula, compassRose, neatline or route");
+                        errors.Add(at + ".kind must be shafts, glow, moonGlow, moon, aurora, nebula, compassRose, neatline, route, tone or plate");
                         break;
                 }
             }

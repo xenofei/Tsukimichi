@@ -139,5 +139,11 @@
     "hk": 0.17
    }
   ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16
+  },
+  "flicker": [0]
  }
 }

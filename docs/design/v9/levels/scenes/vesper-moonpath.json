@@ -113,5 +113,23 @@
    "mask": [["y", 300, 250]],
    "mul": 0.82
   }
- ]
+ ],
+ "runtime": {
+  "motion": {
+   "dust": 10,
+   "stars": 30,
+   "mist": [
+    {
+     "y": [540, 592],
+     "speed": 3,
+     "alpha": 0.06,
+     "cell": 140,
+     "seed": 37,
+     "colour": "#B8C8F0"
+    }
+   ]
+  },
+  "flicker": [0],
+  "feverMoon": [292, 128, 30]
+ }
 }

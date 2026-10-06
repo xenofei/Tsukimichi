@@ -98,5 +98,21 @@
    "mask": [["y", 370, 290]],
    "mul": 0.8
   }
- ]
+ ],
+ "runtime": {
+  "motion": {
+   "stars": 36,
+   "mist": [
+    {
+     "y": [516, 592],
+     "speed": 5,
+     "alpha": 0.07,
+     "cell": 120,
+     "seed": 41,
+     "colour": "#C8C0E8"
+    }
+   ]
+  },
+  "feverMoon": [150, 104, 24]
+ }
 }

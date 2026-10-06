@@ -1,0 +1,135 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "vesper-moonpath",
+ "source": {
+  "picture": "vesper-moonpath"
+ },
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "y": [300, 250]
+    }
+   ],
+   "mul": 0.82
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#3C40C0"], [300, "#2E48C8"], [600, "#2038A0"]],
+  "chroma": 1.1,
+  "floor": 0.04,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#1A2A8A"], [0.45, "#D6DCFF"]],
+  "regions": [
+   {
+    "hue": "#B0566E",
+    "chroma": 0.045,
+    "where": [
+     {
+      "y": [304, 280]
+     },
+     {
+      "disc": [292, 128, 60, 20],
+      "invert": true
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [60, 25],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [60, 25],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "shafts",
+   "origin": [292, 128],
+   "angles": [60, 75, 90, 105, 120],
+   "widths": [16, 22, 28, 22, 16],
+   "k": 0.05,
+   "colour": "#D8DCFF",
+   "seed": 3,
+   "reach": 700,
+   "near": 60,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-moonpath-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-moonpath-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-moonpath-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "vesper-moonpath-rim",
+   "blend": "screen"
+  }
+ ],
+ "lights": [
+  {
+   "x": 712.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.2,
+   "k": 0.95,
+   "halo": 10,
+   "haloK": 0.16,
+   "flicker": true
+  }
+ ],
+ "veil": 0.22,
+ "motion": {
+  "dust": 10,
+  "stars": 30,
+  "mist": [
+   {
+    "y": [540, 592],
+    "speed": 3,
+    "alpha": 0.06,
+    "cell": 140,
+    "seed": 37,
+    "colour": "#B8C8F0"
+   }
+  ]
+ },
+ "feverMoon": [292, 128, 30],
+ "chrome": {
+  "sky": "#1C1650",
+  "deep": "#060A1E",
+  "jewel1": "#2448C0",
+  "jewel2": "#B0507E"
+ }
+}

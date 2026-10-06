@@ -21,6 +21,7 @@ branch of code; here it is data, the recipe's `dress` object, so the plugin can 
 A mask is a product of ramps: ["y", a, b] rises from 0 at y=a to 1 at y=b (a > b falls), the same for "x"; ["luma",
 lo, hi, blur] ramps on the scene's OKLab L; ["dist", a, b] on the distance from the pieces; ["disc", cx, cy, r, f].
 """
+import contextlib
 import math
 
 import numpy as np
@@ -41,6 +42,65 @@ WALL_L, WALL_R, TOP, FOOT = D.WALL_L, D.WALL_R, D.TOP, D.FOOT
 # a recipe asking for less is refused rather than drawn.
 QUIET_BLUR, QUIET_BLUR_MIN, QUIET_BLUR_MAX, CLEARANCE_FAR = 40.0, 40.0, 40.0, 96.0
 QUIET_REGION, QUIET_KEEP = 0.6, 0.5
+
+
+# The jewel in sRGB with its lightness kept (F1), as the runtime draws it (MoonfallColor.ToSrgbKeepingLightness): a
+# colour outside sRGB keeps its OKLab L and hue and gives up chroma (a bisection of 8 steps) until it fits. dress2.jewel
+# clips each channel instead, which moves a saturated pixel's lightness (up to 0.056 in L at the 99th percentile on 1-2)
+# and is not what the game draws; the converter's gate found it (levels runtime round, 6 October 2026). The approved
+# levels were built and checked with the clip, so the dress keeps it unless `RUNTIME_GAMUT` is set (`runtime_gamut()`):
+# the converter's gate draws the game's form, and which form the levels are checked in is the owner's call.
+_M2I = np.array([[1.0, 0.3963377774, 0.2158037573], [1.0, -0.1055613458, -0.0638541728],
+                 [1.0, -0.0894841775, -1.2914855480]], np.float32)
+_M1I = np.array([[4.0767416621, -3.3077115913, 0.2309699292], [-1.2684380046, 2.6097574011, -0.3413193965],
+                 [-0.0041960863, -0.7034186147, 1.7076147010]], np.float32)
+
+
+def _in_gamut(lab, slack=1e-5):
+    lin = ((lab @ _M2I.T) ** 3) @ _M1I.T
+    return ((lin >= -slack) & (lin <= 1 + slack)).all(-1)
+
+
+def keep_lightness(lab):
+    """OKLab to sRGB with L kept: out-of-gamut colours give up chroma (MoonfallColor.ToSrgbKeepingLightness)."""
+    lab = np.asarray(lab, np.float32)
+    lo, hi = np.zeros(lab.shape[:-1], np.float32), np.ones(lab.shape[:-1], np.float32)
+    for _ in range(8):
+        mid = (lo + hi) * 0.5
+        t = lab.copy()
+        t[..., 1:] *= mid[..., None]
+        fits = _in_gamut(t)
+        lo, hi = np.where(fits, mid, lo), np.where(fits, hi, mid)
+    t = lab.copy()
+    t[..., 1:] *= np.where(_in_gamut(lab), 1.0, lo)[..., None]
+    return _CLIP(t)
+
+
+_CLIP = D.oklab_to_srgb
+
+
+RUNTIME_GAMUT = [False]
+
+
+@contextlib.contextmanager
+def runtime_gamut():
+    """The jewel drawn as the game draws it (lightness kept) while inside."""
+    RUNTIME_GAMUT.append(True)
+    try:
+        yield
+    finally:
+        RUNTIME_GAMUT.pop()
+
+
+def jewel(*args, **kwargs):
+    """dress2.jewel, with the lightness kept under `runtime_gamut()` (see keep_lightness)."""
+    if not RUNTIME_GAMUT[-1]:
+        return D.jewel(*args, **kwargs)
+    D.oklab_to_srgb = keep_lightness
+    try:
+        return D.jewel(*args, **kwargs)
+    finally:
+        D.oklab_to_srgb = _CLIP
 
 
 class Ctx:
@@ -401,7 +461,7 @@ def dress(recipe, sc, level, S, t=0.0, unpinned=False):
             # regions the jewel leaves alone (a lamp's warm window, a creature's own colour): their union
             km = 1 - np.maximum.reduce([mask_of(k, ctx, X, Y, Lsc) for k in keeps])
             keepm = km if keepm is None else keepm * km
-        px = D.jewel(px, S, [tuple(b) for b in j["bands"]], chroma=j.get("chroma", 0.9),
+        px = jewel(px, S, [tuple(b) for b in j["bands"]], chroma=j.get("chroma", 0.9),
                      value_hues=[tuple(v) for v in j["valueHues"]] if j.get("valueHues") else None,
                      keep_hi=j.get("keepHi", 0.75), keep=j.get("keep", 0.30), mask=keepm, mix=j.get("mix", 0.5),
                      floor=j.get("floor", 0.03), regions=regions)

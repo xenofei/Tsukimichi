@@ -15,6 +15,7 @@ using LuminaGameData = Lumina.GameData;
 //   Tsukimichi.MoonfallRender <out.png> [--screen title|map|levels|characters|quickplay|challenges|duel|options|play|pause|tally|duelhud]
 //                              [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally]
 //                              [--marks] [--hint] [--reduce-motion] [--decoration full|simple|off] [--no-game-art] [--seconds N]
+//   Tsukimichi.MoonfallRender <out.png> --level base-01 --scene-only 1|2 [--no-grain] [--upto paint|palette]   (the level's bare scene)
 // The board is the plugin's own window, drawn by its own code under a headless ImGui, rasterized to the PNG.
 var dalamud = Environment.GetEnvironmentVariable("DALAMUD_HOME") is { Length: > 0 } home ? home
     : typeof(Raster).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(static a => a.Key == "DalamudLibPath")?.Value;
@@ -55,6 +56,10 @@ internal static class Render
         var repo = FindRepo();
         var gamePath = Environment.GetEnvironmentVariable("TSUKIMICHI_GAME_PATH") ?? @"C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY XIV Online\game\sqpack";
         using var game = new LuminaGameData(gamePath, new LuminaOptions { PanicOnSheetChecksumMismatch = false });
+        if (Arg(args, "--scene-only") is { } tier)
+        {
+            return SceneOnly(repo, args.Contains("--no-game-art") ? null : game, levelName, int.Parse(tier, CultureInfo.InvariantCulture), args.Contains("--no-grain"), Arg(args, "--upto"), outPath);
+        }
 
         Loc.SetLanguage(Loc.English);
         ImGui.CreateContext();
@@ -598,6 +603,106 @@ internal static class Render
         levels.Add(pilot with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, 12) });
         levels.Add(builtIn.Base.Levels[0] with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, 13) });
         return (new MoonfallCampaigns(new MoonfallCampaign(MoonfallCampaignKind.Base, levels), builtIn.Expansion, []), 12);
+    }
+
+    /// <summary>
+    /// --scene-only 1|2 [--no-grain]: the level's scene alone, as the plugin builds it at that tier, over the board's opening
+    /// (the base layer) with the beams at rest laid on as play draws them, before the veil, the pieces and the chrome. The
+    /// level pipeline's converter gate compares it with the pipeline's dressed scene (tools/moonfall-levels, convert.py).
+    /// </summary>
+    private static int SceneOnly(string repo, LuminaGameData? game, string levelId, int tier, bool noGrain, string? upto, string outPath)
+    {
+        var level = MoonfallCampaigns.LoadBuiltIn().Find(levelId);
+        if (level is null)
+        {
+            Console.Error.WriteLine($"no built-in level {levelId}");
+            return 2;
+        }
+
+        var refused = new List<string>();
+        var recipe = MoonfallSceneRecipeLoader.Pick(MoonfallSceneRecipeLoader.LoadBuiltIn(refused), level);
+        if (recipe is null)
+        {
+            Console.Error.WriteLine($"{levelId} takes no scene recipe; refused: {string.Join(" | ", refused)}");
+            return 2;
+        }
+
+        recipe = noGrain ? recipe with { Grain = 0 } : recipe;
+
+        // --upto paint|palette: the build stopped early (everything after it left out), to find where two scenes part.
+        recipe = upto switch
+        {
+            "paint" => recipe with { Palette = null, Light = [], Framing = [], Lights = [] },
+            "palette" => recipe with { Light = [], Framing = [], Lights = [] },
+            _ => recipe,
+        };
+        var host = new GameHost(new TextureStore(new Raster(1, 1)), game, Path.Combine(repo, "Tsukimichi", "assets", "moonfall", "scenes"));
+        var painting = recipe.Source.Kind == MoonfallSourceKind.Game ? host.ReadGameTexture(recipe.Source.Path).Result : host.ReadPicture(recipe.Source.Path).Result;
+        var fallback = false;
+        if (painting is null && recipe.Fallback is { } name)
+        {
+            painting = host.ReadPicture(name).Result;
+            fallback = true;
+        }
+
+        if (painting is null)
+        {
+            Console.Error.WriteLine($"{levelId}: the scene's painting is missing");
+            return 2;
+        }
+
+        var plates = new Dictionary<string, MoonfallImage>(StringComparer.Ordinal);
+        foreach (var plate in MoonfallSceneBuilder.PlateNames(recipe))
+        {
+            if (host.ReadPicture(plate).Result is { } image)
+            {
+                plates[plate] = image;
+            }
+            else
+            {
+                Console.Error.WriteLine($"{levelId}: the plate {plate} is missing");
+                return 2;
+            }
+        }
+
+        var layers = MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, plates: plates);
+        var b = layers.Base;
+        var px = (byte[])b.Pixels.Clone();
+        if (layers.BeamsA is { } beams)
+        {
+            // The beams at rest, as play draws them: the white texture's alpha times the layer's weight, in the beams' colour.
+            var (weight, _) = MoonfallMotion.Beams(0, still: true);
+            var colour = layers.BeamColour;
+            for (var y = 0; y < b.Height; y++)
+            {
+                for (var x = 0; x < b.Width; x++)
+                {
+                    var bx = b.Board.X + ((x + 0.5f) / layers.Scale);
+                    var by = b.Board.Y + ((y + 0.5f) / layers.Scale);
+                    var a = Bilinear(beams, bx, by) * weight;
+                    var o = ((y * b.Width) + x) * 4;
+                    px[o] = MoonfallImage.ToByte(((px[o] / 255f) * (1 - a)) + (colour.X * a));
+                    px[o + 1] = MoonfallImage.ToByte(((px[o + 1] / 255f) * (1 - a)) + (colour.Y * a));
+                    px[o + 2] = MoonfallImage.ToByte(((px[o + 2] / 255f) * (1 - a)) + (colour.Z * a));
+                }
+            }
+        }
+
+        File.WriteAllBytes(outPath, MoonfallPng.Encode(px, b.Width, b.Height));
+        Console.WriteLine($"{levelId}: {recipe.Name} at {tier}x, {b.Width} x {b.Height}, dropped {layers.Dropped}, {layers.Cost.TotalMilliseconds:F0} ms");
+        return 0;
+    }
+
+    /// <summary>A layer's alpha at board (x, y), bilinear between its texel centres as the GPU samples it, held at the edges.</summary>
+    private static float Bilinear(MoonfallRgba layer, float x, float y)
+    {
+        var u = Math.Clamp(((x - layer.Board.X) / (layer.Board.Z - layer.Board.X) * layer.Width) - 0.5f, 0, layer.Width - 1);
+        var v = Math.Clamp(((y - layer.Board.Y) / (layer.Board.W - layer.Board.Y) * layer.Height) - 0.5f, 0, layer.Height - 1);
+        int x0 = (int)u, y0 = (int)v;
+        int x1 = Math.Min(layer.Width - 1, x0 + 1), y1 = Math.Min(layer.Height - 1, y0 + 1);
+        float tx = u - x0, ty = v - y0;
+        float At(int xx, int yy) => layer.Pixels[(((yy * layer.Width) + xx) * 4) + 3] / 255f;
+        return (((At(x0, y0) * (1 - tx)) + (At(x1, y0) * tx)) * (1 - ty)) + (((At(x0, y1) * (1 - tx)) + (At(x1, y1) * tx)) * ty);
     }
 
     private static string? Arg(string[] args, string name)

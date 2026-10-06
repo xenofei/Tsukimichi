@@ -112,7 +112,7 @@ public sealed class MoonfallSceneLayers
 /// in-play drawing moves. Pure: the caller hands in the painting's pixels (a game texture or a shipped picture) and
 /// takes the RGBA layers to the GPU.
 /// </summary>
-public static class MoonfallSceneBuilder
+public static partial class MoonfallSceneBuilder
 {
     /// <summary>The opening the base layer covers, board units.</summary>
     public static readonly Vector4 OpeningRect = new(75, 41, 725, 594);
@@ -131,9 +131,11 @@ public static class MoonfallSceneBuilder
     /// <paramref name="painting"/>. A <paramref name="fallback"/> painting (a shipped picture standing in for a missing
     /// game texture) is taken whole and not graded: it is painted in the night's values already. With
     /// <paramref name="check"/> the fuller-board rules are measured and reported (<see cref="MoonfallSceneLayers.Report"/>).
+    /// <paramref name="plates"/> are the recipe's plates by picture name (<see cref="PlateNames"/>), read by the caller; a
+    /// plate missing from it is left out.
     /// </summary>
     public static MoonfallSceneLayers Build(MoonfallSceneRecipe recipe, MoonfallLevel level, MoonfallImage painting, int s, bool fallback = false, bool check = false,
-        MoonfallClearance? clearance = null)
+        MoonfallClearance? clearance = null, IReadOnlyDictionary<string, MoonfallImage>? plates = null)
     {
         ArgumentNullException.ThrowIfNull(recipe);
         ArgumentNullException.ThrowIfNull(level);
@@ -153,9 +155,27 @@ public static class MoonfallSceneBuilder
         }
 
         clearance ??= MoonfallClearance.For(level);
-        var ctx = new MoonfallDressContext(s, clearance);
+        var ctx = new MoonfallDressContext(s, clearance) { Plates = plates };
         Lap("clearance");
-        var px = Cut(recipe.Source, painting, s, fallback);
+        var source = !fallback && recipe.Source.Erase.Count > 0 ? Erase(painting, recipe.Source.Erase) : painting;
+        var px = Cut(recipe.Source, source, s, fallback);
+        if (UsesLand(recipe))
+        {
+            // A map's land comes from its own painting; a fallback picture has none, so a land term finds no land there.
+            var cut1 = fallback ? null : s == 1 ? px.Copy() : Cut(recipe.Source, source, 1);
+            var lands = new Dictionary<(float, int), MoonfallPlane>();
+            ctx.Land = (threshold, grow) =>
+            {
+                if (!lands.TryGetValue((threshold, grow), out var land))
+                {
+                    land = cut1 is null ? new MoonfallPlane(ctx.W, ctx.H) : LandMask(cut1, threshold, grow, s);
+                    lands[(threshold, grow)] = land;
+                }
+
+                return land;
+            };
+        }
+
         Lap("cut");
         if (!fallback && recipe.Grade is { } grade)
         {
@@ -265,12 +285,12 @@ public static class MoonfallSceneBuilder
             }
         }
 
-        var (beamsA, beamsB, amount) = Beams(moving, clearance);
+        var (beamsA, beamsB, amount) = Beams(moving, clearance, ctx.Cover);
         Lap("beams");
         var baseLayer = Crop(px, s, OpeningRect, alpha: null);
         var sky = SkyMask(ctx);
         var feverMoon = recipe.Moon is { } m0 && ctx.Clear(m0.X, m0.Y) >= m0.R + MoonKeep ? m0 : null;
-        var moonFront = feverMoon is { } moon ? Crop(px, s, MoonRect(moon), ctx.Cover) : null;
+        var moonFront = feverMoon is { } moon && Covered(ctx, MoonRect(moon)) is { } front ? Crop(px, s, front, ctx.Cover) : null;
         var stars = Stars(px, ctx, recipe.Motion);
         var mist = Mist(recipe.Motion, clearance);
         Lap("layers");
@@ -310,6 +330,29 @@ public static class MoonfallSceneBuilder
         ArgumentNullException.ThrowIfNull(moon);
         var r = moon.R * 3.0f;
         return new Vector4(MathF.Max(OpeningRect.X, moon.X - r), MathF.Max(OpeningRect.Y, moon.Y - r), MathF.Min(OpeningRect.Z, moon.X + r), MathF.Min(OpeningRect.W, moon.Y + r));
+    }
+
+    /// <summary>
+    /// The part of <paramref name="board"/> (units) the framing covers, to whole pixels; null when it covers none of it. The
+    /// moon's front layer is only the framing in front of the moon, so it is cut to that (no texture where nothing stands).
+    /// </summary>
+    private static Vector4? Covered(MoonfallDressContext ctx, Vector4 board)
+    {
+        int x0 = (int)MathF.Floor(board.X * ctx.S), y0 = (int)MathF.Floor(board.Y * ctx.S);
+        int x1 = (int)MathF.Ceiling(board.Z * ctx.S), y1 = (int)MathF.Ceiling(board.W * ctx.S);
+        int lx = int.MaxValue, ly = int.MaxValue, hx = -1, hy = -1;
+        for (var y = y0; y < y1; y++)
+        {
+            for (var x = x0; x < x1; x++)
+            {
+                if (ctx.Cover.Data[(y * ctx.W) + x] > 0.5f / 255f)
+                {
+                    (lx, ly, hx, hy) = (Math.Min(lx, x), Math.Min(ly, y), Math.Max(hx, x), Math.Max(hy, y));
+                }
+            }
+        }
+
+        return hx < 0 ? null : new Vector4(lx / ctx.S, ly / ctx.S, (hx + 1) / ctx.S, (hy + 1) / ctx.S);
     }
 
     /// <summary>The painting mirrored, padded, cropped and resampled to the board (scene_official.build), or taken whole as a fallback.</summary>
@@ -360,45 +403,26 @@ public static class MoonfallSceneBuilder
     private static MoonfallImage Palette(MoonfallDressContext ctx, MoonfallImage px, MoonfallPaletteRecipe p)
     {
         MoonfallPlane? lightness = null;
-        MoonfallPlane Mask(IReadOnlyList<MoonfallMaskTerm> terms, float weight)
+        MoonfallPlane Lightness() => lightness ??= MoonfallGrade.Lightness(px);
+        MoonfallPlane? where = p.Where.Count > 0 ? Mask(ctx, p.Where, 1f, Lightness) : null;
+        if (p.Spare.Count > 0)
         {
-            var m = MoonfallPlane.Filled(ctx.W, ctx.H, weight);
-            foreach (var t in terms)
+            // The spared places' union (the largest at each pixel), taken out of where the palette applies.
+            var union = new MoonfallPlane(ctx.W, ctx.H);
+            foreach (var spare in p.Spare)
             {
-                MoonfallPlane? source = null;
-                if (t.Kind == MoonfallMaskKind.Lum)
+                var m = Mask(ctx, spare, 1f, Lightness);
+                for (var i = 0; i < union.Data.Length; i++)
                 {
-                    lightness ??= MoonfallGrade.Lightness(px);
-                    source = t.Blur > 0 ? MoonfallFilters.Blur(lightness, t.Blur * ctx.S) : lightness;
+                    union.Data[i] = MathF.Max(union.Data[i], m.Data[i]);
                 }
-                else if (t.Kind == MoonfallMaskKind.Near)
-                {
-                    source = t.Blur > 0 ? MoonfallFilters.Blur(ctx.ClearanceAtS, t.Blur * ctx.S) : ctx.ClearanceAtS;
-                }
-
-                // Each pixel on its own, so the rows run in parallel (the same result, a few times sooner).
-                MoonfallParallel.For(0, ctx.H, y =>
-                {
-                    var Y = (y + 0.5f) / ctx.S;
-                    var a = t.Args;
-                    for (var x = 0; x < ctx.W; x++)
-                    {
-                        var X = (x + 0.5f) / ctx.S;
-                        var i = (y * ctx.W) + x;
-                        var v = t.Kind switch
-                        {
-                            MoonfallMaskKind.Lum or MoonfallMaskKind.Near => MoonfallColor.Smooth(a[0], a[1], source!.Data[i]),
-                            MoonfallMaskKind.Y => MoonfallColor.Smooth(a[0], a[1], Y),
-                            MoonfallMaskKind.X => MoonfallColor.Smooth(a[0], a[1], X),
-                            _ => MoonfallColor.Smooth(a[2] + a[3] + 1e-3f, a[2] - a[3], MathF.Sqrt(((X - a[0]) * (X - a[0])) + ((Y - a[1]) * (Y - a[1])))),
-                        };
-                        v *= t.Scale;
-                        m.Data[i] *= t.Invert ? 1 - v : v;
-                    }
-                });
             }
 
-            return m;
+            where ??= MoonfallPlane.Filled(ctx.W, ctx.H, 1f);
+            for (var i = 0; i < where.Data.Length; i++)
+            {
+                where.Data[i] *= 1 - union.Data[i];
+            }
         }
 
         var grade = new MoonfallJewelGrade
@@ -410,8 +434,8 @@ public static class MoonfallSceneBuilder
             Floor = p.Floor,
             Keep = p.Keep,
             KeepHigh = p.KeepHigh,
-            Regions = p.Regions.Select(r => new MoonfallJewelRegion(Mask(r.Where, r.Weight), r.Hue, r.Chroma)).ToList(),
-            Mask = p.Where.Count > 0 ? Mask(p.Where, 1f) : null,
+            Regions = p.Regions.Select(r => new MoonfallJewelRegion(Mask(ctx, r.Where, r.Weight, Lightness), r.Hue, r.Chroma)).ToList(),
+            Mask = where,
         };
         return MoonfallGrade.Jewel(px, grade, ctx.S);
     }
@@ -421,15 +445,27 @@ public static class MoonfallSceneBuilder
         switch (layer)
         {
             case MoonfallShafts sh:
-                var amount = MoonfallDress.ShaftAmount(sh, ctx.S, ctx.W, ctx.H, Vector2.Zero);
                 var moving = sh.Moving && !still && beams is not null;
                 if (moving)
                 {
                     beams!.Add(sh);
                 }
 
+                // Its still share is in a plate already: only the beams are made.
+                if (moving && sh.BeamsOnly)
+                {
+                    break;
+                }
+
                 // A moving shaft is baked at the low end of its breath; the beams layer adds the rest in play.
+                var amount = MoonfallDress.ShaftAmount(sh, ctx.S, ctx.W, ctx.H, Vector2.Zero);
                 MoonfallDress.ScreenScaled(px, sh.Colour, amount, moving ? 1 - BeamBreath : 1);
+                break;
+            case MoonfallTone t:
+                Tone(ctx, px, t);
+                break;
+            case MoonfallPlate plate:
+                Plate(ctx, px, plate);
                 break;
             case MoonfallGlow g:
                 MoonfallDress.Glow(px, ctx.S, g);
@@ -481,8 +517,12 @@ public static class MoonfallSceneBuilder
         });
     }
 
-    /// <summary>The moving shafts at two places of their drift, at 1 pixel per 2 units over the opening, masked off every piece.</summary>
-    private static (MoonfallRgba? A, MoonfallRgba? B, MoonfallPlane? Amount) Beams(List<MoonfallShafts> moving, MoonfallClearance clearance)
+    /// <summary>
+    /// The moving shafts at two places of their drift, at 1 pixel per 2 units over the opening, masked off every piece and
+    /// kept behind the framing (<paramref name="cover"/>, at the scene's own scale): light from the sky never crosses a
+    /// silhouette in front of it.
+    /// </summary>
+    private static (MoonfallRgba? A, MoonfallRgba? B, MoonfallPlane? Amount) Beams(List<MoonfallShafts> moving, MoonfallClearance clearance, MoonfallPlane cover)
     {
         if (moving.Count == 0)
         {
@@ -506,14 +546,40 @@ public static class MoonfallSceneBuilder
 
         // Nothing moves within 2.5 units of a piece: the mask is zero out to 2.5 units plus a texel and the filter's reach.
         var mask = MotionMask(clearance, LowScale);
+        var behind = Behind(cover, full, tall);
         for (var i = 0; i < a.Data.Length; i++)
         {
-            a.Data[i] *= mask.Data[i];
-            b.Data[i] *= mask.Data[i];
+            a.Data[i] *= mask.Data[i] * behind.Data[i];
+            b.Data[i] *= mask.Data[i] * behind.Data[i];
         }
 
         var amount = a.Copy();
         return (WhiteAlpha(a, 2 * BeamBreath, LowScale), WhiteAlpha(b, 2 * BeamBreath, LowScale), amount);
+    }
+
+    /// <summary>One less the framing's coverage at the beams' scale (the most of it in each cell), so no beam shows over a silhouette.</summary>
+    private static MoonfallPlane Behind(MoonfallPlane cover, int width, int height)
+    {
+        var step = cover.Width / width;
+        var plane = new MoonfallPlane(width, height);
+        for (var y = 0; y < height; y++)
+        {
+            for (var x = 0; x < width; x++)
+            {
+                var c = 0f;
+                for (var dy = 0; dy < step; dy++)
+                {
+                    for (var dx = 0; dx < step; dx++)
+                    {
+                        c = MathF.Max(c, cover.Data[(((y * step) + dy) * cover.Width) + (x * step) + dx]);
+                    }
+                }
+
+                plane.Data[(y * width) + x] = 1 - c;
+            }
+        }
+
+        return plane;
     }
 
     /// <summary>

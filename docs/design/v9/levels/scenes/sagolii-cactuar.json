@@ -80,5 +80,22 @@
    }
   ]
  },
- "ceilingExempt": [[150, 108, 64]]
+ "ceilingExempt": [[150, 108, 64]],
+ "runtime": {
+  "motion": {
+   "dust": 12,
+   "stars": 40,
+   "mist": [
+    {
+     "y": [538, 592],
+     "speed": 3,
+     "alpha": 0.05,
+     "cell": 140,
+     "seed": 23,
+     "colour": "#D9B8C8"
+    }
+   ]
+  },
+  "feverMoon": [150, 108, 34]
+ }
 }

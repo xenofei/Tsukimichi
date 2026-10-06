@@ -89,6 +89,26 @@ public static class MoonfallPlaces
 
         // Our own painting.
         ["moon-road-night"] = MoonfallPlace.Nowhere,
+
+        // The Moon Road's stages 1 and 2 (the level pipeline, docs/design/v9/levels). Western Thanalan's own area map.
+        ["thanalan-road-chart"] = new(ARealmReborn, "Western Thanalan"),
+
+        // The Thanalan loading painting's great dome.
+        ["uldah-gilded-dome"] = new(ARealmReborn, "Ul'dah - Steps of Nald"),
+
+        // The La Noscea loading painting's west: Limsa Lominsa's tower over the water.
+        ["limsa-across-water"] = new(ARealmReborn, "Limsa Lominsa Lower Decks"),
+
+        // The world painting "The Three Great Continents" read as a chart: no place in the story, as airship-road.
+        ["rhotano-wonders"] = MoonfallPlace.Nowhere,
+
+        // Our own paintings (Horizon, the Sagolii, the Crystal, Vesper Bay, the ferry): set nowhere, as moon-road-night.
+        ["horizon-by-night"] = MoonfallPlace.Nowhere,
+        ["sagolii-cactuar"] = MoonfallPlace.Nowhere,
+        ["crystal-call"] = MoonfallPlace.Nowhere,
+        ["vesper-moonpath"] = MoonfallPlace.Nowhere,
+        ["ferry-under-sail"] = MoonfallPlace.Nowhere,
+        ["vesper-twin-lanterns"] = MoonfallPlace.Nowhere,
     };
 
     /// <summary>

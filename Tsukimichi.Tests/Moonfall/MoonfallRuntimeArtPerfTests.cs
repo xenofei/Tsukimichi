@@ -28,7 +28,7 @@ public sealed class MoonfallRuntimeArtPerfTests(ITestOutputHelper output)
                 {
                     var cpu = Process.GetCurrentProcess().TotalProcessorTime;
                     var wall = Stopwatch.StartNew();
-                    var layers = MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback);
+                    var layers = MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, plates: MoonfallSceneKit.Plates(recipe));
                     var ms = wall.Elapsed.TotalMilliseconds;
                     if (ms < bestMs)
                     {
@@ -55,7 +55,7 @@ public sealed class MoonfallRuntimeArtPerfTests(ITestOutputHelper output)
     {
         var (level, recipe) = MoonfallSceneKit.ShippedScenes().First();
         var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
-        var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, 1, fallback);
+        var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, 1, fallback, plates: MoonfallSceneKit.Plates(recipe));
         var clearance = layers.Clearance!;
         var fireflies = layers.Fireflies.ToArray();
         var stars = layers.Stars.ToArray();

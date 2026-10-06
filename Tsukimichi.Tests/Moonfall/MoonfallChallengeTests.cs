@@ -86,12 +86,12 @@ public sealed class MoonfallChallengeTests
     public void A_run_sets_the_balls_oranges_and_companion_and_a_score_challenge_is_met_at_its_target()
     {
         var campaigns = MoonfallCampaigns.LoadBuiltIn();
-        var challenge = Make(MoonfallChallengeKind.Score, ["base-03"], target: 1, balls: 7, oranges: 35) with { Companion = MoonfallCompanion.Yshtola };
+        var challenge = Make(MoonfallChallengeKind.Score, ["base-03"], target: 1, balls: 7, oranges: 27) with { Companion = MoonfallCompanion.Yshtola };
         var run = new MoonfallChallengeRun(challenge, campaigns, MoonfallCompanion.Cid, 11);
         Assert.Equal(MoonfallCompanion.Yshtola, run.Companion);
         var game = run.StartLevel();
         Assert.Equal(7, game.BallsLeft);
-        Assert.Equal(35, game.OrangesLeft);
+        Assert.Equal(27, game.OrangesLeft);
         Assert.Equal(MoonfallPower.Fireball, game.Power);
         Assert.Equal(3, game.LevelNumber);
         PlayOut(game, Angles);

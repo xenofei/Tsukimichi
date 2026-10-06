@@ -1,0 +1,140 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "crystal-call",
+ "source": {
+  "picture": "crystal-call"
+ },
+ "grain": 0.008,
+ "palette": {
+  "bands": [[0, "#5A36CC"], [600, "#4628A4"]],
+  "chroma": 1.1,
+  "floor": 0.04,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#30188A"], [0.45, "#DACCFF"]],
+  "regions": [
+   {
+    "hue": "#30C490",
+    "chroma": 0.22,
+    "where": [
+     {
+      "poly": [[440.0, 186.0], [524.0, 252.0], [514.0, 414.0], [440.0, 478.0], [366.0, 414.0], [356.0, 252.0]],
+      "blur": 7.0
+     },
+     {
+      "near": [50, 22],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   },
+   {
+    "hue": "#30C490",
+    "chroma": 0.22,
+    "where": [
+     {
+      "line": [160, 85],
+      "points": [[90.0, 560.0], [260.0, 420.0], [430.0, 300.0], [600.0, 190.0], [760.0, 90.0]]
+     },
+     {
+      "y": [520, 480]
+     },
+     {
+      "near": [50, 22],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [50, 22],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ],
+  "spare": [
+   [
+    {
+     "x": [112, 124]
+    },
+    {
+     "x": [240, 228]
+    },
+    {
+     "y": [464, 471]
+    },
+    {
+     "y": [499, 492]
+    }
+   ]
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 440,
+   "y": 330,
+   "r": 150,
+   "colour": "#7FE8D8",
+   "k": 0.035
+  },
+  {
+   "kind": "shafts",
+   "origin": [-80, -90],
+   "angles": [40, 48, 56, 64],
+   "widths": [30, 22, 36, 24],
+   "k": 0.05,
+   "colour": "#CFE0FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "crystal-call-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "crystal-call-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "crystal-call-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "crystal-call-rim",
+   "blend": "screen"
+  }
+ ],
+ "veil": 0.25,
+ "motion": {
+  "dust": 20,
+  "stars": 30
+ },
+ "fireflies": {
+  "count": 10,
+  "seed": 9,
+  "region": [90, 300, 710, 520],
+  "colour": "#9FF0FF"
+ },
+ "chrome": {
+  "sky": "#101A4E",
+  "deep": "#060A1E",
+  "jewel1": "#5636C8",
+  "jewel2": "#2FB89A"
+ }
+}

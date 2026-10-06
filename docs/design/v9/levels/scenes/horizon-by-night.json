@@ -71,5 +71,11 @@
    "rimK": 0.4,
    "seed": 19
   }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16,
+   "stars": 36
+  }
  }
 }

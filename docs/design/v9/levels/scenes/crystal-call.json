@@ -80,5 +80,17 @@
    "rimK": 0.38,
    "seed": 9
   }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 20,
+   "stars": 30
+  },
+  "fireflies": {
+   "count": 10,
+   "seed": 9,
+   "region": [90, 300, 710, 520],
+   "colour": "#9FF0FF"
+  }
  }
 }

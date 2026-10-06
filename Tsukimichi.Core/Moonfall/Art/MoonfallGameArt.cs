@@ -653,6 +653,9 @@ public sealed class MoonfallGameArt<T> : IDisposable
                 Source = new MoonfallSceneSource(MoonfallSourceKind.Picture, picture, false, 0, 0, false, null),
                 Grade = null,
                 Fallback = null,
+
+                // A plate under the palette is drawn on the painting itself (a chart's engraved roads): it shows the place.
+                Paint = recipe.Paint.Where(static l => l is not MoonfallPlate).ToList(),
             };
             safeRecipes[recipe.Name] = safe;
         }
@@ -1071,7 +1074,26 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
         // The pieces' clearance depends on the level alone: worked out once, then shared by its tiers and its thumbnail.
         var clearance = clearances.GetOrAdd(level.Id, static (_, l) => MoonfallClearance.For(l), level);
-        return painting is null ? null : MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check, clearance);
+        if (painting is null)
+        {
+            return null;
+        }
+
+        // The recipe's plates (our own pictures of its dress); one missing is left out of the scene and logged.
+        var plates = new Dictionary<string, MoonfallImage>(StringComparer.Ordinal);
+        foreach (var plateName in MoonfallSceneBuilder.PlateNames(recipe))
+        {
+            if (await host.ReadPicture(plateName).ConfigureAwait(false) is { } plate)
+            {
+                plates[plateName] = plate;
+            }
+            else
+            {
+                host.Warn($"Moonfall: the scene {recipe.Name}'s plate {plateName} is missing; it is left out.");
+            }
+        }
+
+        return MoonfallSceneBuilder.Build(recipe, level, painting, tier, fallback, check, clearance, plates);
     });
 
     private readonly System.Collections.Concurrent.ConcurrentDictionary<string, MoonfallClearance> clearances = new(StringComparer.Ordinal);

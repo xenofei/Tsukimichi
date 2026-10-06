@@ -1,0 +1,104 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "ferry-under-sail",
+ "source": {
+  "picture": "ferry-under-sail"
+ },
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "y": [370, 290]
+    }
+   ],
+   "mul": 0.8
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#4C3CC4"], [340, "#4038B4"], [600, "#30289A"]],
+  "chroma": 1.1,
+  "floor": 0.04,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#24187A"], [0.45, "#D8D0FF"]],
+  "regions": [
+   {
+    "hue": "#B05A66",
+    "chroma": 0.14,
+    "where": [
+     {
+      "y": [130, 310]
+     },
+     {
+      "poly": [[236.0, 400.0], [262.0, 206.0], [330.0, 176.0], [470.0, 150.0], [560.0, 236.0], [662.0, 372.0], [600.0, 402.0], [576.0, 428.0], [530.0, 448.0], [420.0, 454.0], [300.0, 450.0], [260.0, 434.0]],
+      "blur": 5.0,
+      "invert": true
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [40, 18],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.3
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [40, 18],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "plate",
+   "picture": "ferry-under-sail-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "ferry-under-sail-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "ferry-under-sail-rim",
+   "blend": "screen"
+  }
+ ],
+ "veil": 0.22,
+ "motion": {
+  "stars": 36,
+  "mist": [
+   {
+    "y": [516, 592],
+    "speed": 5,
+    "alpha": 0.07,
+    "cell": 120,
+    "seed": 41,
+    "colour": "#C8C0E8"
+   }
+  ]
+ },
+ "feverMoon": [150, 104, 24],
+ "chrome": {
+  "sky": "#16124A",
+  "deep": "#060818",
+  "jewel1": "#4C3CC4",
+  "jewel2": "#B0566E"
+ }
+}

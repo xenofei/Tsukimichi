@@ -1,254 +1,499 @@
 {
   "format": "moonfall-level",
-  "version": 1,
+  "version": 2,
   "id": "base-02",
-  "name": "Crescent",
+  "name": "Horizon by Night",
+  "scene": "horizon-by-night",
   "playfield": {
     "width": 800,
     "height": 600
   },
   "pegs": [
     {
-      "x": 235.3,
-      "y": 190.9
+      "x": 540.0,
+      "y": 214.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
     },
     {
-      "x": 210.0,
-      "y": 204.1
+      "x": 214.0,
+      "y": 224.0,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": false
     },
     {
-      "x": 187.2,
-      "y": 222.1
+      "x": 84.0,
+      "y": 334.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
     },
     {
-      "x": 167.4,
-      "y": 244.3
+      "x": 116.0,
+      "y": 334.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
     },
     {
-      "x": 151.4,
-      "y": 270.0
+      "x": 148.0,
+      "y": 334.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
     },
     {
-      "x": 139.6,
-      "y": 298.4
+      "x": 176.9,
+      "y": 346.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 132.4,
-      "y": 328.7
+      "x": 236.0,
+      "y": 322.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 268.0,
+      "y": 322.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 299.5,
+      "y": 323.3,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 325.1,
+      "y": 340.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 351.1,
+      "y": 323.2,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 405.6,
+      "y": 314.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 431.5,
+      "y": 332.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 612.0,
+      "y": 326.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 644.0,
+      "y": 326.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 673.4,
+      "y": 338.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 703.1,
+      "y": 344.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 190.0,
+      "y": 282.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 238.0,
+      "y": 282.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 486.0,
+      "y": 340.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 482.0,
+      "y": 380.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 598.0,
+      "y": 380.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 110.0,
+      "y": 410.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 146.0,
+      "y": 411.1,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 182.0,
+      "y": 412.3,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 217.9,
+      "y": 413.4,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 253.9,
+      "y": 414.5,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 289.9,
+      "y": 415.7,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 350.0,
+      "y": 444.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 386.0,
+      "y": 445.3,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 422.0,
+      "y": 446.5,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 457.9,
+      "y": 447.8,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 493.9,
+      "y": 449.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 570.0,
+      "y": 418.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 606.0,
+      "y": 416.4,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 641.9,
+      "y": 414.7,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 677.9,
+      "y": 413.1,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 250.0,
+      "y": 474.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 283.9,
+      "y": 476.8,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 317.8,
+      "y": 479.6,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 351.7,
+      "y": 482.4,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 385.5,
+      "y": 485.2,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 419.4,
+      "y": 488.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 300.0,
+      "y": 512.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 334.0,
+      "y": 513.6,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 367.9,
+      "y": 515.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 401.9,
+      "y": 516.7,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 600.0,
+      "y": 472.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 690.0,
+      "y": 498.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
       "x": 130.0,
-      "y": 360.0
+      "y": 470.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 132.4,
-      "y": 391.3
+      "x": 520.0,
+      "y": 500.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 139.6,
-      "y": 421.6
+      "x": 130.0,
+      "y": 200.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 151.4,
-      "y": 450.0
+      "x": 180.0,
+      "y": 150.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
     },
     {
-      "x": 167.4,
-      "y": 475.7
+      "x": 330.0,
+      "y": 170.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
     },
     {
-      "x": 187.2,
-      "y": 497.9
+      "x": 470.0,
+      "y": 190.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
     },
     {
-      "x": 210.0,
-      "y": 515.9
+      "x": 610.0,
+      "y": 170.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 235.3,
-      "y": 529.1
+      "x": 260.0,
+      "y": 210.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 263.5,
-      "y": 264.7
+      "x": 690.0,
+      "y": 230.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 243.3,
-      "y": 283.0
+      "x": 560.0,
+      "y": 150.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
     },
     {
-      "x": 227.9,
-      "y": 306.0
+      "x": 300.0,
+      "y": 250.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 218.3,
-      "y": 332.2
+      "x": 420.0,
+      "y": 250.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 215.0,
-      "y": 360.0
+      "x": 130.0,
+      "y": 250.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 218.3,
-      "y": 387.8
+      "x": 700.0,
+      "y": 300.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 227.9,
-      "y": 414.0
+      "x": 458.0,
+      "y": 360.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 243.3,
-      "y": 437.0
+      "x": 515.0,
+      "y": 388.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     },
     {
-      "x": 263.5,
-      "y": 455.3
-    },
-    {
-      "x": 564.7,
-      "y": 190.9
-    },
-    {
-      "x": 590.0,
-      "y": 204.1
-    },
-    {
-      "x": 612.8,
-      "y": 222.1
-    },
-    {
-      "x": 632.6,
-      "y": 244.3
-    },
-    {
-      "x": 648.6,
-      "y": 270.0
-    },
-    {
-      "x": 660.4,
-      "y": 298.4
-    },
-    {
-      "x": 667.6,
-      "y": 328.7
-    },
-    {
-      "x": 670.0,
-      "y": 360.0
-    },
-    {
-      "x": 667.6,
-      "y": 391.3
-    },
-    {
-      "x": 660.4,
-      "y": 421.6
-    },
-    {
-      "x": 648.6,
-      "y": 450.0
-    },
-    {
-      "x": 632.6,
-      "y": 475.7
-    },
-    {
-      "x": 612.8,
-      "y": 497.9
-    },
-    {
-      "x": 590.0,
-      "y": 515.9
-    },
-    {
-      "x": 564.7,
-      "y": 529.1
-    },
-    {
-      "x": 536.5,
-      "y": 264.7
-    },
-    {
-      "x": 556.7,
-      "y": 283.0
-    },
-    {
-      "x": 572.1,
-      "y": 306.0
-    },
-    {
-      "x": 581.7,
-      "y": 332.2
-    },
-    {
-      "x": 585.0,
-      "y": 360.0
-    },
-    {
-      "x": 581.7,
-      "y": 387.8
-    },
-    {
-      "x": 572.1,
-      "y": 414.0
-    },
-    {
-      "x": 556.7,
-      "y": 437.0
-    },
-    {
-      "x": 536.5,
-      "y": 455.3
-    },
-    {
-      "x": 340,
-      "y": 520
-    },
-    {
-      "x": 370,
-      "y": 520
-    },
-    {
-      "x": 400,
-      "y": 520
-    },
-    {
-      "x": 430,
-      "y": 520
-    },
-    {
-      "x": 460,
-      "y": 520
+      "x": 360.0,
+      "y": 200.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     }
   ],
   "bricks": [
     {
-      "kind": "line",
-      "x1": 338,
-      "y1": 330,
-      "x2": 364,
-      "y2": 330
+      "kind": "arc",
+      "x": 540.0,
+      "y": 314.0,
+      "r": 66.0,
+      "start": 222.0,
+      "sweep": 46.9,
+      "thickness": 12,
+      "canBeOrange": false,
+      "canBeGreen": false
     },
     {
-      "kind": "line",
-      "x1": 370,
-      "y1": 330,
-      "x2": 396,
-      "y2": 330
-    },
-    {
-      "kind": "line",
-      "x1": 402,
-      "y1": 330,
-      "x2": 428,
-      "y2": 330
-    },
-    {
-      "kind": "line",
-      "x1": 434,
-      "y1": 330,
-      "x2": 460,
-      "y2": 330
+      "kind": "arc",
+      "x": 540.0,
+      "y": 314.0,
+      "r": 66.0,
+      "start": 271.1,
+      "sweep": 46.9,
+      "thickness": 12,
+      "canBeOrange": false,
+      "canBeGreen": false
     }
   ]
 }

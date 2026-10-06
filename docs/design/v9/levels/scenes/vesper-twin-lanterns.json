@@ -172,5 +172,22 @@
     "hk": 0.22
    }
   ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 12,
+   "stars": 24,
+   "mist": [
+    {
+     "y": [532, 592],
+     "speed": 3,
+     "alpha": 0.06,
+     "cell": 140,
+     "seed": 43,
+     "colour": "#E0B8C8"
+    }
+   ]
+  },
+  "flicker": [0]
  }
 }

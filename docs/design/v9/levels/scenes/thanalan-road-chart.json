@@ -186,5 +186,10 @@
    "rimK": 0.4,
    "seed": 5
   }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 26
+  }
  }
 }

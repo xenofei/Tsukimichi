@@ -152,5 +152,12 @@
    "mask": [["disc", 390, 455, 100, 40]],
    "mul": 0.82
   }
- ]
+ ],
+ "runtime": {
+  "motion": {
+   "dust": 24,
+   "stars": 20
+  },
+  "flicker": [0]
+ }
 }

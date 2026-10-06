@@ -32,14 +32,14 @@ internal static class MoonfallSceneKit
         return recipes;
     }
 
-    /// <summary>A shipped scene picture (the 2x one when asked and present).</summary>
+    /// <summary>A shipped scene picture (the 2x one when asked and present, else the other; a picture may ship at 2x only).</summary>
     public static MoonfallImage? Picture(string name, bool twoX = true)
     {
         var dir = Path.Combine(MoonfallArtTests.ArtFolder(), "scenes");
         var path = Path.Combine(dir, name + (twoX ? "@2x.png" : ".png"));
         if (!File.Exists(path))
         {
-            path = Path.Combine(dir, name + ".png");
+            path = Path.Combine(dir, name + (twoX ? ".png" : "@2x.png"));
         }
 
         if (!File.Exists(path))
@@ -76,6 +76,24 @@ internal static class MoonfallSceneKit
         }
 
         return recipe.Fallback is { } name ? (Picture(name), true) : (null, false);
+    }
+
+    /// <summary>A recipe's plates (<see cref="MoonfallSceneBuilder.PlateNames"/>) as the plugin reads them; a test fails on a missing one.</summary>
+    public static IReadOnlyDictionary<string, MoonfallImage> Plates(MoonfallSceneRecipe recipe)
+    {
+        var plates = new Dictionary<string, MoonfallImage>(StringComparer.Ordinal);
+        foreach (var name in MoonfallSceneBuilder.PlateNames(recipe))
+        {
+            if (Picture(name) is not { } plate)
+            {
+                Assert.Fail($"{recipe.Name}: the plate {name} does not ship");
+                continue;
+            }
+
+            plates[name] = plate;
+        }
+
+        return plates;
     }
 
     /// <summary>Every shipped level that takes a recipe (<see cref="MoonfallSceneRecipeLoader.Pick"/>), with it.</summary>

@@ -106,7 +106,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Level.Id == key);
         var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
         Assert.NotNull(painting);
-        return (level, MoonfallSceneBuilder.Build(recipe, level, painting, 1, fallback, check: true));
+        return (level, MoonfallSceneBuilder.Build(recipe, level, painting, 1, fallback, check: true, plates: MoonfallSceneKit.Plates(recipe)));
     });
 
     [Theory]
@@ -669,7 +669,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
     {
         var host = new FakeHost(new Dictionary<string, MoonfallImage>(), pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () => art.Chrome is not null && art.SceneState is not MoonfallSceneState.Building);
         Assert.Equal(MoonfallChromeArt.Textures.Count, art.Chrome!.Missing.Count);
         Assert.False(art.Chrome.FrameReady);
@@ -689,7 +689,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         game["ui/uld/TripleTriadResultCrown_hr1.tex"] = Flat(700, 256, 0.7f);
         var host = new FakeHost(game, pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () => art.ChromeTexture is not null);
         var missing = Assert.Single(art.Chrome!.Missing);
         Assert.StartsWith("ui/uld/TripleTriadResultCrown_hr1.tex (700 x 256", missing, StringComparison.Ordinal);
@@ -706,16 +706,16 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         var host = new FakeHost(AllUiTextures(), pictures: true);
         using (var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn()))
         {
-            var level = LevelTaking("airship-road");
+            var level = LevelTaking("rhotano-wonders");
             Until(art, host, level, () => art.SceneState is MoonfallSceneState.Ready or MoonfallSceneState.Failed);
             Assert.Equal(MoonfallSceneState.Ready, art.SceneState);
-            Assert.Equal("airship-road", art.Scene!.Layers.Name);
+            Assert.Equal("rhotano-wonders", art.Scene!.Layers.Name);
         }
 
         // Neither the painting nor any picture: the scene fails (logged once) and the board shows the night sky.
         var bare = new FakeHost(AllUiTextures(), pictures: false);
         using var art2 = new MoonfallGameArt<Tex>(bare, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level2 = LevelTaking("airship-road");
+        var level2 = LevelTaking("rhotano-wonders");
         Until(art2, bare, level2, () => art2.SceneState is MoonfallSceneState.Failed);
         for (var i = 0; i < 10; i++)
         {
@@ -724,7 +724,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         }
 
         Assert.Null(art2.Scene);
-        Assert.Single(bare.Warnings, static w => w.Contains("scene airship-road", StringComparison.Ordinal));
+        Assert.Single(bare.Warnings, static w => w.Contains("scene rhotano-wonders", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -732,7 +732,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
     {
         var host = new FakeHost(AllUiTextures(), pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () =>
         {
             art.Card(MoonfallPower.Wings);
@@ -755,7 +755,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         game[MoonfallCards.CardPath(87058)] = Flat(MoonfallCards.CardWidth, MoonfallCards.CardHeight, 0.6f);
         var host = new FakeHost(game, pictures: true);
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneRecipeLoader.LoadBuiltIn());
-        var level = LevelTaking("moon-road-night");
+        var level = LevelTaking("horizon-by-night");
         Until(art, host, level, () => art.ChromeTexture is not null && art.Scene is not null && art.Card(MoonfallPower.Wings) is not null);
         var held = art.HeldBytes();
         Assert.True(held.Chrome > 0 && held.Cards > 0 && held.Scene > 0);
@@ -792,7 +792,7 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         foreach (var (level, recipe) in MoonfallSceneKit.ShippedScenes())
         {
             var (painting, fallback) = MoonfallSceneKit.Painting(recipe);
-            var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, 2, fallback);
+            var layers = MoonfallSceneBuilder.Build(recipe, level, painting!, 2, fallback, plates: MoonfallSceneKit.Plates(recipe));
             var enamel = chrome.Grain is { } g ? (long)(g.Width / 2) * (g.Height / 2) * 4 : 0;
             output.WriteLine($"{level.Id} ({recipe.Name}) at 2x: {layers.Bytes / MiB:0.00} MiB of layers + {enamel / MiB:0.00} MiB enamel");
             worstScene = Math.Max(worstScene, layers.Bytes + enamel);
