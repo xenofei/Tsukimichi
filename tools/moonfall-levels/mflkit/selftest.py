@@ -76,6 +76,7 @@ def engine_cases(verbose=True):
     one = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.40}], "low_left_share": 0.2}
     ratio = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.10}], "low_left_share": 0.5}
     even = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.10}], "low_left_share": 0.22}
+
     # the colours gate: a green dealt to a never-green piece
     lv = {"pegs": [{"x": 1, "y": 1, "canBeGreen": False}, {"x": 2, "y": 2}], "bricks": []}
     from .build import green_faults
@@ -97,6 +98,7 @@ def engine_cases(verbose=True):
              ("cheap difficulty: one low orange left in 40% of lost games", not engine.cheap(one, homes), False),
              ("cheap difficulty: low candidates 20% of the deal, 50% of what is left", not engine.cheap(ratio, homes), False),
              ("cheap difficulty: low oranges left in their share", not engine.cheap(even, homes), True),
+
              ("colours: a green dealt to a never-green piece", not green_faults(lv, ["green", "blue"]), False),
              ("colours: a green where greens may go", not green_faults(lv, ["blue", "green"]), True)]
     ok = True

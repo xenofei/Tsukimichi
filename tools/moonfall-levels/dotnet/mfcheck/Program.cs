@@ -1,7 +1,7 @@
 // mfcheck: validates Moonfall level files with the shipped loader and plays them with the shipped engine.
 //   validate <file.json>...                 the loader's verdict, counts, and the layout checks below
 //   sweep <file.json> [level] [seed] [step] one fresh shot at every aim angle: what each angle reaches
-//   play <file.json> [games] [level]        a greedy one-shot-lookahead player (aim error +-1.5 deg) and a random player
+//   play <file.json> [games] [level] [first]  a greedy one-shot-lookahead player (aim error +-1.5 deg) over seeds first+1.., and a random player
 // Everything runs the real MoonfallLevelLoader and MoonfallGame from Tsukimichi.Core; nothing here changes them.
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -60,7 +60,8 @@ switch (args[0])
         var level = Load(args[1]);
         var games = args.Length > 2 ? int.Parse(args[2], inv) : 4;
         var number = args.Length > 3 ? int.Parse(args[3], inv) : 5;
-        Play(level, games, number);
+        var first = args.Length > 4 ? int.Parse(args[4], inv) : 0;
+        Play(level, games, number, first);
         return 0;
     }
 
@@ -265,7 +266,7 @@ void Sweep(MoonfallLevel level, int number, ulong seed, double step)
         stuckShots += stuck > 0 ? 1 : 0;
         catches += caught ? 1 : 0;
         longFlights += ticks > 1500 ? 1 : 0;
-        rows.Add($"{a,6:0.0}  pegs {distinct.Count,3}  oranges {o,2}  walls {walls}  flight {ticks / 100.0,5:0.0}s{(stuck > 0 ? $"  STUCK x{stuck}" : string.Empty)}{(caught ? "  bucket" : string.Empty)}");
+        rows.Add($"{a,7:0.00}  pegs {distinct.Count,3}  oranges {o,2}  walls {walls}  flight {ticks / 100.0,5:0.0}s{(stuck > 0 ? $"  STUCK x{stuck}" : string.Empty)}{(caught ? "  bucket" : string.Empty)}");
     }
 
     foreach (var r in rows)
@@ -281,7 +282,7 @@ void Sweep(MoonfallLevel level, int number, ulong seed, double step)
     Console.WriteLine($"pieces no first shot reaches: {never.Count} of {level.Pegs.Count}" + (never.Count > 0 ? ": " + string.Join(", ", never.Take(60)) : string.Empty));
 }
 
-void Play(MoonfallLevel level, int games, int number)
+void Play(MoonfallLevel level, int games, int number, int first = 0)
 {
     // The greedy player: before each shot it tries every angle 2 deg apart on a replay of the game so far and takes the
     // one that lights the most (oranges worth 6 pegs, a bucket catch worth 5), then misses its aim by up to 1.5 deg.
@@ -289,8 +290,8 @@ void Play(MoonfallLevel level, int games, int number)
     var summary = new ConcurrentBag<(int Index, bool Won, int Shots, int OrangesLeft, int PegsLeft, int Stuck)>();
     Parallel.For(0, games, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount }, gi =>
     {
-        var seed = (ulong)(gi + 1) * 7919UL;
-        var rng = new Random(gi * 31 + 7);
+        var seed = (ulong)(gi + first + 1) * 7919UL;           // games first+1 .. first+games (a held-out block when first > 0)
+        var rng = new Random((gi + first) * 31 + 7);
         var shotsSoFar = new List<double>();
         var stuckTotal = 0;
         // The live game is copied for every trial (MoonfallGame.CopyFrom: the same game bit for bit, as

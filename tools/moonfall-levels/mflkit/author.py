@@ -44,6 +44,7 @@ def point_in_poly(x, y, poly):
     return inside
 
 BALL = 12.0
+NOTCH_MAX = 14.0              # a gap between bricks narrower than a dotted line's holds a ball (critic round 3, L11/B2)
 DECK_DEG = 10.0               # a line brick flatter than this is a deck (round 2, critic G5)
 LANE_WIDTH = 120              # units of the bucket lane's width the pieces in it may cover (critic L14)
 DOTTED_GAP = 14.0             # pegs on a dotted line: 14 or more between surfaces (34 centre to centre at r 10)
@@ -422,7 +423,7 @@ class Board(Layout):
                 a, c = bricks[i], bricks[k]
                 d, pa, pc = min((math.hypot(x0 - x1, y0 - y1), (x0, y0), (x1, y1)) for (x0, y0) in bs[i][::2] for (x1, y1) in bs[k][::2])
                 g = d - a["thickness"] / 2 - c["thickness"] / 2
-                if 3.5 < g < 12.5:
+                if 3.5 < g < NOTCH_MAX:
                     P.append(f"notch {g:.1f} between brick {i} and brick {k}")
                 elif g <= 3.5:
                     jy = (pa[1] + pc[1]) / 2
@@ -484,8 +485,15 @@ class Board(Layout):
                     pa, pc = self.mover_points(a), self.mover_points(c)
                 else:
                     T = self.common_cycle(a, c)
-                    ts = [T * q / max(72, int(T * 20)) for q in range(max(72, int(T * 20)))]
-                    pa, pc = [self.mover_at(a, t) for t in ts], [self.mover_at(c, t) for t in ts]
+                    if T < 240.0:
+                        ts = [T * q / max(72, int(T * 20)) for q in range(max(72, int(T * 20)))]
+                        pa, pc = [self.mover_at(a, t) for t in ts], [self.mover_at(c, t) for t in ts]
+                    else:
+                        # a common cycle longer than a game may last (critic round 3, N4): every pair of phases, which
+                        # is conservative (the two meet at every combination sooner or later)
+                        qa, qc = self.mover_points(a, 72), self.mover_points(c, 72)
+                        pa = [p0 for p0 in qa for _ in qc]
+                        pc = [p1 for _ in qa for p1 in qc]
                 if any(math.hypot(x0 - x1, y0 - y1) - a.get("r", 10.0) - c.get("r", 10.0) < 12.0 for (x0, y0), (x1, y1) in zip(pa, pc)):
                     P.append(f"movers from ({a['x']}, {a['y']}) and ({c['x']}, {c['y']}) come within a ball of each other")
         # the subject's interior stays open (section 2): no peg inside a declared silhouette unless it is a feature
@@ -655,6 +663,16 @@ def selftest(verbose=True):
     cases.append(("a deck at 6.5 degrees (critic G5)", faults(b), "level deck"))
     b = grid_board(); b.line(150, 150, 178, 150)
     cases.append(("one level brick of 28 (critic G5)", faults(b), "level deck"))
+    b = grid_board()
+    for k in range(4):
+        b.line(150 + 17 * k, 150, 165 + 17 * k, 150)
+    cases.append(("a chain of four 15-unit level bricks (critic N7)", [q for q in faults(b) if "bricks [" in q], "level deck"))
+    b = grid_board(); b.line(150, 160, 190, 140, t=12); b.line(214.8, 140, 254.8, 160, t=12)
+    cases.append(("a 12.8-unit slot between two bricks (critic L11)", faults(b), "notch"))
+    b = grid_board()
+    b.peg(470, 150, r=9, move={"kind": "slide", "x": 570, "y": 150, "period": 10})
+    b.peg(573, 150, r=9, move={"kind": "slide", "x": 673, "y": 150, "period": 10.1})
+    cases.append(("slides of periods 10 and 10.1 that meet after 264 s (critic N4)", faults(b), "of each other"))
     b = grid_board(); b.line(110, 548, 380, 548); b.line(420, 548, 690, 548)
     cases.append(("two long bricks across the bucket's lane (critic L14)", faults(b), "cover"))
     b = Board(); b.peg(400, 300, r=9, move={"kind": "orbit", "x": 400, "y": 340, "period": 12})

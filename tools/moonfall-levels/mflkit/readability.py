@@ -24,12 +24,17 @@ their edge), the OKLab distance between the mean colour 5-12 units outside the p
 Rule: the median at most 0.066, the approved pilots' highest. (The runtime draws the veil per piece and fades it with
 the piece, so this is the board in play; the print below is what stays when the pieces clear.)
 
-Print (round 2, all three supervisors' G1): the dress must not print anything round a peg, as hue or as lightness, that
-the painting does not have. On the dressed scene with no pieces and no veil, the dress's own change (OKLab, dressed
-minus undressed: the painting's detail cancels) 5-12 units outside each still peg against 20-36 units out, sector by
-sector, the median over eight sectors (so an edge that crosses the peg is not a print). Every still peg with enough
-samples counts, isolated or not; with fewer than three such pegs the board as a whole is measured (5-12 from any piece
-against 30 or more from all), so the check is never vacuous. Rule: the median at most PRINT_MED and the 90th percentile at most PRINT_P90.
+Print (round 2, all three supervisors' G1; round 3, UX m4 and critic N3): the dress must not print anything round a
+peg, as hue or as lightness, that the painting does not have and that shows. On the dressed scene with no pieces and no
+veil, the dress's own change (OKLab, dressed minus undressed: the painting's detail cancels), per peg (a mover at its
+home), sector by sector: 5-12 units outside the peg against 20-36 out, and 5-20 against 45-70 out (a ring between the
+first pair, or a wide disc, shows in the second); the median over eight sectors (an edge crossing the peg is not a
+print), the larger pair. A peg's print counts only where it exceeds 1.2 times the painting's own fine grain round it
+(the undressed scene less its 4-unit blur): a textured game painting hides what a flat night sky shows. Every peg
+counts, isolated or not; with fewer than three measurable the board as a whole is measured, so it is never vacuous.
+Rule: the median at most PRINT_MED and the 90th percentile at most PRINT_P90. Calibrated: the six approved pilots
+measure median 0 and p90 0-0.066 (they are self-test cases); round 2's per-peg quiet measured median 0.012-0.095 on the
+flat boards and p90 0.07-0.10 on the textured ones.
 """
 import math
 
@@ -47,7 +52,7 @@ PILOT_FACES = {"blue": 0.689, "orange": 0.620, "green": 0.718, "purple": 0.593}
 F6_MIN, F6_DROP, F7_SECOND, F7_CHROMA, F7_APART = 0.20, 0.02, 0.15, 0.06, 60.0
 F9_MIN, F9_PILOT = 0.12, 0.101
 GHOST_MAX = 0.066
-PRINT_MED, PRINT_P90 = 0.010, 0.026
+PRINT_MED, PRINT_P90 = 0.010, 0.070
 
 
 def down(px2, s):
@@ -188,37 +193,55 @@ def ghost(bd1, level):
     return round(vals[len(vals) // 2][0], 3), vals[-1], len(vals)
 
 
+PRINT_BANDS = (((5, 12), (20, 36), 16), ((5, 20), (45, 70), 30))   # (near, far, far's clearance from every piece)
+PRINT_TEXTURE = 1.2          # a print within this many times the painting's own local variation does not show
+
+
 def dress_print(dressed1, undressed1, level):
     """The dress's print round the pegs (see the module's docstring): (median, p90, worst (value, at), samples, mode).
 
-    Per still peg, in eight sectors round it: the dress's change (dressed minus undressed, OKLab) 5-12 units outside
-    the peg against 20-36 units out (16 or more from every piece). The peg's value is the median over its sectors, so
-    an edge of the painting or of a region that crosses the peg moves only the sectors it crosses; a disc printed round
-    the peg moves them all."""
-    diff = srgb_to_oklab(dressed1) - srgb_to_oklab(undressed1)
+    Per peg (a mover at its home), in eight sectors round it: the dress's change (dressed minus undressed, OKLab) near
+    the peg against further out, for two pairs of bands (5-12 against 20-36 units from its edge, and 5-20 against
+    45-70: a ring between the first pair or a wide disc both show in the second). Per pair the median over the sectors
+    (so an edge that crosses the peg moves only the sectors it crosses; a disc moves them all), and the larger pair.
+    A print shows only where the ground is flat: a peg counts its print if it exceeds PRINT_TEXTURE times the undressed
+    painting's own fine grain round it (the undressed scene less its 4-unit blur: a textured game painting hides what
+    a flat night sky shows), else 0."""
+    lab_d, lab_u = srgb_to_oklab(dressed1), srgb_to_oklab(undressed1)
+    diff = lab_d - lab_u
+    from r2lib import blur
+    # the painting's fine grain (what hides a print): the undressed scene less its 4-unit blur
+    grain = lab_u - np.stack([blur(lab_u[..., c], 4.0) for c in range(3)], -1)
     import framecheck as fc
     dist = fc.piece_distance(level)
     yy, xx = np.mgrid[0:600, 0:800]
     inside = (xx > 80) & (xx < 720) & (yy > 45) & (yy < 515)
     vals = []
     for d in level["pegs"]:
-        if "move" in d:
-            continue
         x, y, r = d["x"], d["y"], d.get("r", 10)
-        x0, x1, y0, y1 = int(max(0, x - r - 40)), int(min(800, x + r + 40)), int(max(0, y - r - 40)), int(min(600, y + r + 40))
+        R_ = r + 72
+        x0, x1, y0, y1 = int(max(0, x - R_)), int(min(800, x + R_)), int(max(0, y - R_)), int(min(600, y + R_))
         X, Y = xx[y0:y1, x0:x1] + 0.5 - x, yy[y0:y1, x0:x1] + 0.5 - y
         rr = np.sqrt(X ** 2 + Y ** 2) - r
         sec = ((np.degrees(np.arctan2(Y, X)) + 360) // 45).astype(int) % 8
-        df, ins, ds = diff[y0:y1, x0:x1], inside[y0:y1, x0:x1], dist[y0:y1, x0:x1]
-        near_all = (rr >= 5) & (rr <= 12) & ins
-        mid_all = (rr >= 20) & (rr <= 36) & (ds >= 16) & ins
-        per = []
-        for k in range(8):
-            n, m = near_all & (sec == k), mid_all & (sec == k)
-            if n.sum() >= 4 and m.sum() >= 8:
-                per.append(float(np.linalg.norm(df[n].mean(0) - df[m].mean(0))))
-        if len(per) >= 4:
-            vals.append((float(np.median(per)), (round(x), round(y))))
+        df, ins, ds, lu = diff[y0:y1, x0:x1], inside[y0:y1, x0:x1], dist[y0:y1, x0:x1], grain[y0:y1, x0:x1]
+        best = None
+        for (n0, n1), (f0, f1), clear in PRINT_BANDS:
+            near_all = (rr >= n0) & (rr <= n1) & ins
+            far_all = (rr >= f0) & (rr <= f1) & (ds >= clear) & ins
+            per = []
+            for k in range(8):
+                n, m = near_all & (sec == k), far_all & (sec == k)
+                if n.sum() >= 4 and m.sum() >= 8:
+                    per.append(float(np.linalg.norm(df[n].mean(0) - df[m].mean(0))))
+            if len(per) >= 4:
+                v = float(np.median(per))
+                best = v if best is None else max(best, v)
+        if best is None:
+            continue
+        ring = (rr >= 5) & (rr <= 70) & ins
+        texture = float(np.linalg.norm(lu[ring].std(0))) if ring.sum() > 20 else 0.0
+        vals.append((best if best > PRINT_TEXTURE * texture else 0.0, (round(x), round(y))))
     if len(vals) >= 3:
         v = np.array([a for a, _ in vals])
         w = max(vals)
@@ -334,6 +357,15 @@ def selftest(verbose=True):
         if kind == "edge":
             pts = [(400, 200), (400, 300), (400, 400)]
             dl[:, :400, 1] += 0.05                      # a region's edge running through the pegs
+        elif kind == "ring":                            # a ring 13-19 units from the peg's edge (critic N3)
+            for (x, y) in pts:
+                rr = np.sqrt((xx - x) ** 2 + (yy - y) ** 2) - 9
+                m = (rr >= 13) & (rr <= 19)
+                dl[m, 1], dl[m, 2] = 0.03, -0.04
+        elif kind == "wide":                            # a crisp disc 40 units out (critic N3, UX m4)
+            for (x, y) in pts:
+                m = (xx - x) ** 2 + (yy - y) ** 2 < 49 ** 2
+                dl[m, 1], dl[m, 2] = 0.03, -0.04
         elif kind != "even":
             for (x, y) in pts:
                 m = (xx - x) ** 2 + (yy - y) ** 2 < 24 ** 2
@@ -352,7 +384,21 @@ def selftest(verbose=True):
              ("print: a hue disc round each peg on a flat rose sky (UX G2)", printed("disc"), False),
              ("print: the same discs on a board with no isolated peg (critic G1)", printed("cluster"), False),
              ("print: an even dress over the whole sky", printed("even"), True),
-             ("print: a region's edge running through the pegs", printed("edge"), True)]
+             ("print: a region's edge running through the pegs", printed("edge"), True),
+             ("print: a ring 13-19 units out (critic N3)", printed("ring"), False),
+             ("print: a crisp disc 40 units out (critic N3)", printed("wide"), False)]
+    # the six approved pilots, dressed (rich2) against undressed (rich): known-good
+    import json as _json
+    from .paths import RICH
+    v9 = RICH.parent
+    for pid, stem in (("base-p1", "base-p1-airship-road"), ("base-p2", "base-p2-holy-see"), ("base-p3", "base-p3-moogle"),
+                      ("exp-p1", "exp-p1-sharlayan"), ("exp-p2", "exp-p2-lantern-ferry"),
+                      ("exp-p3", "exp-p3-mare-lamentorum")):
+        lv = _json.loads((v9 / "rich" / "levels" / f"{pid}.json").read_text(encoding="utf-8"))
+        import rich_lib as _RL
+        med, p90, _w, _n, _m = dress_print(_RL.load_rgb(v9 / "rich2" / "scenes" / f"{stem}.png"),
+                                           _RL.load_rgb(v9 / "rich" / "scenes" / f"{stem}.png"), lv)
+        cases.append((f"print: the approved pilot {pid} (median {med}, p90 {p90})", med <= PRINT_MED and p90 <= PRINT_P90, True))
     ok = True
     for name, passed, want in cases:
         ok &= passed == want

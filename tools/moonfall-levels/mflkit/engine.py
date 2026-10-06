@@ -8,12 +8,15 @@ from .paths import DOTNET, MFCHECK, TEXDUMP
 
 GREEDY_GAMES = 48
 GREEDY_MIN_WINS = 5          # decision 21: no worse than the weakest shipped level (5 of 48)
+HELD_GAMES = 1728            # the reported ramp: seeds 865-2592, never used for tuning (about +-0.55 per 48)
 RAMP_GAMES = 864             # the difficulty ramp (432 or more: coordinator, round 1; 864 so neighbours separate, GD round 2 G2): the first 48 are the rule's games
 STUCK_MAX_SHARE = 0.05       # level-method.md section 4: the stuck rule fires on fewer than 5% of first shots
 SWEEP_STEP = 0.25            # the first-shot sweep's step (round 2, critic G4: whole degrees missed narrow dead aims)
 LOW_Y = 430.0                # an orange whose home is this low sits in the bucket's approach (cheap difficulty)
 CHEAP_ONE = 0.25             # ...and may be left in at most this share of lost games (game designer G3)
 CHEAP_RATIO = 1.5            # the low candidates' share of the oranges left, at most this times their share of the deal
+# (A cap on the low share of the deal itself, game designer round 3 G11, was tried and dropped: the approved pilot
+# base-p2 has 35% of its candidates at y 430 or lower. A finale's low reflection is a design call, kept within the ratio.)
 
 
 def piece_homes(path):
@@ -41,6 +44,7 @@ def cheap(play_result, homes):
                          f"games ({CHEAP_ONE:.0%} at most below y {LOW_Y:.0f})")
     cands = [xy for (xy, c) in homes if c]
     deal = sum(1 for (_x, y) in cands if y >= LOW_Y) / max(len(cands), 1)
+
     left = play_result["low_left_share"]
     if deal > 0 and left > CHEAP_RATIO * deal and left >= 0.15:
         probs.append(f"low oranges are {left:.0%} of the oranges left in lost games against {deal:.0%} of the candidates "
@@ -88,11 +92,12 @@ def sweep(path, number, seed=1, step=SWEEP_STEP):
             "unreached": [int(v) for v in (u.group(3) or "").split(",") if v.strip()], "pieces": int(u.group(2))}
 
 
-def play(path, number, games=RAMP_GAMES):
-    """mfcheck's greedy player (one-shot lookahead, aim error +-1.5 deg) over `games` seeded games, and the random
-    player over 40. The rule's verdict is the first 48 seeds (the same games a 48-game run plays); the whole run is the
-    difficulty ramp (864 games: about +-0.8 per 48)."""
-    code, out = _run("play", path, games, number)
+def play(path, number, games=RAMP_GAMES, first=0):
+    """mfcheck's greedy player (one-shot lookahead, aim error +-1.5 deg) over `games` seeded games from seed block
+    `first` + 1, and the random player over 40. With first 0 the rule's verdict is the first 48 seeds. Tuning plays the
+    first 864 (about +-0.8 per 48); the build reports the ramp on HELD_GAMES held-out seeds after them, since a layout
+    tuned on the first block carries that block's luck (game designer round 3, G10: about 0.8 per 48)."""
+    code, out = _run("play", path, games, number, first)
     if code != 0:
         raise RuntimeError(out)
     g48 = re.search(r"greedy48: won (\d+) of (\d+); oranges left when lost ([\d,]*)", out)

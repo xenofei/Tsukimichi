@@ -26,11 +26,11 @@
    "regions": [
     {
      "hex": "#B45850",
-     "chroma": 0.08,
-     "mask": [["y", 300, 345], ["not-poly", "cactuar", 6]]
+     "chroma": 0.12,
+     "mask": [["y", 250, 330], ["not-poly", "cactuar", 6]]
     }
    ],
-   "quiet": [22, 12],
+   "quiet": [40, 18],
    "keepMask": [["poly", "cactuar", 4]]
   },
   "shafts": [

@@ -26,11 +26,11 @@
    "regions": [
     {
      "hex": "#B05A66",
-     "chroma": 0.125,
+     "chroma": 0.18,
      "mask": [["y", 130, 310], ["not-poly", "ship", 10]]
     }
    ],
-   "quiet": [22, 12]
+   "quiet": [40, 18]
   },
   "framing": [
    {

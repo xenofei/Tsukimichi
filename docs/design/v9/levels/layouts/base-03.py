@@ -47,4 +47,5 @@ def build(b):
     b.trace([(600, 497), (650, 484), (740, 466)], spacing=38, r=9, tag="near dune")
     for k, (x, y) in enumerate([(560, 176), (628, 214), (688, 170), (590, 270), (668, 286), (140, 250), (250, 230)]):
         b.place(x, y, r=8, orange=k in (0, 3, 4, 5, 6), tag="star")
-    b.place(320, 170, r=8, tag="star")       # a star over the crown (placed last)
+    for (x, y) in ((320, 170), (200, 180)):       # stars over the crown and the west sky (placed last)
+        b.place(x, y, r=8, tag="star")

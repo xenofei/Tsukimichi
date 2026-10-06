@@ -50,6 +50,7 @@ def build(b):
     for (x, y) in ((580, 190), (540, 236), (180, 210), (230, 240), (330, 240), (288, 262), (450, 200), (620, 150)):
         b.place(x, y, r=8, orange=(x, y) in ((580, 190), (540, 236), (180, 210), (330, 240)), tag="star")
     b.place(256, 290, r=8, tag="star")               # a star low over the headland, in the last dead lane
+    b.place(538, 346, r=8, tag="swell")              # and one in a 0.16-degree lane (critic round 3, N5)
     # the candidates the greedy player found hardest (the low moonpath row, the low crest and swell, two right-hand
     # moons) give way to the horizon line, a pier piling and the west swell (`mfl.py ease`; round 2 ramp)
     for (x, y, o) in ((252, 436, False), (332, 436, False), (470, 430, False), (520, 380, False), (676, 346, False),

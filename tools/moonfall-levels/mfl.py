@@ -5,7 +5,7 @@
   trace <scene|level-id>        the tracing sheet: graded scene, grid, features and (for a level) its pieces
   build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
-  stage <n>                     the stage's table: the 864-game ramp, jewels of neighbours, game paintings against ours
+  stage <n>                     the stage's table: the held-out ramp, jewels of neighbours, game paintings against ours
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
@@ -108,7 +108,7 @@ def cmd_build(args):
 
 
 def cmd_stage(args):
-    """The stage's table from the reports: pieces, the rule's 48 games, the 864-game ramp (about +-1.1 per 48), the
+    """The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp (1728 games, about +-0.55 per 48), the
     random player, the jewels; it faults neighbours with the same jewels and a finale that is not the hardest."""
     n = int(args[0])
     reps = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
@@ -127,7 +127,14 @@ def cmd_stage(args):
               f"{str(pair[0]) + '/' + str(pair[1]):>10} {r['source']}")
         rows.append((r["id"], c.get("play", {}).get("ramp_per_48"), pair))
     from mflkit import stagecheck
-    fails += stagecheck.faults(n, rows)
+    allr = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
+    last = [r for r in allr if r["stage"] == n - 1]
+    before = None
+    if last:
+        r = max(last, key=lambda r: r["number"])
+        jw = r["checks"].get("readcheck", {}).get("report", {}).get("jewels", {})
+        before = (r["id"], r["checks"].get("play", {}).get("ramp_per_48"), (jw.get("first_jewel_hue"), jw.get("second_jewel_hue")))
+    fails += stagecheck.faults(n, rows, before)
     game = sum(1 for r in reps if not r["source"].startswith("our painting"))
     print(f"game paintings {game} of {len(reps)}; verdicts: " + ", ".join(f"{r['id']} {r['verdict']}" for r in reps))
     for f in fails:

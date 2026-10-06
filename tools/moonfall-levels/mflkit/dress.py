@@ -7,7 +7,7 @@ branch of code; here it is data, the recipe's `dress` object, so the plugin can 
     "jewel":   {"bands": [[y, "#hex"], ...], "valueHues": [[L, "#hex"], ...], "chroma": 0.9, "floor": 0.03,
                 "keep": 0.30, "keepHi": 0.75, "mix": 0.5,
                 "regions": [{"hex": "#..", "chroma": 0.1, "mask": [["y", 400, 470], ["luma", 0.3, 0.42, 3], ...]}],
-                "quiet": [24, 12]},                      # quieten colour round the layout (F9), spread low-frequency
+                "quiet": [40, 18], "quietBlur": 40},     # quieten colour round the layout (F9): runtime `near` form
     "shafts":  [{"origin": [x, y], "angles": [...], "widths": [...], "k": 0.07, "col": "#..", "reach": 900, "near": 150}],
     "glows":   [{"x":.., "y":.., "r":.., "col": "#..", "k": 0.05}],
     "framing": [{"kind": "frond", ...}, {"kind": "pines", ...}, ...],
@@ -31,8 +31,13 @@ import framecheck as fc
 from r2lib import blur, hexc, screen, smooth, srgb_to_oklab
 
 WALL_L, WALL_R, TOP, FOOT = D.WALL_L, D.WALL_R, D.TOP, D.FOOT
-QUIET_SIGMA, QUIET_GAIN = 40.0, 1.6     # the jewel's quiet, spread over 40 units (or the recipe's own outer reach)
-QUIET_REGION, QUIET_KEEP = 0.6, 0.5     # how much of a region's colour and of the jewel the quiet takes out at its fullest
+# the jewel's quiet, in the runtime's own form (main's scene-recipe `near` mask term, MoonfallSceneBuilder.Palette):
+# the clearance (capped at MoonfallClearance.Far) blurred by `quietBlur` units (40 at most, the format's limit), then
+# the smoothstep `quiet: [a, b]`; a region keeps 1 - 0.6 of it (`near` with invert and scale 0.6) and the jewel
+# 1 - 0.5 (the palette's `where`). Blurring the distance first is what keeps it from printing a coin round a lone peg
+# (round-2 supervision G1); drawing it exactly as the runtime will is round 3's UX G3.
+QUIET_BLUR, QUIET_BLUR_MAX, CLEARANCE_FAR = 40.0, 40.0, 96.0
+QUIET_REGION, QUIET_KEEP = 0.6, 0.5
 
 
 class Ctx:
@@ -255,10 +260,9 @@ def dress(recipe, sc, level, S, t=0.0):
         keepm = None
         if j.get("quiet"):
             a, b = j["quiet"]
-            # low frequency, never per peg (round-2 supervision G1): the per-piece field is spread over QUIET_SIGMA
-            # units, so a cluster quietens its whole area as one calm band and a lone peg leaves only a faint, wide
-            # wash, never a coin round itself that stays after it clears
-            near = np.clip(QUIET_GAIN * blur(smooth(a, b, ctx.dist_at_S()), max(a, QUIET_SIGMA) * S), 0, 1)
+            sigma = min(float(j.get("quietBlur", QUIET_BLUR)), QUIET_BLUR_MAX)
+            dist = np.minimum(ctx.dist_at_S().astype(np.float32), CLEARANCE_FAR)
+            near = smooth(a, b, blur(dist, sigma * S) if sigma > 0.3 else dist)
             regions = [(rm * (1 - QUIET_REGION * near), hx, cr) for (rm, hx, cr) in regions]
             keepm = 1 - QUIET_KEEP * near
         keeps = ([j["keepMask"]] if j.get("keepMask") else []) + list(j.get("keepMasks", []))

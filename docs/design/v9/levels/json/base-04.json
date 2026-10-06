@@ -421,6 +421,20 @@
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
+    },
+    {
+      "x": 320.0,
+      "y": 170.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 480.0,
+      "y": 140.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     }
   ],
   "bricks": [

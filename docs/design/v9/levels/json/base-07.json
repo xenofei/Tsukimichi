@@ -533,6 +533,13 @@
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
+    },
+    {
+      "x": 538.0,
+      "y": 346.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     }
   ],
   "bricks": [

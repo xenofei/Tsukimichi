@@ -39,7 +39,7 @@ def build(b):
     for k in range(7):
         a = math.radians(200 + 140 * k / 6)
         x, y = cx + R * math.cos(a), mirror(cy + R * math.sin(a))
-        b.slide(x, y, RIPPLE, 0, PERIOD, r=9, orange=k in (1, 2, 3, 4, 5), tag="arch reflection")
+        b.slide(x, y, RIPPLE, 0, PERIOD, r=9, orange=k in (1, 2, 4, 5), tag="arch reflection")   # the U's foot is blue
     for (x, top, foot) in b.features["pillars"]:
         side = -1 if x < cx else 1
         b.slide(x + side * 30, mirror(top + 44), RIPPLE, 0, PERIOD, r=9, orange=True, tag="pillar reflection")
@@ -48,7 +48,7 @@ def build(b):
         for k in range(5):
             a = math.radians(90 + 72 * k)                                # the ring turned over: its top is now below
             b.slide(lx + 30 * math.cos(a), mirror(ly + 2) + 30 * math.sin(a), RIPPLE, 0, PERIOD, r=9,
-                    orange=k != 0, green=False, tag="lantern reflection")    # its lowest moon is blue
+                    orange=k != 0, green=False, tag="lantern reflection")    # all but its lowest moon
     # the night sky and the far shore: stars, and the shore's low hills dotted either side
     for (x, y) in ((240, 190), (560, 190), (660, 170), (130, 300), (680, 300), (250, 290), (550, 290), (140, 150),
                    (660, 120)):
@@ -61,6 +61,6 @@ def build(b):
     # ripple marks in the still water, in pairs: short arcs of brick, concave down
     for (x, y) in ((278, 498), (530, 498)):
         b.arc(x, y + 30, 30, 235, 70, t=10, tag="ripple")
-    for (x, y) in ((220, 150), (580, 150), (110, 200), (690, 200)):     # high stars over the lanterns and the shore
+    for (x, y) in ((220, 150), (580, 150), (110, 200), (690, 200), (300, 180), (500, 180)):     # high stars
         b.place(x, y, r=8, tag="star")
     b.greens_in_reach()

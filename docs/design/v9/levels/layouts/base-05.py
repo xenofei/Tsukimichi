@@ -27,7 +27,7 @@ FIELD = [(130, 300, False), (170, 360, True), (110, 420, False), (210, 410, True
 
 def build(b):
     for (x, y) in b.f("stars"):
-        b.place(x, y, r=11, orange=True, green=False, tag="star")
+        b.place(x, y, r=11, orange=y < 430, green=False, tag="star")      # the crystal's foot is low: blue
     b.arc(173, 458, 28, 205, 130, t=10, tag="dome")
     b.place(102, 424, r=9, orange=True, tag="palm crown")
     b.place(258, 428, r=9, orange=True, tag="palm crown")
@@ -40,3 +40,4 @@ def build(b):
     for (x, y, o) in FIELD:
         b.place(x, y, r=8, orange=o, tag="field star")
     b.trace([(300, 500), (420, 508), (520, 502), (600, 494), (700, 498)], spacing=50, r=9, tag="horizon")
+    b.place(150, 200, r=8, tag="field star")      # a faint star in the west sky (placed last: the finale's ramp)

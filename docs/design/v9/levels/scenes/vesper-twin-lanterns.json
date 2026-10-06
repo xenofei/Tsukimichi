@@ -10,11 +10,11 @@
  "features": {},
  "dress": {
   "palette": {
-   "name": "Rose water and lapis sky (the twins)",
+   "name": "Rose water and a teal high sky (the twins)",
    "sky": "#1C1650",
    "deep": "#060818",
    "jewel1": "#B4504E",
-   "jewel2": "#3A4AA8",
+   "jewel2": "#2A9EA8",
    "warm": "#FFB45E",
    "rim": "#C9B8FF"
   },
@@ -25,7 +25,7 @@
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#2E5AC0",
+     "hex": "#2A9EA8",
      "chroma": 0.12,
      "mask": [["y", 240, 130]]
     }

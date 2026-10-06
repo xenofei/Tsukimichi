@@ -130,13 +130,16 @@ def build(level_id, keep2x=False, log=print):
         rep["checks"]["reach"] = rc
         if rc["never"]:
             fails.append(f"reach: pieces {rc['never']} are never reached, even once everything before them clears")
-        pl = engine.play(cand, number)
+        rule = engine.play(cand, number, games=engine.GREEDY_GAMES)
+        pl = engine.play(cand, number, games=engine.HELD_GAMES, first=engine.RAMP_GAMES)
+        pl.update(greedy_won=rule["greedy_won"], games=rule["games"], oranges_left_when_lost=rule["oranges_left_when_lost"],
+                  random_won=rule["random_won"], random_oranges_mean=rule["random_oranges_mean"], ramp_first_seed=engine.RAMP_GAMES + 1)
         rep["checks"]["play"] = pl
         if pl["greedy_won"] < engine.GREEDY_MIN_WINS:
             fails.append(f"play: the greedy player won {pl['greedy_won']} of 48 (at least {engine.GREEDY_MIN_WINS})")
         fails += [f"play: cheap difficulty: {c}" for c in engine.cheap(pl, engine.piece_homes(cand))]
         log(f"[{level_id}] loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, dead {sw['no_hit']}, never reached "
-            f"{len(rc['never'])}; greedy {pl['greedy_won']}/48, ramp {pl['ramp_per_48']}/48 over {pl['ramp_games']}")
+            f"{len(rc['never'])}; greedy {pl['greedy_won']}/48, ramp {pl['ramp_per_48']}/48 over {pl['ramp_games']} held-out games")
 
     # 3. the scene: graded, its ceiling, the dress and the framing rules
     g1, g2 = _scene_cached(recipe, 1), _scene_cached(recipe, 2)

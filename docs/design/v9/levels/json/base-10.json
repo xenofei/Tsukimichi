@@ -192,7 +192,7 @@
       "x": 400.0,
       "y": 514.0,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true,
       "move": {
         "kind": "slide",
@@ -600,6 +600,20 @@
     {
       "x": 690.0,
       "y": 200.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 300.0,
+      "y": 180.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 500.0,
+      "y": 180.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true

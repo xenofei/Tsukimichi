@@ -71,3 +71,5 @@ def build(b):
                       (684, 340, True), (684, 376, True),
                       (250, 279, True)):
         b.key(x, y, orange=o, within=6)
+    for (x, y) in ((320, 170), (480, 140)):       # two stars high over the dome, blue (placed last)
+        b.place(x, y, r=8, tag="star")
