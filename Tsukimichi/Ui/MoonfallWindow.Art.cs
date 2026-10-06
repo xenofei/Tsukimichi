@@ -59,10 +59,20 @@ public sealed partial class MoonfallWindow
         }
     }
 
-    /// <summary>Every frame, open or not: disposes released textures, and lets the art go once the window has stopped drawing.</summary>
+    /// <summary>
+    /// Every frame, open or not, before the window draws: when it did not draw last frame (collapsed, so Dalamud skips
+    /// Draw), the sound is told the board holds, so nothing (the finale least of all) plays on under a collapsed window,
+    /// and the board pauses as it does when the window loses focus. Then disposes released textures, and lets the art go
+    /// once the window has stopped drawing.
+    /// </summary>
     public override void PreOpenCheck()
     {
         base.PreOpenCheck();
+        if (IsOpen && drawWatch.Missed(ImGui.GetFrameCount()))
+        {
+            HoldWhileHidden();
+        }
+
         if (art is null)
         {
             return;
@@ -120,20 +130,21 @@ public sealed partial class MoonfallWindow
 
         artDrawnFrame = ImGui.GetFrameCount();
         var wantTwoX = view.Scale * view.Zoom > ArtTwoXAbove;
-        var plain = Theme.Flair == Flair.Plain;
-        motion = MoonfallMotion.For(Theme.Flair, UiMetrics.ReduceMotion);
+        var plain = decoration == Flair.Plain;
 
         // The game's own art (spec-rich2.md §6): the chrome, the companions' cards and the level's scene, built at the
         // board's tier (the zoom is not counted: a scene is not rebuilt for Full Moon's close-up). Not under Plain.
-        var level = campaigns[campaign].Levels[levelIndex];
+        var level = g.Level;
         if (!plain)
         {
             gameArt?.Frame(level, view.Scale > ArtTwoXAbove, options?.PegMarks == true);
         }
 
         // The interim picture stands in only where no recipe draws the scene: a level without one, or one whose build failed.
+        // A scene the spoiler shield hides shows no picture either: the night sky.
         var recipe = plain ? null : gameArt?.RecipeFor(level);
-        var picture = recipe is null ? g.Level.Scene : gameArt!.SceneState == MoonfallSceneState.Failed ? recipe.Fallback : null;
+        var hidden = !plain && (gameArt?.RecipeHidden(level) ?? modes.SceneVeiled(level, level.Scene));
+        var picture = plain || hidden ? null : recipe is null ? g.Level.Scene : gameArt!.SceneState == MoonfallSceneState.Failed ? recipe.Fallback : null;
         art.Frame(wantTwoX, picture);
         if (art.Atlas is not { } atlas || art.Sheet(wantTwoX, out _) is not { } sheet)
         {
@@ -289,7 +300,7 @@ public sealed partial class MoonfallWindow
 
     private void ArtPegs(in ArtPen p, MoonfallGame g, double alpha, bool plain)
     {
-        var full = Theme.Flair == Flair.Full;
+        var full = decoration == Flair.Full;
         var reduce = UiMetrics.ReduceMotion;
         var highContrast = Theme.Glyphs.HighContrast;
         var lastOrange = g.Approaching && g.OrangesLeft == 1;
@@ -498,7 +509,7 @@ public sealed partial class MoonfallWindow
 
     // ---- The frame ----
 
-    private static void ArtFrame(in ArtPen p, bool plain)
+    private void ArtFrame(in ArtPen p, bool plain)
     {
         var atlas = p.Atlas;
         var view = p.View;
@@ -528,7 +539,7 @@ public sealed partial class MoonfallWindow
             p.Dl.AddRectFilledMultiColor(view.Map(x0, y0), view.Map(x1, y1), Enamel(atlas, x0, y0), Enamel(atlas, x1, y0), Enamel(atlas, x1, y1), Enamel(atlas, x0, y1));
         }
 
-        if (Theme.Flair == Flair.Full)
+        if (decoration == Flair.Full)
         {
             ref readonly var mottle = ref atlas[MoonfallSprite.FrameMottle];
             foreach (var (x0, y0, x1, y1) in rails)
@@ -580,7 +591,7 @@ public sealed partial class MoonfallWindow
         PutTurned(p, atlas[MoonfallSprite.LauncherTube], px, py, (float)dy, (float)-dx, uint.MaxValue);
         Put(p, atlas[MoonfallSprite.LauncherHub], px, py, 1f, uint.MaxValue);
 
-        var aiming = g.Phase == MoonfallPhase.Aiming && g.BallsLeft > 0;
+        var aiming = g.Phase == MoonfallPhase.Aiming && g.BallsLeft > 0 && PlayerAims;
         if (aiming && !pause.Paused)
         {
             var n = g.Guide(aim, guide);
@@ -807,7 +818,7 @@ public sealed partial class MoonfallWindow
         }
 
         // The slow-motion trail in the approach to the last orange: fading copies (Full only).
-        if (g.Approaching && Theme.Flair == Flair.Full && !plain)
+        if (g.Approaching && decoration == Flair.Full && !plain)
         {
             // Another ball to follow starts a trail of its own.
             if (g.CameraBall != artTrailBall)

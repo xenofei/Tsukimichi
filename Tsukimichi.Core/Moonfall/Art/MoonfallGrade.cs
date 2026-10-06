@@ -106,16 +106,17 @@ public static class MoonfallGrade
         MoonfallPlane? sky = null;
         if (grade.SkyDrop > 0)
         {
-            sky = new MoonfallPlane(w, h);
-            for (var y = 0; y < h; y++)
+            var mask = new MoonfallPlane(w, h);
+            MoonfallParallel.For(0, h, y =>
             {
                 var fade = MoonfallColor.Smooth(grade.SkyBottom, grade.SkyTop, y / (float)h);
                 for (var x = 0; x < w; x++)
                 {
                     var i = (y * w) + x;
-                    sky.Data[i] = MoonfallColor.Smooth(0.02f, 0.15f, source.B.Data[i] - source.R.Data[i]) * fade;
+                    mask.Data[i] = MoonfallColor.Smooth(0.02f, 0.15f, source.B.Data[i] - source.R.Data[i]) * fade;
                 }
-            }
+            });
+            sky = mask;
 
             sky = MoonfallFilters.Blur(sky, 3 * s);
         }
@@ -221,30 +222,43 @@ public static class MoonfallGrade
         var n = w * h;
         var hi = MoonfallFilters.Percentile(lo, 92);
         var lb = MoonfallFilters.Blur(lo, 2 * s);
+        // Each step works pixel by pixel, so each runs in chunks in parallel (the same result).
         var shape = new MoonfallPlane(w, h);
-        for (var i = 0; i < n; i++)
+        MoonfallFilters.Chunks(n, (a, b) =>
         {
-            shape.Data[i] = MoonfallColor.Smooth(hi - 0.06f, hi - 0.01f, lb.Data[i]);
-        }
+            for (var i = a; i < b; i++)
+            {
+                shape.Data[i] = MoonfallColor.Smooth(hi - 0.06f, hi - 0.01f, lb.Data[i]);
+            }
+        });
 
         var large = MoonfallFilters.Blur(shape, 40 * s);
-        for (var i = 0; i < n; i++)
+        MoonfallFilters.Chunks(n, (a, b) =>
         {
-            shape.Data[i] *= 1 - MoonfallColor.Smooth(0.70f, 0.92f, large.Data[i]);
-        }
+            for (var i = a; i < b; i++)
+            {
+                shape.Data[i] *= 1 - MoonfallColor.Smooth(0.70f, 0.92f, large.Data[i]);
+            }
+        });
 
         var height = MoonfallFilters.Blur(shape, grade.FormRadius * s);
-        for (var i = 0; i < n; i++)
+        MoonfallFilters.Chunks(n, (a, b) =>
         {
-            height.Data[i] = MathF.Sqrt(Math.Clamp(height.Data[i], 0f, 1f));
-        }
+            for (var i = a; i < b; i++)
+            {
+                height.Data[i] = MathF.Sqrt(Math.Clamp(height.Data[i], 0f, 1f));
+            }
+        });
 
         var (gy, gx) = MoonfallFilters.Gradient(height);
-        for (var i = 0; i < n; i++)
+        MoonfallFilters.Chunks(n, (a, b) =>
         {
-            var lam = Math.Clamp((gx.Data[i] + gy.Data[i]) * 0.7071f * s * grade.FormRadius * 2.5f, -1f, 1f);
-            lo.Data[i] += (lam > 0 ? lam * 0.25f : lam) * grade.Form * shape.Data[i];
-        }
+            for (var i = a; i < b; i++)
+            {
+                var lam = Math.Clamp((gx.Data[i] + gy.Data[i]) * 0.7071f * s * grade.FormRadius * 2.5f, -1f, 1f);
+                lo.Data[i] += (lam > 0 ? lam * 0.25f : lam) * grade.Form * shape.Data[i];
+            }
+        });
     }
 
     /// <summary>

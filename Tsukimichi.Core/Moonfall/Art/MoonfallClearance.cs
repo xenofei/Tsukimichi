@@ -45,7 +45,7 @@ public sealed class MoonfallClearance
                     break;
                 case PegShape.Arc:
                     var r = (float)(piece.Radius + (piece.Thickness * 0.5));
-                    Stamp(d, (float)piece.X - r, (float)piece.Y - r, (float)piece.X + r, (float)piece.Y + r, (x, y) => ArcCapsule(x, y, piece));
+                    Stamp(d, (float)piece.X - r, (float)piece.Y - r, (float)piece.X + r, (float)piece.Y + r, (x, y) => ArcCapsule(x, y, piece), (x, y) => ArcBound(x, y, piece));
                     break;
                 default:
                     foreach (var (px, py) in Path(piece))
@@ -88,7 +88,17 @@ public sealed class MoonfallClearance
         }
     }
 
-    private static void Stamp(float[] d, float x0, float y0, float x1, float y1, Func<float, float, float> sd)
+    /// <summary>
+    /// A lower bound of <see cref="ArcCapsule"/>: the distance to the arc's whole circle (its ends lie on it), less half
+    /// the thickness. Cheap (no angle), so a cell that cannot come nearer is passed over without the arc's own measure.
+    /// </summary>
+    private static float ArcBound(float x, float y, MoonfallPeg p)
+    {
+        float dx = x - (float)p.X, dy = y - (float)p.Y;
+        return MathF.Abs(MathF.Sqrt((dx * dx) + (dy * dy)) - (float)p.Radius) - ((float)p.Thickness * 0.5f);
+    }
+
+    private static void Stamp(float[] d, float x0, float y0, float x1, float y1, Func<float, float, float> sd, Func<float, float, float>? bound = null)
     {
         var ix0 = Math.Max(0, (int)MathF.Floor(x0 - Far));
         var iy0 = Math.Max(0, (int)MathF.Floor(y0 - Far));
@@ -98,8 +108,13 @@ public sealed class MoonfallClearance
         {
             for (var x = ix0; x <= ix1; x++)
             {
-                var v = sd(x + 0.5f, y + 0.5f);
                 var i = (y * Width) + x;
+                if (bound is not null && bound(x + 0.5f, y + 0.5f) >= d[i])
+                {
+                    continue;
+                }
+
+                var v = sd(x + 0.5f, y + 0.5f);
                 if (v < d[i])
                 {
                     d[i] = v;
@@ -120,8 +135,18 @@ public sealed class MoonfallClearance
             var o = y * Width;
             for (var x = ix0; x <= ix1; x++)
             {
+                // Most cells already hold something nearer: compared squared first, the root is taken only for a cell
+                // this circle may bring nearer (every cell stays at least the circle's own distance, so nothing changes
+                // but the work).
                 var dx = x + 0.5f - cx;
-                var v = MathF.Sqrt((dx * dx) + (dy * dy)) - radius;
+                var d2 = (dx * dx) + (dy * dy);
+                var reach = d[o + x] + radius;
+                if (reach > 0 && d2 >= reach * reach * 1.0001f)
+                {
+                    continue;
+                }
+
+                var v = MathF.Sqrt(d2) - radius;
                 if (v < d[o + x])
                 {
                     d[o + x] = v;

@@ -14,7 +14,7 @@ public readonly record struct MoonfallShotWeight(long Value, int Pegs, int Orang
 /// <see cref="MoonfallDuel"/>, which hands the launcher over between turns (<see cref="HandOver"/>). Nothing here
 /// allocates after the game is made.
 /// </summary>
-public sealed partial class MoonfallGame
+public sealed partial class MoonfallGame : IMoonfallShooter
 {
     /// <summary>Each side's shots left of each power while the other side shoots: side × (power id).</summary>
     private readonly int[] sidePowerShots;

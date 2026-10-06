@@ -376,14 +376,15 @@ public static class MoonfallSceneBuilder
                     source = t.Blur > 0 ? MoonfallFilters.Blur(ctx.ClearanceAtS, t.Blur * ctx.S) : ctx.ClearanceAtS;
                 }
 
-                for (var y = 0; y < ctx.H; y++)
+                // Each pixel on its own, so the rows run in parallel (the same result, a few times sooner).
+                MoonfallParallel.For(0, ctx.H, y =>
                 {
                     var Y = (y + 0.5f) / ctx.S;
+                    var a = t.Args;
                     for (var x = 0; x < ctx.W; x++)
                     {
                         var X = (x + 0.5f) / ctx.S;
                         var i = (y * ctx.W) + x;
-                        var a = t.Args;
                         var v = t.Kind switch
                         {
                             MoonfallMaskKind.Lum or MoonfallMaskKind.Near => MoonfallColor.Smooth(a[0], a[1], source!.Data[i]),
@@ -394,7 +395,7 @@ public static class MoonfallSceneBuilder
                         v *= t.Scale;
                         m.Data[i] *= t.Invert ? 1 - v : v;
                     }
-                }
+                });
             }
 
             return m;
@@ -467,14 +468,17 @@ public static class MoonfallSceneBuilder
     /// <summary>No framing within 6.5 units of a piece's edge, feathered over the next unit (F3a by construction).</summary>
     private static void Clamp(MoonfallDressContext ctx, MoonfallPlane mask)
     {
-        for (var i = 0; i < mask.Data.Length; i++)
+        MoonfallFilters.Chunks(mask.Data.Length, (lo, hi) =>
         {
-            var d = ctx.ClearanceAtS.Data[i];
-            if (d < 7.5f)
+            for (var i = lo; i < hi; i++)
             {
-                mask.Data[i] *= MoonfallColor.Smooth(6.5f, 7.5f, d);
+                var d = ctx.ClearanceAtS.Data[i];
+                if (d < 7.5f)
+                {
+                    mask.Data[i] *= MoonfallColor.Smooth(6.5f, 7.5f, d);
+                }
             }
-        }
+        });
     }
 
     /// <summary>The moving shafts at two places of their drift, at 1 pixel per 2 units over the opening, masked off every piece.</summary>

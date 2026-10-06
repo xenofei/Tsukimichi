@@ -116,6 +116,17 @@ internal static class ShieldText
     }
 
     /// <summary>
+    /// Asks for the placeholder menu ("Reveal this name") of the hidden <paramref name="name"/> without a right-click: for
+    /// a focusable control that stands for the placeholder (a button the keyboard or gamepad can press), so the reveal
+    /// never needs a mouse. The window hosting it draws the menu as for any placeholder (<see cref="DrawMenu"/>).
+    /// </summary>
+    /// <param name="kind">The hidden name's kind.</param>
+    /// <param name="name">The hidden name itself (what the reveal keys on), never shown.</param>
+    /// <param name="shown">The placeholder as printed.</param>
+    public static void RequestMenu(SpoilerKind kind, string name, string shown) =>
+        Menu.Request(new MenuTarget(kind, name, shown, null, null, null, [], false));
+
+    /// <summary>
     /// The hover and the right-click of a quest's own placeholder ("Main scenario quest (Lv 50)", "A side story ahead",
     /// "Sidequest (Lv 90)") drawn over <paramref name="min"/>–<paramref name="max"/>: "Reveal this name" reveals the
     /// quest's name for the session (a side quest past the story point then shows too, <see cref="SpoilerMask.IsAhead"/>),

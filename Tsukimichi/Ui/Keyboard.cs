@@ -73,6 +73,28 @@ public static class Keyboard
         return io.KeyAlt && !io.KeyCtrl && !io.KeyShift && ImGui.IsKeyDown(key);
     }
 
+    /// <summary>
+    /// Back went down this frame in the window that has the keys (<see cref="WindowHasKeys"/>): Esc, or the gamepad's
+    /// back face button (East) when Dalamud's gamepad navigation feeds it to ImGui. Moonfall's menus go back with it and
+    /// its board pauses with it; the key is claimed from the game (<see cref="GameKeyClaim"/>).
+    /// </summary>
+    public static bool BackPressed() =>
+        WindowHasKeys() && (ImGui.IsKeyPressed(ImGuiKey.Escape, false) || ImGui.IsKeyPressed(ImGuiKey.GamepadFaceRight, false));
+
+    /// <summary>
+    /// Whether a menu's navigation key (an arrow, Tab, Enter or Space) is still held: a window that answered it keeps
+    /// claiming it from the game until it is let go (<see cref="GameKeyClaim"/>).
+    /// </summary>
+    public static bool NavigationKeyHeld() =>
+        ImGui.IsKeyDown(ImGuiKey.UpArrow) || ImGui.IsKeyDown(ImGuiKey.DownArrow) || ImGui.IsKeyDown(ImGuiKey.LeftArrow) || ImGui.IsKeyDown(ImGuiKey.RightArrow)
+        || ImGui.IsKeyDown(ImGuiKey.Tab) || ImGui.IsKeyDown(ImGuiKey.Enter) || ImGui.IsKeyDown(ImGuiKey.KeypadEnter) || ImGui.IsKeyDown(ImGuiKey.Space);
+
+    /// <summary>Esc is held down (pressed this frame or earlier): a window that closed a popup with it keeps the press from also closing itself.</summary>
+    public static bool EscapeHeld() => ImGui.IsKeyDown(ImGuiKey.Escape);
+
+    /// <summary>The gamepad's Start button went down in the window that has the keys (Moonfall pauses with it, as games do).</summary>
+    public static bool StartPressed() => WindowHasKeys() && ImGui.IsKeyPressed(ImGuiKey.GamepadStart, false);
+
     /// <summary>Ctrl and the key went down (no Alt, no Shift).</summary>
     public static bool CtrlPressed(ImGuiKey key)
     {

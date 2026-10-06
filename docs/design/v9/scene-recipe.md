@@ -229,6 +229,11 @@ A recipe is written against a level's layout (level-method.md §2), not on its o
 
 - The game texture is missing or changed: the `fallback` picture is drawn whole and ungraded, with the recipe's dress;
   no fallback: the night sky. Logged once.
+- The spoiler shield hides the scene's own place (its stage open, `MoonfallPlaces`): the same thing happens, on purpose. The
+  `fallback` picture is drawn whole and ungraded **with the recipe's dress kept: its paint, framing, lights, palette regions
+  and motion all survive**. So a recipe that can be hidden must keep its dress free of any place: no landmark silhouette,
+  no framing shape that names somewhere; only the painting may depict the place. A test holds that every recipe the
+  shield can hide declares a `fallback` of no place.
 - The recipe is refused: the level keeps its picture (or the night sky); the reason is logged at load.
 - Nothing here can crash the plugin: every read, grade and build runs off the framework thread and fails to a fallback.
 
