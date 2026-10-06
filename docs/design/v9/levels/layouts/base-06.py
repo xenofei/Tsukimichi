@@ -32,8 +32,10 @@ def build(b):
     # the bridge: deck and lamps (a procession); its arches' crowns of brick are open at the keystone (about 19 between
     # the bricks, wider than the 17 a ball can still rest in: critic round 4, N11), so no ball rests on an apex
     # (the deck's east end, 6, is a candidate and the air's (700, 320) blue: the wider keystone slot eased the board by
-    # about 1.2 per 48, and this buys it back on the tuning seeds)
-    b.trace("bridge deck", spacing=36, r=9, orange={1, 4, 6}, tag="bridge deck")
+    # about 1.2 per 48, and this buys it back on the tuning seeds). Round 5 (game designer G20): the deck's (506, 387)
+    # is blue and the deck's (578, 385) a candidate, easing the stage's opener about 0.6 per 48 on the tuning seeds so
+    # 2-1 -> 2-2 is a step
+    b.trace("bridge deck", spacing=36, r=9, orange={3, 4, 6}, tag="bridge deck")
     b.trace("bridge lamps", spacing=36, r=9, orange={0, 2, 4}, tag="bridge lamp")
     for name in ("west arch", "east arch"):
         cx, cy, R, a0, sw = b.circle(name)

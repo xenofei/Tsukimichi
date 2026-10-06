@@ -49,7 +49,12 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    band, one palette swapped round, the previous stage's last level. Round 4: a 15-unit slot; crossing slides of
    periods 10 and 10.04 (whose common cycle is 2510 s, not 10); round 2's per-peg coin put back on the real 2-2, 2-1
    and 1-4 (known-bad for the print check; 2-1 and 1-4 run where their game textures are fetched); a recipe asking
-   for less quiet blur than 40 (refused); a second jewel only along the walls (F7).
+   for less quiet blur than 40 (refused); a second jewel only along the walls (F7). Round 5: UX's syn05 hue coin on the
+   real 2-2 and 1-4 (known-bad for the print check's hue clause); the dress's structural guard (`dress.lint`) on
+   real recipes: a NaN quietBlur, a `dist` term in a region and in a keep mask, regionQuiet 1.5, 2-3 with round 5's
+   disc on its lead bird, a keep disc and a tone disc on a peg (all refused), and the ten as shipped (all pass); a
+   16-unit slot between bricks of odd and even sample counts; a step of 0.8 on one block and of 0.6 over 6912 games
+   (not resolved) against one of 0.95 (resolved).
 1. **Pre-flight** (`mflkit/author.py`): bounds, launcher, bucket, overlaps, saddles (still pegs, and the movers of one
    drift group among themselves), cradles, notches (3.5-17 between bricks), wall pinches, the wedge band (a peg 13-16 above a brick), level
    decks (line bricks under 10 degrees: chained over 30 units, or one alone of 20 or more), cups by geometry, movers'
@@ -69,19 +74,29 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    (`ease`, scratch variants) and never on the held-out block: a layout kept because it hit its target on fixed seeds
    carries their luck (about 0.8 per 48 easier on fresh seeds: game designer round 3, G10). Accept or reject a
    variant on the tuning seeds too: the held-out figure reports, it does not decide (critic round 4, N12; round 4's
-   2-3 and 2-5 calls were made on it; the critic's third block of fresh seeds showed no bias from that, +0.09). Holdouts are counted by piece (a mover by
+   2-3 and 2-5 calls were made on it; the critic's third block of fresh seeds showed no bias from that, +0.09). The
+   bands and steps apply to the held-out figure only: a level's tuning figure can read 1-2 per 48 easier or harder
+   than its held-out one (1-1 at round 5: 31.9 against 30.7), so do not hold a tuning figure to a band's edge
+   (critic round 5, N19). For a final pick between close variants, the 864 tuning games are too few (+-0.8): play a
+   second tuning block of 3456 games, seeds 20001-23456 (`engine.play(path, number, 3456, first=20000)`), which no
+   check and no reviewer block uses (round 6: 2-3 read 25.7 on seeds 1-864, 26.0 on that block and 27.6 held out). Holdouts are counted by piece (a mover by
    its home). Refuses cheap difficulty (`engine.cheap`): an orange at home at y 430 or lower left in 25% or more of
    lost games, or low oranges more than 1.5 times their share of the candidates among the oranges left. (A cap on the
    low share of the deal itself was tried and dropped: the approved pilot base-p2 has 35% of its candidates that low.)
 6. **The scene**: graded from its recipe (cached in `build/scenes`); refuses a 99th-percentile luma over 0.465 (a
    painted moon may be exempted with `ceilingExempt`).
-7. **The dress** (`mflkit/dress.py`) and the **framing rules** F2, F3a (and its pixel backstop), F3b, F3c, F3d, F5.
+7. **The dress** (`mflkit/dress.py`), refused first if its structural guard (`dress.lint`) faults: the quiet's blur
+   below 40 or not a number, `regionQuiet` outside 0-1, a `dist` term in a jewel region or keep mask, or a `disc` term
+   in a jewel region, keep mask or `tone` centred within 12 units of a piece's edge and reaching less than 100 (a disc
+   at a peg's scale on a peg is a coin, whatever it is for: round 5, 2-3's disc on its lead bird). Then the **framing rules** F2, F3a (and its pixel backstop), F3b, F3c, F3d, F5.
 8. **Colours**: the engine's own deal at seed 1 (the engine reads `canBeGreen`); a green dealt to a never-green piece
    is refused as an engine fault.
 9. **Composites** at 2x and 1x, and **readability**: F6 for every kind at its worst placement, the faces measured at
    each scale (1x and 0.8x), against the same board undressed (margin 0.20, drop at most 0.02); F7 two jewels by
    mean-hue distance (60 degrees or more, the second 15% or more of the coloured pixels, and at most 1.5 times as
-   much of it in the 50-unit strips along the walls as their share of the area: game designer round 4, G18); F9 protan orange separation
+   much of it in the 50-unit strips along the walls as their share of the area: game designer round 4, G18; the
+   same figure in 100-unit tall windows is reported, not gated, `second_at_walls_worst_window`: it reads 0.4-6.4
+   across the ten, highest where a painted feature such as 1-2's lit water meets a wall); F9 protan orange separation
    over every candidate, movers at four moments of their cycle and orange-able bricks along their length (p10 0.12, or
    0.101, the lowest approved pilot); the ghost check (on the cleared board with its baked veil, the disc round an
    isolated peg: median distance 0.066 or less, the pilots' highest; this is the board in play); the print check
@@ -89,11 +104,21 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    round every peg (a mover at its home), 5-12 units out against 20-36 and 5-20 against 45-70, the median over eight
    sectors so an edge crossing a peg does not count, less 1.2 times the painting's own fine grain round the peg
    (a robust spread, so stars do not inflate it); the board's median at most 0.006 and its 90th percentile at most
-   0.040; never vacuous). Set between known cases, all in the self-test: the six approved pilots pass (median at most
-   0.003, p90 at most 0.032) and the ten levels as built (p90 at most 0.034); round 2's per-peg quiet put back on the
+   0.040; and the hue part alone (the a/b change less 1.2 times the painting's a/b grain: a lightness texture does not
+   hide a shift of hue) at most 0.022 in median; never vacuous). Set between known cases, all in the self-test: the six
+   approved pilots pass (median at most 0.003, p90 at most 0.032, hue median at most 0.0074) and the ten levels as
+   built (p90 at most 0.034, hue median at most 0.0143, 1-1's broad quiet); round 2's per-peg quiet put back on the
    real 2-2, 2-1 and 1-4 fails (2-2 on its median, 0.0105; the textured 2-1 and 1-4 on p90, 0.045 and 0.074; 2-1 is
-   the narrowest margin). Round 4 found its first form (an all-or-nothing grain rule on the plain spread) zeroed most
-   pegs and passed that coin on 2-2 (critic M1, UX m5).
+   the narrowest margin), and so does UX's syn05 hue coin (a/b +0.035 each round every peg) on all ten, by its hue
+   median (0.029-0.046; 1-4 is the narrowest, 0.0295). Round 4 found its first form (an all-or-nothing grain rule on
+   the plain spread) zeroed most pegs and passed that coin on 2-2 (critic M1, UX m5).
+   **What the print check cannot see**, so the structural guard and the eye must: one peg singled out (a board's
+   median and p90 do not move for it, and the approved pilots' own worst single pegs reach 0.086 and 0.19, so no
+   worst-peg limit can be set: round 5's disc on 2-3 measured 0.088); `tone`, which is graded into the scene the dress
+   is compared with; weaker hue coins on the most textured boards (syn03, a/b +0.021 each, passes on 1-1, 1-4 and 2-2); and
+   lightness coins on textured game paintings (L -0.03 passes on 1-4 and 2-3, where it is hard to see). The dress can
+   still draw a coin through any term the guard does not know; the guard covers the quiet, `dist` and peg-scale
+   `disc` terms, which are every per-peg route the recipes have.
 10. If everything passed: `docs/design/v9/levels/json/<id>.json`, `composites/<id>.png` (and `@2x` if asked), our
     paintings as JPEG in `scenes/assets/`. The report, pass or fail, goes to `report/<id>.json`, with the ramp.
 
@@ -127,8 +152,14 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 - **The ramp**, measured on held-out games at each level's own number (432 at least): stage 1 runs from about 30 down to 21, stage 2 from
   about 27 down to 20, and each finale is its stage's hardest, at least 2.5 per 48 below its 4th level. Difficulty
   comes from the subject's places, never from low oranges in the bucket's approach (the cheap-difficulty gate). A
-  step of 0.5 cannot be resolved on one held-out block, so `stage` plays both levels of any step under 1.0 on a second
-  block of 1728 fresh seeds and judges the step on the pooled figure (game designer round 4, G19).
+  step of 0.5 cannot be resolved on one held-out block, so `stage` plays both levels of any step under 1.0 on 5184
+  more fresh seeds (the shipped files in `json/`) and the step must hold by one standard error over all 6912 games:
+  the step less its standard error at least 0.5, so a step under about 0.9 fails however lucky a block is (game
+  designer rounds 4 and 5, G19 and G20). Open steps by design rather than by re-measuring.
+- **A finale takes its difficulty from the whole board, not its bottom** (game designer G11; the owner's answer,
+  6 October 2026: recommendation taken). 2-5's reflected heads are candidates at their two upper moons only and the
+  reflected arch at its two outer moons; six sky stars carry the other oranges. Lost games leaving an orange at y 430
+  or lower fell from about 80% (round 5) to 55%, with no single holdout over 26%.
 - **Paintings**: never the same painting twice in a row, and a painting that belongs to a later stage's home stays
   there (stage 4, Ul'dah, keeps the Thanalan painting beyond 1-4's crop; stage 5 keeps the Merlthor chart and the east
   of the La Noscea painting). Our own paintings are fine; keep the campaign's share of game paintings near two thirds.
@@ -162,7 +193,9 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
   `quiet: [a, b]`, so a lone peg gets no coin and a cluster quietens as one band. With the blur first, a narrow
   `[22, 12]` barely reaches a lone peg, so F9 may need a wider `[40, 18]` to `[60, 25]`; widen it until F9 holds,
   then lift the second jewel's chroma or area until F7's share does. Where a sky must hold one colour, paint it into
-  our painting and keep the jewel band the same hue there.
+  our painting and keep the jewel band the same hue there. Never settle F9 with a mask centred on a peg (round 5:
+  2-3's disc round its lead bird printed a lilac coin there; `dress.lint` now refuses it): move the candidate, or
+  shape a region by the painting at a scale of 100 units or more.
 - With that quiet a region keeps its full colour wherever the layout is not, so a region running to the walls shows
   as coloured light leaking in at the sides and the cleared board keeps the layout's envelope (game designer round 4,
   G18). Fade every region within 60 units of the walls (`["x", 75, 135], ["x", 725, 665]` in its mask); F7 checks it.
@@ -207,6 +240,7 @@ OKLab 0.014 at 2x, the residue being how the clearance is resampled near the foo
 the `poly`, `not-poly` and feature-`near` mask terms, and a `keepMask` made of several ramps inverted as a whole (1-5's
 dome house; the runtime inverts each term on its own) have no counterpart there yet. The converter's gate is a direct
 comparison, not the print check: render each converted level with `tools/Tsukimichi.MoonfallRender` and compare it
-with this pipeline's dressed scene pixel for pixel (OKLab distance, 99th percentile at most about 0.015; critic round
-4, M1). The two formulas are meant to be identical, so any difference is the converter's fault, and the print check
+with this pipeline's dressed scene pixel for pixel (OKLab distance, the maximum, or at least the 99.9th percentile, at
+most about 0.02: critic rounds 4 and 5, M1 and N17; a 99th percentile would pass a local term mis-scaled at a peg's
+scale, since dropping round 5's disc on 2-3 moved it by only 0.018, and the formula's own residue is 0.014 at most). The two formulas are meant to be identical, so any difference is the converter's fault, and the print check
 and F9 measured here then stand for the game.

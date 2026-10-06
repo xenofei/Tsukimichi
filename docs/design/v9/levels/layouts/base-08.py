@@ -28,8 +28,12 @@ def build(b):
     b.trace("galleon hull", spacing=30, r=9, orange={0, 2}, tag="galleon hull")
     for (x, y) in b.f("galleon masts"):
         b.place(x, y, r=9, orange=True, green=False, tag="masthead")
+    # the lead bird (512, 118) is blue: it sits in the chart's green-teal top band, where an orange separates least
+    # for protan eyes (UX round 4 m6; round 5 G4: no mask term may single it out); the right wing's (558, 156) is blue
+    # too, the skill shot left in over a third of lost games (game designer G17); the open sea's (331, 418) and
+    # (160, 406) take their places (tuned on a 3456-game tuning block, seeds 20001-23456)
     for k, (x, y) in enumerate(b.f("flock")):
-        b.place(x, y, r=7, orange=k in (0, 2, 4, 7, 8, 9, 10, 11, 13), tag="bird")
+        b.place(x, y, r=7, orange=k in (4, 7, 8, 9, 10, 11, 13), tag="bird")
     wx, wy, wr = b.features["whirlpool"]
     for k in range(8):
         a = math.radians(45 * k)
@@ -51,9 +55,11 @@ def build(b):
                            ((360, 230), (396, 230)), ((600, 300), (636, 300)), ((160, 370), (160, 406)),
                            ((700, 420), (700, 456))):
         b.place(x, y, r=8, orange=True, tag="open sea")
-        b.place(u, v, r=8, tag="open sea")
+        b.place(u, v, r=8, orange=(u, v) == (331, 418), tag="open sea")
     for (x, y) in SWELL:
         b.arc(x, y + 30, 30, 235, 70, t=10, tag="swell mark")
+    b.place(300, 140, r=8, tag="open sea")     # a blue star in the open sky, last so the deal stays: it hardens 2-3 by
+    # about 0.7 per 48 on the 3456-game tuning block (seeds 20001-23456), keeping 2-2 -> 2-3 a step
     b.greens_in_reach()
 
 

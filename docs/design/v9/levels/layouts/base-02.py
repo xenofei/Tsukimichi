@@ -53,4 +53,7 @@ def build(b):
         b.place(x, y, r=8, tag="star")
     for (x, y) in ((458, 360), (515, 388)):          # lanterns under the eaves, in the last dead lanes (critic G4)
         b.place(x, y, r=8, tag="lantern")
+    # one more faint star, blue, last so the deal stays: it hardens 1-2, so 1-2 -> 1-3 is not the stage's largest step
+    # (game designer round 5, G19 residue)
+    b.place(360, 200, r=8, tag="star")
     b.greens_in_reach()

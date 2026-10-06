@@ -8,6 +8,23 @@ BANDS = {1: (30.0, 21.0), 2: (27.0, 20.0)}
 NOISE = 0.6                 # one standard error per 48 over 1728 games ("about" a band end: within two of them)
 STEP = 0.5                  # each level at least this much harder than the one before (game designer round 2, G2)
 FINALE_GAP = 2.5            # the finale at least this far below its 4th level
+# a step under CONFIRM_STEP cannot be told from STEP on one held-out block (+-0.8 per step), so it must be resolved:
+# the step less one standard error at least STEP, over the held-out games and CONFIRM_GAMES more fresh ones per level
+# (game designer round 5, G20: a second block of 1728 only rolled the dice again)
+CONFIRM_STEP, CONFIRM_GAMES, HELD = 1.0, 5184, 1728
+
+
+def se48(ramp, games):
+    """The standard error of a ramp per 48 (wins per 48 games) over `games` games."""
+    import math
+    p = min(max(ramp / 48.0, 1e-6), 1 - 1e-6)
+    return 48.0 * math.sqrt(p * (1 - p) / games)
+
+
+def step_resolved(ra, rb, na, nb):
+    """Whether b is resolvably at least STEP harder than a: the step less one standard error."""
+    import math
+    return (ra - rb) - math.hypot(se48(ra, na), se48(rb, nb)) >= STEP
 
 
 def hue_distance(a, b):
@@ -21,9 +38,11 @@ def same_jewels(a, b):
                max(hue_distance(a[0], b[1]), hue_distance(a[1], b[0]))) < 30
 
 
-def faults(stage, rows, before=None):
+def faults(stage, rows, before=None, games=None):
     """rows: [(id, ramp, (first hue, second hue))] in play order; before: the previous stage's last row, which the
-    player meets just before this stage's first. The problems, empty if none."""
+    player meets just before this stage's first; games: {id: games its ramp is over} (HELD when absent). The problems,
+    empty if none."""
+    games = games or {}
     P = []
     prev = before[2] if before else None
     for (lid, _ramp, pair) in rows:
@@ -36,6 +55,12 @@ def faults(stage, rows, before=None):
     for (a, ra, _), (b, rb, _) in zip(rows, rows[1:]):
         if rb > ra - STEP:
             P.append(f"ramp: {b} ({rb}) is not at least {STEP} harder than {a} ({ra})")
+        elif ra - rb < CONFIRM_STEP:
+            na, nb = games.get(a, HELD), games.get(b, HELD)
+            if not step_resolved(ra, rb, na, nb):
+                se = (se48(ra, na) ** 2 + se48(rb, nb) ** 2) ** 0.5
+                P.append(f"ramp: {b} is not resolvably {STEP} harder than {a}: a step of {ra - rb:.2f} +- {se:.2f} over "
+                         f"{na} and {nb} games (play them on {CONFIRM_GAMES} more fresh seeds each, or open the step)")
     if len(rows) >= 4:
         fin, fourth = ramps[-1], ramps[-2]
         if not (fin <= min(ramps[:-1]) and fin <= fourth - FINALE_GAP):
@@ -64,7 +89,13 @@ def selftest(verbose=True):
              ("a finale at 17", faults(1, good[:4] + [("e", 17.0, (265, 180))]), "closes"),
              ("a stage much easier than its band", faults(1, [(i, r + 4, p) for (i, r, p) in good]), "much easier"),
              ("the same palette swapped round", faults(1, [good[0], ("b", 27.0, (350, 280))] + good[2:]), "F7"),
-             ("the stage before's last level", faults(2, good, before=("z", 20.0, (283, 352))), "F7")]
+             ("the stage before's last level", faults(2, good, before=("z", 20.0, (283, 352))), "F7"),
+             ("a step of 0.8 on the held-out block alone (game designer G20)",
+              faults(1, good[:1] + [("b", 28.7, (270, 190))] + good[2:]), "resolvably"),
+             ("a step of 0.6 over 6912 games each (game designer G20)",
+              faults(1, good[:1] + [("b", 28.9, (270, 190))] + good[2:], games={"a": 6912, "b": 6912}), "resolvably"),
+             ("a step of 0.95 over 6912 games each", faults(1, good[:1] + [("b", 28.55, (270, 190))] + good[2:],
+                                                             games={"a": 6912, "b": 6912}), None)]
     ok = True
     for name, probs, want in cases:
         good_ = (not probs) if want is None else any(want in q for q in probs)

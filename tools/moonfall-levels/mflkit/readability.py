@@ -33,11 +33,14 @@ print), the larger pair. A peg counts what its print exceeds 1.2 times the paint
 undressed scene less its 4-unit blur, as a robust spread so stars do not inflate it): a textured game painting hides
 part of what a flat night sky shows. Every peg counts, isolated or not; with fewer than three measurable the board as a
 whole is measured, so it is never vacuous. Rule: the median at most PRINT_MED and the 90th percentile at most
-PRINT_P90. Set between known cases, all self-tested (round 4, critic M1 and UX m5): the six approved pilots measure
-median 0-0.003 and p90 0-0.032, the ten levels as built p90 at most 0.034; round 2's per-peg quiet (`[22, 12]`, no
-blur) put back on the real boards measures median 0.010-0.088 on most, and on the textured 1-4 and 2-1, where the
-median stays near 0, p90 0.074 and 0.045. 2-1 is the narrowest margin. The dress itself cannot draw that coin any
-more (`dress.QUIET_BLUR_MIN`); this check guards the rest of the dress.
+PRINT_P90, and the hue part's median (the a/b change less 1.2 times the painting's a/b grain) at most PRINT_HUE_MED.
+Set between known cases, all self-tested (round 4, critic M1 and UX m5; round 5, UX m7): the six approved pilots measure
+median 0-0.003, p90 0-0.032 and hue 0-0.0074, the ten levels as built p90 at most 0.034 and hue at most 0.0143; round
+2's per-peg quiet (`[22, 12]`, no blur) put back on the real boards measures median 0.010-0.088 on most, and on the
+textured 1-4 and 2-1, where the median stays near 0, p90 0.074 and 0.045 (2-1 is the narrowest margin); UX's syn05 hue
+coin measures hue 0.029-0.046 on all ten. What it cannot see (README, step 9): one peg singled out, `tone`, weaker hue
+coins and lightness coins on the most textured boards. Those routes are closed by their shape instead
+(`dress.lint`: the quiet's blur pinned, no `dist` term, no peg-scale `disc` on a piece), not by this check.
 """
 import math
 
@@ -57,6 +60,7 @@ F7_WALLS = 1.5               # the second jewel in the wall strips at most 1.5 t
 F9_MIN, F9_PILOT = 0.12, 0.101
 GHOST_MAX = 0.066
 PRINT_MED, PRINT_P90 = 0.006, 0.040
+PRINT_HUE_MED = 0.022        # the hue part's median (UX round 5, m7)
 
 
 def down(px2, s):
@@ -125,8 +129,19 @@ def jewels(sc2):
     strip = np.zeros(C.shape, bool)
     strip[:, :100], strip[:, W - 100:] = True, True
     wall_x = float(sec_px[strip].sum() / max(sec_px.sum(), 1) / strip.mean())
+    # reported, not gated: the same figure chroma-weighted in 100-unit tall windows, the worst window holding 5% or
+    # more of the second jewel (UX round 5 n9, critic N18: a leak confined to a corner is diluted by the full height;
+    # at round 6 it reads 0.4-6.4 across the ten, the highest where a painted feature meets a wall, so no limit is set)
+    wgt = np.zeros(C.shape, np.float32)
+    wgt[sec_px] = C[sec_px]
+    wtot, worst_win = float(wgt.sum()), (0.0, None)
+    for y0 in range(0, C.shape[0] - 199, 50):
+        ww, ss = wgt[y0:y0 + 200], strip[y0:y0 + 200]
+        if wtot > 0 and ww.sum() >= 0.05 * wtot:
+            worst_win = max(worst_win, (float(ww[ss].sum() / ww.sum() / ss.mean()), (y0 + 82) // 2), key=lambda t: t[0])
     return {"coloured_px_pct": round(float(col.mean()) * 100, 1), "mean_chroma": round(float(C[col].mean()), 3),
             "second_at_walls_x": round(wall_x, 2),
+            "second_at_walls_worst_window": [round(worst_win[0], 2), worst_win[1]],
             "first_jewel_hue": None if h1 is None else round(h1), "first_share": round(float(sum(bins[j] for j in taken) / tot), 3),
             "second_jewel_hue": None if h2 is None else round(h2),
             "second_share": round(float(sum(bins[j] for j in win(second) - taken) / tot), 3),
@@ -225,7 +240,11 @@ def dress_print(dressed1, undressed1, level):
     painting's own fine grain round it (the undressed scene less its 4-unit blur, as a robust spread, 1.4826 times its
     median absolute deviation, so point stars and sparkles do not inflate it): a textured game painting hides part of
     what a flat night sky shows. The excess counts, not all or nothing (critic round 4 M1, UX m5: an all-or-nothing
-    rule on the plain spread zeroed most pegs and let round 2's coin through on 2-2)."""
+    rule on the plain spread zeroed most pegs and let round 2's coin through on 2-2).
+
+    The hue part on its own (the a/b change, less 1.2 times the painting's a/b grain): a painting's lightness texture
+    does not hide a shift of hue, so a hue coin on a textured game painting shows although the whole change is within
+    its grain (UX round 5, m7). Returned last: (median, p90, worst, samples, mode, hue median)."""
     lab_d, lab_u = srgb_to_oklab(dressed1), srgb_to_oklab(undressed1)
     diff = lab_d - lab_u
     from r2lib import blur
@@ -244,35 +263,47 @@ def dress_print(dressed1, undressed1, level):
         rr = np.sqrt(X ** 2 + Y ** 2) - r
         sec = ((np.degrees(np.arctan2(Y, X)) + 360) // 45).astype(int) % 8
         df, ins, ds, lu = diff[y0:y1, x0:x1], inside[y0:y1, x0:x1], dist[y0:y1, x0:x1], grain[y0:y1, x0:x1]
-        best = None
+        best = hue = None
         for (n0, n1), (f0, f1), clear in PRINT_BANDS:
             near_all = (rr >= n0) & (rr <= n1) & ins
             far_all = (rr >= f0) & (rr <= f1) & (ds >= clear) & ins
-            per = []
+            per, per_h = [], []
             for k in range(8):
                 n, m = near_all & (sec == k), far_all & (sec == k)
                 if n.sum() >= 4 and m.sum() >= 8:
-                    per.append(float(np.linalg.norm(df[n].mean(0) - df[m].mean(0))))
+                    dv = df[n].mean(0) - df[m].mean(0)
+                    per.append(float(np.linalg.norm(dv)))
+                    per_h.append(float(np.hypot(dv[1], dv[2])))
             if len(per) >= 4:
-                v = float(np.median(per))
+                v, vh = float(np.median(per)), float(np.median(per_h))
                 best = v if best is None else max(best, v)
+                hue = vh if hue is None else max(hue, vh)
         if best is None:
             continue
         ring = (rr >= 5) & (rr <= 70) & ins
-        texture = 0.0
+        texture = texture_h = 0.0
         if ring.sum() > 20:
             s = lu[ring]
-            texture = float(np.linalg.norm(1.4826 * np.median(np.abs(s - np.median(s, 0)), 0)))
-        vals.append((max(0.0, best - PRINT_TEXTURE * texture), (round(x), round(y))))
+            mad = 1.4826 * np.median(np.abs(s - np.median(s, 0)), 0)
+            texture, texture_h = float(np.linalg.norm(mad)), float(np.hypot(mad[1], mad[2]))
+        vals.append((max(0.0, best - PRINT_TEXTURE * texture), (round(x), round(y)),
+                     max(0.0, hue - PRINT_TEXTURE * texture_h)))
     if len(vals) >= 3:
-        v = np.array([a for a, _ in vals])
+        v = np.array([a for a, _, _ in vals])
         w = max(vals)
-        return round(float(np.median(v)), 4), round(float(np.percentile(v, 90)), 4), (round(w[0], 4), w[1]), len(vals), "pegs"
+        hm = float(np.median([h for _, _, h in vals]))
+        return (round(float(np.median(v)), 4), round(float(np.percentile(v, 90)), 4), (round(w[0], 4), w[1]), len(vals),
+                "pegs", round(hm, 4))
     near, open_ = (dist >= 5) & (dist <= 12) & inside, (dist >= 30) & inside
     if near.sum() < 20 or open_.sum() < 40:
-        return 9.0, 9.0, (9.0, None), 0, "no open ground"
+        return 9.0, 9.0, (9.0, None), 0, "no open ground", 9.0
     g = round(float(np.linalg.norm(diff[near].mean(0) - diff[open_].mean(0))), 4)
-    return g, g, (g, None), 1, "board"
+    return g, g, (g, None), 1, "board", g
+
+
+def print_ok(pr):
+    """The print rule on a dress_print result: median, p90, and the hue part's median."""
+    return pr[0] <= PRINT_MED and pr[1] <= PRINT_P90 and pr[5] <= PRINT_HUE_MED
 
 
 def measure(level, colours, comp2, base2, bd_new, bd_old, dressed2, orange_views, undressed2=None):
@@ -313,17 +344,32 @@ def measure(level, colours, comp2, base2, bd_new, bd_old, dressed2, orange_views
     pr = None
     if undressed2 is not None:
         pr = dress_print(down(dressed2, 1.0), down(undressed2, 1.0), level)
-        if pr[0] > PRINT_MED or pr[1] > PRINT_P90:
+        if not print_ok(pr):
             fails.append(f"dress print round the pegs: median {pr[0]} ({PRINT_MED}), p90 {pr[1]} ({PRINT_P90}), "
-                         f"worst {pr[2]}, over {pr[3]} {pr[4]}")
+                         f"hue median {pr[5]} ({PRINT_HUE_MED}), worst {pr[2]}, over {pr[3]} {pr[4]}")
     rep = {"faces": {s: {k: round(v, 3) for k, v in f.items()} for s, f in faces.items()}, "worst_case": rows,
            "worst_margin": min(r["worst"] for r in rows.values()), "largest_drop": max(r["drop"] for r in rows.values()),
            "bricks_min_margin": bm, "protan_orange_p10": p10, "protan_places": len(seps), "protan_worst_at": worst_place,
            "protan_min": round(min(seps), 3) if seps else None, "jewels": jw,
            "ghost_median": g_med, "ghost_worst": g_worst, "ghost_isolated_pegs": g_n,
            "print": None if pr is None else {"median": pr[0], "p90": pr[1], "worst": pr[2], "samples": pr[3],
-                                             "mode": pr[4]}}
+                                             "mode": pr[4], "hue_median": pr[5]}}
     return rep, fails
+
+
+def _syn_coin(img1, level, da, db, dL=0.0):
+    """UX round 5's synthetic coin: an OKLab shift, radius r + 18 with a 6-unit feather, round every peg (1x)."""
+    from r2lib import oklab_to_srgb
+    lab = srgb_to_oklab(img1).copy()
+    yy, xx = np.mgrid[0:600, 0:800].astype(np.float32) + 0.5
+    m = np.zeros((600, 800), np.float32)
+    for d in level["pegs"]:
+        r = d.get("r", 10)
+        m = np.maximum(m, np.clip((r + 18 + 3 - np.hypot(xx - d["x"], yy - d["y"])) / 6, 0, 1))
+    lab[..., 0] += dL * m
+    lab[..., 1] += da * m
+    lab[..., 2] += db * m
+    return np.clip(oklab_to_srgb(lab), 0, 1).astype(np.float32)
 
 
 def selftest(verbose=True):
@@ -393,12 +439,13 @@ def selftest(verbose=True):
                 m = (xx - x) ** 2 + (yy - y) ** 2 < 24 ** 2
                 dl[m, 1], dl[m, 2] = 0.03, -0.04
         lvl = {"pegs": [{"x": x, "y": y, "r": 9} for (x, y) in pts], "bricks": []}
-        med, p90, _w, _n, _m = dress_print(np.clip(oklab_to_srgb(dl), 0, 1), und, lvl)
-        return med <= PRINT_MED and p90 <= PRINT_P90
+        return print_ok(dress_print(np.clip(oklab_to_srgb(dl), 0, 1), und, lvl))
     cases = [("F6: pegs on a dark ground", w_dark >= F6_MIN, True), ("F6: pegs on a bright ground", w_bright >= F6_MIN, False),
              ("F7: one hue", not f7_fails(jewels(hue_img([255]))), False),
              ("F7: two hues 32 degrees apart (critic P9)", not f7_fails(jewels(hue_img([269, 301, 301]))), False),
              ("F7: two jewels 90 degrees apart", not f7_fails(jewels(hue_img([255, 345, 255]))), True),
+             ("F7: a second jewel on the middle third measures its share of the measured window (533 of 1300 px)",
+              abs(jewels(hue_img([255, 345, 255]))["second_share"] - 533 / 1300) < 0.02, True),
              ("F7: the second jewel only along the walls (game designer G18)",
               not [f for f in f7_fails(jewels(hue_img([345] * 5 + [255] * 22 + [345] * 5))) if "walls" in f], False),
              ("F9: orange on an orange ground", orange_on((0.55, 0.30, 0.12)) >= F9_PILOT, False),
@@ -420,13 +467,14 @@ def selftest(verbose=True):
                       ("exp-p3", "exp-p3-mare-lamentorum")):
         lv = _json.loads((v9 / "rich" / "levels" / f"{pid}.json").read_text(encoding="utf-8"))
         import rich_lib as _RL
-        med, p90, _w, _n, _m = dress_print(_RL.load_rgb(v9 / "rich2" / "scenes" / f"{stem}.png"),
-                                           _RL.load_rgb(v9 / "rich" / "scenes" / f"{stem}.png"), lv)
-        cases.append((f"print: the approved pilot {pid} (median {med}, p90 {p90})", med <= PRINT_MED and p90 <= PRINT_P90, True))
-    # real boards with round 2's per-peg coin put back (quiet [22, 12], no blur: critic round 4 M1, UX m5): known-bad.
-    # 2-2 is our own painting and always runs; 2-1 and 1-4 are game art and run where the textures have been fetched
+        pr = dress_print(_RL.load_rgb(v9 / "rich2" / "scenes" / f"{stem}.png"),
+                         _RL.load_rgb(v9 / "rich" / "scenes" / f"{stem}.png"), lv)
+        cases.append((f"print: the approved pilot {pid} (median {pr[0]}, p90 {pr[1]}, hue {pr[5]})", print_ok(pr), True))
+    # real boards, known-bad: round 2's per-peg coin put back (quiet [22, 12], no blur: critic round 4 M1, UX m5), and
+    # UX round 5's syn05 hue coin (a/b +0.035 each, radius r + 18, round every peg) on the shipped dress (m7). 2-2 is
+    # our own painting and always runs; 2-1 and 1-4 are game art and run where the textures have been fetched
     from . import scene as _scene
-    from .dress import dress as _dress
+    from .dress import dress as _dress, lint as _lint
     from .paths import JSON_OUT
     for lid, name in (("base-07", "2-2"), ("base-06", "2-1"), ("base-04", "1-4")):
         lv = _json.loads((JSON_OUT / f"{lid}.json").read_text(encoding="utf-8"))
@@ -434,22 +482,48 @@ def selftest(verbose=True):
         src = rec["source"]
         if src["kind"] == "game" and not (_scene.CACHE / _scene.cache_name(src["texture"])).exists():
             if verbose:
-                print(f"  --- readcheck: print: {name} with round 2's coin: not run (game texture not fetched)")
+                print(f"  --- readcheck: print: {name} with round 2's coin and syn05: not run (game texture not fetched)")
             continue
         coin = _json.loads(_json.dumps(rec))
         coin["dress"]["jewel"]["quiet"], coin["dress"]["jewel"]["quietBlur"] = [22, 12], 0
         und = _scene.graded(rec, 1)
         dd, _c = _dress(coin, und, lv, 1, unpinned=True)
-        med, p90, _w, _n, _m = dress_print(np.clip(dd, 0, 1).astype(np.float32), und, lv)
-        cases.append((f"print: {name} with round 2's per-peg coin (median {med}, p90 {p90})",
-                      med <= PRINT_MED and p90 <= PRINT_P90, False))
-        if lid == "base-07":
-            try:
-                _dress(coin, und, lv, 1)
-                refused = False
-            except ValueError:
-                refused = True
-            cases.append(("dress: a recipe asking for less quiet blur than 40 is refused (critic round 4 M1)", not refused, False))
+        pr = dress_print(np.clip(dd, 0, 1).astype(np.float32), und, lv)
+        cases.append((f"print: {name} with round 2's per-peg coin (median {pr[0]}, p90 {pr[1]}, hue {pr[5]})",
+                      print_ok(pr), False))
+        if lid in ("base-07", "base-04"):
+            shipped = np.clip(_dress(rec, und, lv, 1)[0], 0, 1).astype(np.float32)
+            pr = dress_print(_syn_coin(shipped, lv, 0.0354, 0.0354), und, lv)
+            cases.append((f"print: {name} with UX's syn05 hue coin (median {pr[0]}, p90 {pr[1]}, hue {pr[5]})",
+                          print_ok(pr), False))
+    # the dress's structural guard (dress.lint, round 5): known-bad recipes on real levels, and the ten as shipped
+    lv7 = _json.loads((JSON_OUT / "base-07.json").read_text(encoding="utf-8"))
+    lv8 = _json.loads((JSON_OUT / "base-08.json").read_text(encoding="utf-8"))
+    r7, r8 = _scene.load_recipe(lv7["scene"]), _scene.load_recipe(lv8["scene"])
+
+    def with_(rec, fn):
+        r = _json.loads(_json.dumps(rec))
+        fn(r["dress"]["jewel"], r)
+        return r
+    bad = [("2-2 asking for less quiet blur than 40 (critic round 4 M1)", lv7,
+            with_(r7, lambda j, r: j.update(quiet=[22, 12], quietBlur=0))),
+           ("2-2 with a NaN quietBlur (critic N13)", lv7, with_(r7, lambda j, r: j.update(quietBlur=float("nan")))),
+           ("2-2 with a `dist` term in a region (critic N13)", lv7,
+            with_(r7, lambda j, r: j["regions"][0]["mask"].append(["dist", 12, 22]))),
+           ("2-2 with a `dist` keep mask (critic N13)", lv7, with_(r7, lambda j, r: j.update(keepMask=[["dist", 22, 12]]))),
+           ("2-2 with regionQuiet 1.5 (critic N18)", lv7, with_(r7, lambda j, r: j.update(regionQuiet=1.5))),
+           ("2-3 with round 5's disc on the lead bird (critic M2, UX G4)", lv8,
+            with_(r8, lambda j, r: j["regions"][0]["mask"].append(["disc", 512, 118, 34, -12]))),
+           ("2-3 with a keep disc on a peg (UX m6's wrong fix)", lv8,
+            with_(r8, lambda j, r: j.update(keepMasks=[[["disc", 512, 118, 14, 4]]]))),
+           ("2-3 with a tone disc on a peg (critic N14)", lv8,
+            with_(r8, lambda j, r: r.setdefault("tone", []).append({"mask": [["disc", 330, 418, 50, 30]], "mul": 0.85})))]
+    for name, lv, rec in bad:
+        cases.append((f"lint: {name}", not _lint(rec, lv), False))
+    for i in range(1, 11):
+        lv = _json.loads((JSON_OUT / f"base-{i:02d}.json").read_text(encoding="utf-8"))
+        probs = _lint(_scene.load_recipe(lv["scene"]), lv)
+        cases.append((f"lint: base-{i:02d} as shipped{(' ' + probs[0][:80]) if probs else ''}", not probs, True))
     ok = True
     for name, passed, want in cases:
         ok &= passed == want

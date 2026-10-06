@@ -573,6 +573,10 @@
      "coloured_px_pct": 99.0,
      "mean_chroma": 0.082,
      "second_at_walls_x": 0.63,
+     "second_at_walls_worst_window": [
+      3.67,
+      441
+     ],
      "first_jewel_hue": 275,
      "first_share": 0.791,
      "second_jewel_hue": 215,
@@ -613,13 +617,14 @@
       ]
      ],
      "samples": 67,
-     "mode": "pegs"
+     "mode": "pegs",
+     "hue_median": 0.0007
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 35.8,
+ "seconds": 37.5,
  "verdict": "PASS"
 }

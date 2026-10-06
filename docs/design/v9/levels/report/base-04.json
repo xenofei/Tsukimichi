@@ -370,7 +370,7 @@
    "ramp_first_seed": 865
   },
   "ceiling": {
-   "p99_luma": 0.415,
+   "p99_luma": 0.414,
    "limit": 0.465
   },
   "framecheck": {
@@ -418,13 +418,13 @@
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.345,
+      "worst": 0.346,
       "at": [
        517,
        386
       ],
       "undressed": 0.345,
-      "drop": 0.0
+      "drop": -0.001
      },
      "orange 1x": {
       "worst": 0.278,
@@ -454,22 +454,22 @@
       "drop": -0.001
      },
      "blue 0.8x": {
-      "worst": 0.335,
+      "worst": 0.336,
       "at": [
        517,
        386
       ],
-      "undressed": 0.334,
-      "drop": -0.001
+      "undressed": 0.336,
+      "drop": 0.0
      },
      "orange 0.8x": {
-      "worst": 0.268,
+      "worst": 0.269,
       "at": [
        517,
        386
       ],
-      "undressed": 0.267,
-      "drop": -0.001
+      "undressed": 0.27,
+      "drop": 0.001
      },
      "green 0.8x": {
       "worst": 0.371,
@@ -481,16 +481,16 @@
       "drop": 0.001
      },
      "purple 0.8x": {
-      "worst": 0.217,
+      "worst": 0.219,
       "at": [
        517,
        386
       ],
-      "undressed": 0.216,
-      "drop": -0.001
+      "undressed": 0.219,
+      "drop": 0.0
      }
     },
-    "worst_margin": 0.217,
+    "worst_margin": 0.219,
     "largest_drop": 0.003,
     "bricks_min_margin": [
      0.375,
@@ -507,6 +507,10 @@
      "coloured_px_pct": 95.8,
      "mean_chroma": 0.075,
      "second_at_walls_x": 1.16,
+     "second_at_walls_worst_window": [
+      4.51,
+      191
+     ],
      "first_jewel_hue": 263,
      "first_share": 0.764,
      "second_jewel_hue": 353,
@@ -547,13 +551,14 @@
       ]
      ],
      "samples": 54,
-     "mode": "pegs"
+     "mode": "pegs",
+     "hue_median": 0.0
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 37.3,
+ "seconds": 40.1,
  "verdict": "PASS"
 }

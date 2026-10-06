@@ -179,7 +179,7 @@
       "x": 365.1,
       "y": 506.8,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true,
       "move": {
         "kind": "slide",
@@ -205,7 +205,7 @@
       "x": 434.9,
       "y": 506.8,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true,
       "move": {
         "kind": "slide",
@@ -296,7 +296,7 @@
       "x": 167.5,
       "y": 471.3,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -335,7 +335,7 @@
       "x": 224.5,
       "y": 471.3,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -374,7 +374,7 @@
       "x": 575.5,
       "y": 471.3,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -413,7 +413,7 @@
       "x": 632.5,
       "y": 471.3,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -461,14 +461,14 @@
       "x": 250.0,
       "y": 290.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "x": 550.0,
       "y": 290.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -580,28 +580,28 @@
       "x": 220.0,
       "y": 150.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "x": 580.0,
       "y": 150.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "x": 110.0,
       "y": 200.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "x": 690.0,
       "y": 200.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {

@@ -249,10 +249,73 @@ def auto_lights(ctx, n=9, box=(90, 380, 712, 516), seed=5, halo=5.0, wander=(9, 
 
 
 # ------------------------------------------------------------------------------------------------ the dress
+PEG_SCALE_NEAR, PEG_SCALE_REACH = 12.0, 100.0   # a disc centred this close to a piece's edge, reaching less than this
+
+
+def _piece_points(level):
+    """(x, y, radius) samples of every piece: a peg at its home and along a mover's path, a brick along its length."""
+    from board import mover_pos, pieces
+    from .author import brick_samples
+    pts = []
+    for kind, p in pieces(level):
+        if kind == "peg":
+            ts = [p["move"]["period"] * k / 24 for k in range(24)] if p.get("move") else [0.0]
+            pts += [(*mover_pos(p, t_), p.get("r", 10.0)) for t_ in ts]
+        else:
+            pts += [(x, y, p["thickness"] / 2) for (x, y) in brick_samples(p, 4.0)]
+    return pts
+
+
+def lint(recipe, level):
+    """The structural guard on the dress (round 5: game designer G21, UX G4 and m7, critic M2, N13, N14 and N18). The
+    print check judges a board's median and 90th percentile, so it cannot see one peg singled out, and it compares the
+    dress with the graded scene, so it cannot see `tone` at all; these rules refuse such terms by their shape instead:
+    - the quiet's blur pinned at QUIET_BLUR_MIN (NaN refused too), and `regionQuiet` within 0-1 (the runtime's scale);
+    - no `dist` term in a jewel region or keep mask: it is the unblurred clearance, a coin round every peg;
+    - no `disc` term in a jewel region, keep mask or `tone` centred within PEG_SCALE_NEAR of a piece's edge and reaching
+      less than PEG_SCALE_REACH (a disc at a peg's scale on a peg is a coin, whatever it is for).
+    The problems, empty if none."""
+    P = []
+    name = recipe.get("name")
+    j = (recipe.get("dress") or {}).get("jewel") or {}
+    if j.get("quiet"):
+        qb = float(j.get("quietBlur", QUIET_BLUR))
+        if not (qb >= QUIET_BLUR_MIN):
+            P.append(f"{name}: quietBlur {qb:g} (the quiet's blur is pinned at {QUIET_BLUR_MIN:g}: less prints a coin "
+                     f"round every peg)")
+    rq = float(j.get("regionQuiet", QUIET_REGION))
+    if not (0.0 <= rq <= 1.0):
+        P.append(f"{name}: regionQuiet {rq:g} (the runtime's scale runs 0-1)")
+    masks = [("jewel region", r.get("mask", [])) for r in j.get("regions", [])]
+    masks += [("keep mask", k) for k in ([j["keepMask"]] if j.get("keepMask") else []) + list(j.get("keepMasks", []))]
+    for where, spec in masks:
+        if any(term[0] == "dist" for term in spec):
+            P.append(f"{name}: a `dist` term in a {where} (the unblurred clearance: a coin round every peg)")
+    masks += [("tone", tn.get("mask", [])) for tn in recipe.get("tone", [])]
+    pts = None
+    for where, spec in masks:
+        for term in spec:
+            if term[0] != "disc":
+                continue
+            _, cx, cy, r, f = term
+            if r + abs(f) >= PEG_SCALE_REACH:
+                continue
+            pts = _piece_points(level) if pts is None else pts
+            near = min(math.hypot(cx - x, cy - y) - pr for (x, y, pr) in pts)
+            if near < PEG_SCALE_NEAR:
+                P.append(f"{name}: the {where} term {term} is centred {max(near, 0):.1f} from a piece's edge at a peg's "
+                         f"scale (reach {r + abs(f):g} < {PEG_SCALE_REACH:g}): a coin round that piece")
+    return P
+
+
 def dress(recipe, sc, level, S, t=0.0, unpinned=False):
-    """The dressed scene (float RGB at S) and the context (framing coverage, rim light, small lights). `unpinned` is
-    for the self-tests alone: it lets a known-bad quiet (less than QUIET_BLUR_MIN of blur, a per-peg coin) be drawn so
+    """The dressed scene (float RGB at S) and the context (framing coverage, rim light, small lights). Refuses a
+    recipe `lint` faults. `unpinned` is for the self-tests alone: it lets a known-bad dress (a per-peg coin) be drawn so
     the print check can be shown to catch it."""
+    if not unpinned:
+        probs = lint(recipe, level)
+        if probs:
+            raise ValueError("; ".join(probs))
     d = recipe.get("dress") or {}
     ctx = Ctx(level, S, recipe.get("features"))
     ctx.recipe = recipe
@@ -266,9 +329,6 @@ def dress(recipe, sc, level, S, t=0.0, unpinned=False):
         if j.get("quiet"):
             a, b = j["quiet"]
             sigma = min(float(j.get("quietBlur", QUIET_BLUR)), QUIET_BLUR_MAX)
-            if sigma < QUIET_BLUR_MIN and not unpinned:
-                raise ValueError(f"{recipe.get('name')}: quietBlur {sigma:g} (the quiet's blur is pinned at "
-                                 f"{QUIET_BLUR_MIN:g}: less prints a coin round every peg)")
             dist = np.minimum(ctx.dist_at_S().astype(np.float32), CLEARANCE_FAR)
             near = smooth(a, b, blur(dist, sigma * S) if sigma > 0.3 else dist)
             # a region takes `regionQuiet` of it (0.6 by default): less keeps a region from surviving only where the

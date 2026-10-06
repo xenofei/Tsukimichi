@@ -423,7 +423,7 @@ class Board(Layout):
         for i in range(len(bricks)):
             for k in range(i + 1, len(bricks)):
                 a, c = bricks[i], bricks[k]
-                d, pa, pc = min((math.hypot(x0 - x1, y0 - y1), (x0, y0), (x1, y1)) for (x0, y0) in bs[i][::2] for (x1, y1) in bs[k][::2])
+                d, pa, pc = min((math.hypot(x0 - x1, y0 - y1), (x0, y0), (x1, y1)) for (x0, y0) in bs[i] for (x1, y1) in bs[k])  # every 1-unit sample, both ends (critic round 5, N15)
                 g = d - a["thickness"] / 2 - c["thickness"] / 2
                 if 3.5 < g < NOTCH_MAX:
                     P.append(f"notch {g:.1f} between brick {i} and brick {k}")
@@ -673,6 +673,9 @@ def selftest(verbose=True):
     cases.append(("a 12.8-unit slot between two bricks (critic L11)", faults(b), "notch"))
     b = grid_board(); b.line(150, 160, 190, 140, t=12); b.line(217, 140, 257, 160, t=12)
     cases.append(("a 15-unit slot between two bricks (critic N11)", faults(b), "notch"))
+    for extra in (0.0, 0.5, 1.0):        # the bricks' sample counts odd and even: an end sample must never be skipped
+        b = grid_board(); b.line(150 - extra, 160, 190, 140, t=12); b.line(218, 140, 258 + extra, 160, t=12)
+        cases.append((f"a 16-unit slot between bricks {44.7 + extra:.1f} long (critic N15)", faults(b), "notch"))
     b = grid_board()
     b.peg(470, 150, r=9, move={"kind": "slide", "x": 570, "y": 150, "period": 10})
     b.peg(573, 150, r=9, move={"kind": "slide", "x": 673, "y": 150, "period": 10.1})
