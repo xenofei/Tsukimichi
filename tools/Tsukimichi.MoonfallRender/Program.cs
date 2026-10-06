@@ -199,7 +199,11 @@ internal static class Render
                 Frame(1f / 60f);
             }
 
-            Settle();
+            // The duel is caught mid-thought: settling would run the opponent's thought out (its art settled before it was staged).
+            if (screen != "duelhud")
+            {
+                Settle();
+            }
         }
         else
         {

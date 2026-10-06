@@ -15739,7 +15739,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>{0} = balls left in the launcher.</comment>
   </data>
   <data name="MoonfallOrangesFormat" xml:space="preserve">
-    <value>Orange {0}</value>
+    <value>Oranges {0}</value>
     <comment>{0} = orange pegs still to hit.</comment>
   </data>
   <data name="MoonfallMultiplierFormat" xml:space="preserve">
@@ -16632,7 +16632,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall: a companion the story has not introduced, with their power; {0} the power.</comment>
   </data>
   <data name="MoonfallYourPickLine" xml:space="preserve">
-    <value>Your pick · any companion you have met</value>
+    <value>Your pick · any companion you have reached</value>
     <comment>Moonfall map: the free-choice stage's carrier line.</comment>
   </data>
   <data name="MoonfallNotReached" xml:space="preserve">
@@ -16732,7 +16732,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall level select: {0} the power (the companion is hidden by the spoiler shield).</comment>
   </data>
   <data name="MoonfallLevelsPickLine" xml:space="preserve">
-    <value>Your pick: any companion you have met carries their power through these five.</value>
+    <value>Your pick: any companion you have reached carries their power through these five.</value>
     <comment>Moonfall level select: the free-choice stage's line.</comment>
   </data>
   <data name="MoonfallOpensAfterFormat" xml:space="preserve">
@@ -16768,7 +16768,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall companions grid at 640: a companion not yet met.</comment>
   </data>
   <data name="MoonfallCompanionsLine" xml:space="preserve">
-    <value>Eleven of Eorzea's own, one for each stage, each carrying a power. In Quick Play, choose any you have met.</value>
+    <value>Eleven of Eorzea's own, one for each stage, each carrying a power. In Quick Play, choose any you have reached.</value>
     <comment>Moonfall companions: the line under the title.</comment>
   </data>
   <data name="MoonfallCompanionsFootnote" xml:space="preserve">
@@ -17012,7 +17012,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall tally: the challenge's next level; {0} its number, {1} levels in the run.</comment>
   </data>
   <data name="MoonfallQuickPlayLine" xml:space="preserve">
-    <value>Replay any level you have reached, with any companion you have met, or none.</value>
+    <value>Replay any level you have reached, with any companion you have reached, or none.</value>
     <comment>Moonfall Quick Play: the line under the title.</comment>
   </data>
   <data name="MoonfallCompanionCaps" xml:space="preserve">
@@ -17134,5 +17134,49 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="MoonfallDifficulty.Master" xml:space="preserve">
     <value>Master</value>
     <comment>Moonfall duel difficulty.</comment>
+  </data>
+  <data name="MoonfallDuelYourShot" xml:space="preserve">
+    <value>Your shot</value>
+    <comment>Moonfall duel HUD: the caption while it is the player's turn.</comment>
+  </data>
+  <data name="MoonfallDuelThinkingFormat" xml:space="preserve">
+    <value>{0} is thinking</value>
+    <comment>Moonfall duel HUD: the caption while the opponent weighs its shot; {0} the opponent.</comment>
+  </data>
+  <data name="MoonfallDuelTheirShotFormat" xml:space="preserve">
+    <value>{0}'s shot</value>
+    <comment>Moonfall duel HUD: the caption while the opponent's ball flies; {0} the opponent.</comment>
+  </data>
+  <data name="MoonfallLevelsComing" xml:space="preserve">
+    <value>Levels on their way</value>
+    <comment>Moonfall map: the Play button of a stage whose levels are not built yet.</comment>
+  </data>
+  <data name="MoonfallPauseShortFormat" xml:space="preserve">
+    <value>{0} balls · {1} oranges</value>
+    <comment>Moonfall pause menu at 640: {0} balls left, {1} oranges left.</comment>
+  </data>
+  <data name="MoonfallAceShort" xml:space="preserve">
+    <value>ACE</value>
+    <comment>Moonfall HUD: the caption over the level's Ace score on the right rail.</comment>
+  </data>
+  <data name="MoonfallPowerShortPath" xml:space="preserve">
+    <value>Path</value>
+    <comment>Moonfall companions at 640: Sage's Path, short.</comment>
+  </data>
+  <data name="MoonfallPowerShortBolt" xml:space="preserve">
+    <value>Storm</value>
+    <comment>Moonfall companions at 640: Storm Post, short.</comment>
+  </data>
+  <data name="MoonfallDecorationHeldNote" xml:space="preserve">
+    <value>Reduce motion is on: everything holds still, whatever this says.</value>
+    <comment>Moonfall options: under the Decoration setting while Reduce motion is on (it overrides Decoration's motion).</comment>
+  </data>
+  <data name="MoonfallLevelsButton" xml:space="preserve">
+    <value>Levels</value>
+    <comment>Moonfall map at the small size: the stage panel's button that opens the stage's five levels.</comment>
+  </data>
+  <data name="MoonfallStripLevelFormat" xml:space="preserve">
+    <value>Level {0} of {1}.</value>
+    <comment>Moonfall level select: the selected level's place. {0} is its code (3-2), {1} the stage's name.</comment>
   </data>
 </root>

@@ -361,6 +361,37 @@ public sealed class MoonfallScreensTests
     }
 
     [Fact]
+    public void A_reached_stage_whose_levels_are_not_built_yet_is_coming_not_sealed()
+    {
+        // The Moon Road won and The Far Shore open, but none of its levels ship yet.
+        var shape = MoonfallCampaigns.LoadBuiltIn().Base.Levels[0];
+        var baseCampaign = new MoonfallCampaign(MoonfallCampaignKind.Base,
+            Enumerable.Range(0, MoonfallStages.BaseLevels).Select(i => shape with { Id = MoonfallStages.LevelId(MoonfallCampaignKind.Base, i) }).ToList());
+        var campaigns = new MoonfallCampaigns(baseCampaign, new MoonfallCampaign(MoonfallCampaignKind.Expansion, []), []);
+        var progress = new MoonfallProgress { BaseCleared = MoonfallStages.BaseLevels };
+        var modes = new MoonfallModes(campaigns, progress, MoonfallStory.Everyone, MoonfallChallenges.LoadBuiltIn().Challenges);
+        Assert.True(modes.CampaignOpen(MoonfallCampaignKind.Expansion));
+        var far = modes.Stages(MoonfallCampaignKind.Expansion);
+        Assert.Equal(MoonfallStageState.Sealed, far[0].State);
+
+        // Its first stage is where the road has come to: no padlock, not drained or dimmed.
+        Assert.True(MoonfallLooks.Coming(far[0], progress.ExpansionCleared));
+        var look = MoonfallLooks.Stop(far[0], coming: true);
+        Assert.False(look.Padlock);
+        Assert.False(look.Drained);
+        Assert.False(look.Dim);
+
+        // The stages after it are not reached yet, built or not.
+        Assert.False(MoonfallLooks.Coming(far[1], progress.ExpansionCleared));
+        Assert.True(MoonfallLooks.Stop(far[1]).Padlock);
+
+        // A sealed stage whose levels ship is never "coming".
+        var road = Modes(new MoonfallProgress { BaseCleared = 12 }).Stages(MoonfallCampaignKind.Base);
+        Assert.Equal(MoonfallStageState.Sealed, road[3].State);
+        Assert.False(MoonfallLooks.Coming(road[3], 12));
+    }
+
+    [Fact]
     public void Every_companion_has_words_for_the_detail_panel()
     {
         foreach (var info in MoonfallCompanions.All)

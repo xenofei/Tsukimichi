@@ -191,6 +191,8 @@ public sealed partial class MoonfallWindow
         MoonfallPower.Draw => Strings.MoonfallPowerShortDraw,
         MoonfallPower.Burst => Strings.MoonfallPowerShortBurst,
         MoonfallPower.Wings => Strings.MoonfallPowerShortWings,
+        MoonfallPower.Path => Strings.MoonfallPowerShortPath,
+        MoonfallPower.Bolt => Strings.MoonfallPowerShortBolt,
         _ => Strings.MoonfallPowerName(power),
     };
 
@@ -245,17 +247,134 @@ public sealed partial class MoonfallWindow
             }
         }
 
-        // The whole opening, with the power's light at its green peg: a white-gold ring, its outer edge in their colour.
-        LevelThumb(m, level, x, y, w, 0.26);
-        if (green >= 0)
+        // A cut of the board round its green peg, 300 units across, kept inside the opening (75..725, 41..594).
+        const double Cw = 300, Ch = Cw * 1106 / 1300;
+        var gx = green >= 0 ? g.Peg(green).X : 400;
+        var gy = green >= 0 ? g.Peg(green).Y : 320;
+        var ox = Math.Clamp(gx - (Cw / 2), 75, 725 - Cw);
+        var oy = Math.Clamp(gy - (Ch * 0.4), 41, 594 - Ch);
+        var h = LevelThumb(m, level, x, y, w, 0.26, new Vector4((float)ox, (float)oy, (float)Cw, (float)Ch));
+        var k = w / Cw;
+        var accent = MoonfallCards.For(info.Power)?.Accent ?? GoldInk;
+        m.Dl.PushClipRect(m.V.Map(x, y), m.V.Map(x + w, y + h), true);
+        PowerGlyph(m, info.Power, x + ((gx - ox) * k), y + ((gy - oy) * k), k, accent, x, y, w, h);
+        m.Dl.PopClipRect();
+    }
+
+    /// <summary>
+    /// The power at work over the cut (board units scaled by <paramref name="k"/> round the green peg at px, py): the
+    /// effect's light at the green (a white-gold ring with an outer edge in the companion's colour, spec-rich2.md §3),
+    /// and the power's own mark: the guide run on past the bounce, the twin ball, the wings on the bucket, the burst's
+    /// reach, the oars, the gate's return, the flowers, the drum, the fireball, the weighed angles, the bolt.
+    /// </summary>
+    private void PowerGlyph(in MenuPen m, MoonfallPower power, double px, double py, double k, Vector3 accent, double x0, double y0, double w, double h)
+    {
+        var dl = m.Dl;
+        var v = m.V;
+        var ink = Ink(accent, 0.95f);
+        var soft = Ink(accent, 0.35f);
+        var white = Ink(MoonfallColor.Hex("#FFF4D8"), 0.95f);
+        var line = MathF.Max(1.4f, v.Size(2.2 * k));
+        void Dots(double ax, double ay, double bx, double by, int count, uint colour)
         {
-            var accent = MoonfallCards.For(info.Power)?.Accent ?? GoldInk;
-            var k = w / 650.0;
-            var px = x + ((g.Peg(green).X - 75) * k);
-            var py = y + ((g.Peg(green).Y - 41) * k);
-            m.Dl.AddCircle(m.V.Map(px, py), m.V.Size(26 * k), Ink(MoonfallColor.Hex("#FFF4D8"), 0.9f), 32, MathF.Max(1.5f, m.V.Size(1.8)));
-            m.Dl.AddCircle(m.V.Map(px, py), m.V.Size(40 * k), Ink(accent, 0.75f), 32, MathF.Max(1.5f, m.V.Size(2.0)));
+            for (var i = 0; i <= count; i++)
+            {
+                var t = i / (double)count;
+                dl.AddCircleFilled(v.Map(ax + ((bx - ax) * t), ay + ((by - ay) * t)), MathF.Max(1.2f, v.Size(2.4 * k)), colour, 8);
+            }
         }
+
+        switch (power)
+        {
+            case MoonfallPower.SuperGuide:
+                // The guide down to the green, and on past the bounce.
+                Dots(px - (90 * k), py - (150 * k), px, py, 9, white);
+                Dots(px, py, px + (110 * k), py + (70 * k), 9, ink);
+                break;
+            case MoonfallPower.Multiball:
+                dl.AddLine(v.Map(px, py), v.Map(px - (80 * k), py + (90 * k)), soft, line);
+                dl.AddLine(v.Map(px, py), v.Map(px + (80 * k), py + (90 * k)), soft, line);
+                dl.AddCircleFilled(v.Map(px - (80 * k), py + (90 * k)), v.Size(7 * k), white, 16);
+                dl.AddCircleFilled(v.Map(px + (80 * k), py + (90 * k)), v.Size(7 * k), white, 16);
+                break;
+            case MoonfallPower.Wings:
+                if (m.C.Sheet[MoonfallChromePart.Wing] is { } wing)
+                {
+                    var ww = w * 0.32;
+                    var wh = ww * wing.H / wing.W;
+                    var cy = y0 + h - (wh * 0.9);
+                    Part(m.C, MoonfallChromePart.Wing, x0 + (w / 2) - ww - 4, cy, x0 + (w / 2) - 4, cy + wh, uint.MaxValue);
+                    Part(m.C, MoonfallChromePart.Wing, x0 + (w / 2) + 4, cy, x0 + (w / 2) + 4 + ww, cy + wh, uint.MaxValue, flipX: true);
+                }
+
+                break;
+            case MoonfallPower.Burst:
+                dl.AddCircleFilled(v.Map(px, py), v.Size(85 * k), Ink(accent, 0.16f), 48);
+                dl.AddCircle(v.Map(px, py), v.Size(85 * k), ink, 48, line);
+                break;
+            case MoonfallPower.Flippers:
+                dl.AddLine(v.Map(x0 + (w * 0.06), y0 + h - (h * 0.10)), v.Map(x0 + (w * 0.30), y0 + h - (h * 0.04)), ink, line * 2);
+                dl.AddLine(v.Map(x0 + w - (w * 0.06), y0 + h - (h * 0.10)), v.Map(x0 + w - (w * 0.30), y0 + h - (h * 0.04)), ink, line * 2);
+                break;
+            case MoonfallPower.Gate:
+                // The ball falls out at the foot and drops back in from the sky above.
+                Dots(px + (60 * k), y0 + h - (10 * k), px + (60 * k), py + (40 * k), 5, soft);
+                dl.AddCircleFilled(v.Map(px + (60 * k), y0 + (16 * k)), v.Size(7 * k), white, 16);
+                Dots(px + (60 * k), y0 + (30 * k), px + (60 * k), py - (40 * k), 5, ink);
+                break;
+            case MoonfallPower.Bloom:
+                for (var i = 0; i < 6; i++)
+                {
+                    var a = i * MathF.PI / 3;
+                    dl.AddCircleFilled(v.Map(px + (MathF.Cos(a) * 20 * k), py + (MathF.Sin(a) * 20 * k)), v.Size(8 * k), Ink(Tint(accent, 0.3f), 0.85f), 16);
+                }
+
+                break;
+            case MoonfallPower.Draw:
+                dl.AddCircle(v.Map(px + (60 * k), py - (40 * k)), v.Size(26 * k), ink, 32, line);
+                for (var i = 0; i < 3; i++)
+                {
+                    var a = (i * 2 * MathF.PI / 3) - (MathF.PI / 2);
+                    dl.AddLine(v.Map(px + (60 * k), py - (40 * k)), v.Map(px + (60 * k) + (MathF.Cos(a) * 26 * k), py - (40 * k) + (MathF.Sin(a) * 26 * k)), ink, line);
+                }
+
+                break;
+            case MoonfallPower.Fireball:
+                for (var i = 4; i >= 1; i--)
+                {
+                    dl.AddCircleFilled(v.Map(px - (i * 16 * k), py - (i * 22 * k)), v.Size((12 - (i * 2)) * k), Ink(MoonfallColor.Hex("#FF9A3D"), 0.18f * (5 - i)), 16);
+                }
+
+                dl.AddCircleFilled(v.Map(px, py), v.Size(10 * k), Ink(MoonfallColor.Hex("#FFD27A")), 16);
+                break;
+            case MoonfallPower.Path:
+                for (var i = -3; i <= 3; i++)
+                {
+                    var bright = i == 1;
+                    dl.AddLine(v.Map(px - (120 * k), py - (180 * k)), v.Map(px + (i * 30 * k), py), bright ? ink : Ink(accent, 0.25f), bright ? line : MathF.Max(1f, line * 0.5f));
+                }
+
+                break;
+            case MoonfallPower.Bolt:
+                {
+                    var zx = px;
+                    var zy = py;
+                    for (var i = 0; i < 6; i++)
+                    {
+                        var nx = px + ((i % 2 == 0 ? 14 : -14) * k);
+                        var ny = zy + (30 * k);
+                        dl.AddLine(v.Map(zx, zy), v.Map(nx, ny), ink, line * 1.4f);
+                        zx = nx;
+                        zy = ny;
+                    }
+                }
+
+                break;
+        }
+
+        // The light at the green itself.
+        dl.AddCircle(v.Map(px, py), v.Size(16 * k), white, 32, MathF.Max(1.5f, v.Size(1.8 * k)));
+        dl.AddCircle(v.Map(px, py), v.Size(24 * k), ink, 32, MathF.Max(1.5f, v.Size(2.0 * k)));
     }
 
     private MoonfallLevel? FirstShippedLevel(MoonfallCompanionInfo info)
@@ -374,11 +493,11 @@ public sealed partial class MoonfallWindow
             py += 17;
         }
 
-        const double Tw2 = 150;
-        var tx2 = ((x0 + x1) / 2) - (Tw2 / 2);
-        if (py + 6 + (Tw2 * 1106 / 1300) < y1 - 50)
+        // The power at work, as large as the room above Play allows (at least 80 units across).
+        var tw2 = Math.Min(150, (y1 - 52 - (py + 4)) * 1300 / 1106);
+        if (tw2 >= 80)
         {
-            PowerAtWork(m, info, tx2, py + 6, Tw2);
+            PowerAtWork(m, info, ((x0 + x1) / 2) - (tw2 / 2), py + 4, tw2);
         }
 
         if (MenuButton(m, "##mfPlayWith", x0 + 30, y1 - 44, x1 - 30, y1 - 14, look.Playable ? charPlay : charPlayTip, 21, isDefault: true,

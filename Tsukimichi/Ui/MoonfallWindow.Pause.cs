@@ -24,8 +24,12 @@ public sealed partial class MoonfallWindow
     private Vector2 boardAreaMax;
     private bool crestHovered;
 
+    /// <summary>A press on the dimmed board outside the pause menu began (its release resumes).</summary>
+    private bool outsidePress;
+
     // The pause menu's words.
     private string pauseLine = string.Empty;
+    private string pauseShort = string.Empty;
     private (int Level, int Balls, int Oranges, MoonfallPauseReason Reason, int Language) pauseLineFor = (-1, -1, -1, MoonfallPauseReason.None, -1);
 
     /// <summary>The pause's mouse target on the board: the crest's moonstone (taken before the board's own button, so it never shoots).</summary>
@@ -45,6 +49,7 @@ public sealed partial class MoonfallWindow
         crestHovered = ImGui.IsItemHovered();
         if (crestHovered)
         {
+            ImGui.SetMouseCursor(ImGuiMouseCursor.Hand);
             UiMetrics.Tooltip(Strings.MoonfallPauseTooltip);
         }
     }
@@ -83,11 +88,16 @@ public sealed partial class MoonfallWindow
         ImGui.Dummy(Vector2.One);
         Panel(m, x0, y0, x1, y1, null, small ? 0.32 : 0.5);
         var cx = (x0 + x1) / 2;
-        MenuTitle(m, cx, y0 + (small ? 34 : 58), Strings.MoonfallPausedTitle, small ? 40 : 60, Anchor.Centre);
+        MenuTitle(m, cx, y0 + (small ? 26 : 58), Strings.MoonfallPausedTitle, small ? 36 : 60, Anchor.Centre);
         if (!small)
         {
             MenuText(m, MoonfallFace.Axis, 15, cx, y0 + 96, pauseLine, held ? DangerInk : Ink2, Anchor.Centre, edge: 0f, maxWidth: (float)(x1 - x0 - 40));
             CrestRule(m, cx, y0 + 124, 320, true, 0.4);
+        }
+        else
+        {
+            // At 640 the board's state in short, the one reminder of it behind the menu.
+            MenuText(m, MoonfallFace.Axis, 12, cx, y0 + 51, pauseShort, held ? DangerInk : Ink2, Anchor.Centre, edge: 0f, maxWidth: (float)(x1 - x0 - 40));
         }
 
         var (pad, bh, top, step) = small ? (30.0, 30.0, 110.0, 58.0) : (66.0, 42.0, 226.0, 84.0);
@@ -130,12 +140,22 @@ public sealed partial class MoonfallWindow
         }
 
         // Outside the window: a click resumes (taken after the window's own entries, so they win where they overlap).
+        // The press must begin outside too: a hold on Restart or Leave dragged off the window and let go never resumes.
         var mouse = ImGui.GetMousePos();
         var inside = mouse.X >= panelMin.X && mouse.X <= panelMax.X && mouse.Y >= panelMin.Y && mouse.Y <= panelMax.Y;
-        if (!inside && !held && ImGui.IsMouseReleased(ImGuiMouseButton.Left) && ImGui.IsWindowHovered() && !ImGui.IsAnyItemActive()
-            && mouse.X >= boardOrigin.X && mouse.X <= boardOrigin.X + boardSize.X && mouse.Y >= boardOrigin.Y && mouse.Y <= boardOrigin.Y + boardSize.Y)
+        var onBoard = mouse.X >= boardOrigin.X && mouse.X <= boardOrigin.X + boardSize.X && mouse.Y >= boardOrigin.Y && mouse.Y <= boardOrigin.Y + boardSize.Y;
+        if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            pause.TryResume();
+            outsidePress = !inside && onBoard && ImGui.IsWindowHovered() && !ImGui.IsAnyItemHovered();
+        }
+
+        if (outsidePress && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
+        {
+            outsidePress = false;
+            if (!inside && onBoard && !held)
+            {
+                pause.TryResume();
+            }
         }
     }
 
@@ -161,6 +181,9 @@ public sealed partial class MoonfallWindow
         pauseLine = pause.Held && PauseReasonText() is { } why
             ? string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseHeldFormat, why)
             : string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseLineFormat, stageText, g.Level.Name, g.BallsLeft, g.OrangesLeft);
+        pauseShort = pause.Held && PauseReasonText() is { } heldBy
+            ? heldBy
+            : string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseShortFormat, g.BallsLeft, g.OrangesLeft);
     }
 
     /// <summary>The quick settings: Reduce motion and Peg marks as switches, Decoration and Sound between chevrons.</summary>
@@ -183,7 +206,7 @@ public sealed partial class MoonfallWindow
 
         y += step;
         MenuText(m, MoonfallFace.Axis, size, lx, y, Strings.MoonfallDecoration, Cream, edge: 0f);
-        var d = MenuStepper(m, "##mfDecoration", rx, y, DecorationName(decoration), small, decoration != Flair.Plain, decoration != Flair.Full);
+        var d = MenuStepper(m, "##mfDecoration", rx, y, DecorationName(decoration), small, decoration != Flair.Plain, decoration != Flair.Full, UiMetrics.ReduceMotion);
         if (d != 0)
         {
             SetDecoration(d);
@@ -284,13 +307,13 @@ public sealed partial class MoonfallWindow
 
         // Decoration.
         MenuText(m, MoonfallFace.Jupiter, label, lx, y, Strings.MoonfallDecoration, Cream, edge: 1f);
-        var d = MenuStepper(m, "##mfOptDecoration", rx, y, DecorationName(decoration), small, decoration != Flair.Plain, decoration != Flair.Full);
+        var d = MenuStepper(m, "##mfOptDecoration", rx, y, DecorationName(decoration), small, decoration != Flair.Plain, decoration != Flair.Full, UiMetrics.ReduceMotion);
         if (d != 0)
         {
             SetDecoration(d);
         }
 
-        MenuText(m, MoonfallFace.Axis, note, lx, y + (small ? 22 : 30), Strings.MoonfallDecorationNote, Ink2, edge: 0f, maxWidth: (float)(rx - lx));
+        MenuText(m, MoonfallFace.Axis, note, lx, y + (small ? 22 : 30), UiMetrics.ReduceMotion ? Strings.MoonfallDecorationHeldNote : Strings.MoonfallDecorationNote, Ink2, edge: 0f, maxWidth: (float)(rx - lx));
         y += step;
 
         // Reduce motion.
@@ -335,7 +358,7 @@ public sealed partial class MoonfallWindow
         }
 
         ReadOnlySpan<PegColour> kinds = [PegColour.Orange, PegColour.Green, PegColour.Purple, PegColour.Blue];
-        var marks = options?.PegMarks == true ? gameArt?.Marks : null;
+        var marks = gameArt?.Marks;
         for (var i = 0; i < kinds.Length; i++)
         {
             var px = x + (i * r * 3.2);
@@ -370,19 +393,36 @@ public sealed partial class MoonfallWindow
             return;
         }
 
-        var small = m.Small;
-        var (x0, y0, x1, y1) = small ? (14.0, 390.0, 204.0, 452.0) : (100.0, 700.0, 640.0, 760.0);
-        m.Dl.AddRectFilled(m.V.Map(x0, y0), m.V.Map(x1, y1), Ink(MoonfallColor.Hex("#070A1C"), 0.92f), m.V.Size(4));
-        GiltBand(m.C, x0, y0, x1, y1, 0.22);
-        MenuText(m, MoonfallFace.Axis, small ? 12 : 14, x0 + 12, y0 + (small ? 14 : 18), small ? Strings.MoonfallPegMarksHintShort : Strings.MoonfallPegMarksHint, Cream, edge: 0f, maxWidth: (float)(x1 - x0 - 24));
-        var by = small ? y0 + 30 : y0 + 30;
-        var bw = small ? 80.0 : 120.0;
-        if (MenuButton(m, "##mfMarksOn", x0 + 12, by, x0 + 12 + bw, by + (small ? 26 : 24), Strings.MoonfallTurnOn, small ? 12 : 14, primaryFace: false))
+        bool turnOn;
+        bool noThanks;
+        if (m.Small)
+        {
+            // At 640 one row under the Companions and Options pills, the words left and the two pills right.
+            const double X0 = 60, Y0 = 436, X1 = 580, Y1 = 474;
+            m.Dl.AddRectFilled(m.V.Map(X0, Y0), m.V.Map(X1, Y1), Ink(MoonfallColor.Hex("#070A1C"), 0.92f), m.V.Size(4));
+            GiltBand(m.C, X0, Y0, X1, Y1, 0.22);
+            const double Bw = 84;
+            MenuText(m, MoonfallFace.Axis, 12, X0 + 12, (Y0 + Y1) / 2, Strings.MoonfallPegMarksHintShort, Cream, edge: 0f, maxWidth: (float)(X1 - X0 - 24 - (2 * Bw) - 16));
+            turnOn = MenuButton(m, "##mfMarksOn", X1 - 10 - (2 * Bw) - 8, Y0 + 6, X1 - 10 - Bw - 8, Y1 - 6, Strings.MoonfallTurnOn, 12, primaryFace: false);
+            noThanks = MenuButton(m, "##mfMarksNo", X1 - 10 - Bw, Y0 + 6, X1 - 10, Y1 - 6, Strings.MoonfallNoThanks, 12, primaryFace: false);
+        }
+        else
+        {
+            // At 1280 a journal panel under the modes, the words over the kit's own pill size.
+            const double X0 = 100, Y0 = 680, X1 = 640, Y1 = 768;
+            Panel(m, X0, Y0, X1, Y1, null, 0.3);
+            MenuText(m, MoonfallFace.Axis, 14, X0 + 44, Y0 + 26, Strings.MoonfallPegMarksHint, Cream, edge: 0f, maxWidth: (float)(X1 - X0 - 88));
+            const double Bw = 140;
+            turnOn = MenuButton(m, "##mfMarksOn", X0 + 44, Y0 + 42, X0 + 44 + Bw, Y0 + 74, Strings.MoonfallTurnOn, 15, primaryFace: false);
+            noThanks = MenuButton(m, "##mfMarksNo", X0 + 56 + Bw, Y0 + 42, X0 + 56 + (2 * Bw), Y0 + 74, Strings.MoonfallNoThanks, 15, primaryFace: false);
+        }
+
+        if (turnOn)
         {
             SetPegMarks(true);
         }
 
-        if (MenuButton(m, "##mfMarksNo", x0 + 22 + bw, by, x0 + 22 + (2 * bw), by + (small ? 26 : 24), Strings.MoonfallNoThanks, small ? 12 : 14, primaryFace: false))
+        if (noThanks)
         {
             options.PegMarksHintSeen = true;
             options.Save();

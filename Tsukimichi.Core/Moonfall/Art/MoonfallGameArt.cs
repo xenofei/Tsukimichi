@@ -235,6 +235,19 @@ public sealed class MoonfallGameArt<T> : IDisposable
             menuEnamelUpload = null;
             menuEnamel = Landed(eu, "menu enamel");
         }
+
+        // Options shows the peg marks on its samples whether they are on or not (what the switch does).
+        marksPixels ??= MoonfallPegMarks.Sheet();
+        if (marksTexture is null && marksUpload is null)
+        {
+            marksUpload = Upload(marksPixels, "Moonfall peg marks");
+        }
+
+        if (marksUpload is { IsCompleted: true } mu)
+        {
+            marksUpload = null;
+            marksTexture = Landed(mu, "peg marks");
+        }
     }
 
     /// <summary>The menus' panel ground: the journal's grain as enamel in the Medallion's lapis, or null until uploaded.</summary>

@@ -142,7 +142,7 @@ public sealed partial class MoonfallWindow
 
         // The interim picture stands in only where no recipe draws the scene: a level without one, or one whose build failed.
         var recipe = plain ? null : gameArt?.RecipeFor(level);
-        var picture = recipe is null ? g.Level.Scene : gameArt!.SceneState == MoonfallSceneState.Failed ? recipe.Fallback : null;
+        var picture = plain ? null : recipe is null ? g.Level.Scene : gameArt!.SceneState == MoonfallSceneState.Failed ? recipe.Fallback : null;
         art.Frame(wantTwoX, picture);
         if (art.Atlas is not { } atlas || art.Sheet(wantTwoX, out _) is not { } sheet)
         {

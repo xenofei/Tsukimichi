@@ -450,7 +450,8 @@ public sealed partial class MoonfallWindow : Window
             multiplierText = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallMultiplierFormat, multiplierFor);
         }
 
-        var shown = duel?.ShownScore(MoonfallDuel.PlayerSide) ?? g.ShownScore;
+        // Over the tally the Ace bonus is in the total, so the score plate counts to the same number.
+        var shown = duel?.ShownScore(MoonfallDuel.PlayerSide) ?? (g.ShownScore + (finished ? aceBonus : 0));
         if (scoreFor != shown)
         {
             scoreFor = shown;
@@ -475,14 +476,19 @@ public sealed partial class MoonfallWindow : Window
         var x = at.X;
         var right = at.X + width;
         // Pause at the right (the mouse's way in; Esc too), then the score.
-        var pauseWidth = ImGui.CalcTextSize(Strings.MoonfallPause).X + (2f * ImGui.GetStyle().FramePadding.X);
-        ImGui.SetCursorScreenPos(new Vector2(right - pauseWidth, at.Y));
-        if (ImGui.Button(PauseButtonLabel, new Vector2(pauseWidth, height)))
+        // Pause, or Resume while paused; none over the tally.
+        if (!LevelOver(g))
         {
-            TogglePause(g);
+            var pauseWidth = MathF.Max(ImGui.CalcTextSize(Strings.MoonfallPause).X, ImGui.CalcTextSize(Strings.MoonfallResume).X) + (2f * ImGui.GetStyle().FramePadding.X);
+            ImGui.SetCursorScreenPos(new Vector2(right - pauseWidth, at.Y));
+            if (ImGui.Button(PauseButtonLabel(pause.Paused), new Vector2(pauseWidth, height)))
+            {
+                TogglePause(g);
+            }
+
+            right -= pauseWidth + gap;
         }
 
-        right -= pauseWidth + gap;
         var scoreWidth = ImGui.CalcTextSize(scoreText).X;
         dl.AddText(new Vector2(right - scoreWidth, y), Theme.U32(Theme.Gold), scoreText);
         right -= scoreWidth + gap;
@@ -505,20 +511,19 @@ public sealed partial class MoonfallWindow : Window
     }
 
     private string pauseButtonLabel = string.Empty;
+    private string resumeButtonLabel = string.Empty;
     private int pauseButtonFor = -1;
 
-    /// <summary>The plain bar's Pause, with its id, made once per language.</summary>
-    private string PauseButtonLabel
+    /// <summary>The plain bar's Pause (Resume while paused), with its id, made once per language.</summary>
+    private string PauseButtonLabel(bool paused)
     {
-        get
+        if (pauseButtonFor != Localization.Loc.Version)
         {
-            if (pauseButtonFor != Localization.Loc.Version)
-            {
-                pauseButtonFor = Localization.Loc.Version;
-                pauseButtonLabel = Strings.MoonfallPause + "##moonfallPause";
-            }
-
-            return pauseButtonLabel;
+            pauseButtonFor = Localization.Loc.Version;
+            pauseButtonLabel = Strings.MoonfallPause + "##moonfallPause";
+            resumeButtonLabel = Strings.MoonfallResume + "##moonfallPause";
         }
+
+        return paused ? resumeButtonLabel : pauseButtonLabel;
     }
 }

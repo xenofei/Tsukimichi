@@ -486,6 +486,39 @@ static partial class Strings
     /// <summary>Moonfall duel: the start button; {0} the opponent.</summary>
     public static string MoonfallDuelPlayFormat => Loc.Get("MoonfallDuelPlayFormat");
 
+    /// <summary>Moonfall duel HUD: the caption while it is the player&#x27;s turn.</summary>
+    public static string MoonfallDuelYourShot => Loc.Get("MoonfallDuelYourShot");
+
+    /// <summary>Moonfall duel HUD: the caption while the opponent weighs its shot; {0} the opponent.</summary>
+    public static string MoonfallDuelThinkingFormat => Loc.Get("MoonfallDuelThinkingFormat");
+
+    /// <summary>Moonfall duel HUD: the caption while the opponent&#x27;s ball flies; {0} the opponent.</summary>
+    public static string MoonfallDuelTheirShotFormat => Loc.Get("MoonfallDuelTheirShotFormat");
+
+    /// <summary>Moonfall map: the Play button of a stage whose levels are not built yet.</summary>
+    public static string MoonfallLevelsComing => Loc.Get("MoonfallLevelsComing");
+
+    /// <summary>Moonfall pause menu at 640: {0} balls left, {1} oranges left.</summary>
+    public static string MoonfallPauseShortFormat => Loc.Get("MoonfallPauseShortFormat");
+
+    /// <summary>Moonfall HUD: the caption over the level&#x27;s Ace score on the right rail.</summary>
+    public static string MoonfallAceShort => Loc.Get("MoonfallAceShort");
+
+    /// <summary>Moonfall companions at 640: Sage&#x27;s Path, short.</summary>
+    public static string MoonfallPowerShortPath => Loc.Get("MoonfallPowerShortPath");
+
+    /// <summary>Moonfall companions at 640: Storm Post, short.</summary>
+    public static string MoonfallPowerShortBolt => Loc.Get("MoonfallPowerShortBolt");
+
+    /// <summary>Moonfall options: under the Decoration setting while Reduce motion is on (it overrides Decoration&#x27;s motion).</summary>
+    public static string MoonfallDecorationHeldNote => Loc.Get("MoonfallDecorationHeldNote");
+
+    /// <summary>Moonfall map at the small size: the stage panel&#x27;s button that opens the stage&#x27;s five levels.</summary>
+    public static string MoonfallLevelsButton => Loc.Get("MoonfallLevelsButton");
+
+    /// <summary>Moonfall level select: the selected level&#x27;s place. {0} is its code (3-2), {1} the stage&#x27;s name.</summary>
+    public static string MoonfallStripLevelFormat => Loc.Get("MoonfallStripLevelFormat");
+
     /// <summary>A duel opponent's difficulty.</summary>
     public static string MoonfallDifficultyName(MoonfallAiDifficulty difficulty) => difficulty switch
     {

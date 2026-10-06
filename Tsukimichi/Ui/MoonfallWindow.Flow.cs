@@ -33,6 +33,9 @@ public sealed partial class MoonfallWindow
     private bool finished;
     private double boardArmedAt;
 
+    /// <summary>A navigation key was taken from the game while a menu answered it and is still held.</summary>
+    private bool navigationTaken;
+
     /// <summary>The companion picked for a "Your Pick" stage, kept for its next level.</summary>
     private MoonfallCompanion adventurePick = MoonfallCompanion.None;
 
@@ -45,11 +48,19 @@ public sealed partial class MoonfallWindow
             Keys?.ClaimBack();
         }
 
-        // The menus (and the pause menu) move their focus with the arrows, Tab, Enter and Space: the game must not see them.
-        var menu = flow.Current != MoonfallScreen.Play || (game is { } g && pause.Paused && !LevelOver(g));
-        if (hasKeys && menu)
+        // The menus, the pause menu and the tally move their focus with the arrows, Tab, Enter and Space: the game must not see them.
+        var menu = flow.Current != MoonfallScreen.Play || pause.Paused || (game is { } g && LevelOver(g));
+        // A key a menu took stays taken until it is let go, even once the board is up (Enter that pressed Play, a key
+        // held through Restart's hold), so the game never sees it half way through.
+        var stillHeld = navigationTaken && Keyboard.NavigationKeyHeld();
+        if ((hasKeys && menu) || stillHeld)
         {
             Keys?.ClaimNavigation();
+            navigationTaken = Keyboard.NavigationKeyHeld();
+        }
+        else
+        {
+            navigationTaken = false;
         }
 
         if (ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel))
@@ -303,8 +314,8 @@ public sealed partial class MoonfallWindow
     /// <summary>The board's shooter: the duel, which keeps its sides and turns, or the level's game.</summary>
     private IMoonfallShooter Shooter(MoonfallGame g) => duel is { } d ? d : g;
 
-    /// <summary>The balls the tube shows: the player's own in a duel, else the level's.</summary>
-    private int TubeBalls(MoonfallGame g) => duel?.BallsLeft(MoonfallDuel.PlayerSide) ?? g.BallsLeft;
+    /// <summary>The balls the tube shows: in a duel the side to shoot (the medallion beside it shows that side too), else the level's.</summary>
+    private int TubeBalls(MoonfallGame g) => duel is { } d ? d.BallsLeft(d.Turn) : g.BallsLeft;
 
     /// <summary>The board's level again, from the start (Restart held, Replay, Try again).</summary>
     private void Restart()

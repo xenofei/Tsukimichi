@@ -285,6 +285,11 @@ public static class MoonfallChromeArt
                 }
 
                 return crop;
+            case MoonfallChromePart.CardSelect:
+                // r2kit.card: the selection glow's rim softened (a Gaussian on its alpha), so it lies round a card or a
+                // tile as a glow, never a hard-edged slab.
+                crop.A = MoonfallFilters.Blur(crop.A!, 7f);
+                return crop;
             default:
                 return crop;
         }

@@ -29,6 +29,12 @@ public sealed partial class MoonfallWindow
     private static readonly Vector3 Ink3 = MoonfallColor.Hex("#AEB6D6");
     private static readonly Vector3 DangerInk = MoonfallColor.Hex("#F0C8D8");
 
+    /// <summary>A sealed entry's label: slate, but at least 4.5:1 on its pill.</summary>
+    private static readonly Vector3 LockedInk = MoonfallColor.Hex("#A9B0CC");
+
+    /// <summary>A tab not chosen: at least 4.5:1 on the tab.</summary>
+    private static readonly Vector3 IdleTabInk = MoonfallColor.Hex("#BCC4E4");
+
     /// <summary>A sheet with no parts, so the kit draws its plain shapes before (or without) the game's UI art.</summary>
     private static readonly Lazy<MoonfallChromeSheet> NoChrome = new(() => MoonfallChromeArt.Build(new Dictionary<string, MoonfallImage>(StringComparer.Ordinal)));
 
@@ -62,6 +68,9 @@ public sealed partial class MoonfallWindow
         Normal,
         Danger,
         Locked,
+
+        /// <summary>Not sealed, but nothing to open yet (a stage whose levels are on their way): slate, with no padlock.</summary>
+        Waiting,
     }
 
     /// <summary>Whether the menus' art has settled (the offline renderer waits for it): the backdrop the screen asks for, the cards it shows.</summary>
@@ -434,20 +443,33 @@ public sealed partial class MoonfallWindow
 
         var hovered = ImGui.IsItemHovered();
         var nav = ImGui.GetIO().NavVisible && ImGui.IsItemFocused();
-        var lit = style != MenuStyle.Locked && (nav || (isDefault && !ImGui.GetIO().NavVisible));
-        EntryGlow(m, x0, y0, x1, y1, lit, hovered && style != MenuStyle.Locked);
+        // A sealed entry (Locked, with a padlock) or one whose content is still to come (Waiting) does nothing.
+        var inert = style is MenuStyle.Locked or MenuStyle.Waiting;
+        var lit = !inert && (nav || (isDefault && !ImGui.GetIO().NavVisible));
+        EntryGlow(m, x0, y0, x1, y1, lit, hovered && !inert);
         var state = style switch
         {
             MenuStyle.Danger => MoonfallChromePart.PillDanger,
-            MenuStyle.Locked => MoonfallChromePart.PillLocked,
+            MenuStyle.Locked or MenuStyle.Waiting => MoonfallChromePart.PillLocked,
             _ => lit ? MoonfallChromePart.PillFocus : MoonfallChromePart.Pill,
         };
         Pill(m.C, x0, y0, x1, y1, uint.MaxValue, state);
         var h = y1 - y0;
         var face = primaryFace ? MoonfallFace.Jupiter : MoonfallFace.Axis;
-        var ink = style == MenuStyle.Locked ? MoonfallColor.Hex("#7E86A4") : Cream;
+        var ink = inert ? LockedInk : Cream;
         var cy = ((y0 + y1) / 2) + (sub is not null ? -h * 0.13 : 0);
-        MenuText(m, face, labelSize, (x0 + x1) / 2, cy, label, ink, Anchor.Centre, edge: 1.0f, maxWidth: (float)(x1 - x0 - (h * 0.6)));
+        // A sealed entry says so without a mouse: a padlock just before its label (the label moved over to make room for
+        // it), and its reason on focus as on hover.
+        var locked = style == MenuStyle.Locked;
+        var room = (float)(x1 - x0 - (h * (locked ? 1.4 : 0.6)));
+        var lx = ((x0 + x1) / 2) + (locked ? h * 0.4 : 0);
+        var lw = MenuText(m, face, labelSize, lx, cy, label, ink, Anchor.Centre, edge: 1.0f, maxWidth: room);
+        if (locked)
+        {
+            var px = Math.Max(x0 + (h * 0.5), lx - (Math.Min(lw, room) / 2) - (h * 0.42));
+            Padlock(m, px, cy, h * (sub is not null ? 0.16 : 0.22));
+        }
+
         if (sub is not null)
         {
             MenuText(m, MoonfallFace.Axis, (float)(h * 0.27), (x0 + x1) / 2, cy + (h * 0.30), sub, lit ? GoldHiInk : Ink3, Anchor.Centre, edge: 0f, maxWidth: (float)(x1 - x0 - (h * 0.6)));
@@ -458,12 +480,12 @@ public sealed partial class MoonfallWindow
             FocusOutline(m.Dl, min, max, v.Size(h / 2));
         }
 
-        if (hovered && tooltip is not null)
+        if ((hovered || nav) && tooltip is not null)
         {
             UiMetrics.Tooltip(tooltip);
         }
 
-        if (clicked && style != MenuStyle.Locked)
+        if (clicked && !inert)
         {
             SoundClick();
             return true;
@@ -551,7 +573,7 @@ public sealed partial class MoonfallWindow
     }
 
     /// <summary>play2.stepper: a value between two gilt chevron buttons that hug it (20 × 20 at 1280, 16 × 16 at 640); −1 or +1 when one is pressed, 0 otherwise.</summary>
-    private int MenuStepper(in MenuPen m, string id, double x, double y, string value, bool small, bool canDown, bool canUp)
+    private int MenuStepper(in MenuPen m, string id, double x, double y, string value, bool small, bool canDown, bool canUp, bool dimValue = false)
     {
         var v = m.V;
         var size = small ? 14f : 16f;
@@ -586,7 +608,7 @@ public sealed partial class MoonfallWindow
             }
         }
 
-        MenuText(m, MoonfallFace.Axis, size, (xl + xr) / 2, y, value, GoldHiInk, Anchor.Centre, edge: 0f);
+        MenuText(m, MoonfallFace.Axis, size, (xl + xr) / 2, y, value, dimValue ? Ink3 : GoldHiInk, Anchor.Centre, edge: 0f);
         return step;
     }
 
@@ -625,13 +647,18 @@ public sealed partial class MoonfallWindow
         }
 
         var h = y1 - y0;
-        MenuText(m, MoonfallFace.Jupiter, (float)(h * 0.62), (x0 + x1) / 2, (y0 + y1) / 2, label, active ? Cream : locked ? MoonfallColor.Hex("#6E7698") : MoonfallColor.Hex("#9AA3C8"), Anchor.Centre, edge: 1f);
+        var lw = MenuText(m, MoonfallFace.Jupiter, (float)(h * 0.62), (x0 + x1) / 2, (y0 + y1) / 2, label, active ? Cream : locked ? LockedInk : IdleTabInk, Anchor.Centre, edge: 1f);
+        if (locked)
+        {
+            Padlock(m, ((x0 + x1) / 2) - (lw / 2) - (h * 0.42), (y0 + y1) / 2, h * 0.2);
+        }
+
         if (nav)
         {
             FocusOutline(m.Dl, min, max, v.Size(6));
         }
 
-        if (hovered && tooltip is not null)
+        if ((hovered || nav) && tooltip is not null)
         {
             UiMetrics.Tooltip(tooltip);
         }
@@ -722,8 +749,8 @@ public sealed partial class MoonfallWindow
         if ((selected || focus) && m.C.Sheet[MoonfallChromePart.CardSelect] is not null)
         {
             var breath = selected ? MoonfallMotion.Breath(menuClock, 3f, 0.15f, motion != MoonfallMotionLevel.Full) : 1f;
-            var tint = Ink(Vector3.Lerp(accent, Vector3.One, 0.25f), Math.Clamp((selected ? 0.75f : 0.45f) * breath, 0f, 1f));
-            Part(m.C, MoonfallChromePart.CardSelect, x - (w * 0.10), y - (h * 0.09), x + (w * 1.10), y + (h * 1.09), tint);
+            var tint = Ink(Vector3.Lerp(accent, Vector3.One, 0.45f), Math.Clamp((selected ? 0.8f : 0.5f) * breath, 0f, 1f));
+            Part(m.C, MoonfallChromePart.CardSelect, x - 9, y - 9, x + w + 9, y + h + 9, tint);
         }
 
         dl.AddRectFilled(v.Map(x + 5, y + 8), v.Map(x + w + 1, y + h + 4), Ink(Vector3.Zero, 0.45f), v.Size(6));

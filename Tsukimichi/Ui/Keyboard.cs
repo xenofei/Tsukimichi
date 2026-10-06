@@ -81,6 +81,14 @@ public static class Keyboard
     public static bool BackPressed() =>
         WindowHasKeys() && (ImGui.IsKeyPressed(ImGuiKey.Escape, false) || ImGui.IsKeyPressed(ImGuiKey.GamepadFaceRight, false));
 
+    /// <summary>
+    /// Whether a menu's navigation key (an arrow, Tab, Enter or Space) is still held: a window that answered it keeps
+    /// claiming it from the game until it is let go (<see cref="GameKeyClaim"/>).
+    /// </summary>
+    public static bool NavigationKeyHeld() =>
+        ImGui.IsKeyDown(ImGuiKey.UpArrow) || ImGui.IsKeyDown(ImGuiKey.DownArrow) || ImGui.IsKeyDown(ImGuiKey.LeftArrow) || ImGui.IsKeyDown(ImGuiKey.RightArrow)
+        || ImGui.IsKeyDown(ImGuiKey.Tab) || ImGui.IsKeyDown(ImGuiKey.Enter) || ImGui.IsKeyDown(ImGuiKey.KeypadEnter) || ImGui.IsKeyDown(ImGuiKey.Space);
+
     /// <summary>The gamepad's Start button went down in the window that has the keys (Moonfall pauses with it, as games do).</summary>
     public static bool StartPressed() => WindowHasKeys() && ImGui.IsKeyPressed(ImGuiKey.GamepadStart, false);
 

@@ -72,11 +72,11 @@ public static class MoonfallLooks
     private static readonly MoonfallCompanionLore[] Lore =
     [
         new("Leader of the Scions of the Seventh Dawn", "Hears the Mother Crystal's voice, and knows where the road goes before you take it.",
-            "Her guide runs on past the first bounce, to the peg after.", "3 shots"),
+            "The aim guide runs on past the first bounce, to the peg after.", "3 shots"),
         new("Twins of Sharlayan, the Archon's grandchildren", "Never agree on a path, so they take both.",
             "A twin ball springs from the green peg and flies the mirror of the first.", "this shot"),
         new("Engineer of the Garlond Ironworks", "Can fix anything with a spanner, and fly most of it.",
-            "He bolts airship wings to the bucket: its mouth doubles in width.", "5 turns"),
+            "Airship wings bolt onto the bucket: its mouth doubles in width.", "5 turns"),
         new("General of Ul'dah's Immortal Flames", "Speaks softly; the floor shakes when he does not.",
             "One great sweep at the green peg lights every peg within its reach.", "this shot"),
         new("Admiral of Limsa Lominsa", "Keeps a fleet afloat on wit and powder.",
@@ -86,11 +86,11 @@ public static class MoonfallLooks
         new("Elder Seedseer of Gridania", "Listens to the Twelveswood, and it listens back.",
             "Moonflowers open from the green peg and light the nearest fifth of the oranges.", "this shot"),
         new("Receptionist of the Scions, keeper of the purse", "Counts every gil twice, and finds three more.",
-            "Her draw turns once: a free ball, a triple score, or another friend's power.", "the draw"),
+            "A draw turns once: a free ball, a triple score, or another friend's power.", "the draw"),
         new("Scholar and mage of the Scions", "Patient with the world, impatient with fools.",
             "The ball meets no peg: each one it touches burns away.", "next shot"),
         new("Archon of Sharlayan, founder of the Circle of Knowing", "Old enough to be patient, wise enough to be quick.",
-            "He weighs seventeen angles round your aim and nudges the ball onto the best.", "next shot"),
+            "Seventeen angles round your aim are weighed, and the ball is nudged onto the best.", "next shot"),
         new("Moogle post, every inn in Eorzea", "Delivers the bolt, kupo, and signs for nothing.",
             "The first peg lit sends a bolt straight to the bucket, lighting every peg along it.", "this shot"),
     ];
@@ -116,13 +116,19 @@ public static class MoonfallLooks
     }
 
     /// <summary>How the stop for <paramref name="view"/> shows on the map.</summary>
-    public static MoonfallStopLook Stop(MoonfallStageView view)
+    public static MoonfallStopLook Stop(MoonfallStageView view) => Stop(view, coming: false);
+
+    /// <summary>
+    /// How a map stop shows; a stop whose levels are <paramref name="coming"/> (reached, but not built yet: see
+    /// <see cref="Coming"/>) is not sealed, so it shows no padlock and is not drained or dimmed.
+    /// </summary>
+    public static MoonfallStopLook Stop(MoonfallStageView view, bool coming)
     {
         ArgumentNullException.ThrowIfNull(view);
         var face = view.Stage.PlayerPicks ? MoonfallStopFace.PickStar
             : view.Companion == MoonfallCompanionState.NotMet ? MoonfallStopFace.CardBack
             : MoonfallStopFace.Portrait;
-        var sealedStop = view.State == MoonfallStageState.Sealed;
+        var sealedStop = view.State == MoonfallStageState.Sealed && !coming;
         return new MoonfallStopLook(
             face,
             Drained: sealedStop && face == MoonfallStopFace.Portrait,
@@ -130,5 +136,17 @@ public static class MoonfallLooks
             Pip: view.State == MoonfallStageState.Done,
             Glow: view.Here,
             Dim: sealedStop);
+    }
+
+    /// <summary>
+    /// Whether a stage is reached but its levels are not built yet (an open Far Shore before its levels ship): its first
+    /// level is missing and the campaign's progress (<paramref name="cleared"/> levels won) has come to it. The map says
+    /// "Levels on their way" there, not "Not reached".
+    /// </summary>
+    public static bool Coming(MoonfallStageView view, int cleared)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        return view.State == MoonfallStageState.Sealed && view.Levels.Count > 0 && view.Levels[0].State == MoonfallLevelState.Missing
+            && cleared >= view.Stage.FirstLevelIndex;
     }
 }

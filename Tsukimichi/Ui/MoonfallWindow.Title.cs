@@ -390,11 +390,12 @@ public sealed partial class MoonfallWindow
             return adventurePick;
         }
 
-        foreach (var info in MoonfallCompanions.All)
+        var all = MoonfallCompanions.All;
+        for (var i = 0; i < all.Count; i++)
         {
-            if (StateOf(info.Companion) == MoonfallCompanionState.Available)
+            if (StateOf(all[i].Companion) == MoonfallCompanionState.Available)
             {
-                return info.Companion;
+                return all[i].Companion;
             }
         }
 

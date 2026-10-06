@@ -48,7 +48,11 @@ public sealed class GameKeyClaim
     /// <summary>Whether the navigation keys are claimed now.</summary>
     public bool NavigationClaimed => Environment.TickCount64 - navigationAt <= GraceMs;
 
-    /// <summary><c>Framework.Update</c>: clears the claimed keys from the game's key state.</summary>
+    /// <summary>
+    /// <c>Framework.Update</c>: clears the claimed keys from the game's key state. (A window that claims a key keeps
+    /// claiming it while the key is still down, so a press that started the board from a menu never reaches the game
+    /// half way through: see the window's key handling.)
+    /// </summary>
     public void Consume(IFramework framework)
     {
         if (keys is not { } state)

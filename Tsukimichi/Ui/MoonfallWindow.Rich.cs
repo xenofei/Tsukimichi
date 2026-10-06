@@ -404,9 +404,20 @@ public sealed partial class MoonfallWindow
         Part(c, MoonfallChromePart.Wing, 400 - 6 - W, 2, 400 - 6, 2 + h, uint.MaxValue);
         Part(c, MoonfallChromePart.Wing, 406, 2, 406 + W, 2 + h, uint.MaxValue, flipX: true);
         c.Dl.AddCircleFilled(c.View.Map(400, 20), c.View.Size(9.5), Ink(PlateInk), 32);
+        // The moonstone is the pause button: under the mouse it lifts and its ring brightens (pressed, more so).
+        var lift = crestHovered ? (ImGui.IsMouseDown(ImGuiMouseButton.Left) ? 0.18f : 0.10f) : 0f;
+        if (lift > 0)
+        {
+            Put(p, p.Atlas[MoonfallSprite.Soft], 400, 20, 22f / 4f, Ink(MoonfallColor.Hex("#FFF4D8"), lift * 2.5f));
+        }
+
         Moonstone(c.Dl, c.View, 400, 20, 6);
-        GiltRing(c, 400, 20, 7.6f);
-        _ = p;
+        if (lift > 0)
+        {
+            c.Dl.AddCircleFilled(c.View.Map(400, 20), c.View.Size(6), Ink(Vector3.One, lift), 32);
+        }
+
+        GiltRing(c, 400, 20, 7.6f, tint: lift > 0 ? Ink(Tint(GoldHiInk, 0.3f)) : uint.MaxValue);
     }
 
     /// <summary>A small moonstone: a pale disc lit from the upper left with a soft cool edge.</summary>
@@ -545,6 +556,51 @@ public sealed partial class MoonfallWindow
         }
 
         DrawText(dl, MoonfallFace.Trump, NumberPx(v, 26, MoonfallFace.Trump), v.Map(701, 21.5), Anchor.Right, Ink(GoldHiInk), scoreText, Ink(MoonfallColor.Hex("#120A02")), v.Size(0.8));
+        AceChip(c, g);
+    }
+
+    private MoonfallLevel? hudAceLevel;
+    private long? hudAce;
+    private string hudAceText = string.Empty;
+    private string hudAceLabel = string.Empty;
+
+    /// <summary>
+    /// The level's Ace score on a small chip under the score plate (Adventure and Quick Play; not in a duel or a challenge):
+    /// ACE and the target, quiet until the score reaches it, then gilt.
+    /// </summary>
+    private void AceChip(in ChromePen c, MoonfallGame g)
+    {
+        if (duel is not null || challengeRun is not null)
+        {
+            return;
+        }
+
+        if (!ReferenceEquals(hudAceLevel, g.Level))
+        {
+            hudAceLevel = g.Level;
+            hudAce = AceFor(g.Level.Id);
+            hudAceText = hudAce is { } target ? target.ToString("N0", CultureInfo.CurrentCulture) : string.Empty;
+            hudAceLabel = Strings.MoonfallAceShort;
+        }
+
+        if (hudAce is not { } ace)
+        {
+            return;
+        }
+
+        var dl = c.Dl;
+        var v = c.View;
+        var reached = g.ShownScore >= ace;
+        var labelPx = NamePx(v, 9.5f, MoonfallFace.Axis);
+        var numberPx = NumberPx(v, 13f, MoonfallFace.Trump);
+        var lw = MeasureText(MoonfallFace.Axis, labelPx, hudAceLabel) / v.Scale;
+        var nw = MeasureText(MoonfallFace.Trump, numberPx, hudAceText) / v.Scale;
+        const double X1 = 712, Y0 = 39, Y1 = 54;
+        var x0 = X1 - lw - nw - 5 - 14;
+        dl.AddRectFilled(v.Map(x0, Y0), v.Map(X1, Y1), Ink(MoonfallColor.Hex("#060816"), reached ? 0.9f : 0.75f), v.Size(4));
+        dl.AddRect(v.Map(x0, Y0), v.Map(X1, Y1), Ink(reached ? GoldHiInk : LabelInk, reached ? 0.9f : 0.35f), v.Size(4), ImDrawFlags.None, MathF.Max(1f, v.Size(reached ? 1.3 : 1)));
+        DrawText(dl, MoonfallFace.Axis, labelPx, v.Map(x0 + 7, (Y0 + Y1) / 2), Anchor.Left, Ink(reached ? GoldHiInk : LabelInk, 0.95f), hudAceLabel);
+        DrawText(dl, MoonfallFace.Trump, numberPx, v.Map(X1 - 7, ((Y0 + Y1) / 2) + 0.5), Anchor.Right, Ink(reached ? GoldHiInk : Ink2), hudAceText, Ink(EdgeInk), v.Size(0.6));
     }
 
     /// <summary>chrome2.ball_tube: the glass tube and its balls in a cage of the journal's rules, spire finials, and the count.</summary>

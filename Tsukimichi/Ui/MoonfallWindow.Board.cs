@@ -157,6 +157,7 @@ public sealed partial class MoonfallWindow
         // The board takes the clicks, except while the tally's or the pause menu's buttons are over it, and in the first
         // moments after it appears (a double click on Play never shoots).
         var over = LevelOver(g);
+        crestHovered = false;
         if (richHud && !over && !pause.Paused)
         {
             // The crest's moonstone pauses (mouse first): taken before the board's own button, so its click never shoots.
@@ -624,20 +625,8 @@ public sealed partial class MoonfallWindow
             dl.AddText(new Vector2(x, y), Theme.U32(Theme.Surface.TextSecondary), tallyNote);
         }
 
-        // The way on: the next level (when there is one), this one again, and the mode's own screen.
+        // The way on, in the rich tally's order: this level again, the mode's own screen, and the next level when there is one.
         ImGui.SetCursorScreenPos(new Vector2(x, max.Y - pad - ImGui.GetFrameHeight()));
-        if (tallyNext is { } next)
-        {
-            if (ImGui.Button(tallyNextLabel ?? next))
-            {
-                SoundClick();
-                Next();
-                return;
-            }
-
-            ImGui.SameLine();
-        }
-
         if (tallyAgain is { } again)
         {
             if (ImGui.Button(tallyAgainLabel ?? again))
@@ -654,6 +643,17 @@ public sealed partial class MoonfallWindow
         {
             SoundClick();
             LeaveBoard();
+            return;
+        }
+
+        if (tallyNext is { } next)
+        {
+            ImGui.SameLine();
+            if (ImGui.Button(tallyNextLabel ?? next))
+            {
+                SoundClick();
+                Next();
+            }
         }
     }
 }
