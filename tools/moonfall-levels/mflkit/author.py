@@ -44,6 +44,8 @@ def point_in_poly(x, y, poly):
     return inside
 
 BALL = 12.0
+DECK_DEG = 10.0               # a line brick flatter than this is a deck (round 2, critic G5)
+LANE_WIDTH = 120              # units of the bucket lane's width the pieces in it may cover (critic L14)
 DOTTED_GAP = 14.0             # pegs on a dotted line: 14 or more between surfaces (34 centre to centre at r 10)
 
 
@@ -324,6 +326,27 @@ class Board(Layout):
                 out.append((p["x"] + (mv["x"] - p["x"]) * s, p["y"] + (mv["y"] - p["y"]) * s))
         return out
 
+    @staticmethod
+    def mover_at(p, t):
+        """A mover's centre at time t (s): the engine moves each mover on the game clock by its own period."""
+        mv = p["move"]
+        ph = 2 * math.pi * ((t % mv["period"]) / mv["period"])
+        if mv["kind"] == "orbit":
+            R = math.hypot(p["x"] - mv["x"], p["y"] - mv["y"])
+            sgn = 1 if mv.get("clockwise", True) else -1
+            a = math.atan2(p["y"] - mv["y"], p["x"] - mv["x"]) + sgn * ph
+            return mv["x"] + R * math.cos(a), mv["y"] + R * math.sin(a)
+        s_ = (1 - math.cos(ph)) / 2
+        return p["x"] + (mv["x"] - p["x"]) * s_, p["y"] + (mv["y"] - p["y"]) * s_
+
+    @staticmethod
+    def common_cycle(a, c, cap=240.0):
+        """The time after which two movers' relative positions repeat (the LCM of their periods, at 0.1 s), capped."""
+        from fractions import Fraction
+        pa, pc = Fraction(round(a["move"]["period"] * 10), 10), Fraction(round(c["move"]["period"] * 10), 10)
+        lcm = (pa.numerator * pc.numerator // math.gcd(pa.numerator, pc.numerator)) / math.gcd(pa.denominator, pc.denominator)
+        return min(float(lcm), cap)
+
     def piece_in_reach(self, piece):
         """Whether some first free flight touches the piece: a still peg, any point of a mover's path, any point of a
         brick."""
@@ -367,16 +390,17 @@ class Board(Layout):
                     break
         # still pegs against each other: overlaps and saddles (touching pegs count: a ball rests on two touching level
         # pegs too), with the pegs' real radii
-        for i in range(len(still)):
-            for k in range(i + 1, len(still)):
-                a, c = still[i], still[k]
-                ra, rc = a.get("r", 10.0), c.get("r", 10.0)
-                d = math.hypot(a["x"] - c["x"], a["y"] - c["y"]) - ra - rc
-                slope = math.degrees(math.atan2(abs(a["y"] - c["y"]), abs(a["x"] - c["x"]) + 1e-9))
-                if d < -0.5:
-                    P.append(f"pegs overlap at ({a['x']}, {a['y']}) and ({c['x']}, {c['y']})")
-                elif d < 11.8 and slope < saddle_deg(max(d, 0.0), (ra + rc) / 2):
-                    P.append(f"saddle (gap {d:.1f}, {slope:.0f} deg) between ({a['x']}, {a['y']}) and ({c['x']}, {c['y']})")
+        pairs = [(still[i], still[k]) for i in range(len(still)) for k in range(i + 1, len(still))]
+        pairs += [(movers[i], movers[k]) for i in range(len(movers)) for k in range(i + 1, len(movers))
+                  if self._drift(movers[i]) == self._drift(movers[k])]        # one drift group moves as one (critic G2)
+        for a, c in pairs:
+            ra, rc = a.get("r", 10.0), c.get("r", 10.0)
+            d = math.hypot(a["x"] - c["x"], a["y"] - c["y"]) - ra - rc
+            slope = math.degrees(math.atan2(abs(a["y"] - c["y"]), abs(a["x"] - c["x"]) + 1e-9))
+            if d < -0.5:
+                P.append(f"pegs overlap at ({a['x']}, {a['y']}) and ({c['x']}, {c['y']})")
+            elif d < 11.8 and slope < saddle_deg(max(d, 0.0), (ra + rc) / 2):
+                P.append(f"saddle (gap {d:.1f}, {slope:.0f} deg) between ({a['x']}, {a['y']}) and ({c['x']}, {c['y']})")
         # pegs against bricks: overlap, cradle (under 13), and the wedge band above a brick (13-16: a ball rolling along
         # the brick jams under the peg)
         bs = [brick_samples(b, 1.0) for b in bricks]
@@ -414,8 +438,13 @@ class Board(Layout):
                     if y > b["y"] + 0.2 * b["r"]:
                         P.append(f"cup: arc brick {j} at ({x:.0f}, {y:.0f}) hangs below its centre (a bowl traps the ball)")
                         break
-        # level decks: a run of line bricks under 6 degrees longer than 30 units holds a resting ball
-        lines = [(j, b) for j, b in enumerate(bricks) if b["kind"] == "line" and self._slope_deg(b) < 6.0]
+        # level decks: a run of line bricks under 10 degrees longer than 30 units, or one such brick of 20 or more, holds
+        # a resting ball (round 2, critic G5: decks at 6.5 degrees and separate level bricks held balls)
+        lines = [(j, b) for j, b in enumerate(bricks) if b["kind"] == "line" and self._slope_deg(b) < DECK_DEG]
+        for j, b in lines:
+            ln = math.hypot(b["x2"] - b["x1"], b["y2"] - b["y1"])
+            if ln >= 20.0:
+                P.append(f"level deck: brick {j} lies under {DECK_DEG:.0f} degrees for {ln:.0f} units (20 at most alone)")
         seen = set()
         for j, b in lines:
             if j in seen:
@@ -431,8 +460,8 @@ class Board(Layout):
                             todo.append(k)
             seen |= chain
             span = sum(math.hypot(bricks[q]["x2"] - bricks[q]["x1"], bricks[q]["y2"] - bricks[q]["y1"]) for q in chain)
-            if span > 30.0:
-                P.append(f"level deck: bricks {sorted(chain)} lie under 6 degrees for {span:.0f} units (30 at most)")
+            if span > 30.0 and len(chain) > 1:
+                P.append(f"level deck: bricks {sorted(chain)} lie under {DECK_DEG:.0f} degrees for {span:.0f} units (30 at most)")
         # movers: a ball's width (12) from every still peg, every brick, and every mover of another drift group at
         # the same moment
         for m in movers:
@@ -451,7 +480,12 @@ class Board(Layout):
                 a, c = movers[i], movers[k]
                 if self._drift(a) == self._drift(c):
                     continue
-                pa, pc = self.mover_points(a), self.mover_points(c)
+                if a["move"]["period"] == c["move"]["period"]:
+                    pa, pc = self.mover_points(a), self.mover_points(c)
+                else:
+                    T = self.common_cycle(a, c)
+                    ts = [T * q / max(72, int(T * 20)) for q in range(max(72, int(T * 20)))]
+                    pa, pc = [self.mover_at(a, t) for t in ts], [self.mover_at(c, t) for t in ts]
                 if any(math.hypot(x0 - x1, y0 - y1) - a.get("r", 10.0) - c.get("r", 10.0) < 12.0 for (x0, y0), (x1, y1) in zip(pa, pc)):
                     P.append(f"movers from ({a['x']}, {a['y']}) and ({c['x']}, {c['y']}) come within a ball of each other")
         # the subject's interior stays open (section 2): no peg inside a declared silhouette unless it is a feature
@@ -494,6 +528,18 @@ class Board(Layout):
         lane += sum(1 for b in bricks if max(y for (_x, y) in brick_samples(b)) + b["thickness"] / 2 > 520)
         if lane > 5:
             P.append(f"{lane} pieces reach into the bucket's lane (y 520-560; at most 5)")
+        cover = set()
+        for p in pegs:
+            for (x, y) in self.mover_points(p, 24):
+                r = p.get("r", 10.0)
+                if y + r > 520:
+                    cover |= set(range(int(x - r), int(x + r) + 1))
+        for b in bricks:
+            for (x, y) in brick_samples(b, 1.0):
+                if y + b["thickness"] / 2 > 520:
+                    cover |= set(range(int(x - b["thickness"] / 2), int(x + b["thickness"] / 2) + 1))
+        if len(cover) > LANE_WIDTH:
+            P.append(f"the pieces in the bucket's lane cover {len(cover)} units of its width ({LANE_WIDTH} at most)")
         if verbose:
             print(f"  pieces {n} (pegs {len(pegs)}, bricks {len(bricks)}, movers {len(movers)}); candidates {len(cands)}; "
                   f"green-only {len(sure)}; skipped while tracing {len(self.skipped)}")
@@ -593,6 +639,24 @@ def selftest(verbose=True):
     b.peg(560, 150, r=9, move={"kind": "slide", "x": 640, "y": 150, "period": 4})
     b.peg(640, 150, r=9, move={"kind": "slide", "x": 560, "y": 150, "period": 4})
     cases.append(("two slides that swap places (P2)", faults(b), "of each other"))
+    b = grid_board()
+    b.peg(560, 150, r=9, move={"kind": "slide", "x": 640, "y": 150, "period": 4})
+    b.peg(640, 150, r=9, move={"kind": "slide", "x": 560, "y": 150, "period": 6})
+    cases.append(("two slides of periods 4 and 6 that collide in real time (critic G2)", faults(b), "of each other"))
+    b = grid_board()
+    b.peg(560, 150, r=9, move={"kind": "slide", "x": 600, "y": 150, "period": 4})
+    b.peg(570, 150, r=9, move={"kind": "slide", "x": 610, "y": 150, "period": 4})
+    cases.append(("two co-moving slides overlapping (critic G2)", faults(b), "overlap"))
+    b = grid_board()
+    b.peg(560, 150, r=9, move={"kind": "slide", "x": 600, "y": 150, "period": 4})
+    b.peg(581, 150, r=9, move={"kind": "slide", "x": 621, "y": 150, "period": 4})
+    cases.append(("two co-moving slides in a level saddle (critic G2)", faults(b), "saddle"))
+    b = grid_board(); b.line(150, 140, 370, 165)
+    cases.append(("a deck at 6.5 degrees (critic G5)", faults(b), "level deck"))
+    b = grid_board(); b.line(150, 150, 178, 150)
+    cases.append(("one level brick of 28 (critic G5)", faults(b), "level deck"))
+    b = grid_board(); b.line(110, 548, 380, 548); b.line(420, 548, 690, 548)
+    cases.append(("two long bricks across the bucket's lane (critic L14)", faults(b), "cover"))
     b = Board(); b.peg(400, 300, r=9, move={"kind": "orbit", "x": 400, "y": 340, "period": 12})
     cases.append(("a placement on an orbit's path is refused (P2)", [] if b.why_not(400, 380) else ["accepted"], None))
     b = grid_board(); b.subject([(380, 120), (470, 120), (470, 190), (380, 190)]); b.peg(425, 150, r=9)

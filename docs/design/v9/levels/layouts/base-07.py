@@ -40,7 +40,7 @@ def build(b):
     b.trace([(196, 306), (250, 306)], spacing=34, r=8, tag="horizon")
     b.trace([(340, 306), (520, 306)], spacing=40, r=8, orange={1, 3}, tag="horizon")
     # the swell: wave crests in the dark water either side of the road, all above y 490 and clear of the road's moons
-    for (x, y, o) in ((140, 390, True), (140, 452, False), (130, 505, False), (420, 404, False), (446, 470, True),
+    for (x, y, o) in ((140, 390, True), (140, 452, False), (130, 505, False), (420, 404, False), (446, 470, False),
                       (500, 490, False)):
         b.arc(x, y + 30, 30, 235, 70, t=10, orange=o, tag="wave crest")
     for (x, y) in ((110, 430), (470, 430), (380, 340), (520, 380), (100, 340), (200, 350), (496, 350),
@@ -49,4 +49,11 @@ def build(b):
     # a few stars, most of them candidates; the rest of the sky is the painting's
     for (x, y) in ((580, 190), (540, 236), (180, 210), (230, 240), (330, 240), (288, 262), (450, 200), (620, 150)):
         b.place(x, y, r=8, orange=(x, y) in ((580, 190), (540, 236), (180, 210), (330, 240)), tag="star")
+    b.place(256, 290, r=8, tag="star")               # a star low over the headland, in the last dead lane
+    # the candidates the greedy player found hardest (the low moonpath row, the low crest and swell, two right-hand
+    # moons) give way to the horizon line, a pier piling and the west swell (`mfl.py ease`; round 2 ramp)
+    for (x, y, o) in ((252, 436, False), (332, 436, False), (470, 430, False), (520, 380, False), (676, 346, False),
+                      (340, 306, True), (420, 306, True), (500, 306, True), (226, 400, True), (626, 286, True),
+                      (548, 424, True)):
+        b.key(x, y, orange=o, within=6)
     b.greens_in_reach()

@@ -7,9 +7,10 @@ Technique: above the waterline the gate's arch wears a crown of brick (never gre
 are short dotted runs just outside their faces, and each lantern's head is a ring of five moons over a dotted post.
 Below the waterline the same figure stands mirrored, drawn with slow slide movers that drift 12 units and back, so the
 reflection ripples while the gate stands still. The mirrored arch hangs (concave up), so it is dotted, never brick.
-Both lantern heads and both reflected heads are wholly candidates (never green); a few stars, the far shore's low hills
+Both lantern heads and both reflected heads are candidates, all but each reflection's lowest moon (never green); a
+few stars, the far shore's low hills
 and two ripple marks of brick in the still water fill the rest. The palette turns warm for the stage's last board:
-rose water and a rose glow over it, the sky's lapis second (game designer n2). The stage's last level, back at Vesper
+a true rose over the water and the lower sky, the high sky's lapis second (game designer n2 and G8). The stage's last level, back at Vesper
 Bay's own gate: the twins' own board, and the stage's hardest.
 """
 import math
@@ -47,7 +48,7 @@ def build(b):
         for k in range(5):
             a = math.radians(90 + 72 * k)                                # the ring turned over: its top is now below
             b.slide(lx + 30 * math.cos(a), mirror(ly + 2) + 30 * math.sin(a), RIPPLE, 0, PERIOD, r=9,
-                    orange=True, green=False, tag="lantern reflection")
+                    orange=k != 0, green=False, tag="lantern reflection")    # its lowest moon is blue
     # the night sky and the far shore: stars, and the shore's low hills dotted either side
     for (x, y) in ((240, 190), (560, 190), (660, 170), (130, 300), (680, 300), (250, 290), (550, 290), (140, 150),
                    (660, 120)):
@@ -60,6 +61,6 @@ def build(b):
     # ripple marks in the still water, in pairs: short arcs of brick, concave down
     for (x, y) in ((278, 498), (530, 498)):
         b.arc(x, y + 30, 30, 235, 70, t=10, tag="ripple")
-    for (x, y) in ((220, 150), (580, 150)):          # two high stars, one over each lantern
+    for (x, y) in ((220, 150), (580, 150), (110, 200), (690, 200)):     # high stars over the lanterns and the shore
         b.place(x, y, r=8, tag="star")
     b.greens_in_reach()

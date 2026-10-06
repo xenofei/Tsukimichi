@@ -20,10 +20,10 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py selftest` | Runs every checker against its known-bad and known-good cases |
 | `py -3 tools/moonfall-levels/mfl.py trace <scene or level-id>` | The tracing sheet (`docs/design/v9/levels/build/trace/`): the graded scene at 2x, a 50-unit grid, the opening, the launcher's swing, the bucket's lane, the recipe's features, and for a level its pieces (oranges ringed orange, never-green pegs barred, skipped points as red crosses) plus the pre-flight |
 | `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...]` | The full pipeline (below); exit 1 if any level is refused |
-| `py -3 tools/moonfall-levels/mfl.py stage <n>` | The stage's table from the reports: pieces, the rule's 48 games, the 432-game ramp, jewels; faults neighbours whose jewels are within 30 degrees in both hues, and a finale that is not the stage's hardest by 2.5 per 48 below its 4th level |
+| `py -3 tools/moonfall-levels/mfl.py stage <n>` | The stage's table from the reports: pieces, the rule's 48 games, the 864-game ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours whose jewels are within 30 degrees in both hues, a level not at least 0.5 per 48 harder than the one before, a finale that is not the stage's hardest by 2.5 below its 4th level, and band ends more than 1.6 (two standard errors) harder than the stage's band |
 | `py -3 tools/moonfall-levels/mfl.py stuck <id>` | Where balls come to rest on the first shots the stuck rule fires on |
 | `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane |
-| `py -3 tools/moonfall-levels/mfl.py ease <id> [tags]` | A scratch copy with every (tagged) peg a candidate, 432 games: each place ranked by how often it is the orange left behind |
+| `py -3 tools/moonfall-levels/mfl.py ease <id> [tags] [--pick N] [--skip tags]` | A scratch copy with every (tagged) peg a candidate, 864 games: each place ranked by how often it is the orange left behind; `--pick` proposes the N most readily cleared places that keep the spread rule and stay above y 430 |
 | `py -3 tools/moonfall-levels/mfl.py sources` | Writes `docs/design/v9/levels/sources.json`: every game file a scene reads, and which level uses it |
 
 ## What `build` does, in order
@@ -36,22 +36,31 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
    candidates crowded into one half. Framing: a peg under framing, a slab across the middle, a 60-unit rim run, a lamp
    beside a peg, lamps in a row, the approved posts/discs/holes. Readability: a bright ground and a dark one, one hue,
    two jewels 32 degrees apart (one jewel), two jewels far apart, orange on orange and on lapis (protan), a ghost disc
-   and a clean board. Engine: the loader on a pilot and on a peg in the launcher's swing; play on a pilot and on
+   and a clean board, a hue disc printed round each peg on a flat sky (isolated pegs, and a cluster with none
+   isolated), an even dress, a region's edge through the pegs. Pre-flight, round 2: slides of different periods that
+   collide in real time, co-moving slides overlapping or in a saddle, a deck at 6.5 degrees, one level brick of 28,
+   long bricks across the lane. Stage: a good stage, neighbours with one palette, a level easier than the one before,
+   a weak finale, band ends. Engine: the loader on a pilot and on a peg in the launcher's swing; play on a pilot and on
    oranges sealed in brick rings; the stuck gate on a pilot and on a board of flat decks; dead first shots on a pilot
-   and on a chute; reach on a pilot and on a ceiling peg no ball can touch.
-1. **Pre-flight** (`mflkit/author.py`): bounds, launcher, bucket, overlaps, saddles, cradles, notches, wall pinches,
-   the wedge band (a peg 13-16 above a brick), level decks, cups by geometry, movers' clearance along their paths,
+   and on a chute; reach on a pilot and on a ceiling peg no ball can touch; cheap difficulty on a pilot and on low
+   oranges that decide losses (one, and in share); the colours gate on a green dealt where it may not go.
+1. **Pre-flight** (`mflkit/author.py`): bounds, launcher, bucket, overlaps, saddles (still pegs, and the movers of one
+   drift group among themselves), cradles, notches, wall pinches, the wedge band (a peg 13-16 above a brick), level
+   decks (line bricks under 10 degrees: chained over 30 units, or one alone of 20 or more), cups by geometry, movers'
+   clearance along their paths (against movers of another period over real time, the periods' common cycle),
    every orange candidate (movers' paths and bricks too) in a direct flight's reach, the spread rule (10 per
    200 x 200), 28-35 candidates (the deal's 25 and 3-7 more, so the deal varies), 60-160 pieces, format v2's greens (8
-   or more sure greens; every greenable peg, brick and mover in reach), the bucket's lane (pegs and bricks).
+   or more sure greens; every greenable peg, brick and mover in reach), the bucket's lane (pegs and bricks: at most 5,
+   covering at most 120 units of its width).
 2. **The shipped loader** (`mfcheck validate`, `MoonfallLevelLoader`).
-3. **The sweep**: one first shot at every aim; refuses if the stuck rule fires on 5% or more, or if any aim touches
-   nothing (a dead first shot).
+3. **The sweep**: one first shot at every aim a quarter of a degree apart (681 aims); refuses if the stuck rule fires
+   on 5% or more, or if any aim touches nothing (a dead first shot).
 4. **Reach**: drops every piece the first sweep touches and sweeps again, a few rounds; refuses a piece no ball ever
    reaches.
-5. **Play**: mfcheck's greedy player at the level's own number over 432 seeded games; the first 48 are the rule's
-   (refuses below 5 wins) and all 432 give the ramp (per 48, about +-1.1). Refuses cheap difficulty: an orange below
-   y 440 left in 30% or more of lost games.
+5. **Play**: mfcheck's greedy player at the level's own number over 864 seeded games; the first 48 are the rule's
+   (refuses below 5 wins) and all 864 give the ramp (per 48, about +-0.8). Holdouts are counted by piece (a mover by
+   its home). Refuses cheap difficulty (`engine.cheap`): an orange at home at y 430 or lower left in 25% or more of
+   lost games, or low oranges more than 1.5 times their share of the candidates among the oranges left.
 6. **The scene**: graded from its recipe (cached in `build/scenes`); refuses a 99th-percentile luma over 0.465 (a
    painted moon may be exempted with `ceilingExempt`).
 7. **The dress** (`mflkit/dress.py`) and the **framing rules** F2, F3a (and its pixel backstop), F3b, F3c, F3d, F5.
@@ -60,9 +69,12 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 9. **Composites** at 2x and 1x, and **readability**: F6 for every kind at its worst placement, the faces measured at
    each scale (1x and 0.8x), against the same board undressed (margin 0.20, drop at most 0.02); F7 two jewels by
    mean-hue distance (60 degrees or more, the second 15% or more of the coloured pixels); F9 protan orange separation
-   over every candidate, movers at four moments of their cycle (p10 0.12, or 0.101, the lowest approved pilot); the
-   ghost check (on the cleared board, the disc round an isolated peg: median distance 0.066 or less, the pilots'
-   highest).
+   over every candidate, movers at four moments of their cycle and orange-able bricks along their length (p10 0.12, or
+   0.101, the lowest approved pilot); the ghost check (on the cleared board with its baked veil, the disc round an
+   isolated peg: median distance 0.066 or less, the pilots' highest); the print check (the dress's own change,
+   dressed minus undressed, with no pieces and no veil: 5-12 units outside every still peg against 20-36 out, the
+   median over eight sectors round the peg, so an edge crossing it does not count; the board's median at most 0.010
+   and its 90th percentile at most 0.026; never vacuous: with fewer than three pegs measured, the board as a whole).
 10. If everything passed: `docs/design/v9/levels/json/<id>.json`, `composites/<id>.png` (and `@2x` if asked), our
     paintings as JPEG in `scenes/assets/`. The report, pass or fail, goes to `report/<id>.json`, with the ramp.
 
@@ -93,12 +105,15 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 
 ## Decisions (round-1 supervision, the coordinator's calls)
 
-- **The ramp**, measured over 432 games at each level's own number: stage 1 runs from about 30 down to 21, stage 2 from
+- **The ramp**, measured over 864 games at each level's own number (432 at least): stage 1 runs from about 30 down to 21, stage 2 from
   about 27 down to 20, and each finale is its stage's hardest, at least 2.5 per 48 below its 4th level. Difficulty
   comes from the subject's places, never from low oranges in the bucket's approach (the cheap-difficulty gate).
 - **Paintings**: never the same painting twice in a row, and a painting that belongs to a later stage's home stays
   there (stage 4, Ul'dah, keeps the Thanalan painting beyond 1-4's crop; stage 5 keeps the Merlthor chart and the east
   of the La Noscea painting). Our own paintings are fine; keep the campaign's share of game paintings near two thirds.
+  Stages 1-2 hold 4 game paintings of 10, so stages 3-11 need about 73% (33 of 45) to reach two thirds over the
+  campaign (game designer round 2, G4); stage 4 (Ul'dah) needs its own sources, since 1-4's crop takes the middle of
+  the only Thanalan painting.
 - **Bricks can be green**: the subject's crowns and key features are marked never green, and bricks and movers count
   in the greens' reach.
 
@@ -112,12 +127,17 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
   5.7, and the open-sea pegs and rhumb lines on 2-3 cost 3.6 and 7.5. Pieces that belong to a structure (a ring, a row,
   a run) cost little, and low arcs of brick can ease a board. So buy fullness with structures, not scatter, and tune
   the ramp last by moving one candidate or one blue peg and re-measuring: one peg can move it by 2-4.
-- The 432-game ramp keeps +-1.1 of noise, and nearby layouts differ by more: compare variants side by side.
+- The 864-game ramp keeps +-0.8 of noise, and nearby layouts differ by more: compare variants side by side.
+- Candidates set difficulty more than anything else: oranges at the board's edges and corners, and low ones, are the
+  ones left. `ease --pick` proposes a starting set from the places a player clears most readily; mix it with the
+  subject's own places, then tune the ramp with one blue peg (placed last, so the deal of the other candidates stays).
 - Two jewels within about 60 degrees of hue count as one; neighbours need 30 degrees in at least one jewel.
-- The jewel's quiet takes the region's colour out round each peg, so over a flat dressed field it prints a disc. Where
-  a sky must hold one colour, paint the colour into our painting (2-2's rose dusk) rather than dress it on, or widen
-  the quiet (`[44, 12]`) so the discs merge into one band; a sky darkened in the grade (`tone`) shrinks the veil's
-  step.
+- The jewel's quiet once took the region's colour out round each peg, and over a flat field (our own paintings above
+  all) it printed a coin round every peg that stayed when the peg cleared, and a ghost check on isolated pegs missed
+  it. The quiet is now spread low-frequency (`dress.QUIET_SIGMA`, 40 units or the recipe's outer reach): a cluster
+  quietens its area as one calm band and a lone peg leaves only a faint wide wash. The print check measures what
+  stays. Where a sky must hold one colour, paint it into our painting and keep the jewel band the same hue there.
+- A sky darkened in the grade (`tone`) shrinks the veil's step.
 
 ## The scene recipe
 

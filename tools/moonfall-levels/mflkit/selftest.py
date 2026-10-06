@@ -3,7 +3,7 @@ supervisors' rule since rich pass 2, round 3). `mfl.py build` runs this first an
 import json
 import math
 
-from . import author, engine, frames, readability
+from . import author, engine, frames, readability, stagecheck
 from .paths import BUILD, RICH
 
 
@@ -67,7 +67,18 @@ def engine_cases(verbose=True):
     ok_bad, _ = engine.validate(bad_path)
     ok_sealed, _ = engine.validate(sealed)
     ok_decks, msg = engine.validate(decks)
-    play_good = engine.play(good, 5, games=48)["greedy_won"]
+    pl_good = engine.play(good, 5, games=48)
+    play_good = pl_good["greedy_won"]
+    cheap_good = engine.cheap(pl_good, engine.piece_homes(good))
+    # cheap difficulty on synthetic results: one low orange left in 40% of lost games; low candidates a fifth of the
+    # deal but half of what is left; and an even spread
+    homes = [((100 + 20 * k, 480.0 if k < 6 else 250.0), True) for k in range(30)]
+    one = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.40}], "low_left_share": 0.2}
+    ratio = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.10}], "low_left_share": 0.5}
+    even = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.10}], "low_left_share": 0.22}
+    # the colours gate: a green dealt to a never-green piece
+    lv = {"pegs": [{"x": 1, "y": 1, "canBeGreen": False}, {"x": 2, "y": 2}], "bricks": []}
+    from .build import green_faults
     play_sealed = engine.play(sealed, 5, games=48)["greedy_won"] if ok_sealed else -1
     sw_good, sw_decks = engine.sweep(good, 5), engine.sweep(decks, 5)
     rc_good, rc_corner = engine.reach(good, 5), engine.reach(corner_path, 5)
@@ -81,7 +92,13 @@ def engine_cases(verbose=True):
              (f"dead shots: a pilot has {sw_good['no_hit']}", sw_good["no_hit"] == 0, True),
              (f"dead shots: a clear chute has {sw_decks['no_hit']}", sw_decks["no_hit"] == 0, False),
              (f"reach: a pilot leaves {len(rc_good['never'])} unreached", not rc_good["never"], True),
-             (f"reach: a peg tucked in the top corner is never reached ({rc_corner['never']})", n_corner in rc_corner["never"], True)]
+             (f"reach: a peg tucked in the top corner is never reached ({rc_corner['never']})", n_corner in rc_corner["never"], True),
+             (f"cheap difficulty: an approved pilot ({cheap_good})", not cheap_good, True),
+             ("cheap difficulty: one low orange left in 40% of lost games", not engine.cheap(one, homes), False),
+             ("cheap difficulty: low candidates 20% of the deal, 50% of what is left", not engine.cheap(ratio, homes), False),
+             ("cheap difficulty: low oranges left in their share", not engine.cheap(even, homes), True),
+             ("colours: a green dealt to a never-green piece", not green_faults(lv, ["green", "blue"]), False),
+             ("colours: a green where greens may go", not green_faults(lv, ["blue", "green"]), True)]
     ok = True
     for name, got, want in cases:
         ok &= got == want
@@ -94,7 +111,8 @@ def engine_cases(verbose=True):
 
 def run(verbose=True):
     results = {"preflight": author.selftest(verbose), "framecheck": frames.selftest(verbose),
-               "readcheck": readability.selftest(verbose), "engine": engine_cases(verbose)}
+               "readcheck": readability.selftest(verbose), "stage": stagecheck.selftest(verbose),
+               "engine": engine_cases(verbose)}
     if verbose:
         print("self-test:", ", ".join(f"{k} {'ok' if v else 'FAILED'}" for k, v in results.items()))
     return all(results.values())

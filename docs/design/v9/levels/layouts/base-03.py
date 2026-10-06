@@ -27,7 +27,7 @@ def build(b):
             b.key(x, y, orange=True, green=False, within=40)
     # two in every five moons of the ring are candidates too, so the oranges circle the whole creature
     for k, p in enumerate(ring):
-        if (k % 5 in (1, 3) and p["y"] < 480) or (k % 5 == 0 and 330 < p["y"] < 450 and p["x"] < 450):
+        if (k % 5 in (1, 3) and p["y"] < 430) or (k % 5 == 0 and 330 < p["y"] < 430 and p["x"] < 450):
             p["canBeOrange"] = True
     # the feet stand on the near crest, at the bucket's approach: blue, never green (an orange there is cheap)
     for (x, y) in b.f("feet"):
@@ -35,15 +35,16 @@ def build(b):
 
     # the middle dune's western hump: its two slopes in brick (13 and 16 degrees: a ball runs off them), its rounded top
     # a moon, and a moon standing over the summit (critic C2: the level apex held balls)
-    b.bricks_along([(104, 392), (140, 381), (180, 374)], length=26, gap=2.5, t=12, tag="dune crest")
+    b.bricks_along([(104, 394), (140, 382), (180, 372)], length=26, gap=2.5, t=12, tag="dune crest")
     b.bricks_along([(270, 378), (300, 385), (330, 395)], length=26, gap=2.5, t=12, tag="dune crest")
     b.place(225, 366, r=9, orange=True, tag="dune crest")
     b.place(222, 328, r=9, orange=True, tag="summit")
     # the eastern hump is low and nearly level: dotted, with its summit moon
-    b.trace([(616, 394), (700, 386)], spacing=34, r=9, orange={1}, tag="dune crest")
+    b.trace([(616, 394), (700, 386)], spacing=34, r=9, orange=True, tag="dune crest")
     b.place(664, 348, r=9, orange=True, tag="summit")
-    b.trace("far dune", spacing=40, r=8, start=40, end_trim=40, orange={1, 4, 6, 12}, tag="far dune")
+    b.trace("far dune", spacing=40, r=8, start=40, end_trim=40, orange={1, 2, 4, 6, 12}, tag="far dune")
     b.trace([(96, 466), (150, 484), (250, 498), (300, 499)], spacing=38, r=9, tag="near dune")
     b.trace([(600, 497), (650, 484), (740, 466)], spacing=38, r=9, tag="near dune")
     for k, (x, y) in enumerate([(560, 176), (628, 214), (688, 170), (590, 270), (668, 286), (140, 250), (250, 230)]):
-        b.place(x, y, r=8, orange=k in (1, 3, 4, 5), tag="star")
+        b.place(x, y, r=8, orange=k in (0, 3, 4, 5, 6), tag="star")
+    b.place(320, 170, r=8, tag="star")       # a star over the crown (placed last)

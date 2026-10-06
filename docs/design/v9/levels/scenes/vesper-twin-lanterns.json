@@ -13,21 +13,21 @@
    "name": "Rose water and lapis sky (the twins)",
    "sky": "#1C1650",
    "deep": "#060818",
-   "jewel1": "#9A4274",
-   "jewel2": "#2E5AC0",
+   "jewel1": "#B4504E",
+   "jewel2": "#3A4AA8",
    "warm": "#FFB45E",
    "rim": "#C9B8FF"
   },
   "jewel": {
-   "bands": [[0, "#6A3A8E"], [200, "#9A4072"], [350, "#A8465E"], [600, "#86344E"]],
-   "valueHues": [[0.08, "#4A1E5E"], [0.45, "#FFD0E4"]],
+   "bands": [[0, "#8E4A6A"], [200, "#A84A5A"], [350, "#B4504E"], [600, "#8E3C40"]],
+   "valueHues": [[0.08, "#4A1E30"], [0.45, "#FFD4CC"]],
    "chroma": 1.1,
    "floor": 0.04,
    "regions": [
     {
      "hex": "#2E5AC0",
-     "chroma": 0.08,
-     "mask": [["y", 260, 140]]
+     "chroma": 0.12,
+     "mask": [["y", 240, 130]]
     }
    ],
    "quiet": [22, 12],
@@ -102,11 +102,11 @@
     "kind": "frond",
     "x": 74,
     "y": 40,
-    "length": 150,
+    "length": 190,
     "angle": 60,
     "droop": 0.2,
-    "leaf": 20,
-    "n": 12,
+    "leaf": 24,
+    "n": 16,
     "style": "willow",
     "seed": 65,
     "width": 1.5
@@ -115,14 +115,40 @@
     "kind": "frond",
     "x": 726,
     "y": 40,
-    "length": 150,
+    "length": 190,
     "angle": 120,
     "droop": 0.2,
-    "leaf": 20,
-    "n": 12,
+    "leaf": 24,
+    "n": 16,
     "style": "willow",
     "seed": 66,
     "width": 1.5
+   },
+   {
+    "kind": "frond",
+    "x": 74,
+    "y": 60,
+    "length": 160,
+    "angle": 40,
+    "droop": 0.25,
+    "leaf": 22,
+    "n": 14,
+    "style": "willow",
+    "seed": 67,
+    "width": 1.4
+   },
+   {
+    "kind": "frond",
+    "x": 726,
+    "y": 60,
+    "length": 160,
+    "angle": 140,
+    "droop": 0.25,
+    "leaf": 22,
+    "n": 14,
+    "style": "willow",
+    "seed": 68,
+    "width": 1.4
    }
   ],
   "silhouette": {

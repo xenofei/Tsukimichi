@@ -3,7 +3,8 @@
 Subject: the Mother Crystal's call, which Minfilia hears through the Echo, written in the night sky over the Waking Sands
 as a constellation in the figure of a tall faceted crystal (our own painting, painters/crystal.py).
 
-Technique: a moon sits on every star of the figure (larger, r 11: orange, never green); smaller moons (r 7) are dotted
+Technique: a moon sits on every star of the figure (larger, r 11: never green, all candidates but the crystal's
+foot, which is low in the bucket's approach); smaller moons (r 7) are dotted
 along the atlas's lines between them, the two long flanks carrying a candidate each. A loose field of sky stars
 surrounds it, thicker along the Milky Way, its brightest ones candidates so the oranges reach both lower corners. On the
 horizon, the Waking Sands' dome wears a crown of brick, and a moon hangs in each date palm's crown.
@@ -18,7 +19,7 @@ LEVEL = dict(id="base-05", name="The Crystal's Call", stage=1, number=5, scene="
 FIELD = [(130, 300, False), (170, 360, True), (110, 420, False), (210, 410, True), (250, 330, True), (300, 270, False),
          (190, 230, False), (140, 250, False), (240, 280, False), (330, 340, True), (120, 360, True), (296, 390, True),
          (600, 330, True), (640, 260, True), (690, 200, False), (620, 400, True), (680, 450, False), (580, 470, False),
-         (560, 380, True), (660, 340, False), (700, 290, False), (600, 290, True), (530, 460, True), (560, 220, False),
+         (560, 380, True), (660, 340, False), (700, 290, False), (600, 290, True), (530, 460, False), (560, 220, True),
          (300, 458, False), (340, 470, False), (200, 300, True), (680, 384, False), (252, 384, False),
          (104, 206, False), (262, 196, True), (618, 176, False), (690, 330, True), (160, 470, False), (330, 200, True),
          (540, 150, True), (696, 420, False)]

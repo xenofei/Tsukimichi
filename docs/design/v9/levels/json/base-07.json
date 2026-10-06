@@ -62,7 +62,7 @@
       "x": 226.0,
       "y": 400.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -76,7 +76,7 @@
       "x": 252.0,
       "y": 436.0,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -90,7 +90,7 @@
       "x": 332.0,
       "y": 436.0,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -181,7 +181,7 @@
       "x": 548.0,
       "y": 424.0,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -293,7 +293,7 @@
       "x": 626.0,
       "y": 286.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -314,7 +314,7 @@
       "x": 676.0,
       "y": 346.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -384,7 +384,7 @@
       "x": 340.0,
       "y": 306.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -398,7 +398,7 @@
       "x": 420.0,
       "y": 306.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -412,7 +412,7 @@
       "x": 500.0,
       "y": 306.0,
       "r": 8,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -426,7 +426,7 @@
       "x": 470.0,
       "y": 430.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -440,7 +440,7 @@
       "x": 520.0,
       "y": 380.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -526,6 +526,13 @@
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
+    },
+    {
+      "x": 256.0,
+      "y": 290.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
     }
   ],
   "bricks": [
@@ -581,7 +588,7 @@
       "start": 235.0,
       "sweep": 70.0,
       "thickness": 10,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {

@@ -64,3 +64,10 @@ def build(b):
         b.place(x, y, r=9, orange=(x, y) != (281, 305), tag="sky")
     for (x, y) in ((150, 150), (230, 150), (300, 128), (620, 172), (650, 280)):
         b.place(x, y, r=8, orange=True, tag="star")
+    # the candidates the greedy player found hardest to clear (the east dome's finial at the top edge, the stars at the
+    # board's corners, the tower's top) give way to the tower's middle and the aqueduct's end (`mfl.py ease`; the
+    # round-2 ramp)
+    for (x, y, o) in ((548, 100, False), (150, 150, False), (620, 172, False), (650, 280, False), (684, 232, False),
+                      (684, 340, True), (684, 376, True),
+                      (250, 279, True)):
+        b.key(x, y, orange=o, within=6)

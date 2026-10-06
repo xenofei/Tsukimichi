@@ -13,7 +13,7 @@
    "chroma_mid": 0.45
   }
  },
- "veil": 0.4,
+ "veil": 0.34,
  "features": {
   "kraken": {
    "circle": [196, 196, 64]
@@ -53,7 +53,7 @@
    "regions": [
     {
      "hex": "#20A884",
-     "chroma": 0.08,
+     "chroma": 0.11,
      "mask": [["luma", 0.16, 0.24, 4]]
     }
    ],

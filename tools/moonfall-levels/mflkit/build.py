@@ -54,17 +54,21 @@ def _scene_cached(recipe, S):
     return RL.load_rgb(p)
 
 
+def green_faults(level, cols):
+    """The pieces a deal turned green although the file keeps them from green (file order: pegs, then bricks)."""
+    return [i for i, (p, c) in enumerate(zip(level["pegs"] + level["bricks"], cols)) if c == "green" and not p.get("canBeGreen", True)]
+
+
 def colours_for(path, level, number, seed=1):
     """The engine's own deal for this level number (it honours canBeGreen since format v2 shipped). A deal that puts a
     green on a piece the file keeps from green would be an engine fault, so it is refused here."""
     cols = engine.colours(path, number, seed)
-    bad = [i for i, (p, c) in enumerate(zip(level["pegs"] + level["bricks"], cols)) if c == "green" and not p.get("canBeGreen", True)]
+    bad = green_faults(level, cols)
     if bad:
         raise RuntimeError(f"the engine dealt green to never-green pieces {bad}")
     return seed, cols
 
 
-CHEAP_Y, CHEAP_SHARE = 440.0, 0.30   # an orange this low left in this share of lost games is cheap difficulty
 
 
 def orange_views(level, recipe, scene2, cols, stage, number):
@@ -80,6 +84,7 @@ def orange_views(level, recipe, scene2, cols, stage, number):
     for t in times:
         img = render(level, recipe, scene2, oc, S=2, stage=stage, number=number, t=t)
         places = [(*mover_pos(d, t), d.get("r", 10)) for k, d in allp if k == "peg" and d.get("canBeOrange", True)]
+        places += [("brick", d) for k, d in allp if k == "brick" and d.get("canBeOrange", False)]
         views.append((img, places))
     return views
 
@@ -129,9 +134,7 @@ def build(level_id, keep2x=False, log=print):
         rep["checks"]["play"] = pl
         if pl["greedy_won"] < engine.GREEDY_MIN_WINS:
             fails.append(f"play: the greedy player won {pl['greedy_won']} of 48 (at least {engine.GREEDY_MIN_WINS})")
-        cheap = [h for h in pl["holdouts"] if h["at"][1] > CHEAP_Y and h["share_of_lost_games"] >= CHEAP_SHARE]
-        if cheap:
-            fails.append(f"play: cheap difficulty, low oranges decide losses: {cheap}")
+        fails += [f"play: cheap difficulty: {c}" for c in engine.cheap(pl, engine.piece_homes(cand))]
         log(f"[{level_id}] loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, dead {sw['no_hit']}, never reached "
             f"{len(rc['never'])}; greedy {pl['greedy_won']}/48, ramp {pl['ramp_per_48']}/48 over {pl['ramp_games']}")
 
@@ -168,7 +171,7 @@ def build(level_id, keep2x=False, log=print):
         bd_new = render(level, recipe, d2, cols, S=2, gone=everything, stage=stage, number=number)
         bd_old = render(level, recipe, g2, cols, S=2, gone=everything, stage=stage, number=number)
         views = orange_views(level, recipe, d2, cols, stage, number)
-        rrep, rfails = readability.measure(level, cols, comp2, base2, bd_new, bd_old, d2, views)
+        rrep, rfails = readability.measure(level, cols, comp2, base2, bd_new, bd_old, d2, views, undressed2=g2)
         rep["checks"]["readcheck"] = {"report": rrep, "fails": rfails}
         fails += [f"readcheck: {f}" for f in rfails]
         RL.save_rgb(comp2, BUILD / "composites" / f"{level_id}@2x.png")

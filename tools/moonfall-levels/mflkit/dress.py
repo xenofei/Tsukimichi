@@ -7,7 +7,7 @@ branch of code; here it is data, the recipe's `dress` object, so the plugin can 
     "jewel":   {"bands": [[y, "#hex"], ...], "valueHues": [[L, "#hex"], ...], "chroma": 0.9, "floor": 0.03,
                 "keep": 0.30, "keepHi": 0.75, "mix": 0.5,
                 "regions": [{"hex": "#..", "chroma": 0.1, "mask": [["y", 400, 470], ["luma", 0.3, 0.42, 3], ...]}],
-                "quiet": [24, 12]},                      # quieten colour within 12-24 units of the pieces (F9)
+                "quiet": [24, 12]},                      # quieten colour round the layout (F9), spread low-frequency
     "shafts":  [{"origin": [x, y], "angles": [...], "widths": [...], "k": 0.07, "col": "#..", "reach": 900, "near": 150}],
     "glows":   [{"x":.., "y":.., "r":.., "col": "#..", "k": 0.05}],
     "framing": [{"kind": "frond", ...}, {"kind": "pines", ...}, ...],
@@ -31,6 +31,8 @@ import framecheck as fc
 from r2lib import blur, hexc, screen, smooth, srgb_to_oklab
 
 WALL_L, WALL_R, TOP, FOOT = D.WALL_L, D.WALL_R, D.TOP, D.FOOT
+QUIET_SIGMA, QUIET_GAIN = 40.0, 1.6     # the jewel's quiet, spread over 40 units (or the recipe's own outer reach)
+QUIET_REGION, QUIET_KEEP = 0.6, 0.5     # how much of a region's colour and of the jewel the quiet takes out at its fullest
 
 
 class Ctx:
@@ -253,9 +255,12 @@ def dress(recipe, sc, level, S, t=0.0):
         keepm = None
         if j.get("quiet"):
             a, b = j["quiet"]
-            near = smooth(a, b, ctx.dist_at_S())
-            regions = [(rm * (1 - 0.6 * near), hx, cr) for (rm, hx, cr) in regions]
-            keepm = 1 - 0.5 * near
+            # low frequency, never per peg (round-2 supervision G1): the per-piece field is spread over QUIET_SIGMA
+            # units, so a cluster quietens its whole area as one calm band and a lone peg leaves only a faint, wide
+            # wash, never a coin round itself that stays after it clears
+            near = np.clip(QUIET_GAIN * blur(smooth(a, b, ctx.dist_at_S()), max(a, QUIET_SIGMA) * S), 0, 1)
+            regions = [(rm * (1 - QUIET_REGION * near), hx, cr) for (rm, hx, cr) in regions]
+            keepm = 1 - QUIET_KEEP * near
         keeps = ([j["keepMask"]] if j.get("keepMask") else []) + list(j.get("keepMasks", []))
         if keeps:
             # regions the jewel leaves alone (a lamp's warm window, a creature's own colour): their union

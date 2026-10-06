@@ -32,7 +32,7 @@
    "sweep": 110
   },
   "east arch": {
-   "circle": [656, 478, 52],
+   "circle": [662, 478, 52],
    "from": 215,
    "sweep": 110
   },
@@ -74,8 +74,8 @@
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#2AA8A8",
-     "chroma": 0.11,
+     "hex": "#30B48C",
+     "chroma": 0.14,
      "mask": [["y", 400, 480]]
     }
    ],

@@ -381,85 +381,64 @@
       "canBeGreen": true
     },
     {
-      "x": 255.9,
-      "y": 486.4,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 295.8,
-      "y": 489.2,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 335.7,
+      "x": 320.0,
       "y": 492.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 375.6,
-      "y": 494.9,
+      "x": 360.0,
+      "y": 494.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 415.5,
-      "y": 497.7,
+      "x": 399.9,
+      "y": 496.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 455.3,
-      "y": 495.0,
+      "x": 439.9,
+      "y": 498.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 495.2,
-      "y": 491.6,
+      "x": 520.0,
+      "y": 488.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 535.0,
-      "y": 488.1,
+      "x": 560.0,
+      "y": 489.3,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 574.9,
-      "y": 486.9,
+      "x": 600.0,
+      "y": 490.7,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 614.9,
-      "y": 489.1,
+      "x": 639.9,
+      "y": 492.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 654.8,
-      "y": 491.4,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 694.7,
-      "y": 493.7,
+      "x": 679.9,
+      "y": 493.3,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
@@ -505,6 +484,20 @@
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
+    },
+    {
+      "x": 356.0,
+      "y": 342.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 446.0,
+      "y": 346.0,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": false
     }
   ],
   "bricks": [
@@ -514,7 +507,7 @@
       "y": 478.0,
       "r": 52.0,
       "start": 215.0,
-      "sweep": 40.7,
+      "sweep": 40.1,
       "thickness": 10,
       "canBeOrange": false,
       "canBeGreen": true
@@ -524,30 +517,30 @@
       "x": 548.0,
       "y": 478.0,
       "r": 52.0,
-      "start": 284.3,
-      "sweep": 40.7,
+      "start": 284.9,
+      "sweep": 40.1,
       "thickness": 10,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
       "kind": "arc",
-      "x": 656.0,
+      "x": 662.0,
       "y": 478.0,
       "r": 52.0,
       "start": 215.0,
-      "sweep": 40.7,
+      "sweep": 40.1,
       "thickness": 10,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
       "kind": "arc",
-      "x": 656.0,
+      "x": 662.0,
       "y": 478.0,
       "r": 52.0,
-      "start": 284.3,
-      "sweep": 40.7,
+      "start": 284.9,
+      "sweep": 40.1,
       "thickness": 10,
       "canBeOrange": false,
       "canBeGreen": true

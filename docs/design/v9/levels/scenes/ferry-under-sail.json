@@ -7,7 +7,7 @@
   "params": {}
  },
  "ceilingExempt": [[150, 104, 64]],
- "veil": 0.24,
+ "veil": 0.22,
  "dress": {
   "palette": {
    "name": "Violet night and rose horizon (the strait)",
@@ -25,8 +25,8 @@
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#A8587E",
-     "chroma": 0.08,
+     "hex": "#B05A66",
+     "chroma": 0.125,
      "mask": [["y", 130, 310], ["not-poly", "ship", 10]]
     }
    ],
@@ -70,6 +70,18 @@
     "kind": "festoon",
     "spans": [[586, 628, 14], [628, 682, 24], [682, 740, 34]],
     "col": "#2A1E50"
+   },
+   {
+    "kind": "outcrop",
+    "points": [[60, 520], [96, 530], [124, 552], [146, 580], [160, 600]],
+    "seed": 81,
+    "rough": 8
+   },
+   {
+    "kind": "outcrop",
+    "points": [[640, 600], [662, 574], [690, 548], [720, 530], [740, 524]],
+    "seed": 83,
+    "rough": 8
    }
   ],
   "silhouette": {
@@ -79,5 +91,11 @@
    "rimK": 0.0,
    "seed": 19
   }
- }
+ },
+ "tone": [
+  {
+   "mask": [["y", 370, 290]],
+   "mul": 0.8
+  }
+ ]
 }

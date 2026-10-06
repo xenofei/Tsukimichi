@@ -283,7 +283,7 @@
       "x": 196.0,
       "y": 492.0,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -361,7 +361,7 @@
       "x": 604.0,
       "y": 492.0,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false,
       "move": {
         "kind": "slide",
@@ -586,6 +586,20 @@
     {
       "x": 580.0,
       "y": 150.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 110.0,
+      "y": 200.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 690.0,
+      "y": 200.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true

@@ -25,8 +25,8 @@
    "floor": 0.035,
    "regions": [
     {
-     "hex": "#A0687E",
-     "chroma": 0.05,
+     "hex": "#B45850",
+     "chroma": 0.08,
      "mask": [["y", 300, 345], ["not-poly", "cactuar", 6]]
     }
    ],

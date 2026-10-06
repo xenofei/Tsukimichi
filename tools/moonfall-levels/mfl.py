@@ -5,7 +5,7 @@
   trace <scene|level-id>        the tracing sheet: graded scene, grid, features and (for a level) its pieces
   build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
-  stage <n>                     the stage's table: the 432-game ramp, jewels of neighbours, game paintings against ours
+  stage <n>                     the stage's table: the 864-game ramp, jewels of neighbours, game paintings against ours
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
@@ -108,7 +108,7 @@ def cmd_build(args):
 
 
 def cmd_stage(args):
-    """The stage's table from the reports: pieces, the rule's 48 games, the 432-game ramp (about +-1.1 per 48), the
+    """The stage's table from the reports: pieces, the rule's 48 games, the 864-game ramp (about +-1.1 per 48), the
     random player, the jewels; it faults neighbours with the same jewels and a finale that is not the hardest."""
     n = int(args[0])
     reps = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
@@ -116,10 +116,7 @@ def cmd_stage(args):
     fails = []
     print(f"stage {n}: {len(reps)} levels")
     print(f"{'level':8} {'name':28} {'pieces':>6} {'greedy':>7} {'ramp/48':>8} {'random':>7} {'jewels':>10} {'source'}")
-    prev = None
-
-    def hd(a, b):
-        return 360 if a is None or b is None else min(abs(a - b), 360 - abs(a - b))
+    rows = []
     for r in reps:
         c = r["checks"]
         jw = c.get("readcheck", {}).get("report", {}).get("jewels", {})
@@ -128,15 +125,9 @@ def cmd_stage(args):
         print(f"{r['id']:8} {r['name'][:28]:28} {c['preflight']['pieces']:>6} {c.get('play', {}).get('greedy_won', '-'):>7} "
               f"{ramp48:>8} {c.get('play', {}).get('random_won', '-'):>7} "
               f"{str(pair[0]) + '/' + str(pair[1]):>10} {r['source']}")
-        # F7 between neighbours: the jewels differ when either one's mean hue moves 30 degrees or more
-        if prev is not None and hd(pair[0], prev[0]) < 30 and hd(pair[1], prev[1]) < 30:
-            fails.append(f"F7: {r['id']} has the same two jewels as the level before it ({prev} then {pair})")
-        prev = pair
-    rs = [(r["id"], r["checks"].get("play", {}).get("ramp_per_48")) for r in reps]
-    if len(rs) >= 4 and all(v is not None for _k, v in rs):
-        fin, fourth = rs[-1][1], rs[-2][1]
-        if not (fin <= min(v for _k, v in rs[:-1]) and fin <= fourth - 2.5):
-            fails.append(f"ramp: the finale ({fin}) must be the stage's hardest and 2.5 or more below its 4th level ({fourth})")
+        rows.append((r["id"], c.get("play", {}).get("ramp_per_48"), pair))
+    from mflkit import stagecheck
+    fails += stagecheck.faults(n, rows)
     game = sum(1 for r in reps if not r["source"].startswith("our painting"))
     print(f"game paintings {game} of {len(reps)}; verdicts: " + ", ".join(f"{r['id']} {r['verdict']}" for r in reps))
     for f in fails:
@@ -172,7 +163,7 @@ def cmd_stuck(args):
     path = paths.BUILD / "json" / f"{lid}.json"
     meta = __import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL
     n = str(meta["number"])
-    out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n], capture_output=True, text=True).stdout
+    out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n, "1", str(engine.SWEEP_STEP)], capture_output=True, text=True).stdout
     angles = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs.*STUCK", out, re.M)]
     cells = Counter()
     for a in angles:
@@ -195,7 +186,8 @@ def cmd_dead(args):
     lid = args[0]
     path = paths.BUILD / "json" / f"{lid}.json"
     n = str(__import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL["number"])
-    out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n], capture_output=True, text=True).stdout
+    out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n, "1", str(engine.SWEEP_STEP)],
+                         capture_output=True, text=True).stdout
     angles = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs\s+0 ", out, re.M)]
     for a in angles:
         pts = json.loads(subprocess.run(["dotnet", str(paths.MFCHECK), "trace", str(path), str(a), n, "1", "600"],
@@ -210,11 +202,20 @@ def cmd_dead(args):
 
 
 def cmd_ease(args):
-    """ease <level-id> [tag,tag,...]: how hard each place is to clear. A scratch copy of the level makes every peg with
-    one of the tags (default: every peg) an orange candidate, the greedy player plays 432 games, and each place is
-    ranked by the share of lost games it is left orange in. Use it to choose the candidates that set a level's
-    difficulty, among the places that carry the subject."""
+    """ease <level-id> [tag,tag,...] [--pick N] [--skip tag,tag]: how hard each place is to clear. A scratch copy of the
+    level makes every peg with one of the tags (default: every peg) an orange candidate, the greedy player plays 864
+    games, and each place is ranked by the share of lost games it is left orange in. With --pick, it also proposes the
+    N places most readily cleared that keep the method's spread rule (10 per 200 x 200, a candidate in y 400-430 on
+    each half) and stay out of the bucket's approach (home above y 430), skipping the tags given: a starting set for a
+    layout's candidates, among the places that carry the subject."""
     from mflkit.build import make_board
+    pick, skip = None, set()
+    if "--pick" in args:
+        i = args.index("--pick")
+        pick, args = int(args[i + 1]), args[:i] + args[i + 2:]
+    if "--skip" in args:
+        i = args.index("--skip")
+        skip, args = set(args[i + 1].split(",")), args[:i] + args[i + 2:]
     lid = args[0]
     tags = set(args[1].split(",")) if len(args) > 1 else None
     meta, recipe, b = make_board(lid)
@@ -232,6 +233,21 @@ def cmd_ease(args):
     print(f"{lid}: {sum(1 for p in level['pegs'] if p['canBeOrange'])} candidates in the copy; ramp {pl['ramp_per_48']}/48")
     for s_, x, y, t in rows:
         print(f"  {s_:5.2f}  ({x}, {y})  {t}")
+    if pick:
+        pool = sorted(r for r in rows if r[2] < engine.LOW_Y and r[3] not in skip)
+
+        def spread_ok(sel):
+            return all(sum(1 for (_s, x, y, _t) in sel if sx <= x < sx + 200 and sy <= y < sy + 200) <= 10
+                       for sx in range(75, 530, 5) for sy in range(40, 400, 5))
+        sel = []
+        for half in (lambda x: x < 400, lambda x: x >= 400):
+            sel += [r for r in pool if 400 <= r[2] and half(r[1])][:1]
+        for r in pool:
+            if len(sel) >= pick:
+                break
+            if r not in sel and spread_ok(sel + [r]):
+                sel.append(r)
+        print(f"proposed candidates ({len(sel)}):", sorted((x, y) for (_s, x, y, _t) in sel))
     return 0
 
 

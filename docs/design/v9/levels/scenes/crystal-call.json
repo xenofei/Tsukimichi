@@ -13,25 +13,25 @@
    "name": "Indigo and crystal aquamarine (the Echo)",
    "sky": "#101A4E",
    "deep": "#060A1E",
-   "jewel1": "#2E44C0",
+   "jewel1": "#4A3CC8",
    "jewel2": "#2FB89A",
    "warm": "#FFB45E",
    "rim": "#A9E6FF"
   },
   "jewel": {
-   "bands": [[0, "#3446C8"], [600, "#283AA0"]],
-   "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9E0FF"]],
+   "bands": [[0, "#4C3CCC"], [600, "#3A2CA4"]],
+   "valueHues": [[0.08, "#2A1A8A"], [0.45, "#D6CCFF"]],
    "chroma": 1.1,
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#30C0A0",
-     "chroma": 0.18,
+     "hex": "#40C878",
+     "chroma": 0.26,
      "mask": [["poly", "crystal", 14]]
     },
     {
-     "hex": "#30B8A8",
-     "chroma": 0.18,
+     "hex": "#40C878",
+     "chroma": 0.26,
      "mask": [["near", "milky way", 85, 160], ["y", 520, 480]]
     }
    ],

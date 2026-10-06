@@ -24,288 +24,316 @@
       "canBeGreen": false
     },
     {
-      "x": 113.6,
+      "x": 84.0,
       "y": 334.0,
-      "r": 9,
+      "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 147.8,
-      "y": 337.2,
-      "r": 9,
+      "x": 116.0,
+      "y": 334.0,
+      "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 179.5,
-      "y": 348.0,
-      "r": 9,
+      "x": 148.0,
+      "y": 334.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 176.9,
+      "y": 346.0,
+      "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 197.2,
-      "y": 290.7,
-      "r": 9,
-      "canBeOrange": true,
-      "canBeGreen": true
-    },
-    {
-      "x": 205.7,
-      "y": 255.9,
-      "r": 9,
-      "canBeOrange": true,
-      "canBeGreen": true
-    },
-    {
-      "x": 236.5,
-      "y": 303.6,
-      "r": 9,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 262.8,
+      "x": 236.0,
       "y": 322.0,
-      "r": 9,
+      "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 294.8,
+      "x": 268.0,
       "y": 322.0,
-      "r": 9,
+      "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 323.1,
+      "x": 299.5,
+      "y": 323.3,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 325.1,
       "y": 340.0,
-      "r": 9,
+      "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 376.6,
+      "x": 351.1,
+      "y": 323.2,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 405.6,
       "y": 314.0,
-      "r": 9,
+      "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 409.9,
-      "y": 318.2,
-      "r": 9,
-      "canBeOrange": true,
-      "canBeGreen": true
-    },
-    {
-      "x": 438.9,
+      "x": 431.5,
       "y": 332.0,
-      "r": 9,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 461.8,
-      "y": 308.9,
-      "r": 9,
+      "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 617.7,
-      "y": 321.3,
-      "r": 9,
-      "canBeOrange": true,
-      "canBeGreen": true
-    },
-    {
-      "x": 650.8,
+      "x": 612.0,
       "y": 326.0,
-      "r": 9,
+      "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 679.1,
+      "x": 644.0,
+      "y": 326.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 673.4,
+      "y": 338.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 703.1,
       "y": 344.0,
-      "r": 9,
-      "canBeOrange": true,
-      "canBeGreen": true
-    },
-    {
-      "x": 109.5,
-      "y": 407.4,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 148.9,
-      "y": 414.3,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 188.5,
-      "y": 416.8,
+      "x": 190.0,
+      "y": 282.0,
       "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 228.5,
-      "y": 414.1,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 268.3,
-      "y": 413.0,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 308.0,
-      "y": 417.8,
+      "x": 238.0,
+      "y": 282.0,
       "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 347.8,
-      "y": 422.5,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 387.6,
-      "y": 421.8,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 427.5,
-      "y": 418.6,
+      "x": 486.0,
+      "y": 340.0,
       "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 467.3,
-      "y": 416.7,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 507.1,
-      "y": 420.7,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 546.9,
-      "y": 424.7,
+      "x": 482.0,
+      "y": 380.0,
       "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 586.7,
-      "y": 422.8,
+      "x": 598.0,
+      "y": 380.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 110.0,
+      "y": 410.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 626.4,
-      "y": 418.0,
+      "x": 146.0,
+      "y": 411.1,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 182.0,
+      "y": 412.3,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 666.1,
-      "y": 414.3,
+      "x": 217.9,
+      "y": 413.4,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 702.1,
-      "y": 415.8,
+      "x": 253.9,
+      "y": 414.5,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 250.0,
+      "x": 289.9,
+      "y": 415.7,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 350.0,
       "y": 444.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 283.7,
-      "y": 448.4,
+      "x": 386.0,
+      "y": 445.3,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 422.0,
+      "y": 446.5,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 457.9,
+      "y": 447.8,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 493.9,
+      "y": 449.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 570.0,
+      "y": 418.0,
       "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 317.4,
-      "y": 452.7,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 351.2,
-      "y": 457.1,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 384.9,
-      "y": 461.5,
-      "r": 8,
-      "canBeOrange": false,
-      "canBeGreen": true
-    },
-    {
-      "x": 418.6,
-      "y": 465.8,
+      "x": 606.0,
+      "y": 416.4,
       "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 286.9,
-      "y": 486.2,
+      "x": 641.9,
+      "y": 414.7,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 677.9,
+      "y": 413.1,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 250.0,
+      "y": 474.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 337.9,
-      "y": 501.8,
+      "x": 283.9,
+      "y": 476.8,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 371.5,
-      "y": 507.0,
+      "x": 317.8,
+      "y": 479.6,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 351.7,
+      "y": 482.4,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 385.5,
+      "y": 485.2,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 419.4,
+      "y": 488.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 300.0,
+      "y": 512.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 334.0,
+      "y": 513.6,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 367.9,
+      "y": 515.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 401.9,
+      "y": 516.7,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
@@ -353,24 +381,10 @@
       "canBeGreen": true
     },
     {
-      "x": 260.0,
-      "y": 210.0,
-      "r": 8,
-      "canBeOrange": true,
-      "canBeGreen": true
-    },
-    {
       "x": 330.0,
       "y": 170.0,
       "r": 8,
       "canBeOrange": true,
-      "canBeGreen": true
-    },
-    {
-      "x": 300.0,
-      "y": 260.0,
-      "r": 8,
-      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -388,45 +402,66 @@
       "canBeGreen": true
     },
     {
-      "x": 660.0,
+      "x": 260.0,
+      "y": 210.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 690.0,
       "y": 230.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 560.0,
+      "y": 150.0,
       "r": 8,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
-      "x": 700.0,
-      "y": 290.0,
+      "x": 300.0,
+      "y": 250.0,
       "r": 8,
       "canBeOrange": false,
       "canBeGreen": true
     },
     {
       "x": 420.0,
-      "y": 270.0,
+      "y": 250.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 150.0,
-      "y": 280.0,
+      "x": 130.0,
+      "y": 250.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 380.0,
-      "y": 220.0,
+      "x": 700.0,
+      "y": 300.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
-      "x": 645.0,
-      "y": 264.0,
+      "x": 458.0,
+      "y": 360.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 515.0,
+      "y": 388.0,
+      "r": 8,
+      "canBeOrange": false,
       "canBeGreen": true
     }
   ],
