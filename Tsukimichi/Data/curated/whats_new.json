@@ -3,6 +3,18 @@
   "note": "The plain What's new notes, one entry per release since 1.14.0, newest first: the popup after an update, Settings > Advanced > What's new and Dalamud's installer listing (tools/make_pluginmaster.py) read them. Written for players: 3 to 5 points, each a short lead and one plain sentence, no class names, settings paths only when the player needs them, no lists of fixes. CHANGELOG.md stays the technical record. Add the new release's entry before tagging it; the tests fail when the csproj version has none.",
   "releases": [
     {
+      "version": "1.23.0",
+      "date": "2026-10-06",
+      "name": "Moonfall preview",
+      "points": [
+        { "lead": "Moonfall, a preview.", "text": "A peg game under Menphina's moon: open it with the Moonfall button on the main window or /tsuki moonfall. This preview has The Moon Road's first two stages, ten levels; more of the road is on its way." },
+        { "lead": "Eorzea's own companions.", "text": "Eleven familiar faces lend their powers when you hit a green peg, shown on their Triple Triad cards." },
+        { "lead": "Painted boards.", "text": "Every level is drawn over a night scene, from the Thanalan roads to the twin lanterns of Vesper Bay, using the game's own art from your install." },
+        { "lead": "Spoiler-safe.", "text": "Moonfall follows your spoiler shield: places and companions your story hasn't reached stay hidden until you get there." },
+        { "lead": "Still growing.", "text": "This is a preview, so levels, scores and balance may change before the full release." }
+      ]
+    },
+    {
       "version": "1.22.1",
       "date": "2026-10-05",
       "name": "Familiar faces",
