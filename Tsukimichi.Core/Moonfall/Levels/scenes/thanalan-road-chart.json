@@ -7,7 +7,6 @@
   "crop": [284, 340, 1429, 1071],
   "erase": [[1280, 860, 110, 135], [1515, 1150, 160, 70], [1335, 1270, 95, 155], [345, 676, 115, 56]]
  },
- "fallback": "moon-road-night",
  "grade": {
   "kind": "night",
   "gamma": 1.6,
@@ -16,6 +15,7 @@
   "chromaMid": 0.45
  },
  "vignette": 0.28,
+ "fallback": "moon-road-night",
  "grain": 0.008,
  "paint": [
   {
@@ -127,12 +127,31 @@
   {
    "kind": "plate",
    "picture": "thanalan-road-chart-rim",
-   "blend": "screen"
+   "blend": "screen",
+   "rim": true
   }
  ],
  "veil": 0.4,
  "motion": {
-  "dust": 26
+  "dust": 26,
+  "glints": [
+   {
+    "points": [[150, 185], [200, 199], [246, 210], [296, 224], [347, 235], [400, 238], [451, 254]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 16,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[451, 254], [446, 298], [464, 343], [504, 382], [527, 428], [550, 472], [605, 480], [657, 478], [678, 474]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 16,
+    "offset": 8,
+    "colour": "#FFE6B0"
+   }
+  ]
  },
  "chrome": {
   "sky": "#141A4E",

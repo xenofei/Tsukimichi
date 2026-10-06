@@ -58,7 +58,8 @@ internal static class Render
         using var game = new LuminaGameData(gamePath, new LuminaOptions { PanicOnSheetChecksumMismatch = false });
         if (Arg(args, "--scene-only") is { } tier)
         {
-            return SceneOnly(repo, args.Contains("--no-game-art") ? null : game, levelName, int.Parse(tier, CultureInfo.InvariantCulture), args.Contains("--no-grain"), Arg(args, "--upto"), outPath);
+            return SceneOnly(repo, args.Contains("--no-game-art") ? null : game, levelName, int.Parse(tier, CultureInfo.InvariantCulture), args.Contains("--no-grain"), Arg(args, "--upto"),
+                Arg(args, "--hide-zone"), outPath);
         }
 
         Loc.SetLanguage(Loc.English);
@@ -132,7 +133,16 @@ internal static class Render
         // The Far Shore is staged at Shadowbringers by default, so its Endwalker stages show veiled.
         var storyArg = Arg(args, "--story");
         var reach = storyArg is not null ? byte.Parse(storyArg, CultureInfo.InvariantCulture) : screen == "far" ? MoonfallPlaces.Shadowbringers : (byte?)null;
-        var shield = reach is { } r ? StoryShield(r) : null;
+
+        // --hide-zone "<zone>": the shield also hides that one area (its story not yet there), so a scene set there shows
+        // its story-safe fallback (the recipe over its placeless picture) while its stage stays open (UX runtime round 1, m4).
+        var hideZone = Arg(args, "--hide-zone");
+        if (hideZone is not null)
+        {
+            reach ??= MoonfallPlaces.Dawntrail;
+        }
+
+        var shield = reach is { } r ? StoryShield(r, hideZone) : null;
         if (reach is not null)
         {
             // A story staged by expansion has met everyone the shield places in A Realm Reborn (the twins included).
@@ -510,7 +520,7 @@ internal static class Render
         public void Dispose() => window.HoldBoardForRender = false;
     }
 
-    private static MoonfallShield StoryShield(byte reach)
+    private static MoonfallShield StoryShield(byte reach, string? hideZone = null)
     {
         string[] expansions = ["A Realm Reborn", "Heavensward", "Stormblood", "Shadowbringers", "Endwalker", "Dawntrail"];
         var eras = new Dictionary<string, (byte Era, int Number)>(StringComparer.Ordinal);
@@ -523,7 +533,7 @@ internal static class Render
         }
 
         return new MoonfallShield(
-            zone => eras.TryGetValue(zone, out var e) && e.Era > reach,
+            zone => string.Equals(zone, hideZone, StringComparison.Ordinal) || (eras.TryGetValue(zone, out var e) && e.Era > reach),
             zone => eras.TryGetValue(zone, out var e) ? $"{expansions[e.Era]} area {e.Number}" : zone);
     }
 
@@ -634,7 +644,7 @@ internal static class Render
     /// (the base layer) with the beams at rest laid on as play draws them, before the veil, the pieces and the chrome. The
     /// level pipeline's converter gate compares it with the pipeline's dressed scene (tools/moonfall-levels, convert.py).
     /// </summary>
-    private static int SceneOnly(string repo, LuminaGameData? game, string levelId, int tier, bool noGrain, string? upto, string outPath)
+    private static int SceneOnly(string repo, LuminaGameData? game, string levelId, int tier, bool noGrain, string? upto, string? hideZone, string outPath)
     {
         var level = MoonfallCampaigns.LoadBuiltIn().Find(levelId);
         if (level is null)
@@ -652,6 +662,13 @@ internal static class Render
         }
 
         recipe = noGrain ? recipe with { Grain = 0 } : recipe;
+        var declared = recipe;
+
+        // The shield hides the scene's own place: its story-safe variant, as the plugin draws it.
+        if (hideZone is not null && MoonfallPlaces.OfScene(recipe.Name) is { Zone: { } zone } && zone == hideZone)
+        {
+            recipe = MoonfallSceneBuilder.StorySafe(recipe) ?? recipe;
+        }
 
         // --upto paint|palette: the build stopped early (everything after it left out), to find where two scenes part.
         recipe = upto switch
@@ -714,6 +731,20 @@ internal static class Render
 
         File.WriteAllBytes(outPath, MoonfallPng.Encode(px, b.Width, b.Height));
         Console.WriteLine($"{levelId}: {recipe.Name} at {tier}x, {b.Width} x {b.Height}, dropped {layers.Dropped}, {layers.Cost.TotalMilliseconds:F0} ms");
+
+        // What the build kept of what the recipe asks for (the converter's gate reads it: a silent drop fails a level).
+        Console.WriteLine("kept " + System.Text.Json.JsonSerializer.Serialize(new
+        {
+            moon = layers.Moon is not null,
+            moonDeclared = declared.Moon is not null,
+            mist = layers.Mist.Count,
+            stars = layers.Stars.Count,
+            starsAt = layers.Stars.Select(static s => new[] { MathF.Round(s.X), MathF.Round(s.Y) }).ToArray(),
+            fireflies = layers.Fireflies.Count,
+            flickers = layers.Flickers.Count,
+            glints = layers.Glints.Count,
+            dropped = layers.Dropped,
+        }));
         return 0;
     }
 

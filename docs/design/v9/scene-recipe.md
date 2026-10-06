@@ -40,8 +40,9 @@ The build runs in this order. Each step reads the result of the one before.
 5. **Palette** (`palette`): the jewel grade. It changes OKLab hue and chroma only; lightness is kept exactly (F1). A colour
    pushed outside sRGB gives up chroma, never lightness.
 6. **Light** (`light`): layers added *over* the palette (shafts, glows, aurora, the compass rose, plates). A shaft with
-   `"moving": true` is baked at 85% and its other 15% becomes the two drifting beam layers; with `"beamsOnly": true` its
-   85% is already in a plate and only the beams are made. A plate marked `cover` is framing: the framing rules, Fever's
+   `"moving": true` is baked at 70% and its other 30% becomes the two drifting beam layers (they breathe ±30% over a
+   9.5 s loop); with `"beamsOnly": true` its 70% is already in a plate and only the beams are made. A plate marked
+   `cover` is framing, and one marked `rim` its rim light: the framing rules, Fever's
    sky and the moon's front take it as the silhouettes' coverage.
 7. **Framing** (`framing`): the silhouettes. Each element that would come within 6.5 units of a piece is dropped whole,
    and a hard clamp behind that keeps every framing pixel 6 units clear.
@@ -125,7 +126,7 @@ the light), `bandK` 0–2 (the restored mid band).
 | `keep` | 0–1 | 0.30 | How much of the source's own colour stays |
 | `keepHigh` | 0–1 | 0.75 | Highlights stay cool moonstone |
 | `where` | mask | everywhere | Where the palette applies |
-| `regions` | list (≤ 6) | `[]` | A second jewel: `{ "hue", "chroma" 0–0.3, "weight" 0–1, "where": mask }` (the level pipeline's approved second jewels reach 0.28) |
+| `regions` | list (≤ 6) | `[]` | A second jewel: `{ "hue", "chroma" 0–0.3, "weight" 0–1, "where": mask }` (the level pipeline's second jewels reach 0.252, 1-2's water) |
 | `spare` | list of masks (≤ 4) | none | Places the palette leaves alone (a lamp's warm window, a creature's own colour): `where` is multiplied by one less their union (the largest at each pixel) |
 
 ### Masks (`where`)
@@ -162,7 +163,7 @@ Each is an object with a `kind`:
 | `neatline` | `inset` (2, 0.5–12) |
 | `route` | `points` (2–256 [x, y]), `smooth` (8), `colour` (#D9BE82), `width` (2.2), `dash` (5), `gap` (4.5), `alpha` (0.6). Kept 6 units off every piece (feathered to 9) |
 | `tone` | `where` (a mask, required), `mul` (1, 0–2). Paint only: the painting times `1 − (1 − mul) × where` (a chart's unwalked desert receding) |
-| `plate` | `picture` (a scene name, required), `blend` (`screen`, `multiply` or `add`, required), `cover` (false; multiply only). One of our own pictures laid whole: `<picture>.png` or `@2x.png` in `Tsukimichi/assets/moonfall/scenes/` (800 × 600 or 1600 × 1200, resampled to the tier). `screen` is light (black is nothing), `multiply` shade (white is nothing; with `cover` one less it is the framing's coverage), `add` a silhouette's colour premultiplied by its coverage (black is nothing). A plate the caller cannot read is left out and counted in `dropped` |
+| `plate` | `picture` (a scene name, required), `blend` (`screen`, `multiply` or `add`, required), `cover` (false; multiply only), `rim` (false; screen only: the silhouettes' rim light, which the framing check's F3b measures). One of our own pictures laid whole: `<picture>.png` or `@2x.png` in `Tsukimichi/assets/moonfall/scenes/` (800 × 600 or 1600 × 1200, resampled to the tier). `screen` is light (black is nothing), `multiply` shade (white is nothing; with `cover` one less it is the framing's coverage), `add` a silhouette's colour premultiplied by its coverage (black is nothing). A plate the caller cannot read is left out and counted in `dropped` |
 
 A `shafts` layer may also say `"beamsOnly": true` (with `"moving": true`, in `light`): its still share is drawn in a
 plate, so only its drifting beams are made.
@@ -189,8 +190,8 @@ Keep framing to the corners and the walls: the open middle must stay open (F2).
 
 - `lights`: `{ "x", "y", "size" (1), "colour" (#FFC86E), "core" (1.4), "k" (0.8), "halo" (5), "haloK" (0.25),
   "flicker" (false) }`. A light whose centre comes within 8 units plus 0.6 × `halo` × `size` of a piece is dropped. `flicker` makes it a lantern
-  (±10%, steady under Reduce motion).
-- `fireflies`: `{ "count" (≤ 40), "seed", "region": [x0, y0, x1, y1], "colour" }`. Each rests where its whole wander
+  (±10%: two sines at 1.3 and 1.9 Hz, never above 2 Hz, irregular in their beat; steady under Reduce motion).
+- `fireflies`: `{ "count" (≤ 40), "seed", "region": [x0, y0, x1, y1], "colour", "halo" (#FFB45E) }`. Each rests where its whole wander
   (9 × 4 units, a 6 s loop), core and halo, keeps 8 units clear of every piece and 110 units from the launcher's pivot;
   those that cannot are not placed.
 
@@ -199,14 +200,17 @@ Keep framing to the corners and the walls: the open middle must stay open (F2).
 | Field | Range | Notes |
 |---|---|---|
 | `dust` | 0–120 | Motes drifting in the moving beams; needs a moving shaft. Drawn only 8 units clear of every piece |
-| `stars` | 0–120 | Twinkles on the scene's own bright points in `starRegion` (default 75, 41, 725, 330) |
-| `mist` | ≤ 3 layers | `{ "y": [y0, y1], "speed" (4, 1–10 units/s), "alpha" (0.07, ≤ 0.2), "cell" (120), "seed", "colour" }`. A periodic tile that wraps at its width; a band that crosses a piece within 2.5 units is not made |
+| `stars` | 0–120 | Twinkles on the scene's own bright points in `starRegion` (default 75, 41, 725, 330), never within a moon's radius and a half (or 8 units, if more) of any moon the recipe paints or names for Fever |
+| `starWhere` | mask | The sky the stars may sit in (none: all of `starRegion`): a star needs it at 0.9 or more, so draw it over open sky and keep it off the subject (a `poly` of the sky, a `not-poly` of the subject). A recipe asking for stars keeps at least half of them, or its level's test fails |
+| `glints` | ≤ 4 | `{ "points" (2–256), "smooth" (8), "speed" (36, 10–120 units/s), "every" (12, 2–60 s), "offset" (0–60 s), "colour" (#FFE6B0) }`: a glint of light running slowly along a path (a chart's road), one pass every `every` seconds. It is light: it shows only where its whole light (4 units) keeps 2.5 units from every piece, fading in 3 units further |
+| `mist` | ≤ 3 layers | `{ "y": [y0, y1], "speed" (4, 1–10 units/s), "alpha" (0.07, ≤ 0.2), "cell" (120), "seed", "colour" }`. A periodic tile that wraps at its width; a band that crosses a piece within 2.5 units is not made (a level's test fails when a recipe's band is not made, or its tile holds almost no mist: pick a seed whose band has cover) |
 
 **The motion budget:** dust, stars and fireflies together at most **120** a board.
 
 **What moves, and where:** nothing moves within 2.5 units of a piece (the beams' moving share is masked off every piece
 and every mover's whole path), particles keep 8. Under Reduce motion, or Plain, nothing moves at all; Simple (the Quiet
-flair) keeps the beams and the halos and stills the rest.
+flair) keeps the beams and the halos and stills the rest. A moon a recipe names for Fever (`feverMoon`) that a piece comes
+within its radius and 18 units of is left out, and its level's test fails: move the piece, shrink the moon, or name none.
 
 ## The fuller-board rules (enforced at build)
 
@@ -225,7 +229,7 @@ loader's ranges keep a recipe near them (a graded game painting, ceiling ≤ 0.4
 | F3d | No peg-sized disc or hole (10–26 units across) in the framing |
 | F4 | A shaft adds at most 0.08 |
 | F5 | Small lights keep 8 units, plus 0.6 of their halo, from every piece |
-| F6 | Every kind's face (the 80th-percentile luma of its unlit sprite) stands at least **0.20** above the 90th percentile of the veiled scene 2–9 units round every place it can be dealt to (orange only where `canBeOrange`, green only where `canBeGreen`, movers at 48 places along their path), at 1× and at 0.8× (the 640 × 480 window) |
+| F6 | Every kind's face (the 80th-percentile luma of its unlit sprite) stands at least **0.20** above the 90th percentile of the veiled scene 2–9 units round every place it can be dealt to (orange only where `canBeOrange`, green only where `canBeGreen`, movers at 48 places along their path), and every brick's face (each kind it may be dealt) above the scene 3–11 units outside its edge, at 1× and at 0.735× (the 640 × 480 window's board); on every scene and on its story-safe variant |
 | Ceiling | The veiled scene's 99th-percentile luma is at most **0.46** (a moon's disc excepted: it keeps clear of the pieces instead) |
 
 ## Fit the layout
@@ -244,8 +248,8 @@ A recipe is written against a level's layout (level-method.md §2), not on its o
 
 ## Fallbacks
 
-- The game texture is missing or changed: the `fallback` picture is drawn whole and ungraded, with the recipe's dress;
-  no fallback: the night sky. Logged once.
+- The game texture is missing or changed: the `fallback` picture is drawn whole and ungraded, with the recipe's dress but
+  its `paint` plates (drawn on the painting, they belong to its place); no fallback: the night sky. Logged once.
 - The spoiler shield hides the scene's own place (its stage open, `MoonfallPlaces`): the same thing happens, on purpose. The
   `fallback` picture is drawn whole and ungraded **with the recipe's dress kept: its paint, framing, lights, palette regions
   and motion all survive**, but for the plates in `paint`, which are drawn on the painting itself (a chart's engraved
@@ -272,14 +276,28 @@ as the pipeline's scene. Edit the pipeline's recipe and convert again; do not ed
   neat-line's gilt, screened), `-ticks` (the chart's ticks, multiplied), `-cover` (one less the framing's coverage,
   multiplied, `cover`), `-cloth` (the cloth and silhouettes premultiplied, added), `-rim` (rim and snow, screened).
 - The small lights as `lights` (the pipeline's auto-placed and lantern-post lights resolved to points; lanterns flicker),
-  and the pipeline recipe's `runtime` block: `motion`, `fireflies`, which lights flicker, `feverMoon`.
+  and the pipeline recipe's `runtime` block: `motion` (its `starWhere` in the pipeline's mask terms), `fireflies`, which
+  lights flicker, `feverMoon`, and `glints` along the recipe's routes (by overlay index).
 
 **The converter's gate** (`mfl.py convert --all --check`): MoonfallRender's bare scene (`--scene-only 2 --no-grain`: the
-base layer with the beams at rest, before the veil and the pieces) against the pipeline's dressed scene with no grain and
-its jewel drawn as the game draws it (lightness kept), OKLab over the opening: the max or the 99.9th percentile at most
-0.02 at 2× (pictures and plates are exact at 2×; at 1× the runtime cuts and grades a game painting at 1× and downsizes the
-2× pictures, where the pipeline's 1× is its 2× scene downsized, so 1× is reported, not judged). The gate first shows it
-fails the pipeline's clipped jewel. `mfl.py selftest` holds that the dress rebuilt from the plates equals the dress.
+base layer with the beams at rest, before the veil and the pieces) against the pipeline's dressed scene with no grain
+(the pipeline draws the jewel as the game does, lightness kept, by default), OKLab over the opening. At 2× the max at
+most 0.04 **and** the 99.9th percentile at most 0.015 (pictures and plates are exact there; 0.015 rather than round 4's
+0.02 so that one soft glow left out fails); at 1× the 99th percentile at most 0.035 (the runtime cuts and grades a game
+painting at 1× and downsizes the 2× pictures, where the pipeline's 1× is its 2× scene downsized). A level also fails
+when MoonfallRender's report (`kept {...}`) shows a dropped moon, mist band, part, or more than half its stars. The gate
+first shows it fails the pipeline's clipped jewel. `mfl.py selftest` holds that the dress rebuilt from the plates equals
+the dress, and that the gate's statistic fails it with any one part left out (the cover, a glow, the ticks, a light).
+
+**Every scene is tagged by the place it depicts** (`MoonfallPlaces.Scenes`, our own paintings included: Horizon, the
+Waking Sands and Vesper Bay are Western Thanalan, the Sagolii Southern Thanalan), and every converted recipe declares
+`fallback: moon-road-night`, so the shield swaps it for the recipe over that placeless painting
+(`MoonfallSceneBuilder.StorySafe`). MoonfallRender's `--hide-zone "<zone>"` hides one area so that variant can be looked at.
+
+**The recipes no level takes.** `airship-road`, `holy-see` and `lantern-night` were the placeholder levels' scenes; no
+shipped level takes them since 1.23.0. They stay: MoonfallRender stages the approved pilots base-p1 and base-p2 on the
+first two, and the loader's and the shield's tests read all three as fixtures (a game painting with a moving shaft and a
+route; a scene tagged in A Realm Reborn; Kugane's, tagged in Stormblood). `moon-road-night` is every scene's fallback.
 
 ## Checking a recipe
 

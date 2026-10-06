@@ -600,17 +600,17 @@
     "protan_min": 0.099,
     "jewels": {
      "coloured_px_pct": 95.7,
-     "mean_chroma": 0.076,
+     "mean_chroma": 0.075,
      "second_at_walls_x": 0.13,
      "second_at_walls_worst_window": [
       0.42,
       466
      ],
      "first_jewel_hue": 298,
-     "first_share": 0.773,
-     "second_jewel_hue": 12,
+     "first_share": 0.774,
+     "second_jewel_hue": 10,
      "second_share": 0.173,
-     "apart_deg": 74,
+     "apart_deg": 72,
      "bins_pct": [
       11.5,
       0.0,
@@ -647,13 +647,13 @@
      ],
      "samples": 65,
      "mode": "pegs",
-     "hue_median": 0.0048
+     "hue_median": 0.0047
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 31.6,
+ "seconds": 35.9,
  "verdict": "PASS"
 }

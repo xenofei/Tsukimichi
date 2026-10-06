@@ -190,6 +190,20 @@
  "runtime": {
   "motion": {
    "dust": 26
-  }
+  },
+  "glints": [
+   {
+    "overlay": 0,
+    "speed": 30,
+    "every": 16,
+    "offset": 0
+   },
+   {
+    "overlay": 1,
+    "speed": 30,
+    "every": 16,
+    "offset": 8
+   }
+  ]
  }
 }

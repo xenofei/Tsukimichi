@@ -47,6 +47,25 @@ public static class MoonfallPegMarks
         _ => MoonfallPegMark.None,
     };
 
+    /// <summary>
+    /// Where a piece's mark is drawn, board units: a round peg's over its face (its radius); a brick's once, upright, at the
+    /// middle of its middle line, sized to its thickness (a line brick's midpoint; a curved brick's at half its sweep), so
+    /// a purple or green brick is told from a blue one as a peg is (UX runtime round 1, M1).
+    /// </summary>
+    public static (Vector2 Centre, float HalfSize) Place(in MoonfallPegView piece)
+    {
+        switch (piece.Shape)
+        {
+            case PegShape.Line:
+                return (new Vector2((float)((piece.X + piece.X2) / 2), (float)((piece.Y + piece.Y2) / 2)), (float)(piece.Thickness / 2));
+            case PegShape.Arc:
+                var t = piece.StartRadians + (piece.SweepRadians / 2);
+                return (new Vector2((float)(piece.X + (piece.Radius * Math.Cos(t))), (float)(piece.Y + (piece.Radius * Math.Sin(t)))), (float)(piece.Thickness / 2));
+            default:
+                return (new Vector2((float)piece.X, (float)piece.Y), (float)piece.Radius);
+        }
+    }
+
     /// <summary>Whether (u, v), in peg radii from its centre, is inside <paramref name="mark"/>.</summary>
     public static bool Inside(MoonfallPegMark mark, float u, float v)
     {

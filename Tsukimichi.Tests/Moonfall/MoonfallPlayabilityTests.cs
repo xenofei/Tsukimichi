@@ -38,7 +38,7 @@ public sealed class MoonfallPlayabilityTests
         Assert.NotNull(level);
         var watch = Stopwatch.StartNew();
         var report = MoonfallPlayability.Check(level);
-        output.WriteLine($"{id}: won {report.Wins} of {report.Games.Count} in {watch.Elapsed.TotalSeconds:0.00} s; Ace {MoonfallAces.For(id)?.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) ?? "none"}, the greedy player suggests {MoonfallAces.Suggest(report)?.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) ?? "none"}; {level.OrangeCandidates} pegs may be orange");
+        output.WriteLine($"{id}: won {report.Wins} of {report.Games.Count} in {watch.Elapsed.TotalSeconds:0.00} s; Ace {MoonfallAces.For(id)?.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) ?? "none"}, the greedy player suggests {MoonfallAces.Suggest(report)?.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) ?? "none"} over these {report.Games.Count} games (set the Ace over {MoonfallAces.SuggestGames}); {level.OrangeCandidates} pegs may be orange");
         Assert.True(report.Passes, $"{id} won {report.Wins} of {report.Games.Count}; a level needs {MoonfallPlayability.WinsNeeded} (plan v9 decision 21)");
     }
 

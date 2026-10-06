@@ -5,6 +5,7 @@
  "source": {
   "picture": "vesper-twin-lanterns"
  },
+ "fallback": "moon-road-night",
  "grain": 0.008,
  "palette": {
   "bands": [[0, "#8E4A6A"], [200, "#A84A5A"], [350, "#B4504E"], [600, "#8E3C40"]],
@@ -85,7 +86,8 @@
   {
    "kind": "plate",
    "picture": "vesper-twin-lanterns-rim",
-   "blend": "screen"
+   "blend": "screen",
+   "rim": true
   }
  ],
  "lights": [
@@ -143,6 +145,28 @@
    "halo": 5,
    "haloK": 0.22,
    "flicker": true
+  },
+  {
+   "x": 196.0,
+   "y": 240.0,
+   "size": 1.0,
+   "colour": "#FFB45E",
+   "core": 1.6,
+   "k": 0.7,
+   "halo": 6,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 604.0,
+   "y": 240.0,
+   "size": 1.0,
+   "colour": "#FFB45E",
+   "core": 1.6,
+   "k": 0.7,
+   "halo": 6,
+   "haloK": 0.2,
+   "flicker": true
   }
  ],
  "veil": 0.28,
@@ -153,10 +177,30 @@
    {
     "y": [532, 592],
     "speed": 3,
-    "alpha": 0.06,
+    "alpha": 0.11,
     "cell": 140,
-    "seed": 43,
+    "seed": 12,
     "colour": "#E0B8C8"
+   }
+  ],
+  "starWhere": [
+   {
+    "y": [340, 326]
+   },
+   {
+    "poly": [[296.0, 170.0], [504.0, 170.0], [504.0, 352.0], [296.0, 352.0]],
+    "blur": 12.0,
+    "invert": true
+   },
+   {
+    "poly": [[168.0, 196.0], [224.0, 196.0], [224.0, 348.0], [168.0, 348.0]],
+    "blur": 10.0,
+    "invert": true
+   },
+   {
+    "poly": [[576.0, 196.0], [632.0, 196.0], [632.0, 348.0], [576.0, 348.0]],
+    "blur": 10.0,
+    "invert": true
    }
   ]
  },

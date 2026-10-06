@@ -5,6 +5,7 @@
  "source": {
   "picture": "crystal-call"
  },
+ "fallback": "moon-road-night",
  "grain": 0.008,
  "palette": {
   "bands": [[0, "#5A36CC"], [600, "#4628A4"]],
@@ -117,19 +118,32 @@
   {
    "kind": "plate",
    "picture": "crystal-call-rim",
-   "blend": "screen"
+   "blend": "screen",
+   "rim": true
   }
  ],
  "veil": 0.25,
  "motion": {
   "dust": 20,
-  "stars": 30
+  "stars": 30,
+  "starWhere": [
+   {
+    "poly": [[70.0, 36.0], [730.0, 36.0], [730.0, 488.0], [690.0, 488.0], [600.0, 484.0], [520.0, 492.0], [420.0, 498.0], [330.0, 494.0], [260.0, 486.0], [180.0, 482.0], [90.0, 488.0], [70.0, 486.0]],
+    "blur": 4.0
+   },
+   {
+    "poly": [[440.0, 186.0], [524.0, 252.0], [514.0, 414.0], [440.0, 478.0], [366.0, 414.0], [356.0, 252.0]],
+    "blur": 12.0,
+    "invert": true
+   }
+  ]
  },
  "fireflies": {
   "count": 10,
   "seed": 9,
   "region": [90, 300, 710, 520],
-  "colour": "#9FF0FF"
+  "colour": "#9FF0FF",
+  "halo": "#5FD8E8"
  },
  "chrome": {
   "sky": "#101A4E",

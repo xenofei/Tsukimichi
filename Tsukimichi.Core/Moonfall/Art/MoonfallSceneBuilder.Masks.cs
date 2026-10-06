@@ -13,6 +13,27 @@ public static partial class MoonfallSceneBuilder
     /// <summary>How far the erase reaches beyond a box for the colour it fills with (source pixels).</summary>
     private const int ErasePad = 12;
 
+    /// <summary>
+    /// A recipe's story-safe variant (the spoiler shield's, when only the scene's own place is past the story): its
+    /// declared fallback picture taken whole and ungraded, under its own name (so its own cache key), with its dress kept
+    /// but for the plates under the palette, which are drawn on the painting itself and so show its place; null for a
+    /// recipe with no fallback (it hides).
+    /// </summary>
+    public static MoonfallSceneRecipe? StorySafe(MoonfallSceneRecipe recipe)
+    {
+        ArgumentNullException.ThrowIfNull(recipe);
+        return recipe.Fallback is not { } picture
+            ? null
+            : recipe with
+            {
+                Name = recipe.Name + "~safe",
+                Source = new MoonfallSceneSource(MoonfallSourceKind.Picture, picture, false, 0, 0, false, null),
+                Grade = null,
+                Fallback = null,
+                Paint = recipe.Paint.Where(static l => l is not MoonfallPlate).ToList(),
+            };
+    }
+
     /// <summary>The plates a recipe lays (paint and light), by picture name, in order.</summary>
     public static IReadOnlyList<string> PlateNames(MoonfallSceneRecipe recipe)
     {
@@ -380,6 +401,11 @@ public static partial class MoonfallSceneBuilder
                         px.R.Data[i] = MoonfallColor.Screen(px.R.Data[i], r);
                         px.G.Data[i] = MoonfallColor.Screen(px.G.Data[i], g);
                         px.B.Data[i] = MoonfallColor.Screen(px.B.Data[i], b);
+                        if (plate.Rim)
+                        {
+                            ctx.Rim.Data[i] = MathF.Max(ctx.Rim.Data[i], MathF.Max(r, MathF.Max(g, b)));
+                        }
+
                         break;
                     case MoonfallPlateBlend.Multiply:
                         px.R.Data[i] *= r;
@@ -399,5 +425,75 @@ public static partial class MoonfallSceneBuilder
                 }
             }
         });
+    }
+}
+
+/// <summary>A glint's path, smoothed and measured: where it is at any distance along it, with no allocation per frame.</summary>
+public sealed class MoonfallGlintTrack
+{
+    private readonly Vector2[] path;
+    private readonly float[] along;
+
+    public MoonfallGlintTrack(MoonfallGlintPath recipe)
+    {
+        ArgumentNullException.ThrowIfNull(recipe);
+        path = [.. MoonfallDress.SmoothPath(recipe.Points, recipe.Smooth)];
+        along = new float[path.Length];
+        for (var i = 1; i < path.Length; i++)
+        {
+            along[i] = along[i - 1] + Vector2.Distance(path[i - 1], path[i]);
+        }
+
+        Length = path.Length > 0 ? along[^1] : 0;
+        Speed = recipe.Speed;
+        Every = recipe.Every;
+        Offset = recipe.Offset;
+        Colour = recipe.Colour;
+    }
+
+    public float Length { get; }
+
+    public float Speed { get; }
+
+    public float Every { get; }
+
+    public float Offset { get; }
+
+    public Vector3 Colour { get; }
+
+    /// <summary>The point <paramref name="d"/> units along the path (clamped to its ends).</summary>
+    public Vector2 At(float d)
+    {
+        if (path.Length == 0)
+        {
+            return Vector2.Zero;
+        }
+
+        if (d <= 0)
+        {
+            return path[0];
+        }
+
+        if (d >= Length)
+        {
+            return path[^1];
+        }
+
+        int lo = 0, hi = along.Length - 1;
+        while (hi - lo > 1)
+        {
+            var mid = (lo + hi) / 2;
+            if (along[mid] <= d)
+            {
+                lo = mid;
+            }
+            else
+            {
+                hi = mid;
+            }
+        }
+
+        var t = (d - along[lo]) / MathF.Max(1e-4f, along[hi] - along[lo]);
+        return Vector2.Lerp(path[lo], path[hi], t);
     }
 }

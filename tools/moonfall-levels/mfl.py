@@ -303,8 +303,8 @@ def cmd_convert(args):
     scratch = paths.BUILD / "convert"
     scratch.mkdir(parents=True, exist_ok=True)
     ok, rows = convert.gate(ids, scratch)
-    print(f"converter gate: {'PASS' if ok else 'FAIL'} ({sum(1 for r in rows if r[1] == 2 and r[4])} of "
-          f"{sum(1 for r in rows if r[1] == 2)} at 2x within {convert.GATE}); diffs in {scratch}")
+    print(f"converter gate: {'PASS' if ok else 'FAIL'} ({sum(1 for r in rows if r[4])} of {len(rows)}: 2x max <= "
+          f"{convert.GATE_MAX} and p99.9 <= {convert.GATE}, 1x p99 <= {convert.GATE_1X}, nothing dropped); diffs in {scratch}")
     return 0 if ok else 1
 
 

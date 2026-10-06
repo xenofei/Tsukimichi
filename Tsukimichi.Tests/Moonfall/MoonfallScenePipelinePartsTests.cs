@@ -76,6 +76,9 @@ public sealed class MoonfallScenePipelinePartsTests
         Assert.Equal(2, r.Paint.OfType<MoonfallPlate>().Count());
         Assert.Contains(r.Light, static l => l is MoonfallShafts { Moving: true, BeamsOnly: true });
         Assert.Single(r.Light.OfType<MoonfallPlate>(), static p => p.Cover && p.Blend == MoonfallPlateBlend.Multiply);
+        Assert.Single(r.Light.OfType<MoonfallPlate>(), static p => p.Rim && p.Blend == MoonfallPlateBlend.Screen);
+        Assert.Equal(2, r.Motion.Glints.Count);
+        Assert.Equal("moon-road-night", r.Fallback);
         Assert.Equal(
             ["thanalan-road-chart-route-cut", "thanalan-road-chart-route", "thanalan-road-chart-light", "thanalan-road-chart-ticks", "thanalan-road-chart-cover", "thanalan-road-chart-cloth", "thanalan-road-chart-rim"],
             MoonfallSceneBuilder.PlateNames(r));
@@ -110,11 +113,14 @@ public sealed class MoonfallScenePipelinePartsTests
         Refused(Edited("thanalan-road-chart", static n => n["light"]!.AsArray().Add(JsonNode.Parse("""{ "kind": "plate", "picture": "../rim", "blend": "screen" }"""))), ".picture must name");
         Refused(Edited("thanalan-road-chart", static n => n["light"]!.AsArray().Add(JsonNode.Parse("""{ "kind": "plate", "picture": "thanalan-road-chart-rim", "blend": "screen", "cover": true }"""))), "cover must multiply");
         Refused(Edited("thanalan-road-chart", static n => n["light"]!.AsArray().Add(JsonNode.Parse("""{ "kind": "shafts", "angles": [50], "widths": [30], "beamsOnly": true }"""))), "beamsOnly must be moving");
+        Refused(Edited("thanalan-road-chart", static n => n["light"]!.AsArray().Add(JsonNode.Parse("""{ "kind": "plate", "picture": "thanalan-road-chart-rim", "blend": "add", "rim": true }"""))), "rim must screen");
+        Refused(Edited("sagolii-cactuar", static n => n["motion"]!["glints"] = JsonNode.Parse("""[{ "points": [[1, 2]] }]""")), ".points must be a list of 2 to 256");
+        Refused(Edited("sagolii-cactuar", static n => n["motion"]!["starWhere"] = JsonNode.Parse("""[{ "sky": [1, 2] }]""")), "must name one of");
         Refused(Edited("horizon-by-night", static n => n["palette"]!["regions"]![0]!["chroma"] = 0.31), "chroma must be");
         Refused(Edited("sagolii-cactuar", static n => n["palette"]!["spare"] = JsonNode.Parse("[[], [], [], [], []]")), "at most 4 masks");
 
-        // 1-2's sky region pushes 0.28, the approved second jewel.
-        Assert.Equal(0.28f, Read(Shipped("horizon-by-night")).Palette!.Regions[0].Chroma, 3);
+        // 1-2's water region pushes 0.252, over the old limit of 0.2 (its approved green, kept in the shipped gamut).
+        Assert.Equal(0.252f, Read(Shipped("horizon-by-night")).Palette!.Regions[0].Chroma, 3);
     }
 
     [Fact]
@@ -240,6 +246,50 @@ public sealed class MoonfallScenePipelinePartsTests
         var without = MoonfallSceneBuilder.Build(recipe, Level, Grey(800, 600, 0.5f), 1);
         Assert.Equal(0.5f, BaseAt(without, 400, 500), 2);
         Assert.Equal(3, without.Dropped);
+    }
+
+    [Fact]
+    public void A_fallback_picture_and_the_story_safe_recipe_leave_the_paint_plates_out()
+    {
+        // A plate under the palette is drawn on the painting (a chart's roads): over a fallback picture it would show the
+        // place, and cross the pegs (critic runtime round 1, m8). Light plates (the framing) stay.
+        var recipe = Flat(""", "paint": [{ "kind": "plate", "picture": "p-road", "blend": "screen" }], "light": [{ "kind": "plate", "picture": "p-light", "blend": "screen" }]""") with { Fallback = "test-night" };
+        var plates = new Dictionary<string, MoonfallImage> { ["p-road"] = Grey(800, 600, 0.5f), ["p-light"] = Grey(800, 600, 0.2f) };
+        var game = MoonfallSceneBuilder.Build(recipe, Level, Grey(800, 600, 0.3f), 1, plates: plates);
+        var fallback = MoonfallSceneBuilder.Build(recipe, Level, Grey(800, 600, 0.3f), 1, fallback: true, plates: plates);
+        Assert.Equal(1 - (0.7f * 0.5f * 0.8f), BaseAt(game, 400, 500), 2);
+        Assert.Equal(1 - (0.7f * 0.8f), BaseAt(fallback, 400, 500), 2);
+        Assert.Equal(0, fallback.Dropped);
+
+        var safe = MoonfallSceneBuilder.StorySafe(recipe)!;
+        Assert.Equal("test-flat~safe", safe.Name);
+        Assert.Equal((MoonfallSourceKind.Picture, "test-night"), (safe.Source.Kind, safe.Source.Path));
+        Assert.Null(safe.Grade);
+        Assert.Empty(safe.Paint);
+        Assert.Single(safe.Light);
+        Assert.Null(MoonfallSceneBuilder.StorySafe(recipe with { Fallback = null }));
+    }
+
+    [Fact]
+    public void A_star_never_sits_out_of_its_sky_or_on_a_moon()
+    {
+        // A field of bright points everywhere: the stars keep to the sky the recipe names (y above 200) and off its moon.
+        var px = Grey(800, 600, 0.05f);
+        for (var y = 50; y < 590; y += 9)
+        {
+            for (var x = 80; x < 720; x += 9)
+            {
+                px.R.Data[(y * 800) + x] = px.G.Data[(y * 800) + x] = px.B.Data[(y * 800) + x] = 0.6f;
+            }
+        }
+
+        var recipe = Flat(""", "light": [{ "kind": "moon", "x": 200, "y": 120, "r": 20 }], "motion": { "stars": 60, "starRegion": [75, 41, 725, 590], "starWhere": [{ "y": [210, 190] }] }""");
+        var level = new MoonfallLevel("base-99", "Low", [MoonfallPeg.Round(600, 560)]);
+        var layers = MoonfallSceneBuilder.Build(recipe, level, px, 1);
+        Assert.Equal(60, layers.Stars.Count);
+        Assert.All(layers.Stars, static s => Assert.True(s.Y < 200, $"a star at y {s.Y}"));
+        Assert.All(layers.Stars, static s => Assert.True(Vector2.Distance(new(s.X, s.Y), new(200, 120)) >= 30, $"a star on the moon at ({s.X}, {s.Y})"));
+        Assert.Equal([new Vector3(200, 120, 30)], MoonfallSceneBuilder.MoonDiscs(recipe));
     }
 
     [Fact]

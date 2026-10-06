@@ -42,8 +42,9 @@ public static partial class MoonfallSceneRecipeLoader
     public const float MaxShaftK = 0.08f;
 
     /// <summary>
-    /// The most chroma a palette region may push. The level pipeline's approved second jewels reach 0.28 (1-2's sky); a
-    /// region's chroma is a target the gamut then trims (lightness kept), and the pipeline's F7 and F9 measure what it gives.
+    /// The most chroma a palette region may push. The level pipeline's second jewels reach 0.252 (1-2's water, 0.28 when
+    /// approved); a region's chroma is a target the gamut then trims (lightness kept), and the pipeline's F7 and F9
+    /// measure what it gives.
     /// </summary>
     public const float MaxRegionChroma = 0.3f;
 
@@ -310,6 +311,11 @@ public static partial class MoonfallSceneRecipeLoader
             if (recipe.Paint.Concat(recipe.Light).OfType<MoonfallPlate>().Any(static p => p.Cover && p.Blend != MoonfallPlateBlend.Multiply))
             {
                 errors.Add("a plate marked cover must multiply (the framing's coverage is one less the plate)");
+            }
+
+            if (recipe.Paint.Concat(recipe.Light).OfType<MoonfallPlate>().Any(static p => p.Rim && p.Blend != MoonfallPlateBlend.Screen))
+            {
+                errors.Add("a plate marked rim must screen (it is light)");
             }
 
             var particles = recipe.Motion.Dust + recipe.Motion.Stars + (recipe.Fireflies?.Count ?? 0);
@@ -686,7 +692,7 @@ public static partial class MoonfallSceneRecipeLoader
                         }
 
                         var mode = blend switch { "screen" => MoonfallPlateBlend.Screen, "multiply" => MoonfallPlateBlend.Multiply, _ => MoonfallPlateBlend.Add };
-                        list.Add(new MoonfallPlate(picture, mode, Bool(l, "cover")));
+                        list.Add(new MoonfallPlate(picture, mode, Bool(l, "cover")) { Rim = Bool(l, "rim") });
                         break;
                     case "glow":
                         list.Add(new MoonfallGlow(Num(l, "x", 0, -800, 1600), Num(l, "y", 0, -600, 1200), Num(l, "r", 100, 1, 2000), ColourV(l, "colour", at), Num(l, "k", 0.05f, 0, 0.2f)));
@@ -876,7 +882,10 @@ public static partial class MoonfallSceneRecipeLoader
 
             var region = Floats(Req(f, "region", "fireflies"), "fireflies.region", 4, 0, 800);
             return new MoonfallFireflies(Int(f, "count", 12, 0, 40), Int(f, "seed", 5, 0, 100_000),
-                region.Length == 4 ? new Vector4(region[0], region[1], region[2], region[3]) : default, ColourV(f, "colour", "fireflies", "#FFD27A"));
+                region.Length == 4 ? new Vector4(region[0], region[1], region[2], region[3]) : default, ColourV(f, "colour", "fireflies", "#FFD27A"))
+            {
+                HaloColour = ColourV(f, "halo", "fireflies", "#FFB45E"),
+            };
         }
 
         private MoonfallMotionRecipe Motion(JsonElement root)
@@ -918,8 +927,35 @@ public static partial class MoonfallSceneRecipeLoader
             }
 
             var region = m.TryGetProperty("starRegion", out var sr) ? Floats(sr, "motion.starRegion", 4, 0, 800) : [75, 41, 725, 330];
+            var glints = new List<MoonfallGlintPath>();
+            if (m.TryGetProperty("glints", out var gs) && gs.ValueKind != JsonValueKind.Null)
+            {
+                if (gs.ValueKind != JsonValueKind.Array || gs.GetArrayLength() > 4)
+                {
+                    errors.Add("motion.glints must be a list of at most 4");
+                }
+                else
+                {
+                    var i = 0;
+                    foreach (var l in gs.EnumerateArray())
+                    {
+                        var at = $"motion.glints[{i++}]";
+                        if (l.ValueKind != JsonValueKind.Object)
+                        {
+                            errors.Add(at + " must be an object");
+                            continue;
+                        }
+
+                        glints.Add(new MoonfallGlintPath(Points(Req(l, "points", at), at + ".points", 2, 256), Int(l, "smooth", 8, 1, 32), Num(l, "speed", 36, 10, 120),
+                            Num(l, "every", 12, 2, 60), Num(l, "offset", 0, 0, 60), ColourV(l, "colour", at, "#FFE6B0")));
+                    }
+                }
+            }
+
             return new MoonfallMotionRecipe
             {
+                StarWhere = Mask(m, "starWhere", "motion"),
+                Glints = glints,
                 Dust = Int(m, "dust", 0, 0, MaxParticles),
                 Stars = Int(m, "stars", 0, 0, MaxParticles),
                 StarRegion = region.Length == 4 ? new Vector4(region[0], region[1], region[2], region[3]) : new(75, 41, 725, 330),

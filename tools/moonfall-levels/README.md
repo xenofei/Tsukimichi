@@ -251,14 +251,15 @@ palette, glows, the moving beams (the shafts' 15%), the small lights (lanterns f
 (`motion`, `fireflies`, `flicker`, `feverMoon`) stay runtime parts, so every level keeps ambient motion. The selftest holds
 that the dress rebuilt from the plates equals the dress (exact) and catches the plates with the cover left out.
 
-**The jewel's gamut** (found by the converter's gate). `dress2.jewel` clips each sRGB channel of a colour pushed out of
-gamut, which moves its lightness; the runtime keeps the lightness and gives up chroma (`MoonfallColor.ToSrgbKeepingLightness`,
-F1). With the approved levels' chroma (up to 1.8) that differs by OKLab 0.04-0.07 at the 99th percentile (1-4: mean chroma
-0.0735 clipped, 0.0636 kept). The pipeline still builds and checks the levels in the clipped form they were approved in;
-`dress.runtime_gamut()` draws the game's form, and the converter's gate uses it. All ten levels pass every build check in
-the game's form too (a scratch build); the print check's round-2 per-peg coin on 2-1 then measures p90 0.030 and hue
-median 0.021, under its limits (0.040, 0.022), so that known-bad self-test case would need a new coin before the pipeline
-switches. Which form the pipeline checks in is the owner's call.
+**The jewel's gamut** (found by the converter's gate; the owner's answer, runtime round 1). `dress2.jewel` clips each sRGB
+channel of a colour pushed out of gamut, which moves its lightness; the runtime keeps the lightness and gives up chroma
+(`MoonfallColor.ToSrgbKeepingLightness`, F1). The game's form is the pipeline's default (`dress.RUNTIME_GAMUT`), so the
+reports, composites and stage checks describe what ships; `dress.clipped_gamut()` draws the round-6 approved form. The
+gamut moved three second jewels most, and their recipes bring the approved look back within it: 1-2's water (hue 150,
+not the teal 200 the kept gamut gave #30B888: `#6AAC5D` at 0.252 and a lightness tone of 1.2 on the water, since the
+clip had raised its lightness), 2-1's sea mist (`#56AE6C`, tone 1.16: hue 154 against the approved 156, so F7 holds
+against 1-5's 202; critic M1) and 2-3's base jewel (chroma 1.5, floor 0.05, region `#4FAF71`: mean chroma 0.066 and 77
+degrees apart, UX m1). Round 2's per-peg coin on 2-1 fails the print check again in this form (p90 0.050).
 
 The runtime's own scene-recipe format (`moonfall-scene` version 1: `docs/design/v9/scene-recipe.md` on main, files in
 `Tsukimichi.Core/Moonfall/Levels/scenes/<name>.json`) has since landed on main. It covers the same ground under other
@@ -280,5 +281,5 @@ with this pipeline's dressed scene pixel for pixel (OKLab distance, the maximum,
 most about 0.02: critic rounds 4 and 5, M1 and N17; a 99th percentile would pass a local term mis-scaled at a peg's
 scale, since dropping round 5's disc on 2-3 moved it by only 0.018, and the formula's own residue is 0.014 at most). The two formulas are meant to be identical, so any difference is the converter's fault, and the print check
 and F9 measured here then stand for the game (once they are measured in the game's gamut: see "The jewel's gamut").
-`mfl.py convert --all --check` runs it at 2x (the gate) and 1x (reported); the runtime-round figures, all ten at 2x:
-max 0.007-0.036, 99.9th percentile 0.005-0.012.
+`mfl.py convert --all --check` runs it at 2x (max 0.04 and 99.9th percentile 0.015, both) and at 1x (99th percentile
+0.035), and fails a level whose build dropped a moon, a mist band, a part or more than half its stars.

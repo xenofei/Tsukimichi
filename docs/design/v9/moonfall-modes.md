@@ -126,15 +126,25 @@ State(companion) =
   - A won level that reaches it earns `MoonfallRules.AceBonus` (25,000 `[J]`), and the level is marked aced; it stays aced.
   - `FinishLevel` records `max(best, score + bonus)`.
   - A level with no entry has no Ace.
-  - `[J]` The numbers come from the greedy player: the 75th percentile of its won games' scores, rounded up to 10,000 (`MoonfallAces.Suggest`).
-  - The playability test prints the suggestion for every shipped level, so whoever authors a level can copy it in.
+  - `[J]` The numbers come from the greedy player over 576 games (`MoonfallAces.Suggest`, `SuggestGames`): the score a
+    fifth of all its games win at or above (`AceShare` 0.20), rounded to 10,000, so every Ace is about as hard to reach.
+    Levels runtime round 1 (game designer m6, critic m6): the old rule, the 75th percentile of 48 games' wins, gave Aces
+    that 6% to 26% of games reached.
+  - The playability test prints the suggestion over its 48 games for every shipped level; set the Ace over 576
+    (`MoonfallPlayability.Check(level, 576)`).
 
-| Level | Ace |
-|---|---|
-| base-01 | 340,000 |
-| base-02 | 330,000 |
-| base-03 | 320,000 |
-| base-04 | 350,000 |
+| Level | Ace | Games reaching it (576) |
+|---|---|---|
+| base-01 Road to Horizon | 300,000 | 19.6% |
+| base-02 Horizon by Night | 280,000 | 20.0% |
+| base-03 The Cactuar | 260,000 | 18.8% |
+| base-04 The Gilded Dome | 250,000 | 21.5% |
+| base-05 The Crystal's Call | 250,000 | 19.6% |
+| base-06 Limsa Across the Water | 270,000 | 20.7% |
+| base-07 Moonpath on the Bay | 280,000 | 21.4% |
+| base-08 The Kraken's Sea | 260,000 | 18.9% |
+| base-09 The Ferry Under Sail | 240,000 | 20.5% |
+| base-10 Twin Lanterns | 260,000 | 21.2% |
 
 ## 5. Challenges (`MoonfallChallenges`, `MoonfallChallengeRun`)
 
@@ -168,7 +178,8 @@ modes.FinishChallenge(run)                              // records done and best
 
 Each level is played at its Adventure number, and at least 3, so greens and the companion's power are on the board. It is dealt from `run.SeedOf(index)`.
 
-**The starter twelve** are in `Moonfall/Modes/challenges.json`. Five of them run on the four shipped levels; the rest wait for their levels:
+**The starter twelve** are in `Moonfall/Modes/challenges.json`. They were set on the four placeholder levels; the ten
+levels from the level pipeline (1.23.0) replaced those, and the rest wait for their levels:
 
 | Id | Name | Kind | Levels | Rules |
 |---|---|---|---|---|
@@ -184,6 +195,16 @@ Each level is played at its Adventure number, and at least 3, so greens and the 
 | ch-10 | A Duel at the Waking Sands | duel | base-01, 02, 03 | Minfilia, novice |
 | ch-11 | The Admiral's Wager | duel | base-21, 22, 23 | Merlwyb, adept |
 | ch-12 | The Archon's Path | duel | base-46, 48, 50 | Louisoix, master |
+
+**Open item, before challenges open** (they are sealed until The Moon Road's 55 levels are won, so nothing changes in
+1.23.0; game designer m7 and critic runtime round 1, decision 6):
+- **ch-03 and ch-04 can never open as written.** The level pipeline gives every level 28 to 35 orange candidates (the
+  ten shipped have 28), so `MoonfallChallenges.Playable` keeps ch-03 (35 oranges on base-04) and ch-04 (45 on base-03)
+  `Unavailable`. Re-point ch-03 to a level authored with 35 or more candidates, and ch-04 to one authored as an explicit
+  exception with 45 or more (or give ch-04 another rule).
+- **ch-01, ch-05 and ch-07 were set on the placeholders.** Recalibrate them on the shipped levels: ch-01 (150,000 with
+  7 balls on 1-3, which the greedy player cannot test at 7 balls), ch-05 (clear every peg of 1-1, the set's largest board
+  at 82 pieces) and ch-07 (600,000 over 2-1 to 2-3).
 
 ## 6. The duel (`MoonfallDuel`, `MoonfallAi`)
 

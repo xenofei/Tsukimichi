@@ -10,124 +10,87 @@
  "checks": {
   "preflight": {
    "problems": [],
-   "pieces": 76,
-   "pegs": 71,
+   "pieces": 75,
+   "pegs": 70,
    "bricks": 5,
    "movers": 21,
    "orange_candidates": 28,
-   "never_green": 24,
+   "never_green": 23,
    "skipped_while_tracing": []
   },
   "loader": {
    "ok": true,
    "output": [
-    "OK   base-10.json  id=base-10 \"Twin Lanterns\"  pieces=76 (round 71, bricks 5, movers 21)  mayBeOrange=28",
-    "     still round pegs 50: closest surfaces 16.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
-    "     rows used y 120..528"
+    "OK   base-10.json  id=base-10 \"Twin Lanterns\"  pieces=75 (round 70, bricks 5, movers 21)  mayBeOrange=28",
+    "     still round pegs 49: closest surfaces 16.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 150..528"
    ]
   },
   "sweep": {
    "angles": 681,
    "pegs_median": 10,
-   "pegs_mean": 10.1,
+   "pegs_mean": 10.0,
    "pegs_max": 21,
-   "oranges_mean": 3.25,
+   "oranges_mean": 3.24,
    "no_hit": 0,
    "stuck": 4,
    "stuck_share": 0.006,
    "long_flights": 1,
-   "bucket": 116,
+   "bucket": 119,
    "unreached": [],
-   "pieces": 76
+   "pieces": 75
   },
   "reach": {
    "rounds": 1,
    "never": []
   },
   "play": {
-   "greedy_won": 18,
+   "greedy_won": 23,
    "games": 48,
    "oranges_left_when_lost": [
-    2,
-    2,
-    2,
     3,
-    4,
-    2,
-    4,
+    3,
+    3,
     3,
     1,
-    2,
-    2,
-    3,
-    2,
-    3,
-    3,
     6,
-    3,
-    5,
-    3,
     1,
-    3,
+    2,
+    4,
+    2,
+    2,
+    2,
+    4,
+    6,
     4,
     4,
-    5,
     7,
     1,
+    6,
     3,
-    1,
-    3,
+    2,
+    2,
+    4,
+    6,
     1
    ],
    "ramp_games": 1728,
-   "ramp_won": 729,
-   "ramp_per_48": 20.2,
-   "shots_mean": 14.4,
-   "stuck_fires": 20,
+   "ramp_won": 747,
+   "ramp_per_48": 20.8,
+   "shots_mean": 14.5,
+   "stuck_fires": 34,
    "random_won": 0,
-   "random_oranges_mean": 18.5,
-   "low_left_share": 0.287,
-   "lost_with_low_orange": 0.554,
+   "random_oranges_mean": 18.6,
+   "low_left_share": 0.283,
+   "lost_with_low_orange": 0.558,
    "holdouts": [
     {
-     "piece": 66,
+     "piece": 15,
      "at": [
-      690,
-      200
-     ],
-     "share_of_lost_games": 0.18
-    },
-    {
-     "piece": 27,
-     "at": [
-      288,
-      394
+      622,
+      262
      ],
      "share_of_lost_games": 0.17
-    },
-    {
-     "piece": 28,
-     "at": [
-      512,
-      394
-     ],
-     "share_of_lost_games": 0.16
-    },
-    {
-     "piece": 12,
-     "at": [
-      196,
-      336
-     ],
-     "share_of_lost_games": 0.16
-    },
-    {
-     "piece": 33,
-     "at": [
-      214,
-      438
-     ],
-     "share_of_lost_games": 0.16
     },
     {
      "piece": 25,
@@ -138,6 +101,30 @@
      "share_of_lost_games": 0.16
     },
     {
+     "piece": 27,
+     "at": [
+      288,
+      394
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 28,
+     "at": [
+      512,
+      394
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 12,
+     "at": [
+      196,
+      336
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
      "piece": 21,
      "at": [
       336,
@@ -146,12 +133,12 @@
      "share_of_lost_games": 0.14
     },
     {
-     "piece": 15,
+     "piece": 33,
      "at": [
-      622,
-      262
+      214,
+      438
      ],
-     "share_of_lost_games": 0.13
+     "share_of_lost_games": 0.14
     },
     {
      "piece": 19,
@@ -162,14 +149,6 @@
      "share_of_lost_games": 0.13
     },
     {
-     "piece": 39,
-     "at": [
-      622,
-      438
-     ],
-     "share_of_lost_games": 0.12
-    },
-    {
      "piece": 38,
      "at": [
       586,
@@ -178,26 +157,26 @@
      "share_of_lost_games": 0.12
     },
     {
-     "piece": 32,
-     "at": [
-      178,
-      438
-     ],
-     "share_of_lost_games": 0.12
-    },
-    {
-     "piece": 1,
-     "at": [
-      288,
-      306
-     ],
-     "share_of_lost_games": 0.11
-    },
-    {
      "piece": 4,
      "at": [
       512,
       306
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 39,
+     "at": [
+      622,
+      438
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 14,
+     "at": [
+      632,
+      229
      ],
      "share_of_lost_games": 0.11
     },
@@ -210,41 +189,41 @@
      "share_of_lost_games": 0.11
     },
     {
-     "piece": 64,
+     "piece": 1,
+     "at": [
+      288,
+      306
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 32,
+     "at": [
+      178,
+      438
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 63,
      "at": [
       580,
+      150
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 62,
+     "at": [
+      220,
       150
      ],
      "share_of_lost_games": 0.08
     },
     {
-     "piece": 14,
-     "at": [
-      632,
-      229
-     ],
-     "share_of_lost_games": 0.08
-    },
-    {
-     "piece": 6,
-     "at": [
-      196,
-      208
-     ],
-     "share_of_lost_games": 0.07
-    },
-    {
      "piece": 8,
      "at": [
       214,
-      262
-     ],
-     "share_of_lost_games": 0.07
-    },
-    {
-     "piece": 16,
-     "at": [
-      586,
       262
      ],
      "share_of_lost_games": 0.07
@@ -258,28 +237,12 @@
      "share_of_lost_games": 0.07
     },
     {
-     "piece": 63,
-     "at": [
-      220,
-      150
-     ],
-     "share_of_lost_games": 0.07
-    },
-    {
-     "piece": 46,
-     "at": [
-      250,
-      290
-     ],
-     "share_of_lost_games": 0.06
-    },
-    {
      "piece": 47,
      "at": [
       550,
       290
      ],
-     "share_of_lost_games": 0.05
+     "share_of_lost_games": 0.07
     },
     {
      "piece": 17,
@@ -287,15 +250,31 @@
       576,
       229
      ],
-     "share_of_lost_games": 0.04
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 16,
+     "at": [
+      586,
+      262
+     ],
+     "share_of_lost_games": 0.07
     },
     {
      "piece": 65,
      "at": [
-      110,
+      690,
       200
      ],
-     "share_of_lost_games": 0.04
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 6,
+     "at": [
+      196,
+      208
+     ],
+     "share_of_lost_games": 0.06
     },
     {
      "piece": 13,
@@ -303,13 +282,29 @@
       604,
       208
      ],
-     "share_of_lost_games": 0.04
+     "share_of_lost_games": 0.05
     },
     {
      "piece": 7,
      "at": [
       224,
       229
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 64,
+     "at": [
+      110,
+      200
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 46,
+     "at": [
+      250,
+      290
      ],
      "share_of_lost_games": 0.04
     }
@@ -322,29 +317,29 @@
   },
   "framecheck": {
    "report": {
-    "cover_pct": 1.57,
+    "cover_pct": 1.52,
     "middle_pct": 0.0,
     "in_swing_px": 0,
     "min_clearance": 8.51,
-    "longest_rim_run": 11.7,
+    "longest_rim_run": 12.5,
     "longest_rim_at": [
-     82,
-     74
+     684,
+     116
     ],
     "straight_run": null,
     "peg_sized_discs": [],
     "lights_too_close": [],
     "lights_per_band_max": 2,
     "lights_nearest": 100.2,
-    "darkened_min_clearance": 10.56,
-    "elements_dropped_for_clearance": 27
+    "darkened_min_clearance": 8.51,
+    "elements_dropped_for_clearance": 26
    },
    "fails": []
   },
   "colours": {
    "seed": 1,
    "counts": {
-    "blue": 48,
+    "blue": 47,
     "green": 2,
     "orange": 25,
     "purple": 1
@@ -354,26 +349,26 @@
    "report": {
     "faces": {
      "1x": {
-      "blue": 0.676,
+      "blue": 0.677,
       "orange": 0.614,
-      "green": 0.715,
+      "green": 0.723,
       "purple": 0.569
      },
      "0.8x": {
-      "blue": 0.684,
+      "blue": 0.685,
       "orange": 0.61,
-      "green": 0.698,
+      "green": 0.712,
       "purple": 0.586
      }
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.499,
+      "worst": 0.5,
       "at": [
        180,
        471
       ],
-      "undressed": 0.502,
+      "undressed": 0.503,
       "drop": 0.003
      },
      "orange 1x": {
@@ -386,13 +381,13 @@
       "drop": 0.007
      },
      "green 1x": {
-      "worst": 0.545,
+      "worst": 0.554,
       "at": [
        196,
        302
       ],
-      "undressed": 0.55,
-      "drop": 0.005
+      "undressed": 0.558,
+      "drop": 0.004
      },
      "purple 1x": {
       "worst": 0.392,
@@ -409,8 +404,8 @@
        178,
        262
       ],
-      "undressed": 0.49,
-      "drop": 0.006
+      "undressed": 0.491,
+      "drop": 0.007
      },
      "orange 0.8x": {
       "worst": 0.41,
@@ -422,13 +417,13 @@
       "drop": 0.006
      },
      "green 0.8x": {
-      "worst": 0.529,
+      "worst": 0.542,
       "at": [
        196,
        302
       ],
-      "undressed": 0.53,
-      "drop": 0.001
+      "undressed": 0.544,
+      "drop": 0.002
      },
      "purple 0.8x": {
       "worst": 0.385,
@@ -443,7 +438,7 @@
     "worst_margin": 0.385,
     "largest_drop": 0.007,
     "bricks_min_margin": [
-     0.515,
+     0.506,
      "blue"
     ],
     "protan_orange_p10": 0.115,
@@ -454,61 +449,61 @@
     ],
     "protan_min": 0.113,
     "jewels": {
-     "coloured_px_pct": 99.6,
-     "mean_chroma": 0.065,
-     "second_at_walls_x": 1.21,
+     "coloured_px_pct": 98.8,
+     "mean_chroma": 0.062,
+     "second_at_walls_x": 0.95,
      "second_at_walls_worst_window": [
-      1.45,
+      1.8,
       191
      ],
-     "first_jewel_hue": 344,
-     "first_share": 0.761,
-     "second_jewel_hue": 234,
-     "second_share": 0.237,
-     "apart_deg": 110,
+     "first_jewel_hue": 343,
+     "first_share": 0.765,
+     "second_jewel_hue": 209,
+     "second_share": 0.205,
+     "apart_deg": 135,
      "bins_pct": [
-      18.9,
+      18.5,
       0.1,
       0.1,
       0.0,
       0.0,
       0.0,
-      0.0,
-      19.5,
-      1.3,
-      2.9,
+      17.2,
+      2.2,
+      1.2,
+      2.7,
       7.9,
-      49.3
+      50.2
      ]
     },
-    "ghost_median": 0.047,
+    "ghost_median": 0.045,
     "ghost_worst": [
-     0.058034997433423996,
+     0.054626114666461945,
      [
-      300,
-      180
+      450,
+      250
      ]
     ],
-    "ghost_isolated_pegs": 8,
+    "ghost_isolated_pegs": 9,
     "print": {
-     "median": 0.0021,
-     "p90": 0.0257,
+     "median": 0.0011,
+     "p90": 0.021,
      "worst": [
-      0.063,
+      0.0393,
       [
-       560,
+       240,
        190
       ]
      ],
-     "samples": 65,
+     "samples": 64,
      "mode": "pegs",
-     "hue_median": 0.0063
+     "hue_median": 0.0054
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 105.2,
+ "seconds": 122.1,
  "verdict": "PASS"
 }

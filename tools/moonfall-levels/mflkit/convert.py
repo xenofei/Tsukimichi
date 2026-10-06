@@ -41,8 +41,12 @@ RUNTIME_SCENES = REPO / "Tsukimichi.Core" / "Moonfall" / "Levels" / "scenes"
 RUNTIME_LEVELS = REPO / "Tsukimichi.Core" / "Moonfall" / "Levels"
 PICTURES = REPO / "Tsukimichi" / "assets" / "moonfall" / "scenes"
 FALLBACK = "moon-road-night"          # our own night painting of no place: a game painting's stand-in
-BEAMS_STILL = 0.85                    # MoonfallSceneBuilder.BeamBreath: the beams add the other 15% at rest
-GATE = 0.02                           # the converter's gate: OKLab max or 99.9th percentile (critic rounds 4-5)
+BEAMS_STILL = 0.70                    # 1 - MoonfallSceneBuilder.BeamBreath: the beams add the other 30% at rest
+GATE = 0.015                          # the converter's gate at 2x: OKLab 99.9th percentile (critic rounds 4-5 asked
+                                      # 0.02; one glow left out on 1-1 reads 0.0198 at 1x and 0.021 at 2x, so 0.015, which
+                                      # the ten clear at 0.012 at most) ...
+GATE_MAX = 0.04                       # ... and max, both (critic runtime round 1, m2: one dropped lamp passed p99.9 alone)
+GATE_1X = 0.035                       # and at 1x, the 99th percentile (critic runtime round 1, n1)
 OPENING = (75, 41, 725, 594)          # MoonfallSceneBuilder.OpeningRect: the base layer's board rectangle
 RENDER = REPO / "tools" / "Tsukimichi.MoonfallRender"
 RENDER_DLL = RENDER / "bin" / "Release" / "net10.0-windows" / "Tsukimichi.MoonfallRender.dll"
@@ -251,8 +255,18 @@ def plate_names(recipe):
         light.append((f"{name}-ticks", "multiply", False, "T"))
     if d.get("framing"):
         light += [(f"{name}-cover", "multiply", True, "K"), (f"{name}-cloth", "add", False, "C"),
-                  (f"{name}-rim", "screen", False, "R")]
+                  (f"{name}-rim", "screen", "rim", "R")]
     return paint, light
+
+
+def _plate(name, blend, mark):
+    """A plate layer: `mark` True is the framing's cover, "rim" its rim light (the runtime's framing check reads both)."""
+    out = {"kind": "plate", "picture": name, "blend": blend}
+    if mark is True:
+        out["cover"] = True
+    elif mark == "rim":
+        out["rim"] = True
+    return out
 
 
 def runtime_recipe(recipe, level):
@@ -270,12 +284,13 @@ def runtime_recipe(recipe, level):
             s["pad"] = list(src["pad"])
             s["padMode"] = src.get("padMode", "edge")
         s["crop"] = list(src["crop"])
-        if abs(src["crop"][2] / src["crop"][3] - 4 / 3) > 0.02:
-            s["squeeze"] = True              # the pipeline resamples any crop to the board: a squarer one is squeezed
+        if src.get("squeeze"):
+            s["squeeze"] = True              # the recipe says its crop is squeezed to the board (2-1: critic n3)
+        elif abs(src["crop"][2] / src["crop"][3] - 4 / 3) > 0.02:
+            raise ValueError(f"{recipe['name']}: the crop is not 4:3 and the recipe does not declare squeeze")
         if src.get("erase"):
             s["erase"] = [list(b) for b in src["erase"]]
         out["source"] = s
-        out["fallback"] = FALLBACK
         g = {"kind": "violet" if src.get("hour") == "far" else "night"}
         for k, v in src.get("grade", {}).items():
             g[GRADE_KEYS[k]] = v
@@ -289,10 +304,13 @@ def runtime_recipe(recipe, level):
         out["vignette"] = recipe.get("vignette", 0.28)
     else:
         out["source"] = {"picture": recipe["name"]}
+    # every scene can stand in for itself with our own painting of no place: when its painting is missing, and when the
+    # spoiler shield hides the place it depicts (MoonfallPlaces tags every scene by its place: critic m7)
+    out["fallback"] = FALLBACK
     for tn in recipe.get("tone", []):
         paint.append({"kind": "tone", "where": mask_terms(tn["mask"], recipe), "mul": tn["mul"]})
     p_plates, l_plates = plate_names(recipe)
-    paint += [{"kind": "plate", "picture": n, "blend": b, **({"cover": True} if c else {})} for (n, b, c, _) in p_plates]
+    paint += [_plate(n, b, c) for (n, b, c, _) in p_plates]
     out["grain"] = 0.008
     if paint:
         out["paint"] = paint
@@ -306,15 +324,26 @@ def runtime_recipe(recipe, level):
                       "widths": list(sh["widths"]), "k": min(0.08, sh.get("k", 0.07)), "colour": sh.get("col", "#BFD2FF"),
                       "seed": sh.get("seed", 3), "reach": sh.get("reach", 900.0), "near": sh.get("near", 150.0),
                       "moving": True, "beamsOnly": True})
-    light += [{"kind": "plate", "picture": n, "blend": b, **({"cover": True} if c else {})} for (n, b, c, _) in l_plates]
+    light += [_plate(n, b, c) for (n, b, c, _) in l_plates]
     if light:
         out["light"] = light
     lights = small_lights(recipe, level)
     if lights:
         out["lights"] = [{k: v for k, v in li.items() if not (k == "flicker" and not v)} for li in lights]
     out["veil"] = recipe.get("veil", 0.40)
-    if rt.get("motion"):
-        out["motion"] = rt["motion"]
+    motion = dict(rt.get("motion") or {})
+    if motion.get("starWhere"):
+        motion["starWhere"] = mask_terms(motion["starWhere"], recipe)
+    glints = []
+    for gl in rt.get("glints", []):
+        ov = recipe["overlays"][gl["overlay"]]
+        glints.append({"points": [list(p) for p in ov["points"]], "smooth": 8 if ov.get("smooth", True) else 1,
+                       "speed": gl.get("speed", 36), "every": gl.get("every", 12), "offset": gl.get("offset", 0),
+                       "colour": gl.get("colour", "#FFE6B0")})
+    if glints:
+        motion["glints"] = glints
+    if motion:
+        out["motion"] = motion
     if rt.get("fireflies"):
         out["fireflies"] = rt["fireflies"]
     if rt.get("feverMoon"):
@@ -417,12 +446,19 @@ def reference(level_id, S=2):
     return d
 
 
+LAST_BUILD = {}
+
+
 def runtime_scene(level_id, S, out):
-    """MoonfallRender's bare scene for the level at tier S (the opening, beams at rest, no veil, grain off)."""
+    """MoonfallRender's bare scene for the level at tier S (the opening, beams at rest, no veil, grain off). What the build
+    kept and dropped (its moon, mist bands, stars and dropped parts against the recipe's) lands in LAST_BUILD[level_id]."""
     cmd = ["dotnet", str(RENDER_DLL), str(out), "--level", level_id, "--scene-only", str(S), "--no-grain"]
     r = subprocess.run(cmd, capture_output=True, text=True, cwd=REPO)
     if r.returncode != 0:
         raise RuntimeError(f"MoonfallRender failed for {level_id}: {r.stdout}\n{r.stderr}")
+    for line in r.stdout.splitlines():
+        if line.startswith("kept "):
+            LAST_BUILD[level_id] = json.loads(line[5:])
     return np.asarray(Image.open(out).convert("RGB"), np.float32) / 255
 
 
@@ -457,21 +493,27 @@ def check(level_id, S, scratch):
     return figs, worst
 
 
+def rebuild(recipe, level, P, parts, glows, lights, S=1):
+    """The plates over the palette's output P, the glows, then the small lights as the runtime draws them."""
+    from .dress import Ctx
+    X = recompose(P, parts, glows, S)
+    lc = Ctx(level, S, recipe.get("features"))
+    for li in lights:
+        X = D.points(lc, X, [(li["x"], li["y"], li["size"])], li["colour"], r=li["core"], k=li["k"], halo=li["halo"],
+                     hk=li["haloK"])
+    return np.clip(X, 0, 1)
+
+
 def recomposed(recipe, level, S=1):
     """The dress rebuilt from its runtime parts at S, with the shafts whole (the beams' share at rest): the plates over the
     palette's output, the glows, then the small lights as the runtime draws them. It must equal the dress."""
-    from .dress import Ctx
     sc = graded(recipe, S)
     P, parts = split_dress(recipe, sc, level, S, still=1.0)
-    X = recompose(P, parts, (recipe.get("dress") or {}).get("glows", []), S)
-    lc = Ctx(level, S, recipe.get("features"))
-    for li in small_lights(recipe, level):
-        X = D.points(lc, X, [(li["x"], li["y"], li["size"])], li["colour"], r=li["core"], k=li["k"], halo=li["halo"],
-                     hk=li["haloK"])
-    return sc, np.clip(X, 0, 1), parts
+    glows = (recipe.get("dress") or {}).get("glows", [])
+    return sc, rebuild(recipe, level, P, parts, glows, small_lights(recipe, level), S), (P, parts, glows)
 
 
-def selftest(verbose=True, levels=("base-01", "base-06", "base-09")):
+def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09")):
     """The converter proves itself (every checker does): the dress rebuilt from the parts the converter ships equals the
     dress (OKLab max 0.002 at 1x, on a chart with routes and ticks, a game painting with cloth and lantern posts, and our
     own painting), and the same rebuild with the framing's cover left out (the cloth laid over the scene, not in place of
@@ -482,15 +524,26 @@ def selftest(verbose=True, levels=("base-01", "base-06", "base-09")):
     for lid in levels:
         level = _level(lid)
         recipe = load_recipe(level["scene"])
-        sc, X, parts = recomposed(recipe, level)
+        sc, X, (P, parts, glows) = recomposed(recipe, level)
         d, _ = dress(recipe, sc, level, 1)
         good = compare(d, X)[0]
         cases.append((f"{lid}: the dress rebuilt from its plates (max {good:.4f})", good <= 0.002, True))
+        lights = small_lights(recipe, level)
+
+        # each variant leaves out exactly one part; the gate's statistic must catch every one (critic m2)
+        def bad_case(what, **kw):
+            args = dict(parts=parts, glows=glows, lights=lights)
+            args.update(kw)
+            bad = compare(d, rebuild(recipe, level, P, args["parts"], args["glows"], args["lights"]))
+            cases.append((f"{lid}: {what} (max {bad[0]:.4f}, p99.9 {bad[1]:.4f})", passes(bad, 2), False))
         if (recipe.get("dress") or {}).get("framing"):
-            bad_parts = dict(parts, K=np.ones_like(parts["K"]))
-            P, _ = split_dress(recipe, sc, level, 1, still=1.0)
-            bad = compare(d, recompose(P, bad_parts, (recipe.get("dress") or {}).get("glows", []), 1))[0]
-            cases.append((f"{lid}: the plates without the framing's cover (max {bad:.4f})", bad <= GATE, False))
+            bad_case("the plates without the framing's cover", parts=dict(parts, K=np.ones_like(parts["K"])))
+        if glows:
+            bad_case("one glow left out", glows=glows[1:])
+        if (recipe.get("dress") or {}).get("extras"):
+            bad_case("the ticks plate left out", parts=dict(parts, T=np.ones_like(parts["T"])))
+        if lights:
+            bad_case("one small light left out", lights=lights[1:])
     r = {"name": "t", "features": {"f": [[0, 0], [10, 0], [10, 10]]}, "masks": {"land": {"kind": "rim-fill", "threshold": 0.7, "grow": 4}}}
     terms = mask_terms([["disc", 1, 2, 30, -20], ["poly", "f", 10], ["not-poly", "f"], ["near", "f", 8, 30], ["luma", 0.2, 0.3],
                         ["not-mask", "land", 12]], r)
@@ -516,25 +569,56 @@ def gate(level_ids, scratch, tiers=(2, 1), log=print):
     """The converter's gate on these levels: the runtime's bare scene against the pipeline's (grain off). Fails at 2x when
     both the max and the 99.9th percentile exceed GATE (a picture is exact only at 2x; at 1x the runtime cuts and grades
     a game painting at 1x and downsizes our 2x pictures and plates, where the pipeline's own 1x is its 2x scene downsized,
-    so 1x is reported, not judged). The gate first proves itself: the pipeline's scene against itself passes, and against
-    the pipeline's clipped jewel (the form the game does not draw) it fails."""
+    so 1x is judged by its 99th percentile, GATE_1X). A level also fails when the build drops a moon, a mist band or more
+    than half the stars its recipe asks for, or any part (a plate, a light). The gate first proves itself: the pipeline's
+    scene against itself passes, and against the pipeline's clipped jewel (the form the game does not draw) it fails."""
     from .dress import dress
     from .scene import load_recipe
     level = _level(level_ids[0])
     recipe = load_recipe(level["scene"])
     ref = reference(level_ids[0], 1)
-    clipped, _ = dress(recipe, graded(recipe, 1), level, 1)
+    from .dress import clipped_gamut
+    with clipped_gamut():
+        clipped, _ = dress(recipe, graded(recipe, 1), level, 1)
     same, other = compare(ref, ref), compare(ref, clipped)
-    proof = same[0] == 0 and min(other[0], other[1]) > GATE
+    proof = same[0] == 0 and not passes(other, 2)
     log(f"gate proof on {level_ids[0]}: itself max {same[0]:.4f}; the clipped jewel max {other[0]:.4f} p99.9 {other[1]:.4f}: "
         f"{'ok' if proof else 'BAD'}")
     rows, ok = [], proof
     for lid in level_ids:
         for S in tiers:
             figs, worst = check(lid, S, scratch)
-            passed = S != 2 or min(figs[0], figs[1]) <= GATE
+            kept = LAST_BUILD.get(lid, {})
+            drops = dropped(lid, kept)
+            passed = passes(figs, S) and not drops
             ok &= passed
             rows.append((lid, S, figs, worst, passed))
             log(f"{lid} {S}x: max {figs[0]:.4f} p99.9 {figs[1]:.4f} p99 {figs[2]:.4f} mean {figs[3]:.4f}, worst at "
-                f"({worst[0]:g}, {worst[1]:g}){'' if S == 2 else ' (reported)'}{'' if passed else '  FAIL'}")
+                f"({worst[0]:g}, {worst[1]:g}); kept {kept}{'; dropped ' + ', '.join(drops) if drops else ''}"
+                f"{'' if passed else '  FAIL'}")
     return ok, rows
+
+
+def passes(figs, S):
+    """The gate's figures at tier S: at 2x the max within GATE_MAX and the 99.9th percentile within GATE, both; at 1x the
+    99th percentile within GATE_1X."""
+    return figs[0] <= GATE_MAX and figs[1] <= GATE if S == 2 else figs[2] <= GATE_1X
+
+
+def dropped(level_id, kept):
+    """What the runtime's build left out of the level's recipe (from MoonfallRender's report)."""
+    rt = json.loads((RUNTIME_SCENES / f"{_level(level_id)['scene']}.json").read_text(encoding="utf-8"))
+    out = []
+    if not kept:
+        return ["(no report)"]
+    if rt.get("feverMoon") and not kept.get("moon"):
+        out.append("the Fever moon")
+    want_mist = len((rt.get("motion") or {}).get("mist", []))
+    if kept.get("mist", 0) < want_mist:
+        out.append(f"{want_mist - kept.get('mist', 0)} mist band(s)")
+    want_stars = (rt.get("motion") or {}).get("stars", 0)
+    if kept.get("stars", 0) * 2 < want_stars:
+        out.append(f"stars ({kept.get('stars', 0)} of {want_stars})")
+    if kept.get("dropped", 0):
+        out.append(f"{kept['dropped']} part(s)")
+    return out

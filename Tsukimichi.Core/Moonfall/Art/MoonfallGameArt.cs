@@ -640,23 +640,14 @@ public sealed class MoonfallGameArt<T> : IDisposable
     /// </summary>
     private MoonfallSceneRecipe? SafeRecipe(MoonfallSceneRecipe recipe)
     {
-        if (recipe.Fallback is not { } picture)
+        if (recipe.Fallback is null)
         {
             return null;
         }
 
         if (!safeRecipes.TryGetValue(recipe.Name, out var safe))
         {
-            safe = recipe with
-            {
-                Name = recipe.Name + "~safe",
-                Source = new MoonfallSceneSource(MoonfallSourceKind.Picture, picture, false, 0, 0, false, null),
-                Grade = null,
-                Fallback = null,
-
-                // A plate under the palette is drawn on the painting itself (a chart's engraved roads): it shows the place.
-                Paint = recipe.Paint.Where(static l => l is not MoonfallPlate).ToList(),
-            };
+            safe = MoonfallSceneBuilder.StorySafe(recipe)!;
             safeRecipes[recipe.Name] = safe;
         }
 

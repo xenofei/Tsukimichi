@@ -7,7 +7,11 @@
   "params": {}
  },
  "veil": 0.28,
- "features": {},
+ "features": {
+  "gate box": [[296, 170], [504, 170], [504, 352], [296, 352]],
+  "lantern l": [[168, 196], [224, 196], [224, 348], [168, 348]],
+  "lantern r": [[576, 196], [632, 196], [632, 348], [576, 348]]
+ },
  "dress": {
   "palette": {
    "name": "Rose water and a teal high sky (the twins)",
@@ -170,6 +174,14 @@
     "k": 0.8,
     "halo": 5,
     "hk": 0.22
+   },
+   {
+    "points": [[196, 240], [604, 240], [196, 460], [604, 460]],
+    "col": "#FFB45E",
+    "r": 1.6,
+    "k": 0.7,
+    "halo": 6,
+    "hk": 0.2
    }
   ]
  },
@@ -181,13 +193,14 @@
     {
      "y": [532, 592],
      "speed": 3,
-     "alpha": 0.06,
+     "alpha": 0.11,
      "cell": 140,
-     "seed": 43,
+     "seed": 12,
      "colour": "#E0B8C8"
     }
-   ]
+   ],
+   "starWhere": [["y", 340, 326], ["not-poly", "gate box", 24], ["not-poly", "lantern l", 20], ["not-poly", "lantern r", 20]]
   },
-  "flicker": [0]
+  "flicker": [0, 1]
  }
 }

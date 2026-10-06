@@ -122,12 +122,13 @@
     {
      "y": [540, 592],
      "speed": 3,
-     "alpha": 0.06,
+     "alpha": 0.11,
      "cell": 140,
      "seed": 37,
      "colour": "#B8C8F0"
     }
-   ]
+   ],
+   "starWhere": [["y", 258, 244]]
   },
   "flicker": [0],
   "feverMoon": [292, 128, 30]

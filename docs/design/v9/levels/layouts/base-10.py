@@ -16,7 +16,9 @@ What carries the finale's gap (game designer round 6, G24; measured on the tunin
 stars (110, 200) and (690, 200), each left in up to a fifth of lost games; the U's second pair at y 486 (about 1.5 per
 48 against the outermost pair at y 456); and the two blue stars seen through the gate, (350, 250) and (450, 250), about
 2 per 48. The right corner star once sat behind a blue star on the launcher's line to it (critic N21): that star moved
-from (660, 170) to (640, 150), off the line, so both corner stars are fair shots. The palette turns warm for the stage's last board:
+from (660, 170) to (640, 150), off the line, but the right field still shielded it ((640, 150) took 13 first touches, the
+corner star 3 against its mirror's 15: critic runtime round 1, m5). The right field is now the left's mirror: (660, 150)
+for (140, 150), and (660, 120), which had no mirror, is gone, so both corner stars are fair first-touch shots. The palette turns warm for the stage's last board:
 a true rose over the water and the lower sky, the high sky's lapis second (game designer n2 and G8). The stage's last level, back at Vesper
 Bay's own gate: the twins' own board, and the stage's hardest.
 """
@@ -58,8 +60,7 @@ def build(b):
                     orange=k in (2, 3), green=False, tag="lantern reflection")    # its two upper moons
     # the night sky and the far shore: stars, and the shore's low hills dotted either side
     SKY = {(110, 200), (690, 200), (250, 290), (550, 290), (220, 150), (580, 150)}     # the stars that are candidates
-    for (x, y) in ((240, 190), (560, 190), (640, 150), (130, 300), (680, 300), (250, 290), (550, 290), (140, 150),
-                   (660, 120)):
+    for (x, y) in ((240, 190), (560, 190), (660, 150), (130, 300), (680, 300), (250, 290), (550, 290), (140, 150)):
         b.place(x, y, r=8, orange=(x, y) in SKY, tag="star")
     for line in ([(92, 332), (150, 338)], [(650, 338), (708, 332)]):
         b.trace(line, spacing=30, r=7, tag="far shore")

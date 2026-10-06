@@ -75,6 +75,12 @@ public sealed class MoonfallSceneLayers
 
     public IReadOnlyList<MoonfallMistLayer> Mist { get; init; } = [];
 
+    /// <summary>The glints running along their tracks.</summary>
+    public IReadOnlyList<MoonfallGlintTrack> Glints { get; init; } = [];
+
+    /// <summary>The fireflies' halo colour.</summary>
+    public Vector3 FireflyHaloColour { get; init; } = MoonfallColor.Hex("#FFB45E");
+
     /// <summary>How many dust motes drift in the beams.</summary>
     public int Dust { get; init; }
 
@@ -123,8 +129,14 @@ public static partial class MoonfallSceneBuilder
     /// <summary>How far every piece keeps from a moon's disc, units (F6: the brightest face never sits behind a peg).</summary>
     public const float MoonKeep = 18f;
 
-    /// <summary>The moving share of a moving shaft: it breathes ±15% round the still.</summary>
-    public const float BeamBreath = 0.15f;
+    /// <summary>
+    /// The moving share of a moving shaft: it breathes ±30% round the still (twice round 1's ±15%, which could not be seen:
+    /// game designer runtime round 1, m3), so its texture holds 60% of the shaft and 70% is baked.
+    /// </summary>
+    public const float BeamBreath = 0.30f;
+
+    /// <summary>The least a recipe's star mask (<see cref="MoonfallMotionRecipe.StarWhere"/>) must be where a star sits.</summary>
+    public const float StarMaskLeast = 0.9f;
 
     /// <summary>
     /// Builds <paramref name="recipe"/> over <paramref name="level"/> at <paramref name="s"/> pixels a unit (1 or 2) from
@@ -185,6 +197,13 @@ public static partial class MoonfallSceneBuilder
 
         foreach (var layer in recipe.Paint)
         {
+            // A plate under the palette is drawn on the painting itself (a chart's engraved roads): it belongs to the place,
+            // so over a fallback picture it is left out, as the spoiler shield's story-safe recipe leaves it (critic m8).
+            if (fallback && layer is MoonfallPlate)
+            {
+                continue;
+            }
+
             ApplyLight(ctx, px, layer, still: true, beams: null);
         }
 
@@ -291,7 +310,8 @@ public static partial class MoonfallSceneBuilder
         var sky = SkyMask(ctx);
         var feverMoon = recipe.Moon is { } m0 && ctx.Clear(m0.X, m0.Y) >= m0.R + MoonKeep ? m0 : null;
         var moonFront = feverMoon is { } moon && Covered(ctx, MoonRect(moon)) is { } front ? Crop(px, s, front, ctx.Cover) : null;
-        var stars = Stars(px, ctx, recipe.Motion);
+        var stars = Stars(px, ctx, recipe);
+        var glints = recipe.Motion.Glints.Select(static g => new MoonfallGlintTrack(g)).ToList();
         var mist = Mist(recipe.Motion, clearance);
         Lap("layers");
         timer.Stop();
@@ -311,6 +331,8 @@ public static partial class MoonfallSceneBuilder
             VeilK = recipe.Veil,
             Fireflies = fireflies,
             FireflyColour = recipe.Fireflies?.Colour ?? MoonfallColor.Hex("#FFD27A"),
+            FireflyHaloColour = recipe.Fireflies?.HaloColour ?? MoonfallColor.Hex("#FFB45E"),
+            Glints = glints,
             Stars = stars,
             Flickers = flickers,
             Mist = mist,
@@ -770,13 +792,49 @@ public static partial class MoonfallSceneBuilder
         return picked;
     }
 
-    /// <summary>The scene's own bright points in the sky (title_loop.star_points): local maxima, clear of framing and 8 units from pieces.</summary>
-    private static IReadOnlyList<MoonfallStar> Stars(MoonfallImage px, MoonfallDressContext ctx, MoonfallMotionRecipe motion)
+    /// <summary>
+    /// The discs no star may sit in (x, y, radius), board units: every moon the recipe paints or names for Fever, out to
+    /// half its radius again or 8 units, whichever is more (game designer runtime round 1, M1).
+    /// </summary>
+    public static IReadOnlyList<Vector3> MoonDiscs(MoonfallSceneRecipe recipe)
     {
+        ArgumentNullException.ThrowIfNull(recipe);
+        var moons = recipe.Paint.Concat(recipe.Light).OfType<MoonfallMoon>().ToList();
+        if (recipe.Moon is { } m)
+        {
+            moons.Add(m);
+        }
+
+        return moons.Select(static m => new Vector3(m.X, m.Y, MathF.Max(m.R * 1.5f, m.R + 8))).Distinct().ToList();
+    }
+
+    /// <summary>
+    /// A mask (<see cref="MoonfallMaskTerm"/>s) over <paramref name="px"/> at <paramref name="s"/> pixels a unit, against
+    /// <paramref name="clearance"/>; a <c>land</c> term finds no land here (the tests read a star mask with it).
+    /// </summary>
+    public static MoonfallPlane EvaluateMask(IReadOnlyList<MoonfallMaskTerm> terms, MoonfallClearance clearance, MoonfallImage px, int s)
+    {
+        ArgumentNullException.ThrowIfNull(terms);
+        ArgumentNullException.ThrowIfNull(clearance);
+        ArgumentNullException.ThrowIfNull(px);
+        var ctx = new MoonfallDressContext(s, clearance);
+        return Mask(ctx, terms, 1f, () => MoonfallGrade.Lightness(px));
+    }
+
+    /// <summary>
+    /// The scene's own bright points in the sky (title_loop.star_points): local maxima, clear of framing and 8 units from
+    /// pieces, inside the recipe's sky (<see cref="MoonfallMotionRecipe.StarWhere"/>) and out of every moon's disc.
+    /// </summary>
+    private static IReadOnlyList<MoonfallStar> Stars(MoonfallImage px, MoonfallDressContext ctx, MoonfallSceneRecipe recipe)
+    {
+        var motion = recipe.Motion;
         if (motion.Stars <= 0)
         {
             return [];
         }
+
+        var sky = motion.StarWhere.Count > 0 ? Mask(ctx, motion.StarWhere, 1f, () => MoonfallGrade.Lightness(px)) : null;
+        var moons = MoonDiscs(recipe);
 
         var luma = new MoonfallPlane(px.Width, px.Height);
         for (var i = 0; i < luma.Data.Length; i++)
@@ -805,7 +863,8 @@ public static partial class MoonfallSceneBuilder
                 }
 
                 float X = (x + 0.5f) / ctx.S, Y = (y + 0.5f) / ctx.S;
-                if (ctx.Clear(X, Y) < MoonfallMotion.ParticleKeepOut + 2)
+                if (ctx.Clear(X, Y) < MoonfallMotion.ParticleKeepOut + 2 || (sky is not null && sky.Data[i] < StarMaskLeast)
+                    || moons.Any(m => Vector2.Distance(new Vector2(X, Y), new Vector2(m.X, m.Y)) < m.Z))
                 {
                     continue;
                 }

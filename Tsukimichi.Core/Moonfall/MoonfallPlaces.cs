@@ -102,13 +102,15 @@ public static class MoonfallPlaces
         // The world painting "The Three Great Continents" read as a chart: no place in the story, as airship-road.
         ["rhotano-wonders"] = MoonfallPlace.Nowhere,
 
-        // Our own paintings (Horizon, the Sagolii, the Crystal, Vesper Bay, the ferry): set nowhere, as moon-road-night.
-        ["horizon-by-night"] = MoonfallPlace.Nowhere,
-        ["sagolii-cactuar"] = MoonfallPlace.Nowhere,
-        ["crystal-call"] = MoonfallPlace.Nowhere,
-        ["vesper-moonpath"] = MoonfallPlace.Nowhere,
-        ["ferry-under-sail"] = MoonfallPlace.Nowhere,
-        ["vesper-twin-lanterns"] = MoonfallPlace.Nowhere,
+        // Our own paintings, each tagged by the place it depicts, as the game's are (critic runtime round 1, m7; the owner:
+        // Moonfall follows the shield). Horizon on its mesa, the constellation over the Waking Sands, Vesper Bay's moonpath,
+        // its ferry and its harbour gate: Western Thanalan. The cactuar on the Sagolii's dunes: Southern Thanalan.
+        ["horizon-by-night"] = new(ARealmReborn, "Western Thanalan"),
+        ["sagolii-cactuar"] = new(ARealmReborn, "Southern Thanalan"),
+        ["crystal-call"] = new(ARealmReborn, "Western Thanalan"),
+        ["vesper-moonpath"] = new(ARealmReborn, "Western Thanalan"),
+        ["ferry-under-sail"] = new(ARealmReborn, "Western Thanalan"),
+        ["vesper-twin-lanterns"] = new(ARealmReborn, "Western Thanalan"),
     };
 
     /// <summary>

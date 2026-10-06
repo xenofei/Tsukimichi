@@ -12,7 +12,8 @@
    "ceiling": 0.36
   },
   "skyDrop": 0.35,
-  "glow": [-50, -60]
+  "glow": [-50, -60],
+  "squeeze": true
  },
  "veil": 0.44,
  "features": {
@@ -74,7 +75,7 @@
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#30B48C",
+     "hex": "#56AE6C",
      "chroma": 0.14,
      "mask": [["y", 400, 480]]
     }
@@ -159,7 +160,7 @@
     {
      "y": [516, 592],
      "speed": 4,
-     "alpha": 0.07,
+     "alpha": 0.11,
      "cell": 130,
      "seed": 31,
      "colour": "#9FD8E0"
@@ -167,5 +168,11 @@
    ]
   },
   "flicker": [0]
- }
+ },
+ "tone": [
+  {
+   "mask": [["y", 400, 480]],
+   "mul": 1.16
+  }
+ ]
 }

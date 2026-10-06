@@ -380,8 +380,8 @@
     "straight_run": null,
     "peg_sized_discs": [],
     "lights_too_close": [],
-    "lights_per_band_max": 0,
-    "lights_nearest": 99,
+    "lights_per_band_max": 3,
+    "lights_nearest": 92.0,
     "darkened_min_clearance": 54.28,
     "elements_dropped_for_clearance": 0
    },
@@ -498,7 +498,7 @@
     "protan_min": 0.132,
     "jewels": {
      "coloured_px_pct": 99.5,
-     "mean_chroma": 0.079,
+     "mean_chroma": 0.078,
      "second_at_walls_x": 0.27,
      "second_at_walls_worst_window": [
       0.42,
@@ -506,11 +506,11 @@
      ],
      "first_jewel_hue": 291,
      "first_share": 0.803,
-     "second_jewel_hue": 5,
+     "second_jewel_hue": 356,
      "second_share": 0.197,
-     "apart_deg": 73,
+     "apart_deg": 65,
      "bins_pct": [
-      11.0,
+      10.6,
       0.0,
       0.0,
       0.0,
@@ -521,7 +521,7 @@
       0.0,
       60.3,
       20.0,
-      8.7
+      9.1
      ]
     },
     "ghost_median": 0.065,
@@ -535,7 +535,7 @@
     "ghost_isolated_pegs": 4,
     "print": {
      "median": 0.0,
-     "p90": 0.0145,
+     "p90": 0.0143,
      "worst": [
       0.0453,
       [
@@ -545,13 +545,13 @@
      ],
      "samples": 69,
      "mode": "pegs",
-     "hue_median": 0.0015
+     "hue_median": 0.0014
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 92.3,
+ "seconds": 92.2,
  "verdict": "PASS"
 }

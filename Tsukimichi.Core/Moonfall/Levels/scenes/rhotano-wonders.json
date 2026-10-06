@@ -6,7 +6,6 @@
   "game": "ui/loadingimage/-nowloading_base05_hr1.tex",
   "crop": [1080, 1300, 960, 720]
  },
- "fallback": "moon-road-night",
  "grade": {
   "kind": "night",
   "gamma": 1.35,
@@ -15,18 +14,19 @@
   "chromaMid": 0.45
  },
  "vignette": 0.28,
+ "fallback": "moon-road-night",
  "grain": 0.008,
  "palette": {
   "bands": [[0, "#3048C8"], [600, "#2438A0"]],
-  "chroma": 1.2,
-  "floor": 0.04,
+  "chroma": 1.5,
+  "floor": 0.05,
   "keep": 0.3,
   "keepHigh": 0.75,
   "mix": 0.5,
   "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9DCFF"]],
   "regions": [
    {
-    "hue": "#20A884",
+    "hue": "#4FAF71",
     "chroma": 0.11,
     "where": [
      {
@@ -103,7 +103,8 @@
   {
    "kind": "plate",
    "picture": "rhotano-wonders-rim",
-   "blend": "screen"
+   "blend": "screen",
+   "rim": true
   }
  ],
  "lights": [

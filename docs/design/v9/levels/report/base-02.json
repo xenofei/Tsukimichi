@@ -367,7 +367,7 @@
    "ramp_first_seed": 865
   },
   "ceiling": {
-   "p99_luma": 0.219,
+   "p99_luma": 0.226,
    "limit": 0.465
   },
   "framecheck": {
@@ -495,42 +495,42 @@
      0.532,
      "blue"
     ],
-    "protan_orange_p10": 0.134,
+    "protan_orange_p10": 0.129,
     "protan_places": 28,
     "protan_worst_at": [
-     606,
-     416
+     678,
+     413
     ],
-    "protan_min": 0.131,
+    "protan_min": 0.126,
     "jewels": {
-     "coloured_px_pct": 99.8,
-     "mean_chroma": 0.098,
-     "second_at_walls_x": 0.27,
+     "coloured_px_pct": 99.3,
+     "mean_chroma": 0.095,
+     "second_at_walls_x": 0.39,
      "second_at_walls_worst_window": [
-      1.09,
-      441
+      2.11,
+      416
      ],
-     "first_jewel_hue": 274,
-     "first_share": 0.769,
-     "second_jewel_hue": 150,
-     "second_share": 0.156,
-     "apart_deg": 125,
+     "first_jewel_hue": 275,
+     "first_share": 0.755,
+     "second_jewel_hue": 151,
+     "second_share": 0.173,
+     "apart_deg": 124,
      "bins_pct": [
       0.0,
       0.0,
       0.0,
       0.0,
       12.5,
-      1.7,
-      1.5,
-      7.5,
-      9.0,
-      67.8,
+      2.7,
+      2.1,
+      7.2,
+      6.9,
+      68.5,
       0.1,
       0.0
      ]
     },
-    "ghost_median": 0.028,
+    "ghost_median": 0.027,
     "ghost_worst": [
      0.029011134058237076,
      [
@@ -541,23 +541,23 @@
     "ghost_isolated_pegs": 6,
     "print": {
      "median": 0.0,
-     "p90": 0.0115,
+     "p90": 0.0093,
      "worst": [
-      0.0379,
+      0.0284,
       [
-       130,
-       470
+       182,
+       412
       ]
      ],
      "samples": 59,
      "mode": "pegs",
-     "hue_median": 0.0017
+     "hue_median": 0.001
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 30.5,
+ "seconds": 41.0,
  "verdict": "PASS"
 }

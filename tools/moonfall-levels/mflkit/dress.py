@@ -47,9 +47,9 @@ QUIET_REGION, QUIET_KEEP = 0.6, 0.5
 # The jewel in sRGB with its lightness kept (F1), as the runtime draws it (MoonfallColor.ToSrgbKeepingLightness): a
 # colour outside sRGB keeps its OKLab L and hue and gives up chroma (a bisection of 8 steps) until it fits. dress2.jewel
 # clips each channel instead, which moves a saturated pixel's lightness (up to 0.056 in L at the 99th percentile on 1-2)
-# and is not what the game draws; the converter's gate found it (levels runtime round, 6 October 2026). The approved
-# levels were built and checked with the clip, so the dress keeps it unless `RUNTIME_GAMUT` is set (`runtime_gamut()`):
-# the converter's gate draws the game's form, and which form the levels are checked in is the owner's call.
+# and is not what the game draws; the converter's gate found it (levels runtime round 1, 6 October 2026). The owner's
+# answer (runtime round 1): the game's form, lightness kept, is the pipeline's default, so the reports, composites and
+# stage checks describe what ships. `clipped_gamut()` draws the old form (the round-6 approved composites).
 _M2I = np.array([[1.0, 0.3963377774, 0.2158037573], [1.0, -0.1055613458, -0.0638541728],
                  [1.0, -0.0894841775, -1.2914855480]], np.float32)
 _M1I = np.array([[4.0767416621, -3.3077115913, 0.2309699292], [-1.2684380046, 2.6097574011, -0.3413193965],
@@ -79,13 +79,23 @@ def keep_lightness(lab):
 _CLIP = D.oklab_to_srgb
 
 
-RUNTIME_GAMUT = [False]
+RUNTIME_GAMUT = [True]
 
 
 @contextlib.contextmanager
 def runtime_gamut():
     """The jewel drawn as the game draws it (lightness kept) while inside."""
     RUNTIME_GAMUT.append(True)
+    try:
+        yield
+    finally:
+        RUNTIME_GAMUT.pop()
+
+
+@contextlib.contextmanager
+def clipped_gamut():
+    """The jewel drawn as dress2 draws it (each channel clipped) while inside: the round-6 approved form."""
+    RUNTIME_GAMUT.append(False)
     try:
         yield
     finally:

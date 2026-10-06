@@ -7,7 +7,9 @@
   "params": {}
  },
  "veil": 0.3,
- "features": {},
+ "features": {
+  "star sky": [[70, 36], [730, 36], [730, 306], [720, 306], [640, 312], [520, 334], [420, 342], [330, 326], [250, 308], [160, 302], [60, 320], [70, 320]]
+ },
  "dress": {
   "palette": {
    "name": "Violet night and rose sand (the Sagolii)",
@@ -89,12 +91,13 @@
     {
      "y": [538, 592],
      "speed": 3,
-     "alpha": 0.05,
+     "alpha": 0.11,
      "cell": 140,
-     "seed": 23,
+     "seed": 12,
      "colour": "#D9B8C8"
     }
-   ]
+   ],
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "cactuar", 30], ["disc", 458, 190, 30, -6]]
   },
   "feverMoon": [150, 108, 34]
  }

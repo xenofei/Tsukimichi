@@ -7,7 +7,9 @@
   "params": {}
  },
  "veil": 0.25,
- "features": {},
+ "features": {
+  "star sky": [[70, 36], [730, 36], [730, 488], [690, 488], [600, 484], [520, 492], [420, 498], [330, 494], [260, 486], [180, 482], [90, 488], [70, 486]]
+ },
  "dress": {
   "palette": {
    "name": "Indigo and crystal aquamarine (the Echo)",
@@ -84,13 +86,15 @@
  "runtime": {
   "motion": {
    "dust": 20,
-   "stars": 30
+   "stars": 30,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "crystal", 24]]
   },
   "fireflies": {
    "count": 10,
    "seed": 9,
    "region": [90, 300, 710, 520],
-   "colour": "#9FF0FF"
+   "colour": "#9FF0FF",
+   "halo": "#5FD8E8"
   }
  }
 }

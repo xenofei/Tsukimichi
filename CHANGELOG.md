@@ -13,7 +13,7 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
   - **Duel:** take turns on one board against a companion at Novice, Adept or Master; the higher score wins.
   - **Ace scores:** reach a level's Ace score for a bonus and the ACED mark. Your best scores, aces and records are saved.
   - **The look:** the game's own frames, cards, paintings and fonts, read from your install while Moonfall is open; nothing of them is shipped. Each level has its own night scene with gentle moonbeams, fireflies and stars. Moonfall has its own sound and music.
-  - **Comfort:** Esc goes back, and pauses a level; Moonfall pauses itself in combat, duties, cutscenes and when you click away. Restart and Leave are held to confirm. Options holds Decoration (Full to start), Reduce motion, Sound and Peg marks, marks on the pegs for colour-blind play (off to start; Moonfall offers them once). The menus work with the keyboard and, with Dalamud's gamepad navigation on, a gamepad.
+  - **Comfort:** Esc goes back, and pauses a level; Moonfall pauses itself in combat, duties, cutscenes and when you click away. Restart and Leave are held to confirm. Options holds Decoration (Full to start), Reduce motion, Sound and Peg marks, marks on the pegs and bricks for colour-blind play (off to start; Moonfall offers them once). The menus work with the keyboard and, with Dalamud's gamepad navigation on, a gamepad.
 
 ## [1.22.1] - 2026-10-05
 

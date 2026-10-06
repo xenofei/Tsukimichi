@@ -7,8 +7,10 @@ namespace Tsukimichi.Core.Moonfall;
 /// 'Aced' badge, 'like beating an expert score'". The research has no values, so they are our own, kept by level id in
 /// <c>Moonfall/Modes/aces.json</c> (<c>{ "format": "moonfall-aces", "version": 1, "aces": { "base-01": 290000 } }</c>),
 /// apart from the level files so a level's author can tune its Ace without touching its pegs. A level without one has no
-/// Ace: no badge, no bonus. [J] Each value is set from the greedy player (<see cref="Suggest"/>): the score three in
-/// four of its won games stay under, rounded up to 10,000, so a careful human beats it and a lucky one sometimes does.
+/// Ace: no badge, no bonus. [J] Each value is set from the greedy player (<see cref="Suggest"/>) over
+/// <see cref="SuggestGames"/> games: the score that <see cref="AceShare"/> of all its games win at or above, rounded to
+/// 10,000, so every level's Ace is about as hard to reach (levels runtime round 1: a quartile of 48 games' wins gave
+/// shares from 6% to 26%).
 /// </summary>
 public static class MoonfallAces
 {
@@ -17,6 +19,12 @@ public static class MoonfallAces
     private const string Resource = "Tsukimichi.Core.Moonfall.Modes.aces.json";
 
     private static readonly Lazy<(IReadOnlyDictionary<string, long> Aces, IReadOnlyList<string> Errors)> BuiltIn = new(LoadBuiltIn);
+
+    /// <summary>The share of the greedy player's games that win at or above a level's Ace.</summary>
+    public const double AceShare = 0.20;
+
+    /// <summary>How many of the greedy player's games an Ace is suggested from (48 gave Aces from 7% to 26% of games).</summary>
+    public const int SuggestGames = 576;
 
     /// <summary>The shipped Ace scores by level id.</summary>
     public static IReadOnlyDictionary<string, long> All => BuiltIn.Value.Aces;
@@ -34,20 +42,21 @@ public static class MoonfallAces
     public static long Bonus(string? levelId, bool won, long score) => won && IsAce(levelId, score) ? MoonfallRules.AceBonus : 0;
 
     /// <summary>
-    /// The Ace score the greedy player suggests for a level: the 75th percentile of its won games' scores, rounded up
-    /// to 10,000; null when it won none.
+    /// The Ace score the greedy player suggests for a level: the score <see cref="AceShare"/> of all its games win at or
+    /// above (the lowest of its wins when fewer win), rounded to the nearest 10,000; null when it won none. Play it over
+    /// <see cref="SuggestGames"/> games.
     /// </summary>
     public static long? Suggest(MoonfallPlayabilityReport report)
     {
         ArgumentNullException.ThrowIfNull(report);
-        var won = report.Games.Where(static g => g.Won).Select(static g => g.Score).Order().ToList();
+        var won = report.Games.Where(static g => g.Won).Select(static g => g.Score).OrderDescending().ToList();
         if (won.Count == 0)
         {
             return null;
         }
 
-        var at = won[Math.Min(won.Count - 1, (int)Math.Ceiling(won.Count * 0.75) - 1)];
-        return (at + 9_999) / 10_000 * 10_000;
+        var at = won[Math.Min(won.Count, Math.Max(1, (int)Math.Ceiling(report.Games.Count * AceShare))) - 1];
+        return (at + 5_000) / 10_000 * 10_000;
     }
 
     /// <summary>Reads an aces file; never throws on bad input. Ids must be level ids, values above 0.</summary>

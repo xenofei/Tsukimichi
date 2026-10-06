@@ -156,9 +156,17 @@ public enum MoonfallPlateBlend : byte
 /// One of our own pictures laid whole over the scene (<c>assets/moonfall/scenes/&lt;picture&gt;.png</c>, 800 × 600 or
 /// 1600 × 1200): the level pipeline's dress (its light, framing and small lights) drawn ahead of time, so the game
 /// draws exactly what was measured there. A <see cref="MoonfallPlateBlend.Multiply"/> plate marked <see cref="Cover"/> is
-/// the framing's coverage (one less the plate): Fever's sky and the moon's front take it, and the framing rules measure it.
+/// the framing's coverage (one less the plate): Fever's sky and the moon's front take it, and the framing rules measure it;
+/// a screened plate marked <see cref="Rim"/> is its rim light, which they measure too.
 /// </summary>
-public sealed record MoonfallPlate(string Picture, MoonfallPlateBlend Blend, bool Cover) : MoonfallLightRecipe;
+public sealed record MoonfallPlate(string Picture, MoonfallPlateBlend Blend, bool Cover) : MoonfallLightRecipe
+{
+    /// <summary>
+    /// A <see cref="MoonfallPlateBlend.Screen"/> plate that is the silhouettes' rim light: its strength (the brightest of
+    /// its channels) is the framing's rim, so the fuller-board check measures its runs (F3b) as it does a drawn rim's.
+    /// </summary>
+    public bool Rim { get; init; }
+}
 
 /// <summary>A framing shape, drawn into its group's silhouette.</summary>
 public abstract record MoonfallShapeRecipe;
@@ -191,7 +199,18 @@ public sealed record MoonfallFramingGroup(Vector3 Body, Vector3 Inner, float Inn
 public sealed record MoonfallSmallLight(float X, float Y, float Size, Vector3 Colour, float Core, float K, float Halo, float HaloK, bool Flicker);
 
 /// <summary>Fireflies picked in <see cref="Region"/> where their whole wander and halo keep 8 units from every piece (F5).</summary>
-public sealed record MoonfallFireflies(int Count, int Seed, Vector4 Region, Vector3 Colour);
+public sealed record MoonfallFireflies(int Count, int Seed, Vector4 Region, Vector3 Colour)
+{
+    /// <summary>The colour of each firefly's halo (amber by default; a crystal's sparks take their own).</summary>
+    public Vector3 HaloColour { get; init; } = MoonfallColor.Hex("#FFB45E");
+}
+
+/// <summary>
+/// A glint of light that runs slowly along a path (a chart's engraved road), one pass every <see cref="Every"/> seconds at
+/// <see cref="Speed"/> units a second; Catmull-Rom smoothed through <see cref="Points"/> as a route is. It is light, so it
+/// shows only where its whole halo keeps <see cref="MoonfallMotion.PegKeepOut"/> from every piece.
+/// </summary>
+public sealed record MoonfallGlintPath(Vector2[] Points, int Smooth, float Speed, float Every, float Offset, Vector3 Colour);
 
 /// <summary>A mist layer scrolling across a band of the board, wrapping at its tile width.</summary>
 public sealed record MoonfallMist(float Y0, float Y1, float Speed, float Alpha, float Cell, int Seed, Vector3 Colour);
@@ -206,6 +225,15 @@ public sealed record MoonfallMotionRecipe
     public int Stars { get; init; }
 
     public Vector4 StarRegion { get; init; } = new(75, 41, 725, 330);
+
+    /// <summary>
+    /// The sky the stars may twinkle in (a mask; empty: all of <see cref="StarRegion"/>): a star sits only where it is at
+    /// least <see cref="MoonfallSceneBuilder.StarMaskLeast"/>, so never on the subject (game designer runtime round 1, M1).
+    /// </summary>
+    public IReadOnlyList<MoonfallMaskTerm> StarWhere { get; init; } = [];
+
+    /// <summary>Glints running along paths (a chart's roads).</summary>
+    public IReadOnlyList<MoonfallGlintPath> Glints { get; init; } = [];
 
     public IReadOnlyList<MoonfallMist> Mist { get; init; } = [];
 }

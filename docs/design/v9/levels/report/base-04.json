@@ -502,22 +502,22 @@
      300,
      128
     ],
-    "protan_min": 0.108,
+    "protan_min": 0.109,
     "jewels": {
-     "coloured_px_pct": 95.8,
-     "mean_chroma": 0.073,
+     "coloured_px_pct": 95.2,
+     "mean_chroma": 0.066,
      "second_at_walls_x": 0.77,
      "second_at_walls_worst_window": [
       1.91,
       216
      ],
-     "first_jewel_hue": 263,
-     "first_share": 0.78,
+     "first_jewel_hue": 261,
+     "first_share": 0.778,
      "second_jewel_hue": 351,
-     "second_share": 0.22,
-     "apart_deg": 89,
+     "second_share": 0.221,
+     "apart_deg": 90,
      "bins_pct": [
-      11.8,
+      11.9,
       0.0,
       0.0,
       0.0,
@@ -525,7 +525,7 @@
       0.0,
       0.0,
       0.3,
-      69.5,
+      69.3,
       8.2,
       4.8,
       5.4
@@ -533,7 +533,7 @@
     },
     "ghost_median": 0.056,
     "ghost_worst": [
-     0.10891185700893402,
+     0.10792718082666397,
      [
       548,
       100
@@ -542,7 +542,7 @@
     "ghost_isolated_pegs": 8,
     "print": {
      "median": 0.0,
-     "p90": 0.0164,
+     "p90": 0.0146,
      "worst": [
       0.0374,
       [
@@ -559,6 +559,6 @@
   }
  },
  "fails": [],
- "seconds": 33.3,
+ "seconds": 38.4,
  "verdict": "PASS"
 }

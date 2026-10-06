@@ -7,7 +7,6 @@
   "crop": [60, 330, 1660, 1530],
   "squeeze": true
  },
- "fallback": "moon-road-night",
  "grade": {
   "kind": "night",
   "gamma": 1.7,
@@ -18,6 +17,7 @@
   "skyBottom": 0.75
  },
  "vignette": 0.28,
+ "fallback": "moon-road-night",
  "grain": 0.008,
  "paint": [
   {
@@ -29,6 +29,15 @@
    "kCore": 0.11,
    "kWide": 0.05,
    "colour": "#C4C0EE"
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "y": [400, 480]
+    }
+   ],
+   "mul": 1.16
   }
  ],
  "palette": {
@@ -41,7 +50,7 @@
   "valueHues": [[0.08, "#1E2A8A"], [0.45, "#D0D8FF"]],
   "regions": [
    {
-    "hue": "#30B48C",
+    "hue": "#56AE6C",
     "chroma": 0.14,
     "where": [
      {
@@ -98,7 +107,8 @@
   {
    "kind": "plate",
    "picture": "limsa-across-water-rim",
-   "blend": "screen"
+   "blend": "screen",
+   "rim": true
   }
  ],
  "lights": [
@@ -121,7 +131,7 @@
    {
     "y": [516, 592],
     "speed": 4,
-    "alpha": 0.07,
+    "alpha": 0.11,
     "cell": 130,
     "seed": 31,
     "colour": "#9FD8E0"
