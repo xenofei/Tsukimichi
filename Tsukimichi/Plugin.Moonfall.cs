@@ -22,6 +22,9 @@ public sealed partial class Plugin
     /// <summary>Moonfall's sound (plan v9 G8), stopped and let go when the plugin unloads.</summary>
     private MoonfallAudio? moonfallAudio;
 
+    /// <summary>The keys Moonfall claims from the game, consumed on each framework update while it answers them.</summary>
+    private GameKeyClaim? moonfallKeys;
+
     /// <summary>Sets Moonfall up; a failure is logged and leaves the game out, never the plugin.</summary>
     private void InitializeMoonfall()
     {
@@ -52,7 +55,23 @@ public sealed partial class Plugin
         }
 
         var pluginDirectory = PluginInterface.AssemblyLocation.DirectoryName;
-        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory);
+        var options = new MoonfallConfigOptions(Settings, () => Settings.Save(PluginInterface));
+        // The companions follow the viewed character's spoiler shield (its NPC rule): a name not yet met shows the card back.
+        var story = new MoonfallStory(name => !Session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Npc, name));
+        // The Far Shore's stages and the levels' scenes follow the same shield's place rule: one set past the story shows
+        // the shield's placeholder and stays closed until the story reaches it or the place is revealed.
+        var shield = new MoonfallShield(
+            zone => Session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Area, zone),
+            zone => Session.Spoilers.Name(Core.Query.SpoilerKind.Area, zone),
+            () => Session.Spoilers.Fingerprint);
+        var window = new MoonfallWindow(campaigns, progress, path, MoonfallCausesNow, Log, TextureProvider, pluginDirectory, DataManager, PluginInterface.UiBuilder.FontAtlas, options, story, shield)
+        {
+            ShieldSession = Session,
+        };
+        // The keys Moonfall answers (Esc; the arrows, Tab, Enter and Space on its menus) are taken back from the game.
+        moonfallKeys = GameKeyClaim.ForGame();
+        window.Keys = moonfallKeys;
+        Framework.Update += moonfallKeys.Consume;
         // Its sound: the output starts when the window opens; the volume lives in the settings.
         moonfallAudio = new MoonfallAudio(
             Log,
@@ -95,6 +114,12 @@ public sealed partial class Plugin
 
     private void DisposeMoonfall()
     {
+        if (moonfallKeys is not null)
+        {
+            Framework.Update -= moonfallKeys.Consume;
+            moonfallKeys = null;
+        }
+
         moonfallWindow?.SaveNow();
         moonfallWindow?.DisposeArt();
         if (moonfallWindow is not null)

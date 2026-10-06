@@ -70,7 +70,8 @@ public static class MoonfallStages
     /// [J] The Far Shore's stage names: the spec names only The Moon Road's, so these follow the level method's road for
     /// the expansion ("the sea voyage and what lies past it: harbours, islands, the sky over open water, and at its end
     /// the moon itself") and its three approved pilots (The Domes of Sharlayan, The Ferry in the Stars, The Sea of
-    /// Sorrows), each themed to its companion. Proposals for the owner.
+    /// Sorrows), each themed to its companion. Approved by the owner, stage 8 as "The Floating Market". Where each is set,
+    /// for the spoiler shield, is <see cref="MoonfallPlaces"/>.
     /// </summary>
     private static readonly string[] ExpansionNames =
     [
@@ -81,7 +82,7 @@ public static class MoonfallStages
         "The Admiral's Sea",
         "The Ferry in the Stars",
         "The Floating Grove",
-        "The Night Market Boats",
+        "The Floating Market",
         "The Domes of Sharlayan",
         "The Archon's Crossing",
         "The Courier's Wake",

@@ -1,0 +1,42 @@
+{
+  // The Airship Road (pilot base-p1; shipped on base-03 "Tidewater"): the official world map painting, night graded
+  // as a chart lying under the moon, teal seas against sapphire lands, the desk
+  // lamp's warm pool and three broad beams from the upper left, the chart's compass rose and neat-line.
+  // spec-rich2.md §5; docs/design/v9/rich/src/scene_airship_road.py and rich2/src/dress2.py, recipe "base-p1". The pilot's
+  // engraved route is left out: it traced base-p1's own trail of pegs and means nothing over Tidewater's layout
+  // (runtime supervision round 1, level critic).
+  "format": "moonfall-scene",
+  "version": 1,
+  "name": "airship-road",
+  "levels": ["base-03"],
+  "source": {
+    "game": "ui/loadingimage/-nowloading_base05.tex",
+    "pad": [0, 64],
+    "padMode": "reflect",
+    "crop": [-30, 370, 840, 630]
+  },
+  "fallback": "moon-road-night",
+  "grade": { "kind": "night", "gamma": 1.35, "exposure": 0.72, "ceiling": 0.35, "warmKeep": 0.25, "chromaMid": 0.45 },
+  "paint": [
+    { "kind": "moonGlow", "x": -60, "y": -60, "rCore": 420, "rWide": 900, "kCore": 0.10, "kWide": 0.05 }
+  ],
+  "vignette": 0.28,
+  "grain": 0.008,
+  "palette": {
+    "bands": [[0, "#2B5FD0"], [600, "#1D4DB8"]],
+    "chroma": 0.9,
+    "floor": 0.03,
+    "regions": [
+      { "hue": "#169A9A", "chroma": 0.085, "weight": 0.85, "where": [{ "lum": [0.30, 0.42], "blur": 3 }] }
+    ]
+  },
+  "light": [
+    { "kind": "glow", "x": 150, "y": 120, "r": 300, "colour": "#FFC27A", "k": 0.05 },
+    { "kind": "shafts", "origin": [-60, -160], "angles": [50, 58, 67], "widths": [46, 32, 52], "k": 0.065, "colour": "#FFD9A0", "seed": 3, "moving": true },
+    { "kind": "neatline", "inset": 2 },
+    { "kind": "compassRose", "x": 138, "y": 112, "r": 58 }
+  ],
+  "veil": 0.40,
+  "motion": { "dust": 40 },
+  "chrome": { "sky": "#0E1C4E", "deep": "#070C24", "jewel1": "#1D4DB8", "jewel2": "#137C86" }
+}

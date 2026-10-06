@@ -10,11 +10,15 @@
   <ItemGroup>
     <!-- Test-only seams (e.g. ShareCode.Apply's stand-in Offered flags) stay internal. -->
     <InternalsVisibleTo Include="Tsukimichi.Tests" />
+    <!-- The offline renderer stages Moonfall's moments with the engine's test hooks (tools/Tsukimichi.MoonfallRender). -->
+    <InternalsVisibleTo Include="Tsukimichi.MoonfallRender" />
   </ItemGroup>
 
   <ItemGroup>
     <!-- Moonfall's shipped levels (plan v9 G1, G6), read by MoonfallCampaigns.LoadBuiltIn. -->
     <EmbeddedResource Include="Moonfall\Levels\*.json" />
+    <!-- The levels' scene recipes (docs/design/v9/scene-recipe.md), read by MoonfallSceneRecipeLoader.LoadBuiltIn. -->
+    <EmbeddedResource Include="Moonfall\Levels\scenes\*.json" />
     <!-- Moonfall's modes data (plan v9 G7): the challenges and the Ace scores. -->
     <EmbeddedResource Include="Moonfall\Modes\*.json" />
   </ItemGroup>

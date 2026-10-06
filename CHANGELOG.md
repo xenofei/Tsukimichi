@@ -5,14 +5,15 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 ## [Unreleased]
 
 ### Added
-- **Moonfall:** a peg game inside Tsukimichi. Open it with the Moonfall button at the right of the status bar, or `/tsuki moonfall`. Aim with the mouse, click to shoot, and clear the 25 orange pegs with 10 balls; the last orange brings on the Full Moon. Four starter levels for now, with simple shapes until the artwork arrives. It pauses itself in combat, in duties, in cutscenes and when you click away, and your furthest level is saved.
-  - Eleven characters, each with a power that a green peg sets off: Super Guide, Multiball, Brass Wings, Lunar Burst, Flippers, Moon Gate, Moonbloom, Moon-Viewing Draw, Fireball, Sage's Path and Storm Post. The bar shows the level's character and each power's shots left.
-  - In Adventure each stage of five levels has its own character. Tick **Quick Play** to pick any character before your first shot.
-  - Flippers rise while you hold the mouse button over the board.
-  - Style shots pay a bonus and pop up over the board: Long Shot, Super Long Shot, Double Long Shot, Off the Wall, One-Peg Catch, Rim Shot, Lucky Bounce, Orange Sweep, Long Slide, Clear Night and Live Wire. Their bonuses count towards free balls.
-  - Moonfall has sound. Each peg rings two notes a fifth apart, a semitone higher for every peg in the shot. The bucket, free balls, style shots, each character's power, the drum roll before FULL MOON, the Fever cups and the score count-up have their own sounds.
-  - FULL MOON starts an original finale piece that plays on through the level's tally, built on Moonfall's own moon theme.
-  - Set the volume with **Sound** on the pause screen (70% to start; Off silences it). It follows the game's master volume and mute, goes quiet while Moonfall is paused, and while the game is in the background unless the game plays sound there.
+- **Moonfall:** a peg game inside Tsukimichi, under Menphina's moon. Open it with the **Moonfall** button on the main window or `/tsuki moonfall`. Aim with the mouse, click to shoot, and clear a board's 25 orange pegs before your 10 balls run out; the last orange brings on the Full Moon.
+  - **Adventure:** the map shows The Moon Road's eleven stages, each with its own companion and five levels, and a last stage where you pick your companion. The Far Shore, a second campaign of twelve stages, opens once The Moon Road is won; it follows your spoiler shield, so a stage set in a place your story hasn't reached shows its placeholder name and stays closed until your story gets there or you reveal it. Continue on the title takes you straight to your next level. Four levels ship so far; more of the road is on its way.
+  - **The companions** are eleven of Eorzea's own, shown on their Triple Triad cards, each carrying a power that a green peg sets off. Moonfall follows your spoiler shield: a companion your story hasn't introduced shows face down, and one you've met but not yet reached in Moonfall shows dimmed with their stage.
+  - **Quick Play** replays any level you've reached, with any companion you've met and reached, or none.
+  - **Challenges:** twelve to start, opening once The Moon Road is won: score targets, fewer balls, more oranges, clearing every peg, and runs of duels.
+  - **Duel:** take turns on one board against a companion at Novice, Adept or Master; the higher score wins.
+  - **Ace scores:** reach a level's Ace score for a bonus and the ACED mark. Your best scores, aces and records are saved.
+  - **The look:** the game's own frames, cards, paintings and fonts, read from your install while Moonfall is open; nothing of them is shipped. Each level has its own night scene with gentle moonbeams, fireflies and stars. Moonfall has its own sound and music.
+  - **Comfort:** Esc goes back, and pauses a level; Moonfall pauses itself in combat, duties, cutscenes and when you click away. Restart and Leave are held to confirm. Options holds Decoration (Full to start), Reduce motion, Sound and Peg marks, marks on the pegs for colour-blind play (off to start; Moonfall offers them once). The menus work with the keyboard and, with Dalamud's gamepad navigation on, a gamepad.
 
 ## [1.22.1] - 2026-10-05
 

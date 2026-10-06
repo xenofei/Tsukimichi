@@ -91,6 +91,12 @@ public enum MoonfallSprite
 
     /// <summary>The banner's soft band behind the pegs, white (tinted dark), stretched across the board. Anchor: its centre.</summary>
     FeverBand,
+
+    /// <summary>Bucket C, the lantern cart with its wheels and lantern. Anchor: the bucket's centre on its rim line.</summary>
+    BucketCart,
+
+    /// <summary>The moon road bucket C rolls on, from wall to wall. Anchor: its left end on the road's top line.</summary>
+    BucketRoad,
 }
 
 /// <summary>The manifest names of Moonfall's sprites (<see cref="MoonfallSprite"/>, the pegs and the bricks).</summary>
@@ -107,6 +113,7 @@ public static class MoonfallSprites
         "bucket.cradle", "bucket.rail", "bucket.boat", "bucket.boat.contact", "bucket.water", "bucket.column",
         "frame.bead.outer", "frame.bead.inner", "frame.mottle",
         "fever.cup", "fever.cup.centre", "fever.rule", "fever.band",
+        "bucket.cart", "bucket.road",
     ];
 
     /// <summary>The name of <paramref name="sprite"/>.</summary>

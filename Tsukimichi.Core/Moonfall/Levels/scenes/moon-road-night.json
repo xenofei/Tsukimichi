@@ -1,0 +1,49 @@
+{
+  // The Moon Road by night (shipped on base-01 "First Light"; the default dressing of our own painting): the night
+  // sky Moonfall ships, given the Moonlit Post's dress (pilot base-p3): an emissive full moon at the upper left, an
+  // amethyst sky over a teal-emerald ground, two oaks at the walls (mostly beyond them), oak leaves from both top
+  // corners and ferns in the lower corners, moonbeams through the leaves, fireflies and twinkling stars in the open sky.
+  "format": "moonfall-scene",
+  "version": 1,
+  "name": "moon-road-night",
+  "default": true,
+  "source": { "picture": "moon-road-night" },
+  "paint": [
+    { "kind": "moon", "x": 168, "y": 112, "r": 27, "seed": 3 }
+  ],
+  "palette": {
+    "bands": [[0, "#6B3FA8"], [330, "#4A3AA8"], [600, "#1F6E78"]],
+    "chroma": 0.9,
+    "floor": 0.03,
+    "regions": [
+      { "hue": "#1FB0A8", "chroma": 0.12, "weight": 0.95, "where": [{ "y": [380, 440] }] },
+      { "hue": "#8A4FD0", "chroma": 0.09, "weight": 0.6, "where": [{ "y": [330, 260] }] }
+    ]
+  },
+  "light": [
+    { "kind": "shafts", "origin": [150, 70], "angles": [38, 50, 62, 74, 86], "widths": [16, 24, 14, 26, 12], "k": 0.08, "colour": "#D6E4FF", "seed": 3, "reach": 760, "near": 40, "moving": true }
+  ],
+  "framing": [
+    {
+      "body": "#04080A", "inner": "#0E3328", "rim": "#9EE6C4", "rimK": 0.5, "seed": 7,
+      "shapes": [
+        { "kind": "trunk", "x": 57, "y0": 30, "y1": 610, "w0": 14, "w1": 20, "lean": -3, "seed": 3 },
+        { "kind": "trunk", "x": 743, "y0": 30, "y1": 610, "w0": 14, "w1": 20, "lean": 4, "seed": 5 },
+        { "kind": "frond", "style": "oak", "x": 66, "y": 30, "length": 150, "angle": 18, "droop": 0.55, "leaf": 23, "leaves": 23, "seed": 11, "width": 2.2, "twigs": 3 },
+        { "kind": "frond", "style": "oak", "x": 88, "y": 40, "length": 110, "angle": 55, "droop": 0.40, "leaf": 20.7, "leaves": 18, "seed": 12, "width": 2.2, "twigs": 3 },
+        { "kind": "frond", "style": "oak", "x": 60, "y": 90, "length": 120, "angle": 30, "droop": 0.60, "leaf": 20.7, "leaves": 18, "seed": 13, "width": 2.2, "twigs": 3 },
+        { "kind": "frond", "style": "oak", "x": 736, "y": 30, "length": 140, "angle": 168, "droop": 0.40, "leaf": 23, "leaves": 21, "seed": 14, "width": 2.2, "twigs": 3 },
+        { "kind": "frond", "style": "oak", "x": 720, "y": 60, "length": 110, "angle": 128, "droop": 0.35, "leaf": 20.7, "leaves": 18, "seed": 15, "width": 2.2, "twigs": 3 },
+        { "kind": "frond", "style": "oak", "x": 742, "y": 100, "length": 110, "angle": 150, "droop": 0.60, "leaf": 20.7, "leaves": 18, "seed": 16, "width": 2.2, "twigs": 3 },
+        { "kind": "frond", "style": "fern", "x": 72, "y": 600, "length": 120, "angle": -60, "droop": 0.22, "leaf": 20, "leaves": 11, "seed": 21, "width": 1.4 },
+        { "kind": "frond", "style": "fern", "x": 95, "y": 600, "length": 95, "angle": -35, "droop": 0.22, "leaf": 20, "leaves": 11, "seed": 22, "width": 1.4 },
+        { "kind": "frond", "style": "fern", "x": 728, "y": 600, "length": 120, "angle": -120, "droop": 0.22, "leaf": 20, "leaves": 11, "seed": 23, "width": 1.4 },
+        { "kind": "frond", "style": "fern", "x": 705, "y": 600, "length": 95, "angle": -145, "droop": 0.22, "leaf": 20, "leaves": 11, "seed": 24, "width": 1.4 }
+      ]
+    }
+  ],
+  "fireflies": { "count": 10, "seed": 5, "region": [90, 120, 712, 210], "colour": "#FFD27A" },
+  "veil": 0.22,
+  "motion": { "dust": 40, "stars": 36, "starRegion": [75, 41, 725, 200] },
+  "chrome": { "sky": "#1F1650", "deep": "#050D10", "jewel1": "#13805E", "jewel2": "#6B3FA8" }
+}

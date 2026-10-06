@@ -142,18 +142,24 @@ public sealed class MoonfallArtLoader<T> : IDisposable
             Release(unused);
         }
 
-        Start(MoonfallArtSlot.Sheet1x, Path.Combine(folder, atlas.OneXFile), (atlas.Width, atlas.Height));
-        if (wantTwoX)
+        // Each path is made only when its slot loads (never a string a frame once everything is in).
+        if (slots.ShouldLoad(MoonfallArtSlot.Sheet1x))
+        {
+            Start(MoonfallArtSlot.Sheet1x, Path.Combine(folder, atlas.OneXFile), (atlas.Width, atlas.Height));
+        }
+
+        if (wantTwoX && slots.ShouldLoad(MoonfallArtSlot.Sheet2x))
         {
             Start(MoonfallArtSlot.Sheet2x, Path.Combine(folder, atlas.TwoXFile), (atlas.Width * 2, atlas.Height * 2));
         }
 
-        if (scene is not null)
+        var sceneSlot = wantTwoX ? MoonfallArtSlot.Scene2x : MoonfallArtSlot.Scene1x;
+        if (scene is not null && slots.ShouldLoad(sceneSlot))
         {
-            Start(wantTwoX ? MoonfallArtSlot.Scene2x : MoonfallArtSlot.Scene1x, MoonfallArtFiles.ScenePath(folder, scene, wantTwoX), MoonfallArtFiles.SceneSize(wantTwoX));
+            Start(sceneSlot, MoonfallArtFiles.ScenePath(folder, scene, wantTwoX), MoonfallArtFiles.SceneSize(wantTwoX));
         }
 
-        if (slots.NeedsSky)
+        if (slots.NeedsSky && slots.ShouldLoad(MoonfallArtSlot.Sky))
         {
             Start(MoonfallArtSlot.Sky, Path.Combine(folder, atlas.SkyFile), ((int)atlas.Sky.W, (int)atlas.Sky.H));
         }
