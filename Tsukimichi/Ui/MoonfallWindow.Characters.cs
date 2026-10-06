@@ -86,6 +86,12 @@ public sealed partial class MoonfallWindow
             var look = MoonfallLooks.Companion(all[i], StateOf(all[i].Companion));
             var hit = MenuHit(m, CardIds[i], x - 4, y - 4, x + cw + 4, y + chh + (small ? 30 : 46), out var hovered, out var nav);
             CompanionCard(m, look, x, y, cw, i == charSel, nav || hovered);
+            if (look.Face == MoonfallCardFace.Dimmed)
+            {
+                // Met but not reached: the same padlock as the pickers' drained medallions.
+                Padlock(m, x + cw - (small ? 9 : 14), y + chh - (small ? 10 : 16), small ? 5.5 : 8);
+            }
+
             if (nav)
             {
                 FocusOutline(m.Dl, m.V.Map(x, y), m.V.Map(x + cw, y + chh), m.V.Size(6));
@@ -144,10 +150,19 @@ public sealed partial class MoonfallWindow
             var power = Strings.MoonfallPowerName(info.Power);
             charNames[i] = look.Face == MoonfallCardFace.Back ? (m.Small ? Strings.MoonfallNotMetShort : Strings.MoonfallNotYetMet)
                 : m.Small && info.Name.Length > 9 ? ShortName(info.Companion) : info.Name;
-            var shortPower = m.Small ? ShortPowerName(info.Power) : power;
+            // At 640 the power's name alone, as the player learns it; the stage is the detail panel's and the dimmed card's.
+            if (m.Small)
+            {
+                // Within the card's pitch (the floor stops it shrinking): the full name, else its short form ("Draw").
+                var pitch = m.V.Size(66 + 12 - 4);
+                var px = NamePx(m.V, 12, MoonfallFace.Axis);
+                charSubs[i] = MeasureText(MoonfallFace.Axis, px, power) <= pitch ? power : FitLine(MoonfallFace.Axis, px, ShortPowerName(info.Power), pitch);
+                continue;
+            }
+
             charSubs[i] = !look.ShowsStage ? power
-                : look.FarShore ? string.Format(c, m.Small ? Strings.MoonfallPowerFarShoreShortFormat : Strings.MoonfallPowerFarShoreFormat, shortPower)
-                : string.Format(c, m.Small ? Strings.MoonfallPowerStageShortFormat : Strings.MoonfallPowerStageFormat, shortPower, info.Stage);
+                : look.FarShore ? string.Format(c, Strings.MoonfallPowerFarShoreFormat, power)
+                : string.Format(c, Strings.MoonfallPowerStageFormat, power, info.Stage);
         }
 
         var sel = all[charSel];
@@ -158,11 +173,11 @@ public sealed partial class MoonfallWindow
         charName = selLook.Named ? sel.Name : Strings.MoonfallNotYetMet;
         charRole = Wrap(m, MoonfallFace.Axis, small ? 12 : 15, selLook.Named ? lore.Role : Strings.MoonfallNotMetRole, textWidth);
         charQuote = selLook.Named ? Wrap(m, MoonfallFace.Axis, small ? 12 : 17.5f, "“" + lore.Line + "”", textWidth) : [];
-        var stageName = MoonfallStages.Of(sel.Campaign)[sel.Stage - 1].Name;
+        var stageName = StageNameShown(MoonfallStages.Of(sel.Campaign)[sel.Stage - 1]);
         charJoins = sel.Campaign == MoonfallCampaignKind.Expansion
             ? string.Format(c, Strings.MoonfallJoinsFarShoreFormat, sel.Stage, stageName)
             : string.Format(c, Strings.MoonfallJoinsFormat, sel.Stage, stageName);
-        charDoes = Wrap(m, MoonfallFace.Axis, small ? 12.5f : 17, lore.Does, small ? 258f : 300f);
+        charDoes = Wrap(m, MoonfallFace.Axis, small ? 12.5f : 17, lore.Does, small ? 258f : 280f);
         charLasts = lore.Lasts;
         charWon = 0;
         var stage = (sel.Campaign == MoonfallCampaignKind.Expansion ? farStages : baseStages) is { } list && sel.Stage - 1 < list.Count ? list[sel.Stage - 1] : null;
@@ -185,7 +200,7 @@ public sealed partial class MoonfallWindow
         };
     }
 
-    /// <summary>A power's short name for the 640 grid ("Draw", "Burst", "Wings").</summary>
+    /// <summary>A power's short name, for a 640 card whose pitch the full one overruns ("Draw" for "Moon-Viewing Draw").</summary>
     private static string ShortPowerName(MoonfallPower power) => power switch
     {
         MoonfallPower.Draw => Strings.MoonfallPowerShortDraw,
@@ -256,7 +271,9 @@ public sealed partial class MoonfallWindow
         var h = LevelThumb(m, level, x, y, w, 0.26, new Vector4((float)ox, (float)oy, (float)Cw, (float)Ch));
         var k = w / Cw;
         var accent = MoonfallCards.For(info.Power)?.Accent ?? GoldInk;
-        m.Dl.PushClipRect(m.V.Map(x, y), m.V.Map(x + w, y + h), true);
+        // Clipped to the opening inside the thumbnail's gilt frame, so no mark sits on the frame.
+        var inset = w * 0.04;
+        m.Dl.PushClipRect(m.V.Map(x + inset, y + inset), m.V.Map(x + w - inset, y + h - inset), true);
         PowerGlyph(m, info.Power, x + ((gx - ox) * k), y + ((gy - oy) * k), k, accent, x, y, w, h);
         m.Dl.PopClipRect();
     }

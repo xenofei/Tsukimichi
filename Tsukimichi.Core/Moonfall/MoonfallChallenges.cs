@@ -325,6 +325,9 @@ public enum MoonfallChallengeState : byte
 
     /// <summary>Completed at least once.</summary>
     Done,
+
+    /// <summary>Open, but a level it runs through is set past the player's story (<see cref="MoonfallShield"/>): closed until the story reaches it.</summary>
+    Veiled,
 }
 
 /// <summary>The challenges that ship (<c>Moonfall/Modes/challenges.json</c>) and who may play them.</summary>

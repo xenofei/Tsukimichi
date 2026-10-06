@@ -123,10 +123,22 @@ internal static class Render
             options.Decoration = decoration switch { "simple" => Tsukimichi.Core.Ui.Flair.Quiet, "off" => Tsukimichi.Core.Ui.Flair.Plain, _ => Tsukimichi.Core.Ui.Flair.Full };
         }
 
+        // The spoiler shield for places (--story N: the story has reached expansion N, 0 A Realm Reborn … 5 Dawntrail).
+        // The Far Shore is staged at Shadowbringers by default, so its Endwalker stages show veiled.
+        var storyArg = Arg(args, "--story");
+        var reach = storyArg is not null ? byte.Parse(storyArg, CultureInfo.InvariantCulture) : screen == "far" ? MoonfallPlaces.Shadowbringers : (byte?)null;
+        var shield = reach is { } r ? StoryShield(r) : null;
         var temp = Path.Combine(Path.GetTempPath(), "moonfall-render-progress.json");
         var window = new MoonfallWindow(campaigns, progress, temp, static () => MoonfallPauseReason.None, null, artHost,
-            Path.Combine(repo, "Tsukimichi", "assets", "moonfall"), gameHost, fonts, options, story, null, aces)
+            Path.Combine(repo, "Tsukimichi", "assets", "moonfall"), gameHost, fonts, options, story, null, aces, shield)
         { SeedForRender = 1 };
+
+        // --text-check: every string drawn is heard, and none may hold a veiled stage's name or place.
+        var drawn = new HashSet<string>(StringComparer.Ordinal);
+        if (args.Contains("--text-check"))
+        {
+            MoonfallWindow.TextSinkForRender = text => drawn.Add(text.ToString());
+        }
 
         void Frame(float dt, bool draw = false)
         {
@@ -180,6 +192,12 @@ internal static class Render
             return 2;
         }
 
+        // --stage N: the map's selected stage (from 1), so a veiled stage's panel can be shown.
+        if (Arg(args, "--stage") is { } stageArg)
+        {
+            window.MapStageForRender = int.Parse(stageArg, CultureInfo.InvariantCulture) - 1;
+        }
+
         Settle();
         if (board)
         {
@@ -217,6 +235,28 @@ internal static class Render
         for (var t = 0.0; t < seconds; t += 1 / 60.0)
         {
             Frame(1f / 60f);
+        }
+
+        if (args.Contains("--text-check"))
+        {
+            // No string drawn on any frame may hold the name or the place of a stage the shield veils.
+            var hidden = new List<string>();
+            foreach (var stage in MoonfallStages.Of(MoonfallCampaignKind.Expansion))
+            {
+                var place = MoonfallPlaces.OfStage(stage);
+                if (shield is not null && shield.Hides(place))
+                {
+                    hidden.Add(stage.Name);
+                    hidden.Add(place.Zone!);
+                }
+            }
+
+            var leaks = drawn.Where(t => hidden.Any(h => t.Contains(h, StringComparison.OrdinalIgnoreCase))).ToList();
+            Console.WriteLine($"text-check: {drawn.Count} strings drawn, {hidden.Count / 2} stages veiled, {leaks.Count} leaks{(leaks.Count > 0 ? ": " + string.Join(" | ", leaks) : string.Empty)}");
+            if (leaks.Count > 0)
+            {
+                return 3;
+            }
         }
 
         if (args.Contains("--alloc"))
@@ -380,6 +420,27 @@ internal static class Render
     }
 
     /// <summary>The board of the old renderer: --level (a shipped level, or a pilot on stage 3), its progress just short of it.</summary>
+    /// <summary>
+    /// A stand-in for the spoiler shield whose story has reached expansion <paramref name="reach"/>: it hides an area
+    /// Moonfall tags with a later era and prints the shield's placeholder shape for it ("Endwalker area 2").
+    /// </summary>
+    private static MoonfallShield StoryShield(byte reach)
+    {
+        string[] expansions = ["A Realm Reborn", "Heavensward", "Stormblood", "Shadowbringers", "Endwalker", "Dawntrail"];
+        var eras = new Dictionary<string, (byte Era, int Number)>(StringComparer.Ordinal);
+        foreach (var place in MoonfallStages.Of(MoonfallCampaignKind.Expansion).Select(MoonfallPlaces.OfStage).Concat(MoonfallPlaces.Scenes.Values))
+        {
+            if (place.Zone is { } zone && !eras.ContainsKey(zone))
+            {
+                eras[zone] = (place.Era, eras.Values.Count(e => e.Era == place.Era) + 1);
+            }
+        }
+
+        return new MoonfallShield(
+            zone => eras.TryGetValue(zone, out var e) && e.Era > reach,
+            zone => eras.TryGetValue(zone, out var e) ? $"{expansions[e.Era]} area {e.Number}" : zone);
+    }
+
     private static (MoonfallCampaigns, MoonfallProgress, Func<string?, long?>?, MoonfallStory?) Legacy(string repo, string levelName, string moment)
     {
         var (campaigns, index) = Campaign(repo, levelName);

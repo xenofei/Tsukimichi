@@ -148,6 +148,12 @@ public sealed partial class MoonfallWindow
     internal Vector2 ContentSizeForRender { get; private set; }
 
     /// <summary>Shows a screen as a player would reach it, for the offline renderer; false for a name it does not know.</summary>
+    /// <summary>The offline renderer: the map's selected stage (from 0).</summary>
+    internal int MapStageForRender
+    {
+        set => mapStage = value;
+    }
+
     internal bool ShowForRender(string name)
     {
         flow.Home();

@@ -5,6 +5,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Tsukimichi.Core.Moonfall;
 using Tsukimichi.Core.Moonfall.Art;
+using Tsukimichi.Core.Query;
 
 namespace Tsukimichi.Ui;
 
@@ -50,10 +51,69 @@ public sealed partial class MoonfallWindow
     private string[] stopTips = [];
     private string[] stopTipLines = [];
     private bool[] stopComing = [];
+
+    /// <summary>The area the selected stage hides while it is set past the player's story (what "Reveal this name" reveals); null otherwise.</summary>
+    private string? panelVeiledZone;
+
+    // ---- The spoiler shield's names (every stage or level name the screens draw goes through these) ----
+
+    /// <summary>A stage's name as drawn: the shield's placeholder ("Endwalker area 3") while it is set past the story.</summary>
+    private string StageNameShown(MoonfallStage stage) => modes.StageName(stage);
+
+    /// <summary>A level's name as drawn on the menus: none of a veiled stage's ("Past your story"), "On its way" for one not built.</summary>
+    private static string LevelNameShown(in MoonfallLevelSlot slot) =>
+        slot.State == MoonfallLevelState.Veiled ? Strings.MoonfallVeiledLevel : slot.Level?.Name ?? Strings.MoonfallLevelComing;
+
+    /// <summary>A level's name where it is played (the HUD, the pause, the tally): "Past your story" should the shield come to hide it mid-level.</summary>
+    private string PlayLevelName(MoonfallLevel level) => modes.LevelVeiled(level.Id) ? Strings.MoonfallVeiledLevel : level.Name;
+
+    /// <summary>
+    /// A placeholder's hover and right-click over <paramref name="x0"/>,<paramref name="y0"/>–<paramref name="x1"/>,<paramref name="y1"/>:
+    /// the shield's own three-line hover, and "Reveal this name" for the hidden area (Tsukimichi's reveal, for the
+    /// session), as every placeholder in Tsukimichi answers.
+    /// </summary>
+    private void ShieldPlaceholder(in MenuPen m, double x0, double y0, double x1, double y1, string zone, string shown)
+    {
+        var min = m.V.Map(x0, y0);
+        var max = m.V.Map(x1, y1);
+        if (ShieldSession is { } session)
+        {
+            ShieldText.Interact(min, max, session, SpoilerKind.Area, zone, shown);
+        }
+        else if (ImGui.IsWindowHovered() && ImGui.IsMouseHoveringRect(min, max))
+        {
+            ShieldText.Hover();
+        }
+    }
+
+    /// <summary>
+    /// The spoiler shield's mark (Tsukimichi's eye-slash, as on the Spoilers help and settings), drawn small at
+    /// <paramref name="x"/>,<paramref name="y"/> on a dark disc: a stage set past the player's story. Not the padlock,
+    /// which is Moonfall's own progress.
+    /// </summary>
+    private static void ShieldMark(in MenuPen m, double x, double y, double s)
+    {
+        var dl = m.Dl;
+        var v = m.V;
+        dl.AddCircleFilled(v.Map(x, y), v.Size(s * 1.25), Ink(MoonfallColor.Hex("#0A0E22"), 0.95f), 24);
+        var ink = Ink(MoonfallColor.Hex("#C9CFE6"));
+        var w = MathF.Max(1f, v.Size(s * 0.16));
+
+        // The eye: two arcs meeting at its corners, and the pupil.
+        dl.PathArcTo(v.Map(x, y + (s * 0.55)), v.Size(s * 0.95), MathF.PI * 1.22f, MathF.PI * 1.78f, 12);
+        dl.PathStroke(ink, ImDrawFlags.None, w);
+        dl.PathArcTo(v.Map(x, y - (s * 0.55)), v.Size(s * 0.95), MathF.PI * 0.22f, MathF.PI * 0.78f, 12);
+        dl.PathStroke(ink, ImDrawFlags.None, w);
+        dl.AddCircleFilled(v.Map(x, y), v.Size(s * 0.24), ink, 12);
+
+        // The slash, with a dark cut either side so it reads at a few pixels.
+        dl.AddLine(v.Map(x - (s * 0.72), y - (s * 0.72)), v.Map(x + (s * 0.72), y + (s * 0.72)), Ink(MoonfallColor.Hex("#0A0E22")), w * 2.4f);
+        dl.AddLine(v.Map(x - (s * 0.72), y - (s * 0.72)), v.Map(x + (s * 0.72), y + (s * 0.72)), ink, w);
+    }
     private bool panelComing;
 
     /// <summary>The stage panel's Play: lit when there is a level to play, waiting (no padlock) when its levels are on their way, else sealed.</summary>
-    private MenuStyle PanelPlayStyle => panelPlayable ? MenuStyle.Normal : panelComing ? MenuStyle.Waiting : MenuStyle.Locked;
+    private MenuStyle PanelPlayStyle => panelPlayable ? MenuStyle.Normal : panelVeiledZone is not null ? MenuStyle.Veiled : panelComing ? MenuStyle.Waiting : MenuStyle.Locked;
     private string panelState = string.Empty;
     private string panelStage = string.Empty;
     private string panelName = string.Empty;
@@ -65,6 +125,7 @@ public sealed partial class MoonfallWindow
     private readonly string[] panelScores = new string[MoonfallCharacters.LevelsPerStage];
     private readonly string[] tileLines = new string[MoonfallCharacters.LevelsPerStage];
     private readonly string[][] tileNames = new string[MoonfallCharacters.LevelsPerStage][];
+    private readonly string?[] tileFull = new string?[MoonfallCharacters.LevelsPerStage];
     private string levelsHeader = string.Empty;
     private string levelsLine = string.Empty;
     private string stripName = string.Empty;
@@ -156,7 +217,7 @@ public sealed partial class MoonfallWindow
                 return;
             }
 
-            if (stages[i].State != MoonfallStageState.Sealed)
+            if (stages[i].State is MoonfallStageState.Open or MoonfallStageState.Done)
             {
                 mapStage = i;
             }
@@ -209,7 +270,7 @@ public sealed partial class MoonfallWindow
             CampaignTabs(m, 430, 16, 200, 34, 24);
             MenuText(m, MoonfallFace.Axis, 14, m.W - 30, 33, mapCount, Ink2, Anchor.Right, edge: 0f);
             StagePanel(m, 900, 84, 1248, 456);
-            Legend(m, 900, 470, 1248, 548);
+            Legend(m, 900, 470, 1248, 580);
             StopTooltip(m);
         }
     }
@@ -340,6 +401,10 @@ public sealed partial class MoonfallWindow
             {
                 Padlock(m, at.X + (r * 0.95), at.Y + (r * 0.9), Math.Max(r * 0.36, 5.0));
             }
+            else if (look.Veiled)
+            {
+                ShieldMark(m, at.X + (r * 0.95), at.Y + (r * 0.9), Math.Max(r * 0.36, 5.0));
+            }
 
             if (look.Pip)
             {
@@ -353,7 +418,7 @@ public sealed partial class MoonfallWindow
 
             if (hit)
             {
-                if (mapStage == i && view.State != MoonfallStageState.Sealed)
+                if (mapStage == i && view.State is MoonfallStageState.Open or MoonfallStageState.Done)
                 {
                     OpenLevels(i, -1);
                 }
@@ -398,7 +463,13 @@ public sealed partial class MoonfallWindow
         Panel(m, x0, y0, x1, y1, accent, 0.36);
         StageFace(m, view, x0 + 64, y0 + 76, 34, 0.45f);
         MenuText(m, MoonfallFace.Axis, 14, x0 + 122, y0 + 46, panelStage, GoldInk, edge: 0f);
-        MenuText(m, MoonfallFace.Jupiter, 32, x0 + 122, y0 + 74, panelName, Cream, edge: 1f, maxWidth: 210);
+        // A veiled stage's name is the shield's placeholder: the same slot and size, in the secondary tone, with its hover and reveal.
+        var nameW = MenuText(m, MoonfallFace.Jupiter, 32, x0 + 122, y0 + 74, panelName, panelVeiledZone is null ? Cream : Ink2, edge: 1f, maxWidth: 210);
+        if (panelVeiledZone is { } zone)
+        {
+            ShieldPlaceholder(m, x0 + 122, y0 + 58, x0 + 122 + Math.Min(nameW, 210), y0 + 90, zone, panelName);
+        }
+
         MenuText(m, MoonfallFace.Axis, 14.5f, x0 + 122, y0 + 100, panelCarrier, Tint(accent, 0.3f), edge: 0f, maxWidth: 210);
         CrestRule(m, x0 + 174, y0 + 140, 296, false, 0.36);
         for (var i = 0; i < view.Levels.Count; i++)
@@ -406,7 +477,7 @@ public sealed partial class MoonfallWindow
             var slot = view.Levels[i];
             var yy = y0 + 168 + (i * 29);
             var reached = slot.Reached;
-            if (MenuHit(m, rowIds[i], x0 + 16, yy - 13, x1 - 16, yy + 13, out var hovered, out var nav) && slot.State != MoonfallLevelState.Missing && view.State != MoonfallStageState.Sealed)
+            if (MenuHit(m, rowIds[i], x0 + 16, yy - 13, x1 - 16, yy + 13, out var hovered, out var nav) && slot.State != MoonfallLevelState.Missing && view.State is MoonfallStageState.Open or MoonfallStageState.Done)
             {
                 SoundClick();
                 OpenLevels(mapStage, i);
@@ -422,8 +493,8 @@ public sealed partial class MoonfallWindow
             }
 
             MenuText(m, MoonfallFace.Trump, 19, x0 + 26, yy, panelCodes[i], reached ? GoldHiInk : Ink3, edge: 0.6f);
-            MenuText(m, MoonfallFace.Jupiter, 24, x0 + 66, yy, panelNames[i], reached ? Cream : Ink3, edge: 1f, maxWidth: slot.Aced ? 168 : 196);
-            if (slot.Aced)
+            MenuText(m, MoonfallFace.Jupiter, 24, x0 + 66, yy, panelNames[i], reached ? Cream : Ink3, edge: 1f, maxWidth: slot.Aced && reached ? 168 : 196);
+            if (slot.Aced && reached)
             {
                 // An aced level says so, as level select and Quick Play do.
                 MenuText(m, MoonfallFace.Trump, 15, x0 + 330, yy, Strings.MoonfallAced, GoldHiInk, Anchor.Right, edge: 0.6f);
@@ -441,7 +512,7 @@ public sealed partial class MoonfallWindow
         }
 
         if (MenuButton(m, "##mfStagePlay", x0 + 74, y0 + 316, x0 + 274, y0 + 354, panelPlay, 28, isDefault: true, style: PanelPlayStyle,
-            tooltip: panelPlayable || panelComing ? null : Strings.MoonfallStageSealedTooltip))
+            tooltip: panelPlayable || panelComing ? null : panelVeiledZone is not null ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageSealedTooltip))
         {
             PlayStage(view);
         }
@@ -456,7 +527,7 @@ public sealed partial class MoonfallWindow
         var power = MoonfallCompanions.TryGet(view.Stage.Companion, out var info) ? info.Power : MoonfallPower.None;
         var accent = MoonfallCards.For(power)?.Accent ?? GoldInk;
         Panel(m, x0, y0, x1, y1, accent, 0.3);
-        if (MenuHit(m, "##mfStageHead", x0 + 10, y0 + 8, x1 - 10, y0 + 56, out var hovered, out var nav) && view.State != MoonfallStageState.Sealed)
+        if (MenuHit(m, "##mfStageHead", x0 + 10, y0 + 8, x1 - 10, y0 + 56, out var hovered, out var nav) && view.State is MoonfallStageState.Open or MoonfallStageState.Done)
         {
             SoundClick();
             OpenLevels(mapStage, -1);
@@ -478,11 +549,15 @@ public sealed partial class MoonfallWindow
 
         StageFace(m, view, x0 + 32, y0 + 38, 18, 0.4f);
         MenuText(m, MoonfallFace.Axis, 12.5f, x0 + 62, y0 + 22, panelStage, GoldInk, edge: 0f);
-        MenuText(m, MoonfallFace.Jupiter, 21, x0 + 62, y0 + 44, panelName, Cream, edge: 1f, maxWidth: (float)(x1 - x0 - 74));
+        var nameW = MenuText(m, MoonfallFace.Jupiter, 21, x0 + 62, y0 + 44, panelName, panelVeiledZone is null ? Cream : Ink2, edge: 1f, maxWidth: (float)(x1 - x0 - 74));
+        if (panelVeiledZone is { } zone)
+        {
+            ShieldPlaceholder(m, x0 + 62, y0 + 33, x0 + 62 + Math.Min(nameW, x1 - x0 - 74), y0 + 55, zone, panelName);
+        }
 
         // Its state in words (no legend or stop tooltip at 640), then Levels and Play.
         MenuText(m, MoonfallFace.Axis, 12, x0 + 16, y0 + 68, panelState, Ink2, edge: 0f, maxWidth: (float)(x1 - x0 - 32));
-        var sealedStage = view.State == MoonfallStageState.Sealed;
+        var sealedStage = view.State is MoonfallStageState.Sealed or MoonfallStageState.Veiled;
         if (!sealedStage && MenuButton(m, "##mfStageLevels", x0 + 12, y0 + 82, x0 + 92, y0 + 112, Strings.MoonfallLevelsButton, 15, primaryFace: false,
             tooltip: Strings.MoonfallSeeLevelsTooltip))
         {
@@ -490,7 +565,7 @@ public sealed partial class MoonfallWindow
         }
 
         if (MenuButton(m, "##mfStagePlay", x0 + (sealedStage ? 12 : 100), y0 + 82, x1 - 12, y0 + 112, panelPlay, 20, isDefault: true, style: PanelPlayStyle,
-            tooltip: panelPlayable || panelComing ? null : Strings.MoonfallStageSealedTooltip))
+            tooltip: panelPlayable || panelComing ? null : panelVeiledZone is not null ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageSealedTooltip))
         {
             PlayStage(view);
         }
@@ -560,6 +635,8 @@ public sealed partial class MoonfallWindow
         MenuText(m, MoonfallFace.Axis, 14, x0 + 158, y0 + 56, Strings.MoonfallLegendNotMet, Ink2, edge: 0f);
         PickStar(m, x0 + 260, y0 + 56, 9, false);
         MenuText(m, MoonfallFace.Axis, 14, x0 + 276, y0 + 56, Strings.MoonfallLegendPick, Ink2, edge: 0f);
+        ShieldMark(m, x0 + 26, y0 + 88, 7);
+        MenuText(m, MoonfallFace.Axis, 14, x0 + 44, y0 + 88, Strings.MoonfallLegendStory, Ink2, edge: 0f);
     }
 
     /// <summary>The stop under the mouse or the focus explains itself (1280): its stage, name, state and power, and why it shows as it does.</summary>
@@ -607,19 +684,21 @@ public sealed partial class MoonfallWindow
         {
             var view = stages[i];
             stopComing[i] = MoonfallLooks.Coming(view, cleared);
-            reachedStages += view.State != MoonfallStageState.Sealed ? 1 : 0;
+            reachedStages += view.State is MoonfallStageState.Open or MoonfallStageState.Done ? 1 : 0;
             stopNumbers[i] = view.Stage.Number.ToString(c);
             var state = view.State switch
             {
                 MoonfallStageState.Done => Strings.MoonfallStageWon,
                 MoonfallStageState.Open when view.Here => Strings.MoonfallStageHere,
                 MoonfallStageState.Open => Strings.MoonfallStageOpen,
+                MoonfallStageState.Veiled => Strings.MoonfallStageVeiledState,
                 _ when stopComing[i] => Strings.MoonfallLevelsComing,
                 _ => Strings.MoonfallStageNotReached,
             };
             var power = MoonfallCompanions.TryGet(view.Stage.Companion, out var info) ? Strings.MoonfallPowerName(info.Power) : Strings.MoonfallYourPick;
-            stopTips[i] = string.Format(c, Strings.MoonfallStopTipFormat, view.Stage.Number, view.Stage.Name, state, power);
-            stopTipLines[i] = view.Companion == MoonfallCompanionState.NotMet && !view.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
+            stopTips[i] = string.Format(c, Strings.MoonfallStopTipFormat, view.Stage.Number, StageNameShown(view.Stage), state, power);
+            stopTipLines[i] = view.State == MoonfallStageState.Veiled ? Strings.MoonfallStageVeiledLine
+                : view.Companion == MoonfallCompanionState.NotMet && !view.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
                 : view.State == MoonfallStageState.Sealed && !stopComing[i] ? Strings.MoonfallStopSealedLine
                 : string.Empty;
         }
@@ -631,7 +710,7 @@ public sealed partial class MoonfallWindow
         for (var i = 0; i < stages.Count && i < spots.Length; i++)
         {
             roadPoints[i] = StopAt(spots[i], m.Small);
-            if (stages[i].State != MoonfallStageState.Sealed)
+            if (stages[i].State is MoonfallStageState.Open or MoonfallStageState.Done)
             {
                 roadWalked = i;
             }
@@ -640,7 +719,8 @@ public sealed partial class MoonfallWindow
         // The selected stage's panel.
         var sel = stages[Math.Clamp(mapStage, 0, stages.Count - 1)];
         panelStage = string.Format(c, Strings.MoonfallStageCapsFormat, sel.Stage.Number);
-        panelName = sel.Stage.Name;
+        panelName = StageNameShown(sel.Stage);
+        panelVeiledZone = modes.VeiledZone(sel.Stage);
         if (sel.Stage.PlayerPicks)
         {
             panelCarrier = Strings.MoonfallYourPickLine;
@@ -655,17 +735,18 @@ public sealed partial class MoonfallWindow
         panelPlayable = false;
         var selComing = stopComing[Math.Clamp(mapStage, 0, stages.Count - 1)];
         panelComing = selComing;
-        panelPlay = selComing ? Strings.MoonfallLevelsComing : sel.State == MoonfallStageState.Sealed ? Strings.MoonfallNotReached : Strings.MoonfallChooseLevel;
+        panelPlay = sel.State == MoonfallStageState.Veiled ? Strings.MoonfallStageVeiledButton : selComing ? Strings.MoonfallLevelsComing : sel.State == MoonfallStageState.Sealed ? Strings.MoonfallNotReached : Strings.MoonfallChooseLevel;
 
         // At 640 the panel's state line stands in for the legend and the stop's tooltip.
-        panelState = sel.Companion == MoonfallCompanionState.NotMet && !sel.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
+        panelState = sel.State == MoonfallStageState.Veiled ? (m.Small ? Strings.MoonfallStageVeiledShort : Strings.MoonfallStageVeiledLine)
+            : sel.Companion == MoonfallCompanionState.NotMet && !sel.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
             : sel.State == MoonfallStageState.Sealed && !selComing ? Strings.MoonfallStopSealedLine
             : panelCarrier;
         for (var i = 0; i < sel.Levels.Count; i++)
         {
             var slot = sel.Levels[i];
             panelCodes[i] = LevelCode(slot.Place.Index);
-            panelNames[i] = slot.Level?.Name ?? Strings.MoonfallLevelComing;
+            panelNames[i] = LevelNameShown(slot);
             panelScores[i] = slot.State switch
             {
                 MoonfallLevelState.Cleared => slot.Best > 0 ? slot.Best.ToString("N0", c) : string.Empty,
@@ -733,33 +814,37 @@ public sealed partial class MoonfallWindow
         for (var i = 0; i < view.Levels.Count; i++)
         {
             var slot = view.Levels[i];
-            var name = slot.Level?.Name ?? Strings.MoonfallLevelComing;
+            var name = LevelNameShown(slot);
             // One line: at 1280 shrunk to the tile; at 640 (where the floor stops shrinking) without its "The", cut short if
             // it still does not fit (the strip names the selected level in full).
             tileNames[i] = small
                 ? [FitLine(MoonfallFace.Jupiter, NamePx(m.V, 15, MoonfallFace.Jupiter), name.StartsWith("The ", StringComparison.Ordinal) ? name[4..] : name, m.V.Size(108 - 30 - 14))]
                 : [name];
+
+            // A name cut short shows whole on the tile's hover and focus (a sealed tile cannot be selected into the strip).
+            tileFull[i] = small && !string.Equals(tileNames[i][0], name, StringComparison.Ordinal) ? name : null;
             tileLines[i] = slot.State switch
             {
                 MoonfallLevelState.Cleared => string.Format(c, Strings.MoonfallTileBestFormat, slot.Best.ToString("N0", c)),
                 MoonfallLevelState.Open when slot.Ace is { } ace => string.Format(c, Strings.MoonfallAceFormat, ace.ToString("N0", c)),
                 MoonfallLevelState.Open => string.Empty,
                 MoonfallLevelState.Missing => Strings.MoonfallLevelComingLine,
+                MoonfallLevelState.Veiled => string.Empty,
                 _ => i > 0 ? string.Format(c, Strings.MoonfallOpensAfterFormat, LevelCode(slot.Place.Index - 1)) : Strings.MoonfallNotReached,
             };
         }
 
         var sel = view.Levels[Math.Clamp(levelsSel, 0, view.Levels.Count - 1)];
-        stripName = sel.Level?.Name ?? Strings.MoonfallLevelComing;
+        stripName = LevelNameShown(sel);
         var carrierPower = view.Stage.PlayerPicks
             ? (MoonfallCompanions.TryGet(levelsPick, out var picked) ? picked.Power : MoonfallPower.None)
             : MoonfallCompanions.TryGet(view.Stage.Companion, out var carrier2) ? carrier2.Power : MoonfallPower.None;
         var does = MoonfallCompanions.TryGet(MoonfallCompanions.Carrying(carrierPower), out var who) && (view.Stage.PlayerPicks || view.Companion != MoonfallCompanionState.NotMet)
             ? MoonfallLooks.LoreOf(who.Companion).Does
-            : Strings.MoonfallClearTheOranges;
+            : string.Empty;
         // The level's own line (its place on the road), then what the power does on it.
-        var place = string.Format(c, Strings.MoonfallStripLevelFormat, LevelCode(sel.Place.Index), view.Stage.Name);
-        stripDescription = Wrap(m, MoonfallFace.Axis, small ? 12.5f : 15f, place + " " + does + " " + Strings.MoonfallClearTheOranges, small ? 410f : 860f);
+        var place = string.Format(c, Strings.MoonfallStripLevelFormat, LevelCode(sel.Place.Index), StageNameShown(view.Stage));
+        stripDescription = Wrap(m, MoonfallFace.Axis, small ? 12.5f : 15f, place + (does.Length > 0 ? " " + does : string.Empty) + " " + Strings.MoonfallClearTheOranges, small ? 410f : 860f);
         if (stripDescription.Length > 2)
         {
             stripDescription = stripDescription[..2];
@@ -781,6 +866,19 @@ public sealed partial class MoonfallWindow
         if (MeasureText(face, px, text) <= room)
         {
             return text;
+        }
+
+        // At a word's end first ("Above the..."), and only within a word when no whole word fits.
+        for (var n = text.Length - 1; n > 1; n--)
+        {
+            if (text[n] == ' ' && text[n - 1] != ' ')
+            {
+                var words = string.Concat(text.AsSpan(0, n), "...");
+                if (MeasureText(face, px, words) <= room)
+                {
+                    return words;
+                }
+            }
         }
 
         for (var n = text.Length - 1; n > 1; n--)
@@ -819,7 +917,7 @@ public sealed partial class MoonfallWindow
 
             StageFace(m, view, 104, 30, 18, 0.4f);
             MenuText(m, MoonfallFace.Axis, 12, 132, 18, panelStage, GoldInk, edge: 1f);
-            MenuTitle(m, 130, 40, view.Stage.Name, 30, maxWidth: 500);
+            MenuTitle(m, 130, 40, StageNameShown(view.Stage), 30, maxWidth: 500);
         }
         else
         {
@@ -830,7 +928,7 @@ public sealed partial class MoonfallWindow
 
             StageFace(m, view, 200, 78, 40, 0.5f);
             MenuText(m, MoonfallFace.Axis, 14, 270, 52, levelsHeader, GoldInk, edge: 1f);
-            MenuTitle(m, 268, 88, view.Stage.Name, 52, maxWidth: 940);
+            MenuTitle(m, 268, 88, StageNameShown(view.Stage), 52, maxWidth: 940);
             MenuText(m, MoonfallFace.Axis, 15, 270, 122, levelsLine, Ink2, edge: 1f, maxWidth: 960);
         }
 
@@ -857,7 +955,7 @@ public sealed partial class MoonfallWindow
         var small = m.Small;
         var slot = view.Levels[i];
         var th = w * 1106 / 1300;
-        var capH = small ? 48.0 : 56.0;
+        var capH = small ? 48.0 : 60.0;
         var dl = m.Dl;
         var v = m.V;
         var hit = MenuHit(m, tileIds[i], x - 8, y - 8, x + w + 8, y + th + capH, out var hovered, out var nav);
@@ -876,12 +974,24 @@ public sealed partial class MoonfallWindow
         else
         {
             SealedThumb(m, x, y, w, th);
-            Padlock(m, x + (w / 2), y + (th / 2) - (small ? 6 : 8), small ? 7 : 9);
+            if (slot.State == MoonfallLevelState.Veiled)
+            {
+                ShieldMark(m, x + (w / 2), y + (th / 2) - (small ? 6 : 8), small ? 7 : 9);
+            }
+            else
+            {
+                Padlock(m, x + (w / 2), y + (th / 2) - (small ? 6 : 8), small ? 7 : 9);
+            }
         }
 
         if (hovered && !selected)
         {
             dl.AddRect(v.Map(x - 8, y - 8), v.Map(x + w + 8, y + th + capH), Ink(MoonfallColor.Hex("#9DC0FF"), 0.6f), v.Size(4), ImDrawFlags.None, MathF.Max(1f, v.Size(1.4)));
+        }
+
+        if ((hovered || nav) && tileFull[i] is { } full)
+        {
+            UiMetrics.Tooltip(full);
         }
 
         if (nav)
@@ -913,7 +1023,7 @@ public sealed partial class MoonfallWindow
         if (slot.State == MoonfallLevelState.Cleared)
         {
             MenuText(m, MoonfallFace.Axis, small ? 14 : 13.5f, x + Pad, yy, tileLines[i], Ink2, edge: 0f, maxWidth: (float)(w - 40 - Pad));
-            if (slot.Aced)
+            if (slot.Aced && reached)
             {
                 if (small)
                 {

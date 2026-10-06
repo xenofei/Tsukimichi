@@ -17048,7 +17048,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall challenges: the line under the title.</comment>
   </data>
   <data name="MoonfallChallengeUnavailable" xml:space="preserve">
-    <value>its levels are on their way</value>
+    <value>Its levels are on their way.</value>
     <comment>Moonfall challenges: a challenge whose levels are not built yet.</comment>
   </data>
   <data name="MoonfallChallengeUnavailableLine" xml:space="preserve">
@@ -17168,7 +17168,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall companions at 640: Storm Post, short.</comment>
   </data>
   <data name="MoonfallDecorationHeldNote" xml:space="preserve">
-    <value>Reduce motion is on: everything holds still, whatever this says.</value>
+    <value>Reduce motion is on: nothing moves at any setting; Off still draws the plain board.</value>
     <comment>Moonfall options: under the Decoration setting while Reduce motion is on (it overrides Decoration's motion).</comment>
   </data>
   <data name="MoonfallLevelsButton" xml:space="preserve">
@@ -17178,5 +17178,49 @@ Another job or society: a job, class or allied society you don't play now.</valu
   <data name="MoonfallStripLevelFormat" xml:space="preserve">
     <value>Level {0} of {1}.</value>
     <comment>Moonfall level select: the selected level's place. {0} is its code (3-2), {1} the stage's name.</comment>
+  </data>
+  <data name="MoonfallVeiledLevel" xml:space="preserve">
+    <value>Past your story</value>
+    <comment>Moonfall: what a level of a stage set past the player's story is called in its place (the spoiler shield hides the place it depicts).</comment>
+  </data>
+  <data name="MoonfallStageVeiledState" xml:space="preserve">
+    <value>past your story</value>
+    <comment>Moonfall map: a stop's state in its hover line, for a stage set past the player's story (the spoiler shield).</comment>
+  </data>
+  <data name="MoonfallStageVeiledLine" xml:space="preserve">
+    <value>Set past your story: it opens when your story gets there, or when you reveal the place (right-click its name).</value>
+    <comment>Moonfall map: why a stage set past the player's story is closed, and how it opens (the spoiler shield's reveal).</comment>
+  </data>
+  <data name="MoonfallStageVeiledButton" xml:space="preserve">
+    <value>Past your story</value>
+    <comment>Moonfall map and challenges: the closed Play button of a stage or challenge set past the player's story.</comment>
+  </data>
+  <data name="MoonfallLegendStory" xml:space="preserve">
+    <value>past your story</value>
+    <comment>Moonfall map legend: the spoiler shield's mark on a stop set past the player's story.</comment>
+  </data>
+  <data name="MoonfallChallengeVeiled" xml:space="preserve">
+    <value>Runs past your story.</value>
+    <comment>Moonfall challenges: a row's line when the challenge runs through a stage set past the player's story.</comment>
+  </data>
+  <data name="MoonfallDuelLockedTooltip" xml:space="preserve">
+    <value>Win a level in Adventure first: a duel is played on a level you have reached.</value>
+    <comment>Moonfall title: why Duel is locked.</comment>
+  </data>
+  <data name="MoonfallTitleDuelNoLevels" xml:space="preserve">
+    <value>win a level first</value>
+    <comment>Moonfall title: the locked Duel pill's second line.</comment>
+  </data>
+  <data name="MoonfallDuelTwinsThinking" xml:space="preserve">
+    <value>The twins are thinking</value>
+    <comment>Moonfall duel HUD: the caption while the twins (Alphinaud and Alisaie) weigh their shot.</comment>
+  </data>
+  <data name="MoonfallDuelTwinsShot" xml:space="preserve">
+    <value>The twins' shot</value>
+    <comment>Moonfall duel HUD: the caption while the twins' ball is in play.</comment>
+  </data>
+  <data name="MoonfallStageVeiledShort" xml:space="preserve">
+    <value>Opens when your story gets there</value>
+    <comment>Moonfall map at the small size: the stage panel's line for a stage set past the player's story (the spoiler shield).</comment>
   </data>
 </root>

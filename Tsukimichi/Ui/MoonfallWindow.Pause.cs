@@ -27,6 +27,9 @@ public sealed partial class MoonfallWindow
     /// <summary>A press on the dimmed board outside the pause menu began (its release resumes).</summary>
     private bool outsidePress;
 
+    /// <summary>Whether the board was paused last frame (a change re-arms it: see <c>DrawPlay</c>).</summary>
+    private bool wasPaused;
+
     // The pause menu's words.
     private string pauseLine = string.Empty;
     private string pauseShort = string.Empty;
@@ -146,7 +149,8 @@ public sealed partial class MoonfallWindow
         var onBoard = mouse.X >= boardOrigin.X && mouse.X <= boardOrigin.X + boardSize.X && mouse.Y >= boardOrigin.Y && mouse.Y <= boardOrigin.Y + boardSize.Y;
         if (ImGui.IsMouseClicked(ImGuiMouseButton.Left))
         {
-            outsidePress = !inside && onBoard && ImGui.IsWindowHovered() && !ImGui.IsAnyItemHovered();
+            // A press within the arming time of the pause itself (a double click on the crest) is not one.
+            outsidePress = !inside && onBoard && BoardArmed && ImGui.IsWindowHovered() && !ImGui.IsAnyItemHovered();
         }
 
         if (outsidePress && ImGui.IsMouseReleased(ImGuiMouseButton.Left))
@@ -171,7 +175,7 @@ public sealed partial class MoonfallWindow
     private void RefreshPauseLine(MoonfallGame g)
     {
         var reason = pause.Held ? pause.Shown : MoonfallPauseReason.None;
-        var key = (levelIndex, g.BallsLeft, g.OrangesLeft, reason, Localization.Loc.Version);
+        var key = (levelIndex, TubeBalls(g), g.OrangesLeft, reason, Localization.Loc.Version);
         if (key == pauseLineFor)
         {
             return;
@@ -180,10 +184,10 @@ public sealed partial class MoonfallWindow
         pauseLineFor = key;
         pauseLine = pause.Held && PauseReasonText() is { } why
             ? string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseHeldFormat, why)
-            : string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseLineFormat, stageText, g.Level.Name, g.BallsLeft, g.OrangesLeft);
+            : string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseLineFormat, stageText, PlayLevelName(g.Level), TubeBalls(g), g.OrangesLeft);
         pauseShort = pause.Held && PauseReasonText() is { } heldBy
             ? heldBy
-            : string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseShortFormat, g.BallsLeft, g.OrangesLeft);
+            : string.Format(CultureInfo.CurrentCulture, Strings.MoonfallPauseShortFormat, TubeBalls(g), g.OrangesLeft);
     }
 
     /// <summary>The quick settings: Reduce motion and Peg marks as switches, Decoration and Sound between chevrons.</summary>

@@ -14,6 +14,7 @@ using Dalamud.Plugin.Services;
 using Tsukimichi.Core.Moonfall;
 using Tsukimichi.Core.Moonfall.Art;
 using Tsukimichi.Core.Ui;
+using Tsukimichi.Game;
 
 namespace Tsukimichi.Ui;
 
@@ -80,22 +81,24 @@ public sealed partial class MoonfallWindow : Window
     /// <param name="fontAtlas">The plugin's font atlas, for the game's own fonts (<see cref="MoonfallFonts"/>); null sets the chrome in the window's font.</param>
     /// <param name="options">Moonfall's options (Peg marks and its hint, Decoration, Reduce motion).</param>
     /// <param name="story">Who the player's story has introduced (the spoiler shield, for the companions); null: everyone.</param>
+    /// <param name="shield">The spoiler shield for places (the Far Shore's stages, the scenes); null hides nothing.</param>
     public MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log = null, ITextureProvider? textures = null,
-        string? pluginDirectory = null, IDataManager? data = null, IFontAtlas? fontAtlas = null, IMoonfallOptions? options = null, MoonfallStory? story = null)
+        string? pluginDirectory = null, IDataManager? data = null, IFontAtlas? fontAtlas = null, IMoonfallOptions? options = null, MoonfallStory? story = null, MoonfallShield? shield = null)
         : this(campaigns, progress, progressPath, causes, log,
             textures is not null && pluginDirectory is not null ? new MoonfallArtTextures(textures, log) : null,
             pluginDirectory is not null ? MoonfallArtFiles.Folder(pluginDirectory) : null,
             textures is not null && data is not null && pluginDirectory is not null ? new MoonfallGameArtTextures(textures, data, pluginDirectory, log) : null,
             fontAtlas is not null ? new MoonfallFonts(fontAtlas, log) : null,
             options,
-            story)
+            story,
+            shield: shield)
     {
     }
 
     /// <summary>The window over hosts of its own (the offline renderer brings stand-ins for Dalamud's textures and fonts).</summary>
     internal MoonfallWindow(MoonfallCampaigns campaigns, MoonfallProgress progress, string progressPath, Func<MoonfallPauseReason> causes, IPluginLog? log,
         IMoonfallArtHost<IDalamudTextureWrap>? artHost, string? artFolder, IMoonfallGameArtHost<IDalamudTextureWrap>? gameHost, IMoonfallFonts? fontSource, IMoonfallOptions? options,
-        MoonfallStory? story = null, IReadOnlyList<MoonfallChallenge>? challenges = null, Func<string?, long?>? aces = null)
+        MoonfallStory? story = null, IReadOnlyList<MoonfallChallenge>? challenges = null, Func<string?, long?>? aces = null, MoonfallShield? shield = null)
         : base(Strings.MoonfallTitle + Id, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse)
     {
         this.campaigns = campaigns ?? throw new ArgumentNullException(nameof(campaigns));
@@ -103,12 +106,48 @@ public sealed partial class MoonfallWindow : Window
         this.progressPath = progressPath ?? throw new ArgumentNullException(nameof(progressPath));
         this.causes = causes ?? throw new ArgumentNullException(nameof(causes));
         this.log = log;
-        modes = new MoonfallModes(campaigns, progress, story ?? MoonfallStory.Everyone, challenges ?? LoadChallenges(log)) { AceOf = aces ?? MoonfallAces.For };
+        modes = new MoonfallModes(campaigns, progress, story ?? MoonfallStory.Everyone, challenges ?? LoadChallenges(log))
+        {
+            AceOf = aces ?? MoonfallAces.For,
+            Shield = shield ?? MoonfallShield.Open,
+        };
         Size = new Vector2(1280f, 840f);
         SizeCondition = ImGuiCond.FirstUseEver;
         RespectCloseHotkey = true;
         InitArt(artHost, artFolder);
         InitRich(gameHost, fontSource, options);
+        if (gameArt is not null)
+        {
+            // A scene set past the player's story (or on a veiled stage) is never drawn: the night sky stands in.
+            gameArt.HidesScene = VeilsScene;
+        }
+    }
+
+    private bool VeilsScene(MoonfallLevel level, MoonfallSceneRecipe recipe) => modes.SceneVeiled(level, recipe.Name);
+
+    /// <summary>
+    /// The session whose spoiler shield the placeholders answer to (its hover, and its right-click "Reveal this name");
+    /// set by the plugin. Null (the offline renderer) draws the placeholders without the menu.
+    /// </summary>
+    internal SessionState? ShieldSession { get; set; }
+
+    /// <summary>The shield version the menus' words and the scene veil were made for.</summary>
+    private int shieldSeen = int.MinValue;
+
+    /// <summary>Follows the spoiler shield: a reveal or a story step remakes the menus' words and lifts or lays the scene veil.</summary>
+    private void FollowShield()
+    {
+        var version = modes.Shield.Version;
+        if (version == shieldSeen)
+        {
+            return;
+        }
+
+        shieldSeen = version;
+        gameArt?.VeilChanged();
+
+        // The menus' views and words are made per progress epoch: a shield change remakes them as a win does.
+        progressEpoch++;
     }
 
     private static IReadOnlyList<MoonfallChallenge> LoadChallenges(IPluginLog? log)
@@ -181,6 +220,7 @@ public sealed partial class MoonfallWindow : Window
         motion = MoonfallMotion.For(decoration, UiMetrics.ReduceMotion);
         var dt = ImGui.GetIO().DeltaTime;
         menuClock += Math.Clamp(dt, 0f, 0.25f);
+        FollowShield();
 
         var inPlay = flow.Current == MoonfallScreen.Play && game is not null;
         if (inPlay)
@@ -214,6 +254,12 @@ public sealed partial class MoonfallWindow : Window
                 DrawMenu(flow.Current);
                 break;
         }
+
+        // The spoiler shield's right-click menu ("Reveal this name") of the placeholders the screens drew, at the window's root.
+        if (ShieldSession is { } session)
+        {
+            ShieldText.DrawMenu(nameof(MoonfallWindow), session);
+        }
     }
 
     /// <summary>The board this frame: its clock, its events, its end, the board itself, the pause menu and the tally.</summary>
@@ -224,6 +270,15 @@ public sealed partial class MoonfallWindow : Window
         if (LevelOver(g) && pause.Paused)
         {
             pause.TryResume();
+        }
+
+        // Every resume re-arms the board as its start does, so the second press of a double click on Resume (or on
+        // the crest) never shoots; and a pause just begun ignores a press outside its panel for as long.
+        if (pause.Paused != wasPaused)
+        {
+            wasPaused = pause.Paused;
+            boardArmedAt = ImGui.GetTime() + BoardArmSeconds;
+            outsidePress = false;
         }
 
         // The board's clock runs while it is not paused; after the level ends it runs on for the tally's count-up.
@@ -432,9 +487,10 @@ public sealed partial class MoonfallWindow : Window
             ballsFor = orangesFor = multiplierFor = -1;
         }
 
-        if (ballsFor != g.BallsLeft)
+        // In a duel the balls are the shooter's (the board's count is both sides' together).
+        if (ballsFor != TubeBalls(g))
         {
-            ballsFor = g.BallsLeft;
+            ballsFor = TubeBalls(g);
             ballsText = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallBallsFormat, ballsFor);
         }
 
@@ -489,11 +545,35 @@ public sealed partial class MoonfallWindow : Window
             right -= pauseWidth + gap;
         }
 
-        var scoreWidth = ImGui.CalcTextSize(scoreText).X;
-        dl.AddText(new Vector2(right - scoreWidth, y), Theme.U32(Theme.Gold), scoreText);
-        right -= scoreWidth + gap;
+        // A duel shows both sides' scores (the opponent's, then yours) and, first on the left, whose shot it is.
+        var turn = string.Empty;
+        if (duel is { } d)
+        {
+            RefreshDuelNames(d);
+            RefreshPlainDuel(d);
+            var youWidth = ImGui.CalcTextSize(plainDuelYou).X;
+            dl.AddText(new Vector2(right - youWidth, y), Theme.U32(Theme.Gold), plainDuelYou);
+            right -= youWidth + gap;
+            var foeWidth = ImGui.CalcTextSize(plainDuelFoe).X;
+            dl.AddText(new Vector2(right - foeWidth, y), Theme.U32(Theme.Surface.Text), plainDuelFoe);
+            right -= foeWidth + gap;
+            turn = DuelTurnText(d);
+        }
+        else
+        {
+            var scoreWidth = ImGui.CalcTextSize(scoreText).X;
+            dl.AddText(new Vector2(right - scoreWidth, y), Theme.U32(Theme.Gold), scoreText);
+            right -= scoreWidth + gap;
+        }
+
         dl.PushClipRect(at, new Vector2(right, at.Y + height), true);
-        foreach (var part in (ReadOnlySpan<string>)[stageText, playLevel?.Name ?? string.Empty, ballsText, orangesText, multiplierText])
+        if (turn.Length > 0)
+        {
+            dl.AddText(new Vector2(x, y), Theme.U32(Theme.Gold), turn);
+            x += ImGui.CalcTextSize(turn).X + gap;
+        }
+
+        foreach (var part in (ReadOnlySpan<string>)[stageText, playLevel is null ? string.Empty : PlayLevelName(playLevel), ballsText, orangesText, multiplierText])
         {
             if (part.Length == 0)
             {
@@ -508,6 +588,25 @@ public sealed partial class MoonfallWindow : Window
         ImGui.SetCursorScreenPos(at);
         ImGui.Dummy(new Vector2(width, height));
         return height;
+    }
+
+    private string plainDuelYou = string.Empty;
+    private string plainDuelFoe = string.Empty;
+    private (long You, long Foe, MoonfallDuel? Duel, int Language) plainDuelFor;
+
+    /// <summary>The plain bar's two duel scores, "LOUISOIX 4,200" and "YOU 3,900", made when a score changes.</summary>
+    private void RefreshPlainDuel(MoonfallDuel d)
+    {
+        var key = (d.ShownScore(MoonfallDuel.PlayerSide), d.ShownScore(MoonfallDuel.OpponentSide), d, Localization.Loc.Version);
+        if (key == plainDuelFor)
+        {
+            return;
+        }
+
+        plainDuelFor = key;
+        var c = CultureInfo.CurrentCulture;
+        plainDuelYou = duelYou + " " + key.Item1.ToString("N0", c);
+        plainDuelFoe = duelFoe + " " + key.Item2.ToString("N0", c);
     }
 
     private string pauseButtonLabel = string.Empty;

@@ -519,6 +519,39 @@ static partial class Strings
     /// <summary>Moonfall level select: the selected level&#x27;s place. {0} is its code (3-2), {1} the stage&#x27;s name.</summary>
     public static string MoonfallStripLevelFormat => Loc.Get("MoonfallStripLevelFormat");
 
+    /// <summary>Moonfall: what a level of a stage set past the player&#x27;s story is called in its place (the spoiler shield hides the place it depicts).</summary>
+    public static string MoonfallVeiledLevel => Loc.Get("MoonfallVeiledLevel");
+
+    /// <summary>Moonfall map: a stop&#x27;s state in its hover line, for a stage set past the player&#x27;s story (the spoiler shield).</summary>
+    public static string MoonfallStageVeiledState => Loc.Get("MoonfallStageVeiledState");
+
+    /// <summary>Moonfall map: why a stage set past the player&#x27;s story is closed, and how it opens (the spoiler shield&#x27;s reveal).</summary>
+    public static string MoonfallStageVeiledLine => Loc.Get("MoonfallStageVeiledLine");
+
+    /// <summary>Moonfall map and challenges: the closed Play button of a stage or challenge set past the player&#x27;s story.</summary>
+    public static string MoonfallStageVeiledButton => Loc.Get("MoonfallStageVeiledButton");
+
+    /// <summary>Moonfall map legend: the spoiler shield&#x27;s mark on a stop set past the player&#x27;s story.</summary>
+    public static string MoonfallLegendStory => Loc.Get("MoonfallLegendStory");
+
+    /// <summary>Moonfall challenges: a row&#x27;s line when the challenge runs through a stage set past the player&#x27;s story.</summary>
+    public static string MoonfallChallengeVeiled => Loc.Get("MoonfallChallengeVeiled");
+
+    /// <summary>Moonfall title: why Duel is locked.</summary>
+    public static string MoonfallDuelLockedTooltip => Loc.Get("MoonfallDuelLockedTooltip");
+
+    /// <summary>Moonfall title: the locked Duel pill&#x27;s second line.</summary>
+    public static string MoonfallTitleDuelNoLevels => Loc.Get("MoonfallTitleDuelNoLevels");
+
+    /// <summary>Moonfall duel HUD: the caption while the twins (Alphinaud and Alisaie) weigh their shot.</summary>
+    public static string MoonfallDuelTwinsThinking => Loc.Get("MoonfallDuelTwinsThinking");
+
+    /// <summary>Moonfall duel HUD: the caption while the twins&#x27; ball is in play.</summary>
+    public static string MoonfallDuelTwinsShot => Loc.Get("MoonfallDuelTwinsShot");
+
+    /// <summary>Moonfall map at the small size: the stage panel&#x27;s line for a stage set past the player&#x27;s story (the spoiler shield).</summary>
+    public static string MoonfallStageVeiledShort => Loc.Get("MoonfallStageVeiledShort");
+
     /// <summary>A duel opponent's difficulty.</summary>
     public static string MoonfallDifficultyName(MoonfallAiDifficulty difficulty) => difficulty switch
     {

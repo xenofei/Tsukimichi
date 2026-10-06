@@ -56,8 +56,12 @@ public enum MoonfallStopFace : byte
 /// <param name="Padlock">A padlock at the ring's foot (not reached).</param>
 /// <param name="Pip">The lit orange moon (every level won).</param>
 /// <param name="Glow">The carrier's glow (it holds the next level).</param>
-/// <param name="Dim">The ring dimmed (not reached).</param>
-public readonly record struct MoonfallStopLook(MoonfallStopFace Face, bool Drained, bool Padlock, bool Pip, bool Glow, bool Dim);
+/// <param name="Dim">The ring dimmed (not reached, or past the player's story).</param>
+/// <param name="Veiled">
+/// The spoiler shield's mark at the ring's foot in place of the padlock: the stage is set past the player's story
+/// (<see cref="MoonfallShield"/>), which is not Moonfall's progress. The companion's face follows its own gating.
+/// </param>
+public readonly record struct MoonfallStopLook(MoonfallStopFace Face, bool Drained, bool Padlock, bool Pip, bool Glow, bool Dim, bool Veiled = false);
 
 /// <summary>A companion's words for the detail panel (characters.md; r2cast.CAST): English data, as their names are.</summary>
 /// <param name="Role">Who they are, as the card would say it.</param>
@@ -129,13 +133,15 @@ public static class MoonfallLooks
             : view.Companion == MoonfallCompanionState.NotMet ? MoonfallStopFace.CardBack
             : MoonfallStopFace.Portrait;
         var sealedStop = view.State == MoonfallStageState.Sealed && !coming;
+        var veiled = view.State == MoonfallStageState.Veiled;
         return new MoonfallStopLook(
             face,
             Drained: sealedStop && face == MoonfallStopFace.Portrait,
             Padlock: sealedStop && face != MoonfallStopFace.PickStar,
             Pip: view.State == MoonfallStageState.Done,
-            Glow: view.Here,
-            Dim: sealedStop);
+            Glow: view.Here && !veiled,
+            Dim: sealedStop || veiled,
+            Veiled: veiled);
     }
 
     /// <summary>

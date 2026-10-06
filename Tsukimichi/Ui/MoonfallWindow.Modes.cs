@@ -230,8 +230,7 @@ public sealed partial class MoonfallWindow
         var rowH = small ? 31.0 : 32.0;
         var y = ly0 + (small ? 40 : 56);
         var inset = small ? 26.0 : 34.0;
-        // The last page is a full one (it ends on the last level), not a stub of a row or two.
-        var first = Math.Max(0, Math.Min(quickPage * rows, levels.Count - rows));
+        var first = quickPage * rows;
         for (var i = 0; i < rows && first + i < levels.Count; i++)
         {
             var index = first + i;
@@ -248,7 +247,7 @@ public sealed partial class MoonfallWindow
             }
 
             MenuText(m, MoonfallFace.Trump, small ? 15 : 19, lx0 + inset + (small ? 8 : 12), yy, quickCodes[index], GoldHiInk, edge: 0.6f);
-            MenuText(m, MoonfallFace.Jupiter, small ? 15 : 22, lx0 + inset + (small ? 46 : 64), yy, slot.Level?.Name ?? string.Empty, Cream, edge: 1f, maxWidth: small ? 140 : 290);
+            MenuText(m, MoonfallFace.Jupiter, small ? 15 : 22, lx0 + inset + (small ? 46 : 64), yy, LevelNameShown(slot), Cream, edge: 1f, maxWidth: small ? 140 : 290);
             if (slot.Aced)
             {
                 MenuText(m, MoonfallFace.Trump, small ? 13 : 16, lx1 - inset - 8, yy, Strings.MoonfallAced, GoldHiInk, Anchor.Right, edge: 0.6f);
@@ -298,7 +297,7 @@ public sealed partial class MoonfallWindow
             gameArt?.Warm(level, BoardTwoX(m));
             LevelThumb(m, level, rx0 + (small ? 14 : 30), ry0 + (small ? 16 : 30), tw);
             var tx = rx0 + (small ? 146 : 320);
-            MenuText(m, MoonfallFace.Jupiter, small ? 20 : 34, tx, ry0 + (small ? 30 : 56), level.Name, Cream, edge: 1f, maxWidth: (float)(rx1 - tx - 16));
+            MenuText(m, MoonfallFace.Jupiter, small ? 20 : 34, tx, ry0 + (small ? 30 : 56), PlayLevelName(level), Cream, edge: 1f, maxWidth: (float)(rx1 - tx - 16));
             MenuText(m, MoonfallFace.Axis, small ? 12 : 14.5f, tx, ry0 + (small ? 52 : 92), quickTitleLine, Ink2, edge: 0f, maxWidth: (float)(rx1 - tx - 16));
             MenuText(m, MoonfallFace.Axis, small ? 12 : 14.5f, tx, ry0 + (small ? 70 : 118), quickBest, Ink2, edge: 0f, maxWidth: (float)(rx1 - tx - 16));
         }
@@ -362,8 +361,8 @@ public sealed partial class MoonfallWindow
         var sel = levels[Math.Clamp(quickSel, 0, levels.Count - 1)];
         var stage = MoonfallStages.StageOf(sel.Place.Campaign, sel.Place.Index);
         quickTitleLine = m.Small
-            ? string.Format(c, Strings.MoonfallCarrierFormat, LevelCode(sel.Place.Index), stage?.Name ?? string.Empty)
-            : string.Format(c, Strings.MoonfallQuickLevelLineFormat, Strings.MoonfallCampaignName(sel.Place.Campaign), LevelCode(sel.Place.Index), stage?.Name ?? string.Empty);
+            ? string.Format(c, Strings.MoonfallCarrierFormat, LevelCode(sel.Place.Index), (stage is null ? string.Empty : StageNameShown(stage)))
+            : string.Format(c, Strings.MoonfallQuickLevelLineFormat, Strings.MoonfallCampaignName(sel.Place.Campaign), LevelCode(sel.Place.Index), (stage is null ? string.Empty : StageNameShown(stage)));
         quickBest = sel.Best > 0
             ? (sel.Ace is { } ace ? string.Format(c, Strings.MoonfallBestAceFormat, string.Format(c, Strings.MoonfallBestFormat, sel.Best.ToString("N0", c)), ace.ToString("N0", c)) : string.Format(c, Strings.MoonfallBestFormat, sel.Best.ToString("N0", c)))
             : sel.Ace is { } ace2 ? string.Format(c, Strings.MoonfallAceFormat, ace2.ToString("N0", c)) : Strings.MoonfallNotYetWon;
@@ -411,7 +410,7 @@ public sealed partial class MoonfallWindow
         var rows = ChallengeRowsPerPage(small);
         var y = ly0 + (small ? 40 : 60);
         var (rx0Row, rx1Row) = (lx0 + (small ? 26 : 34), lx1 - (small ? 26 : 34));
-        var first = Math.Max(0, Math.Min(challengePage * rows, challengeList.Count - rows));
+        var first = challengePage * rows;
         for (var r = 0; r < rows && first + r < challengeList.Count; r++)
         {
             var i = first + r;
@@ -438,7 +437,11 @@ public sealed partial class MoonfallWindow
             {
                 Pip(m, rx1Row - (small ? 16 : 22), yy, small ? 5.5f : 7f, i);
             }
-            else if (!open)
+            else if (state == MoonfallChallengeState.Veiled)
+            {
+                ShieldMark(m, rx1Row - (small ? 16 : 22), yy, small ? 6 : 8);
+            }
+            else if (state == MoonfallChallengeState.Sealed)
             {
                 Padlock(m, rx1Row - (small ? 16 : 22), yy, small ? 6 : 8);
             }
@@ -513,7 +516,7 @@ public sealed partial class MoonfallWindow
         }
 
         if (MenuButton(m, "##mfChallengePlay", rx1 - (small ? 190 : 260), ry1 - (small ? 46 : 70), rx1 - (small ? 14 : 30), ry1 - (small ? 12 : 22), challengePlay, small ? 22 : 34,
-            isDefault: true, style: open2 ? MenuStyle.Normal : MenuStyle.Locked))
+            isDefault: true, style: open2 ? MenuStyle.Normal : selState switch { MoonfallChallengeState.Veiled => MenuStyle.Veiled, MoonfallChallengeState.Unavailable => MenuStyle.Waiting, _ => MenuStyle.Locked }))
         {
             PlaySelectedChallenge();
         }
@@ -548,6 +551,7 @@ public sealed partial class MoonfallWindow
             challengeSubs[i] = state switch
             {
                 MoonfallChallengeState.Unavailable => Strings.MoonfallChallengeUnavailable,
+                MoonfallChallengeState.Veiled => Strings.MoonfallChallengeVeiled,
                 MoonfallChallengeState.Sealed => Strings.MoonfallChallengesSealed,
                 _ => ch.Text,
             };
@@ -573,6 +577,7 @@ public sealed partial class MoonfallWindow
         {
             MoonfallChallengeState.Sealed => Strings.MoonfallChallengesSealedTooltip,
             MoonfallChallengeState.Unavailable => Strings.MoonfallChallengeUnavailableLine,
+            MoonfallChallengeState.Veiled => Strings.MoonfallStageVeiledLine,
             _ when record is { Done: true } => string.Format(c, Strings.MoonfallChallengeDoneFormat, record.Best.ToString("N0", c)),
             _ when record is { Best: > 0 } => string.Format(c, Strings.MoonfallBestFormat, record.Best.ToString("N0", c)),
             _ => Strings.MoonfallChallengeNotTried,
@@ -586,6 +591,7 @@ public sealed partial class MoonfallWindow
         {
             MoonfallChallengeState.Sealed => Strings.MoonfallSealed,
             MoonfallChallengeState.Unavailable => Strings.MoonfallLevelComing,
+            MoonfallChallengeState.Veiled => Strings.MoonfallStageVeiledButton,
             MoonfallChallengeState.Done => Strings.MoonfallPlayAgain,
             _ => Strings.MoonfallPlay,
         };
@@ -786,7 +792,7 @@ public sealed partial class MoonfallWindow
         duelRecord = string.Format(c, Strings.MoonfallDuelRecordFormat, Strings.MoonfallDifficultyName(duelDifficulty), record.Wins, record.Losses, record.Draws);
         var slot = levels[duelLevelSel];
         duelLevelCode = slot.Place.Campaign == MoonfallCampaignKind.Expansion ? "FS " + LevelCode(slot.Place.Index) : LevelCode(slot.Place.Index);
-        duelLevelLine = slot.Level?.Name ?? string.Empty;
+        duelLevelLine = LevelNameShown(slot);
         var lore = MoonfallLooks.LoreOf(opponent.Companion);
         duelOpponentRole = lore.Role;
         duelOpponentLore = Wrap(m, MoonfallFace.Axis, m.Small ? 12f : 15f, lore.Line, m.Small ? 270f : 480f);
@@ -820,28 +826,69 @@ public sealed partial class MoonfallWindow
     private string duelYou = string.Empty;
     private string duelFoe = string.Empty;
     private string duelFoeShown = string.Empty;
+    private float duelFoePx;
     private string duelYouScore = string.Empty;
     private string duelFoeScore = string.Empty;
     private string duelYourShot = string.Empty;
     private string duelFoeThinking = string.Empty;
     private string duelFoeShot = string.Empty;
-    private (long You, long Foe, int Language, float Scale) duelHudFor = (-1, -1, -1, 0f);
+    private (long You, long Foe, int Language, float Scale, bool Fonts) duelHudFor = (-1, -1, -1, 0f, false);
     private (int You, int Foe) duelBallsFor = (-1, -1);
     private string duelYouBalls = string.Empty;
     private string duelFoeBalls = string.Empty;
     private string duelBallsLabel = string.Empty;
+    private MoonfallDuel? duelNamesFor;
+    private int duelNamesLanguage = -1;
+
+    /// <summary>The fewest letters the opponent's name is cut to; shorter, it is left out (the face and the caption carry it).</summary>
+    private const int MinNameLetters = 4;
+
+    /// <summary>
+    /// The duel's words that change only with the duel and the language: YOU, the opponent's name, and the turn captions
+    /// in capitals ("YOUR SHOT", "LOUISOIX IS THINKING", "THE TWINS ARE THINKING"). A new duel remakes them, so a duel
+    /// left before its first shot never lends its opponent's name to the next.
+    /// </summary>
+    private void RefreshDuelNames(MoonfallDuel d)
+    {
+        if (ReferenceEquals(d, duelNamesFor) && duelNamesLanguage == Localization.Loc.Version)
+        {
+            return;
+        }
+
+        duelNamesFor = d;
+        duelNamesLanguage = Localization.Loc.Version;
+        duelHudFor = (-1, -1, -1, 0f, false);
+        duelBallsFor = (-1, -1);
+        var culture = CultureInfo.CurrentCulture;
+        var opponent = d.Companion(MoonfallDuel.OpponentSide);
+        var name = MoonfallCompanions.TryGet(opponent, out var info) ? ShortName(info.Companion) : string.Empty;
+        duelYou = Strings.MoonfallDuelYouCaps;
+        duelFoe = name.ToUpper(culture);
+        duelBallsLabel = Strings.MoonfallHudBalls;
+        duelYourShot = Strings.MoonfallDuelYourShot.ToUpper(culture);
+        duelFoeThinking = (opponent == MoonfallCompanion.Twins ? Strings.MoonfallDuelTwinsThinking : string.Format(culture, Strings.MoonfallDuelThinkingFormat, name)).ToUpper(culture);
+        duelFoeShot = (opponent == MoonfallCompanion.Twins ? Strings.MoonfallDuelTwinsShot : string.Format(culture, Strings.MoonfallDuelTheirShotFormat, name)).ToUpper(culture);
+    }
+
+    /// <summary>The caption of whose shot it is now, for the rich rail and the plain bar alike; empty once the duel is decided.</summary>
+    private string DuelTurnText(MoonfallDuel d) =>
+        d.Outcome != MoonfallDuelOutcome.Undecided ? string.Empty
+        : d.Turn == MoonfallDuel.PlayerSide ? duelYourShot
+        : d.Opponent.Thinking ? duelFoeThinking
+        : duelFoeShot;
 
     /// <summary>
     /// A duel's top rail. The name plate is the player's side (their companion's face, YOU and their score), the score
     /// plate the opponent's (its face, its name fitted beside the score, and its score). The side to shoot is lit: its
     /// plate glows in its companion's colour with a rim of it (breathing ±15% over 3 s, still under Reduce motion), the
-    /// other plate is dimmed, and a caption under the lit plate says whose shot it is, "Louisoix is thinking" with its
-    /// dots while the opponent weighs its shot.
+    /// other plate is dimmed under its words, and a caption under the lit plate says whose shot it is, "LOUISOIX IS
+    /// THINKING" with its dots while the opponent weighs its shot.
     /// </summary>
     private void DuelPlates(in ChromePen c, MoonfallDuel d)
     {
         var dl = c.Dl;
         var v = c.View;
+        RefreshDuelNames(d);
         var you = d.ShownScore(MoonfallDuel.PlayerSide);
         var foe = d.ShownScore(MoonfallDuel.OpponentSide);
         var foeInfo = MoonfallCompanions.TryGet(d.Companion(MoonfallDuel.OpponentSide), out var oi) ? oi : null;
@@ -849,28 +896,36 @@ public sealed partial class MoonfallWindow
         var scorePx = NumberPx(v, 26, MoonfallFace.Trump);
         var youBalls = d.BallsLeft(MoonfallDuel.PlayerSide);
         var foeBalls = d.BallsLeft(MoonfallDuel.OpponentSide);
-        if (duelHudFor != (you, foe, Localization.Loc.Version, v.Scale) || duelBallsFor != (youBalls, foeBalls))
+        if (duelBallsFor != (youBalls, foeBalls))
         {
-            duelHudFor = (you, foe, Localization.Loc.Version, v.Scale);
             duelBallsFor = (youBalls, foeBalls);
+            duelYouBalls = youBalls.ToString(CultureInfo.CurrentCulture);
+            duelFoeBalls = foeBalls.ToString(CultureInfo.CurrentCulture);
+        }
+
+        var fontsReady = fonts is { } f && f.TryGet(MoonfallFace.Axis, 12f, out _);
+        if (duelHudFor != (you, foe, Localization.Loc.Version, v.Scale, fontsReady))
+        {
+            duelHudFor = (you, foe, Localization.Loc.Version, v.Scale, fontsReady);
             var culture = CultureInfo.CurrentCulture;
-            duelYouBalls = youBalls.ToString(culture);
-            duelFoeBalls = foeBalls.ToString(culture);
-            duelBallsLabel = Strings.MoonfallHudBalls;
-            duelYou = Strings.MoonfallDuelYouCaps;
-            var name = foeInfo is null ? string.Empty : ShortName(foeInfo.Companion);
-            duelFoe = name.ToUpper(culture);
             duelYouScore = you.ToString("N0", culture);
             duelFoeScore = foe.ToString("N0", culture);
-            duelYourShot = Strings.MoonfallDuelYourShot;
-            duelFoeThinking = string.Format(culture, Strings.MoonfallDuelThinkingFormat, name);
-            duelFoeShot = string.Format(culture, Strings.MoonfallDuelTheirShotFormat, name);
 
-            // The opponent's name fits the room left of its score: shrunk to the label floor, then cut short.
+            // The opponent's name fits the room left of its score: shrunk as far as the label floor, then cut short,
+            // and left out rather than cut below four letters.
             var room = v.Size(701 - 618 - 6) - MeasureText(MoonfallFace.Trump, scorePx, duelFoeScore);
             var px = NamePx(v, 11.5f, MoonfallFace.Axis);
+            var floor = NamePx(v, 1f, MoonfallFace.Axis);
+            var w = MeasureText(MoonfallFace.Axis, px, duelFoe);
+            if (w > room && w > 0)
+            {
+                px = MathF.Max(floor, px * room / w);
+            }
+
+            duelFoePx = px;
             duelFoeShown = duelFoe.Length > 0 ? FitLine(MoonfallFace.Axis, px, duelFoe, room) : duelFoe;
-            if (MeasureText(MoonfallFace.Axis, px, duelFoeShown) > room)
+            var letters = duelFoeShown.EndsWith("...", StringComparison.Ordinal) ? duelFoeShown.Length - 3 : duelFoeShown.Length;
+            if (MeasureText(MoonfallFace.Axis, px, duelFoeShown) > room || (letters < MinNameLetters && letters < duelFoe.Length))
             {
                 duelFoeShown = string.Empty;
             }
@@ -889,18 +944,21 @@ public sealed partial class MoonfallWindow
             TurnGlow(c, nx0, ny0, nx1, ny1, youAccent, breath);
         }
 
+        // The waiting plate is dimmed under its words (the pill and the face), so its label keeps its contrast.
         Pill(c, nx0, ny0, nx1, ny1);
-        if (!FaceRing(c, youInfo?.Power ?? MoonfallPower.None, 103, 21, 10))
+        var youFace = FaceRing(c, youInfo?.Power ?? MoonfallPower.None, 103, 21, 10);
+        if (foeTurn)
+        {
+            IdleDim(c, nx0, ny0, nx1, ny1);
+        }
+
+        if (!youFace)
         {
             DrawText(dl, MoonfallFace.Trump, NumberPx(v, 16.5f, MoonfallFace.Trump), v.Map(103, 21.5), Anchor.Centre, Ink(GoldHiInk), stageText, Ink(EdgeInk), v.Size(0.6));
         }
 
         DrawText(dl, MoonfallFace.Jupiter, NamePx(v, 13f, MoonfallFace.Jupiter), v.Map(124, 21), Anchor.Left, Ink(playerTurn ? Tint(youAccent, 0.3f) : Cream), duelYou, Ink(EdgeInk), v.Size(0.8));
         DrawText(dl, MoonfallFace.Trump, NumberPx(v, 24, MoonfallFace.Trump), v.Map(nx1 - 14, 21.5), Anchor.Right, Ink(GoldHiInk), duelYouScore, Ink(MoonfallColor.Hex("#120A02")), v.Size(0.8));
-        if (foeTurn)
-        {
-            IdleDim(c, nx0, ny0, nx1, ny1);
-        }
 
         // The opponent's plate.
         var (sx0, sy0, sx1, sy1) = MoonfallHud.ScorePlate;
@@ -912,29 +970,49 @@ public sealed partial class MoonfallWindow
         Pill(c, sx0, sy0, sx1, sy1);
         dl.AddRectFilled(v.Map(614, 12.5), v.Map(706, 29.5), Ink(MoonfallColor.Hex("#060A1E")), v.Size(8.5));
         FaceRing(c, foeInfo?.Power ?? MoonfallPower.None, 601, 21, 10);
-        if (duelFoeShown.Length > 0)
-        {
-            DrawText(dl, MoonfallFace.Axis, NamePx(v, 11.5f, MoonfallFace.Axis), v.Map(618, 21), Anchor.Left, Ink(foeTurn ? Tint(foeAccent, 0.3f) : LabelInk), duelFoeShown);
-        }
-
-        DrawText(dl, MoonfallFace.Trump, scorePx, v.Map(701, 21.5), Anchor.Right, Ink(GoldHiInk), duelFoeScore, Ink(MoonfallColor.Hex("#120A02")), v.Size(0.8));
         if (playerTurn)
         {
             IdleDim(c, sx0, sy0, sx1, sy1);
         }
 
+        if (duelFoeShown.Length > 0)
+        {
+            DrawText(dl, MoonfallFace.Axis, duelFoePx, v.Map(618, 21), Anchor.Left, Ink(foeTurn ? Tint(foeAccent, 0.3f) : Cream), duelFoeShown);
+        }
+
+        DrawText(dl, MoonfallFace.Trump, scorePx, v.Map(701, 21.5), Anchor.Right, Ink(GoldHiInk), duelFoeScore, Ink(MoonfallColor.Hex("#120A02")), v.Size(0.8));
+
         // Whose shot it is, under the lit plate; under the waiting one, its balls left (the tube counts the shooter's).
         if (playerTurn)
         {
-            TurnCaption(c, (nx0 + nx1) / 2, duelYourShot, youAccent, thinking: false);
+            TurnCaption(c, (nx0 + nx1) / 2, DuelTurnText(d), youAccent, thinking: false);
             BallsChip(c, (sx0 + sx1) / 2, duelFoeBalls);
         }
         else if (foeTurn)
         {
-            var thinking = d.Opponent.Thinking;
-            TurnCaption(c, (sx0 + sx1) / 2, thinking ? duelFoeThinking : duelFoeShot, foeAccent, thinking);
+            TurnCaption(c, (sx0 + sx1) / 2, DuelTurnText(d), foeAccent, d.Opponent.Thinking);
             BallsChip(c, (nx0 + nx1) / 2, duelYouBalls);
         }
+    }
+
+    /// <summary>A chip <paramref name="w"/> units wide centred on <paramref name="cx"/>, kept inside the rail's plates (86–716): it never runs past the wall.</summary>
+    private static (double X0, double X1) ChipSpan(double cx, double w)
+    {
+        var x0 = cx - (w / 2);
+        var x1 = cx + (w / 2);
+        var (left, _, _, _) = MoonfallHud.NamePlate;
+        var (_, _, right, _) = MoonfallHud.ScorePlate;
+        if (x1 > right)
+        {
+            (x0, x1) = (x0 - (x1 - right), right);
+        }
+
+        if (x0 < left)
+        {
+            (x0, x1) = (left, x1 + (left - x0));
+        }
+
+        return (x0, x1);
     }
 
     /// <summary>The waiting side's balls left, on a quiet dark chip under its plate: BALLS and the count.</summary>
@@ -946,9 +1024,7 @@ public sealed partial class MoonfallWindow
         var numberPx = NumberPx(v, 13f, MoonfallFace.Trump);
         var lw = MeasureText(MoonfallFace.Axis, labelPx, duelBallsLabel) / v.Scale;
         var nw = MeasureText(MoonfallFace.Trump, numberPx, count) / v.Scale;
-        var w = lw + 5 + nw;
-        var x0 = cx - (w / 2) - 7;
-        var x1 = cx + (w / 2) + 7;
+        var (x0, x1) = ChipSpan(cx, lw + 5 + nw + 14);
         const double Y0 = 43, Y1 = 58;
         dl.AddRectFilled(v.Map(x0, Y0), v.Map(x1, Y1), Ink(MoonfallColor.Hex("#060816"), 0.75f), v.Size(4));
         dl.AddRect(v.Map(x0, Y0), v.Map(x1, Y1), Ink(LabelInk, 0.35f), v.Size(4), ImDrawFlags.None, MathF.Max(1f, v.Size(1)));
@@ -983,8 +1059,7 @@ public sealed partial class MoonfallWindow
         var px = NamePx(v, 12f, MoonfallFace.Jupiter);
         var w = MeasureText(MoonfallFace.Jupiter, px, text) / v.Scale;
         var dots = thinking ? 18.0 : 0.0;
-        var x0 = cx - ((w + dots) / 2) - 8;
-        var x1 = cx + ((w + dots) / 2) + 8;
+        var (x0, x1) = ChipSpan(cx, w + dots + 16);
         const double Y0 = 43, Y1 = 58;
         dl.AddRectFilled(v.Map(x0, Y0), v.Map(x1, Y1), Ink(MoonfallColor.Hex("#060816"), 0.85f), v.Size(4));
         dl.AddRect(v.Map(x0, Y0), v.Map(x1, Y1), Ink(accent, 0.6f), v.Size(4), ImDrawFlags.None, MathF.Max(1f, v.Size(1)));

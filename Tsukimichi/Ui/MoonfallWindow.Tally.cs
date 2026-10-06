@@ -191,7 +191,7 @@ public sealed partial class MoonfallWindow
 
         var level = g.Level;
         var titleY = y0 + titleOffset;
-        DrawText(dl, MoonfallFace.Jupiter, NamePx(v, small ? 40 : 37.5f, MoonfallFace.Jupiter), v.Map(cx, titleY), Anchor.Centre, Ink(GoldHiInk), level.Name, Ink(MoonfallColor.Hex("#1A0F04")), v.Size(1.4));
+        DrawText(dl, MoonfallFace.Jupiter, NamePx(v, small ? 40 : 37.5f, MoonfallFace.Jupiter), v.Map(cx, titleY), Anchor.Centre, Ink(GoldHiInk), PlayLevelName(level), Ink(MoonfallColor.Hex("#1A0F04")), v.Size(1.4));
         if (tallySubFor != (levelIndex, g.BallsLeft, Localization.Loc.Version))
         {
             tallySubFor = (levelIndex, g.BallsLeft, Localization.Loc.Version);

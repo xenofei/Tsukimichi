@@ -299,7 +299,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         ArgumentNullException.ThrowIfNull(level);
         if (!palettes.TryGetValue(level.Id, out var palette))
         {
-            palette = MoonfallSceneRecipeLoader.Pick(recipes, level)?.Chrome ?? MoonfallChromePalette.Medallion;
+            palette = PickScene(level)?.Chrome ?? MoonfallChromePalette.Medallion;
             palettes[level.Id] = palette;
         }
 
@@ -389,7 +389,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
     private Task<MoonfallRgba?> BuildThumb(MoonfallLevel level)
     {
-        var recipe = MoonfallSceneRecipeLoader.Pick(recipes, level);
+        var recipe = PickScene(level);
         if (recipe is null)
         {
             return Task.FromResult<MoonfallRgba?>(null);
@@ -535,7 +535,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
         warmAsked = level;
         warmAskedTwoX = twoX;
-        if (MoonfallSceneRecipeLoader.Pick(recipes, level) is not { } recipe)
+        if (PickScene(level) is not { } recipe)
         {
             return;
         }
@@ -585,6 +585,73 @@ public sealed class MoonfallGameArt<T> : IDisposable
         }
     }
 
+    /// <summary>
+    /// The spoiler shield's veil over scenes (the owner's decision: Moonfall follows the shield): true for a level whose
+    /// scene must not show (its stage, or the scene's own place, is past the player's story). Such a level is drawn on
+    /// the plain night sky everywhere: on the board, in thumbnails and in scenes built ahead. Null veils nothing.
+    /// Call <see cref="VeilChanged"/> when what it veils may have changed.
+    /// </summary>
+    public Func<MoonfallLevel, MoonfallSceneRecipe, bool>? HidesScene { get; set; }
+
+    /// <summary>The scene <paramref name="level"/> is drawn on, after the veil: null for none (or a veiled one).</summary>
+    private MoonfallSceneRecipe? PickScene(MoonfallLevel level)
+    {
+        var recipe = MoonfallSceneRecipeLoader.Pick(recipes, level);
+        return recipe is not null && HidesScene is { } veil && veil(level, recipe) ? null : recipe;
+    }
+
+    /// <summary>Whether <paramref name="level"/>'s scene (or the picture its file names) is veiled by the spoiler shield.</summary>
+    public bool SceneVeiled(MoonfallLevel level)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        return HidesScene is { } veil && MoonfallSceneRecipeLoader.Pick(recipes, level) is { } recipe && veil(level, recipe);
+    }
+
+    /// <summary>
+    /// What the veil hides may have changed (a reveal, a story step): the per-level picks are made again, and a thumbnail
+    /// that was veiled is built afresh when next asked.
+    /// </summary>
+    public void VeilChanged()
+    {
+        pickedFor = null;
+        warmAsked = null;
+        palettes.Clear();
+        foreach (var (id, build) in thumbBuilds)
+        {
+            // Built while veiled (no scene), or built with a scene the veil now hides: made again when next asked.
+            var nowVeiled = thumbLevels.TryGetValue(id, out var level) && SceneVeiled(level);
+            if ((build.IsCompleted && (!build.IsCompletedSuccessfully || build.Result is null)) || nowVeiled)
+            {
+                thumbVeiled.Add(id);
+            }
+        }
+
+        foreach (var id in thumbVeiled)
+        {
+            if (thumbBuilds.TryGetValue(id, out var build) && !build.IsCompleted)
+            {
+                continue;
+            }
+
+            thumbBuilds.Remove(id);
+            if (thumbs.Remove(id, out var held))
+            {
+                if (held.Texture is { } texture)
+                {
+                    released.Add(texture);
+                }
+                else if (held.Upload is { } upload)
+                {
+                    abandoned.Add(upload);
+                }
+            }
+        }
+
+        thumbVeiled.Clear();
+    }
+
+    private readonly List<string> thumbVeiled = [];
+
     /// <summary>The recipe <paramref name="level"/> names, or null.</summary>
     public MoonfallSceneRecipe? RecipeFor(MoonfallLevel level)
     {
@@ -592,10 +659,20 @@ public sealed class MoonfallGameArt<T> : IDisposable
         if (!ReferenceEquals(level, pickedFor))
         {
             pickedFor = level;
-            picked = MoonfallSceneRecipeLoader.Pick(recipes, level);
+            picked = PickScene(level);
+            pickedHidden = picked is null && SceneVeiled(level);
         }
 
         return picked;
+    }
+
+    private bool pickedHidden;
+
+    /// <summary>Whether <paramref name="level"/>'s scene is hidden by the spoiler shield (picked once per level, as <see cref="RecipeFor"/>).</summary>
+    public bool RecipeHidden(MoonfallLevel level)
+    {
+        _ = RecipeFor(level);
+        return pickedHidden;
     }
 
     /// <summary>A companion's card (light-graded) once uploaded; asks for it the first time.</summary>

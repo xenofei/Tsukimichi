@@ -33,6 +33,16 @@ public sealed class MoonfallScreensLintTests
         return source[at..(end < 0 ? source.Length : end)];
     }
 
+    /// <summary>An expression-bodied member whose declaration contains <paramref name="signature"/>, to its semicolon.</summary>
+    private static string Expression(string source, string signature)
+    {
+        var at = source.IndexOf(signature, StringComparison.Ordinal);
+        Assert.True(at >= 0, $"not found: {signature}");
+        var end = source.IndexOf(";\n", at, StringComparison.Ordinal);
+        Assert.True(end >= 0, $"no end: {signature}");
+        return source[at..(end + 1)];
+    }
+
     [Fact]
     public void Esc_and_the_gamepads_back_go_through_the_keyboard_helpers_and_are_claimed_from_the_game()
     {
@@ -135,5 +145,79 @@ public sealed class MoonfallScreensLintTests
             .SelectMany(f => Regex.Matches(Code(File.ReadAllText(f)), @"progress\.Record(Level|Challenge|Duel)\(").Select(m => Path.GetFileName(f) + ": " + m.Value))
             .ToList();
         Assert.True(writes.Count == 0, string.Join(Environment.NewLine, writes));
+    }
+
+    [Fact]
+    public void The_navigation_keys_are_claimed_over_the_menus_the_pause_and_the_tally_and_while_still_held()
+    {
+        var keys = Member(Ui("MoonfallWindow.Flow.cs"), "private void HandleKeys(");
+
+        // The tally is a menu too: its Replay, Map and Next take the arrows, Enter and Space.
+        Assert.Contains("var menu = flow.Current != MoonfallScreen.Play || pause.Paused || (game is { } g && LevelOver(g));", keys, StringComparison.Ordinal);
+
+        // A key a menu took stays claimed until it is let go (Enter that pressed Play, a key held through a hold).
+        Assert.Contains("var stillHeld = navigationTaken && Keyboard.NavigationKeyHeld();", keys, StringComparison.Ordinal);
+        Assert.Contains("if ((hasKeys && menu) || stillHeld)", keys, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_press_outside_the_pause_resumes_only_when_it_began_outside_and_every_resume_re_arms_the_board()
+    {
+        var pauseMenu = Member(Ui("MoonfallWindow.Pause.cs"), "private void DrawPauseMenu(");
+        Assert.Contains("outsidePress = !inside && onBoard && BoardArmed && ImGui.IsWindowHovered() && !ImGui.IsAnyItemHovered();", pauseMenu, StringComparison.Ordinal);
+        Assert.Contains("if (outsidePress && ImGui.IsMouseReleased(ImGuiMouseButton.Left))", pauseMenu, StringComparison.Ordinal);
+
+        // A pause or a resume re-arms the board (a double click on Resume or on the crest never shoots) and forgets a press.
+        var play = Member(Ui("MoonfallWindow.cs"), "private void DrawPlay(");
+        Assert.Contains("if (pause.Paused != wasPaused)", play, StringComparison.Ordinal);
+        Assert.Contains("boardArmedAt = ImGui.GetTime() + BoardArmSeconds;", play, StringComparison.Ordinal);
+        Assert.Contains("outsidePress = false;", play, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_screens_draw_stage_and_level_names_only_through_the_spoiler_shields_helpers()
+    {
+        // The Far Shore follows the spoiler shield: a stage set past the player's story prints the shield's placeholder,
+        // and its levels no names. Every name the screens draw goes through StageNameShown, LevelNameShown or
+        // PlayLevelName, so none can leak by another path.
+        var map = Ui("MoonfallWindow.Map.cs");
+        var helpers = new[]
+        {
+            Expression(map, "private string StageNameShown("),
+            Expression(map, "private static string LevelNameShown("),
+            Expression(map, "private string PlayLevelName("),
+        };
+        Assert.Contains("modes.StageName(stage)", helpers[0], StringComparison.Ordinal);
+        Assert.Contains("MoonfallLevelState.Veiled", helpers[1], StringComparison.Ordinal);
+        Assert.Contains("modes.LevelVeiled(level.Id)", helpers[2], StringComparison.Ordinal);
+
+        var leaks = new List<string>();
+        var pattern = new Regex(@"\.Stage\.Name\b|stage\??\.Name\b|\]\.Name\b|Level\??\.Name\b|\blevel\.Name\b|playLevel\??\.Name\b");
+        foreach (var file in Directory.GetFiles(Path.Combine(Root, "Tsukimichi", "Ui"), "MoonfallWindow*.cs"))
+        {
+            var code = Code(File.ReadAllText(file));
+            foreach (var helper in helpers)
+            {
+                code = code.Replace(helper, string.Empty, StringComparison.Ordinal);
+            }
+
+            leaks.AddRange(pattern.Matches(code).Select(m => Path.GetFileName(file) + ": " + m.Value));
+        }
+
+        Assert.True(leaks.Count == 0, string.Join(Environment.NewLine, leaks));
+    }
+
+    [Fact]
+    public void The_plugin_gives_moonfall_the_viewed_characters_shield_for_places_and_its_reveal()
+    {
+        var plugin = Plugin("Plugin.Moonfall.cs");
+        Assert.Contains("Session.Spoilers.IsNameMasked(Core.Query.SpoilerKind.Area, zone)", plugin, StringComparison.Ordinal);
+        Assert.Contains("() => Session.Spoilers.Fingerprint", plugin, StringComparison.Ordinal);
+        Assert.Contains("ShieldSession = Session,", plugin, StringComparison.Ordinal);
+
+        // Its placeholders answer as every placeholder does: the shield's hover, and its right-click menu at the window's root.
+        var map = Ui("MoonfallWindow.Map.cs");
+        Assert.Contains("ShieldText.Interact(min, max, session, SpoilerKind.Area, zone, shown);", map, StringComparison.Ordinal);
+        Assert.Contains("ShieldText.DrawMenu(nameof(MoonfallWindow), session);", Ui("MoonfallWindow.cs"), StringComparison.Ordinal);
     }
 }

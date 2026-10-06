@@ -52,7 +52,7 @@ After `FinishLevel`, `FinishChallenge` or `FinishDuel`, save the progress the sa
   9. Mor Dhona's Glass
   10. Silvertear by Night
   11. Your Pick
-- **The Far Shore's stage names** are `[J]` proposals for the owner, because the spec names only the base stages. They follow the level method's road for the expansion ("harbours, islands, the sky over open water, and at its end the moon itself"), and they reuse its three approved pilots:
+- **The Far Shore's stage names** were proposed here, because the spec names only the base stages, and the owner approved them (stage 8 as "The Floating Market"). They follow the level method's road for the expansion ("harbours, islands, the sky over open water, and at its end the moon itself"), and they reuse its three approved pilots:
   1. The Lantern Quay
   2. The Twin Lights
   3. The Skyward Deck
@@ -60,11 +60,12 @@ After `FinishLevel`, `FinishChallenge` or `FinishDuel`, save the progress the sa
   5. The Admiral's Sea
   6. The Ferry in the Stars
   7. The Floating Grove
-  8. The Night Market Boats
+  8. The Floating Market
   9. The Domes of Sharlayan
   10. The Archon's Crossing
   11. The Courier's Wake
   12. The Sea of Sorrows (the moon, decision 20)
+- **The Far Shore follows the spoiler shield** (owner's decision). Each stage, and each shipped scene, is set in an area on the shield's era scale (`MoonfallPlaces`): the Lantern Quay in Limsa Lominsa Lower Decks, the Twin Lights in Western Thanalan, the Skyward Deck over the Sea of Clouds, the Sunlit Isles on the Ruby Sea, the Admiral's Sea in Western La Noscea, the Ferry in the Stars nowhere (our own painting), the Floating Grove in Il Mheg, the Floating Market in Kugane, the Domes of Sharlayan in Old Sharlayan, the Archon's Crossing in Labyrinthos, the Courier's Wake in the Churning Mists, the Sea of Sorrows in Mare Lamentorum. A stage whose area the shield hides is `Veiled`: its name prints as the shield's placeholder (with its hover and "Reveal this name"), its levels have no names and no scene, and Adventure, Quick Play, duels and challenges cannot play them, until the story reaches the area or the player reveals it. The map marks such a stop with the shield's eye-slash, not the padlock. A scene whose area is hidden is drawn as the night sky wherever it would show. The companions keep their own gating.
 - **Levels are referenced by id.** Content is authored separately. `MoonfallCampaigns.Find(id)` returns the shipped level, or null when no level of that id is shipped yet, in which case the slot is `Missing` and Adventure stops before it.
 
 **Unlocks** [R §6 l.126]:

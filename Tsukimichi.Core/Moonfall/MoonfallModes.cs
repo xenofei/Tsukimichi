@@ -23,6 +23,12 @@ public enum MoonfallLevelState : byte
 
     /// <summary>Won.</summary>
     Cleared,
+
+    /// <summary>
+    /// Its stage is set past the player's story (<see cref="MoonfallShield"/>): no name, no scene, and closed until the
+    /// story reaches it or the place is revealed, whatever Moonfall's progress.
+    /// </summary>
+    Veiled,
 }
 
 /// <summary>Where a stage stands on the map.</summary>
@@ -36,6 +42,9 @@ public enum MoonfallStageState : byte
 
     /// <summary>Every level won: a lit orange moon.</summary>
     Done,
+
+    /// <summary>Set past the player's story (<see cref="MoonfallShield"/>): the shield's mark, its name a placeholder, closed.</summary>
+    Veiled,
 }
 
 /// <summary>One level as the menus show it.</summary>
@@ -116,6 +125,41 @@ public sealed class MoonfallModes
     /// <summary>Each level's Ace score (the shipped table, <see cref="MoonfallAces.For"/>; the offline renderer stages its own).</summary>
     public Func<string?, long?> AceOf { get; init; } = MoonfallAces.For;
 
+    /// <summary>The spoiler shield for places (<see cref="MoonfallShield"/>; the plugin passes the viewed character's).</summary>
+    public MoonfallShield Shield { get; init; } = MoonfallShield.Open;
+
+    // ---- The spoiler shield ----
+
+    /// <summary>Whether <paramref name="stage"/> is set past the player's story (<see cref="MoonfallPlaces.OfStage"/>).</summary>
+    public bool StageVeiled(MoonfallStage stage) => Shield.Hides(MoonfallPlaces.OfStage(stage));
+
+    /// <summary>Whether the level <paramref name="id"/> belongs to a stage set past the player's story.</summary>
+    public bool LevelVeiled(string? id) =>
+        MoonfallStages.TryPlace(id, out var place) && MoonfallStages.StageOf(place.Campaign, place.Index) is { } stage && StageVeiled(stage);
+
+    /// <summary>The stage's name as the menus print it: the shield's placeholder for its place while it is veiled.</summary>
+    public string StageName(MoonfallStage stage)
+    {
+        ArgumentNullException.ThrowIfNull(stage);
+        return StageVeiled(stage) ? Shield.Placeholder(MoonfallPlaces.OfStage(stage)) : stage.Name;
+    }
+
+    /// <summary>
+    /// The place a veiled stage hides (the area the shield's reveal opens), or null when <paramref name="stage"/> is not
+    /// veiled.
+    /// </summary>
+    public string? VeiledZone(MoonfallStage stage) => StageVeiled(stage) ? MoonfallPlaces.OfStage(stage).Zone : null;
+
+    /// <summary>
+    /// Whether <paramref name="level"/>'s scene, the recipe <paramref name="sceneName"/>, must not show: its stage is
+    /// veiled, or the scene itself is set past the player's story (<see cref="MoonfallPlaces.OfScene"/>).
+    /// </summary>
+    public bool SceneVeiled(MoonfallLevel level, string? sceneName)
+    {
+        ArgumentNullException.ThrowIfNull(level);
+        return LevelVeiled(level.Id) || (MoonfallPlaces.OfScene(sceneName) is { } place && Shield.Hides(place));
+    }
+
     // ---- Adventure ----
 
     /// <summary>Whether the campaign can be played: The Moon Road always; The Far Shore once all 55 of The Moon Road are won.</summary>
@@ -127,7 +171,8 @@ public sealed class MoonfallModes
     {
         var id = MoonfallStages.LevelId(campaign, index);
         var level = Campaigns.Find(id);
-        var state = level is null ? MoonfallLevelState.Missing
+        var state = MoonfallStages.StageOf(campaign, index) is { } stage && StageVeiled(stage) ? MoonfallLevelState.Veiled
+            : level is null ? MoonfallLevelState.Missing
             : Progress.IsCleared(id) ? MoonfallLevelState.Cleared
             : CampaignOpen(campaign) && index <= Progress.Cleared(campaign) ? MoonfallLevelState.Open
             : MoonfallLevelState.Sealed;
@@ -147,7 +192,8 @@ public sealed class MoonfallModes
                 slots[k] = Slot(campaign, stage.FirstLevelIndex + k);
             }
 
-            var state = slots.All(static s => s.State == MoonfallLevelState.Cleared) ? MoonfallStageState.Done
+            var state = StageVeiled(stage) ? MoonfallStageState.Veiled
+                : slots.All(static s => s.State == MoonfallLevelState.Cleared) ? MoonfallStageState.Done
                 : slots[0].Reached ? MoonfallStageState.Open
                 : MoonfallStageState.Sealed;
             var companion = stage.PlayerPicks ? MoonfallCompanionState.Available : CompanionState(stage.Companion);
@@ -290,7 +336,14 @@ public sealed class MoonfallModes
 
     /// <summary>Each challenge with where it stands.</summary>
     public IReadOnlyList<(MoonfallChallenge Challenge, MoonfallChallengeState State)> ChallengeList() =>
-        Challenges.Select(c => (c, MoonfallChallenges.State(c, Campaigns, Progress))).ToList();
+        Challenges.Select(c => (c, ChallengeState(c))).ToList();
+
+    /// <summary>Where a challenge stands; one that runs through a level of a veiled stage is <see cref="MoonfallChallengeState.Veiled"/> once open.</summary>
+    private MoonfallChallengeState ChallengeState(MoonfallChallenge challenge)
+    {
+        var state = MoonfallChallenges.State(challenge, Campaigns, Progress);
+        return state is MoonfallChallengeState.Open or MoonfallChallengeState.Done && challenge.LevelIds.Any(LevelVeiled) ? MoonfallChallengeState.Veiled : state;
+    }
 
     /// <summary>
     /// A run of the challenge <paramref name="id"/>, with <paramref name="companion"/> when it lets the player pick (an
@@ -299,7 +352,7 @@ public sealed class MoonfallModes
     public MoonfallChallengeRun? StartChallenge(string id, MoonfallCompanion companion, ulong seed)
     {
         var challenge = Challenges.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal));
-        if (challenge is null || MoonfallChallenges.State(challenge, Campaigns, Progress) is not (MoonfallChallengeState.Open or MoonfallChallengeState.Done))
+        if (challenge is null || ChallengeState(challenge) is not (MoonfallChallengeState.Open or MoonfallChallengeState.Done))
         {
             return null;
         }

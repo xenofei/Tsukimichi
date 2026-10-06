@@ -71,6 +71,9 @@ public sealed partial class MoonfallWindow
 
         /// <summary>Not sealed, but nothing to open yet (a stage whose levels are on their way): slate, with no padlock.</summary>
         Waiting,
+
+        /// <summary>Closed by the spoiler shield (set past the player's story): slate, with the shield's mark in place of the padlock.</summary>
+        Veiled,
     }
 
     /// <summary>Whether the menus' art has settled (the offline renderer waits for it): the backdrop the screen asks for, the cards it shows.</summary>
@@ -443,14 +446,14 @@ public sealed partial class MoonfallWindow
 
         var hovered = ImGui.IsItemHovered();
         var nav = ImGui.GetIO().NavVisible && ImGui.IsItemFocused();
-        // A sealed entry (Locked, with a padlock) or one whose content is still to come (Waiting) does nothing.
-        var inert = style is MenuStyle.Locked or MenuStyle.Waiting;
+        // A sealed entry (Locked, with a padlock), one past the story (Veiled, the shield's mark) or one whose content is still to come (Waiting) does nothing.
+        var inert = style is MenuStyle.Locked or MenuStyle.Waiting or MenuStyle.Veiled;
         var lit = !inert && (nav || (isDefault && !ImGui.GetIO().NavVisible));
         EntryGlow(m, x0, y0, x1, y1, lit, hovered && !inert);
         var state = style switch
         {
             MenuStyle.Danger => MoonfallChromePart.PillDanger,
-            MenuStyle.Locked or MenuStyle.Waiting => MoonfallChromePart.PillLocked,
+            MenuStyle.Locked or MenuStyle.Waiting or MenuStyle.Veiled => MoonfallChromePart.PillLocked,
             _ => lit ? MoonfallChromePart.PillFocus : MoonfallChromePart.Pill,
         };
         Pill(m.C, x0, y0, x1, y1, uint.MaxValue, state);
@@ -460,14 +463,22 @@ public sealed partial class MoonfallWindow
         var cy = ((y0 + y1) / 2) + (sub is not null ? -h * 0.13 : 0);
         // A sealed entry says so without a mouse: a padlock just before its label (the label moved over to make room for
         // it), and its reason on focus as on hover.
-        var locked = style == MenuStyle.Locked;
+        var locked = style is MenuStyle.Locked or MenuStyle.Veiled;
         var room = (float)(x1 - x0 - (h * (locked ? 1.4 : 0.6)));
         var lx = ((x0 + x1) / 2) + (locked ? h * 0.4 : 0);
         var lw = MenuText(m, face, labelSize, lx, cy, label, ink, Anchor.Centre, edge: 1.0f, maxWidth: room);
         if (locked)
         {
             var px = Math.Max(x0 + (h * 0.5), lx - (Math.Min(lw, room) / 2) - (h * 0.42));
-            Padlock(m, px, cy, h * (sub is not null ? 0.16 : 0.22));
+            var size = h * (sub is not null ? 0.16 : 0.22);
+            if (style == MenuStyle.Veiled)
+            {
+                ShieldMark(m, px, cy, size);
+            }
+            else
+            {
+                Padlock(m, px, cy, size);
+            }
         }
 
         if (sub is not null)

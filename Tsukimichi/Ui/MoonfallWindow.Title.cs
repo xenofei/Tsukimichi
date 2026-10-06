@@ -116,7 +116,8 @@ public sealed partial class MoonfallWindow
         }
 
         var opponent = modes.TitleOpponent();
-        titleDuelSub = MoonfallCompanions.TryGet(opponent, out var foe)
+        titleDuelSub = QuickLevels().Count == 0 ? Strings.MoonfallTitleDuelNoLevels
+            : MoonfallCompanions.TryGet(opponent, out var foe)
             ? string.Format(c, Strings.MoonfallTitleDuelSubFormat, foe.Name)
             : Strings.MoonfallTitleDuelNone;
 
@@ -127,7 +128,7 @@ public sealed partial class MoonfallWindow
         {
             titleContinueLevel = level;
             titleContinueCode = LevelCode(next.Index);
-            titleContinueName = level.Name;
+            titleContinueName = PlayLevelName(level);
             titleContinue = string.Format(c, Strings.MoonfallContinueFormat, titleContinueCode);
             var companion = MoonfallStages.AdventureCompanion(next.Campaign, next.Index);
             titleContinuePower = MoonfallCompanions.TryGet(companion, out var info) ? info.Power : MoonfallPower.None;
@@ -246,7 +247,7 @@ public sealed partial class MoonfallWindow
 
         y += 66;
         if (MenuButton(m, "##mfDuel", 172, y, 488, y + 54, Strings.MoonfallScreenDuel, 36, sub: titleDuelSub,
-            style: duelOpponents.Count > 0 && QuickLevels().Count > 0 ? MenuStyle.Normal : MenuStyle.Locked))
+            style: DuelOpen ? MenuStyle.Normal : MenuStyle.Locked, tooltip: DuelLockedWhy))
         {
             Open(MoonfallScreen.Duel);
         }
@@ -301,7 +302,7 @@ public sealed partial class MoonfallWindow
         }
 
         y += 42;
-        if (MenuButton(m, "##mfDuel", 214, y, 426, y + 34, Strings.MoonfallScreenDuel, 24, style: duelOpponents.Count > 0 && QuickLevels().Count > 0 ? MenuStyle.Normal : MenuStyle.Locked))
+        if (MenuButton(m, "##mfDuel", 214, y, 426, y + 34, Strings.MoonfallScreenDuel, 24, style: DuelOpen ? MenuStyle.Normal : MenuStyle.Locked, tooltip: DuelLockedWhy))
         {
             Open(MoonfallScreen.Duel);
         }
@@ -317,6 +318,12 @@ public sealed partial class MoonfallWindow
             Open(MoonfallScreen.Options);
         }
     }
+
+    /// <summary>Whether a duel can be set up: someone to play against and a level reached to play it on.</summary>
+    private bool DuelOpen => duelOpponents.Count > 0 && QuickLevels().Count > 0;
+
+    /// <summary>Why Duel is locked (on hover and on focus); null while it is open.</summary>
+    private string? DuelLockedWhy => DuelOpen ? null : QuickLevels().Count == 0 ? Strings.MoonfallDuelLockedTooltip : Strings.MoonfallTitleDuelNone;
 
     private Vector3? ContinueAccent() => MoonfallCards.For(titleContinuePower)?.Accent;
 

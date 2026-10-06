@@ -88,6 +88,12 @@ public sealed partial class MoonfallWindow
 
     // ---- Text ----
 
+    /// <summary>Hears every string the chrome and the menus draw (the offline renderer's check that no hidden name is drawn); null in the plugin.</summary>
+    internal delegate void TextSink(ReadOnlySpan<char> text);
+
+    /// <summary>The renderer's <see cref="TextSink"/>; null hears nothing (the plugin never sets it).</summary>
+    internal static TextSink? TextSinkForRender { get; set; }
+
     /// <summary>
     /// Draws <paramref name="text"/> in <paramref name="face"/> at <paramref name="px"/> pixels (the face's cell, as the
     /// design sizes type), its caps' middle on <paramref name="at"/>'s y, with the game's dark edge when
@@ -101,6 +107,7 @@ public sealed partial class MoonfallWindow
             return 0f;
         }
 
+        TextSinkForRender?.Invoke(text);
         var (font, size) = FontFor(face, px);
         var width = TextWidth(font, size, text, tracking);
         var x = anchor switch { Anchor.Centre => at.X - (width * 0.5f), Anchor.Right => at.X - width, _ => at.X };
@@ -535,7 +542,7 @@ public sealed partial class MoonfallWindow
         DrawText(dl, MoonfallFace.Trump, NumberPx(v, 16.5f, MoonfallFace.Trump), v.Map(103, 21.5), Anchor.Centre, Ink(GoldHiInk), stageText, Ink(EdgeInk), v.Size(0.6));
         var nameMax = v.Size(nx1 - 124 - 6);
         var namePx = NamePx(v, 27, MoonfallFace.Jupiter);
-        var levelName = g.Level.Name;
+        var levelName = PlayLevelName(g.Level);
         var w = MeasureText(MoonfallFace.Jupiter, namePx, levelName);
         if (w > nameMax && w > 0)
         {
@@ -642,9 +649,15 @@ public sealed partial class MoonfallWindow
         var label = LabelPx(v, 11.5f, MoonfallFace.Axis);
         if (label > 0)
         {
-            DrawText(dl, MoonfallFace.Axis, label, v.Map(Cx, 408), Anchor.Centre, Ink(LabelInk), Strings.MoonfallHudBalls, Ink(EdgeInk), v.Size(0.6));
+            DrawText(dl, MoonfallFace.Axis, label, v.Map(Cx, 408), Anchor.Centre, Ink(TubeLabelInk()), Strings.MoonfallHudBalls, Ink(EdgeInk), v.Size(0.6));
         }
     }
+
+    /// <summary>The tube's BALLS label: in a duel, in the shooter's colour, so the tube reads as that side's (the waiting side's are on its chip).</summary>
+    private Vector3 TubeLabelInk() =>
+        duel is { } d && MoonfallCompanions.TryGet(d.Companion(d.Turn), out var shooter) && MoonfallCards.For(shooter.Power) is { } card
+            ? Tint(card.Accent, 0.35f)
+            : LabelInk;
 
     /// <summary>chrome2.mult_dial: an enamel face, the oranges-cleared arc in gold with the multiplier's notches, the great lattice ring, and "×" in AXIS with the digits in TrumpGothic.</summary>
     private void Dial(in ChromePen c, MoonfallGame g)
