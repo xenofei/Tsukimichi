@@ -3,7 +3,7 @@
     "Author": "Michiru Tsukikage",
     "Name": "Tsukimichi",
     "InternalName": "Tsukimichi",
-    "AssemblyVersion": "1.22.1.0",
+    "AssemblyVersion": "1.23.0.0",
     "Description": "A quest catalog for every journal type, with completed and available filters and a per-requirement breakdown of what still blocks a quest.\nMoonlit treasures collects quests with unique rewards, and per-character snapshots keep the whole account in view.\nLocal only: no network code.",
     "ApplicableVersion": "any",
     "RepoUrl": "https://github.com/xenofei/Tsukimichi",
@@ -21,13 +21,13 @@
     "IconUrl": "https://raw.githubusercontent.com/xenofei/Tsukimichi/main/assets/icon-medallion.png",
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
-    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.1/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.1/latest.zip",
-    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.22.1/latest.zip",
-    "LastUpdate": 1791200273,
+    "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.23.0/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.23.0/latest.zip",
+    "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.23.0/latest.zip",
+    "LastUpdate": 1791311645,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Familiar faces\n\n• Faces where they belong. Quest-giver portraits were re-cut by hand so faces sit in the middle, and each quest shows a character as they looked at that point in the story.\n• Photos built in. Quest-giver photos now come with Tsukimichi, so there's nothing to download. Turn them off in Settings, under Look.\n• Sort Moonlit. Click a column header in Moonlit to sort by it; click again to reverse.\n• One click for Umbra. If you use Umbra, Tsukimichi can put its widget on your Umbra bar for you, and take it off again."
+    "Changelog": "Moonfall preview\n\n• Moonfall, a preview. A peg game under Menphina's moon, from the Moonfall button on the main window. This preview holds the first ten levels; more are on the way.\n• Eorzea's own companions. Eleven familiar faces lend their powers when you hit a green peg, shown on their Triple Triad cards.\n• Painted boards. Every level is drawn over a night scene, from the Thanalan roads to the twin lanterns of Vesper Bay, using the game's own art from your install.\n• Spoiler-safe. Moonfall follows your spoiler shield: places and companions your story hasn't reached stay hidden until you get there.\n• Still growing. This is a preview, so levels, scores and balance may change before the full release."
   }
 ]
