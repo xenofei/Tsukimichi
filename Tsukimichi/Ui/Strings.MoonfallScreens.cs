@@ -591,6 +591,12 @@ static partial class Strings
     /// <summary>Moonfall map: the short reason in the hover of a stop both past the player&#x27;s story and not reached.</summary>
     public static string MoonfallStopVeiledSealedLine => Loc.Get("MoonfallStopVeiledSealedLine");
 
+    /// <summary>Moonfall map: a veiled stop the road has come to whose levels are not built yet (nothing to reveal).</summary>
+    public static string MoonfallStopVeiledComingLine => Loc.Get("MoonfallStopVeiledComingLine");
+
+    /// <summary>Moonfall map: the panel line of a stage past the player&#x27;s story whose levels are not built yet.</summary>
+    public static string MoonfallStageVeiledComingLine => Loc.Get("MoonfallStageVeiledComingLine");
+
     /// <summary>A duel opponent's difficulty.</summary>
     public static string MoonfallDifficultyName(MoonfallAiDifficulty difficulty) => difficulty switch
     {

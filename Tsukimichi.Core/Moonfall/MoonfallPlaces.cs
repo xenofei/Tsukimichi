@@ -67,8 +67,9 @@ public static class MoonfallPlaces
         // 10 The Archon's Crossing (Louisoix): the archons' Labyrinthos beneath Sharlayan.
         new(Endwalker, "Labyrinthos"),
 
-        // 11 The Courier's Wake (the moogle): the moogles' Churning Mists.
-        new(Heavensward, "The Churning Mists"),
+        // 11 The Courier's Wake (the moogle): our own painting of a courier's wake over open sky, set nowhere (the owner's
+        // answer, 6 October 2026), so Storm Post and the moogle, met in the first hours of any start, open at every era.
+        MoonfallPlace.Nowhere,
 
         // 12 The Sea of Sorrows (your pick): Mare Lamentorum on Endwalker's moon (pilot exp-p3, the Mare Lamentorum painting).
         new(Endwalker, "Mare Lamentorum"),
@@ -93,11 +94,15 @@ public static class MoonfallPlaces
     /// <summary>
     /// Where each menu backdrop is set (the backdrop policy, <c>moonfall-modes.md</c>): the menus follow the same rule
     /// as the scenes. The title's painting is Sohm Al, Heavensward's peak in Dravania; while the shield hides it the title
-    /// is drawn over the chart (Eorzea's world map, no story place).
+    /// is Ul'dah's painting (A Realm Reborn); the chart (Eorzea's world map, no story place) stands in only when neither
+    /// can be shown or read.
     /// </summary>
     public static MoonfallPlace OfBackdrop(Art.MoonfallBackdrop backdrop) => backdrop switch
     {
         Art.MoonfallBackdrop.Title => new(Heavensward, "The Dravanian Forelands"),
+
+        // Ul'dah's painting: the title for a story still in A Realm Reborn.
+        Art.MoonfallBackdrop.TitleEarly => new(ARealmReborn, "Ul'dah - Steps of Nald"),
         _ => MoonfallPlace.Nowhere,
     };
 

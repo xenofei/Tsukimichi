@@ -294,7 +294,7 @@ public sealed class MoonfallModes
         var state = MoonfallStages.StageOf(campaign, index) is { } stage && StageVeiled(stage) ? MoonfallLevelState.Veiled
             : level is null ? MoonfallLevelState.Missing
             : Progress.IsCleared(id) ? MoonfallLevelState.Cleared
-            : CampaignOpen(campaign) && (index <= Frontier(campaign) || Opened(campaign, index)) ? MoonfallLevelState.Open
+            : CampaignOpen(campaign) && (index <= Frontier(campaign) || Opened(campaign, index) || index == Progress.Reach(campaign)) ? MoonfallLevelState.Open
             : MoonfallLevelState.Sealed;
         return new MoonfallLevelSlot(id, new MoonfallLevelPlace(campaign, index), level, state, Progress.Best(id), Progress.IsAced(id), AceOf(id));
     }
@@ -440,7 +440,9 @@ public sealed class MoonfallModes
             return false;
         }
 
-        if (stage.FirstLevelIndex <= Frontier(info.Campaign))
+        // Its stage's first level is open by the road's rule (the frontier, the level before it won, or the road's
+        // high-water mark), or a level of it is already won.
+        if (Slot(info.Campaign, stage.FirstLevelIndex).Reached)
         {
             return true;
         }
@@ -453,7 +455,26 @@ public sealed class MoonfallModes
             }
         }
 
-        return Opened(info.Campaign, stage.FirstLevelIndex);
+        return false;
+    }
+
+    /// <summary>
+    /// Notes where each open campaign's frontier stands as its high-water mark (<see cref="MoonfallProgress.Reach"/>):
+    /// done after every level's end, so a level the road came to stays open when a reveal or the story moving on pulls
+    /// the frontier back. True when a mark moved.
+    /// </summary>
+    public bool NoteReach()
+    {
+        var moved = false;
+        foreach (var campaign in (ReadOnlySpan<MoonfallCampaignKind>)[MoonfallCampaignKind.Base, MoonfallCampaignKind.Expansion])
+        {
+            if (CampaignOpen(campaign))
+            {
+                moved |= Progress.RecordReach(campaign, Frontier(campaign));
+            }
+        }
+
+        return moved;
     }
 
     // ---- Quick Play ----
@@ -521,6 +542,7 @@ public sealed class MoonfallModes
         var wasAced = Progress.IsAced(start.LevelId);
         var before = (Progress.BaseCleared, Progress.ExpansionCleared, ChallengesOpen);
         Progress.RecordLevel(start.LevelId, won, score, AceOf(start.LevelId));
+        NoteReach();
         var unlocked = before != (Progress.BaseCleared, Progress.ExpansionCleared, ChallengesOpen);
         return new MoonfallLevelResult(won, score, bonus, bonus > 0 && !wasAced, newBest, unlocked);
     }

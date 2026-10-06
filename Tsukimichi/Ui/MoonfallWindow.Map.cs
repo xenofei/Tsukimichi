@@ -441,7 +441,7 @@ public sealed partial class MoonfallWindow
                 if (view.Here)
                 {
                     // Where the road waits: a faint slate ring (a veiled stop is never lit).
-                    m.Dl.AddCircle(m.V.Map(at.X, at.Y), m.V.Size(r * 1.32), Ink(MoonfallColor.Hex("#9AA6CC"), 0.75f), 40, MathF.Max(1.5f, m.V.Size(2)));
+                    m.Dl.AddCircle(m.V.Map(at.X, at.Y), m.V.Size(r * 1.34), Ink(MoonfallColor.Hex("#C9D2F2")), 40, MathF.Max(2f, m.V.Size(2.6)));
                 }
             }
 
@@ -612,7 +612,20 @@ public sealed partial class MoonfallWindow
         var power = MoonfallCompanions.TryGet(view.Stage.Companion, out var info) ? info.Power : MoonfallPower.None;
         var accent = MoonfallCards.For(power)?.Accent ?? GoldInk;
         Panel(m, x0, y0, x1, y1, accent, 0.3);
-        if (MenuHit(m, "##mfStageHead", x0 + 10, y0 + 8, x1 - 10, y0 + 56, out var hovered, out var nav))
+        // The head is a focus stop only where it acts (levels to open, or a place to reveal): never a dead nav stop.
+        var headActs = view.State is MoonfallStageState.Open or MoonfallStageState.Done || panelRevealable;
+        if (!headActs)
+        {
+            ImGuiP.PushItemFlag(ImGuiItemFlags.NoNav, true);
+        }
+
+        var headHit = MenuHit(m, "##mfStageHead", x0 + 10, y0 + 8, x1 - 10, y0 + 56, out var hovered, out var nav);
+        if (!headActs)
+        {
+            ImGuiP.PopItemFlag();
+        }
+
+        if (headHit)
         {
             if (view.State is MoonfallStageState.Open or MoonfallStageState.Done)
             {
@@ -636,6 +649,11 @@ public sealed partial class MoonfallWindow
             {
                 UiMetrics.Tooltip(Strings.MoonfallSeeLevelsTooltip);
             }
+        }
+        else if ((hovered || nav) && panelRevealable)
+        {
+            // A revealable head answers a click: the slate fill says so (its hover words are the shield's own).
+            m.Dl.AddRectFilled(m.V.Map(x0 + 10, y0 + 8), m.V.Map(x1 - 10, y0 + 56), Ink(MoonfallColor.Hex("#8A94B8"), 0.14f), m.V.Size(6));
         }
 
         if (nav)
@@ -813,7 +831,9 @@ public sealed partial class MoonfallWindow
             stopTips[i] = stopVeiled[i]
                 ? string.Format(c, Strings.MoonfallStopTipVeiledFormat, view.Stage.Number, power)
                 : string.Format(c, Strings.MoonfallStopTipFormat, view.Stage.Number, StageNameShown(view.Stage), state, power);
-            stopTipLines[i] = view.State == MoonfallStageState.Veiled ? (view.Reached ? Strings.MoonfallStopVeiledLine : Strings.MoonfallStopVeiledSealedLine)
+            // A veiled stop says why it is closed: reached and built (reveal it), reached but not built (its levels are on
+            // their way: a reveal would show nothing), or not reached.
+            stopTipLines[i] = view.State == MoonfallStageState.Veiled ? (!view.Reached ? Strings.MoonfallStopVeiledSealedLine : modes.StageBuilt(view.Stage) ? Strings.MoonfallStopVeiledLine : Strings.MoonfallStopVeiledComingLine)
                 : view.Companion == MoonfallCompanionState.NotMet && !view.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
                 : view.State == MoonfallStageState.Sealed && !stopComing[i] ? Strings.MoonfallStopSealedLine
                 : string.Empty;
@@ -851,13 +871,16 @@ public sealed partial class MoonfallWindow
         panelPlayable = false;
         var selComing = stopComing[Math.Clamp(mapStage, 0, stages.Count - 1)];
         panelComing = selComing;
-        panelRevealable = sel.State == MoonfallStageState.Veiled && sel.Reached;
-        panelPlay = panelRevealable ? Strings.MoonfallStageRevealButton : selComing ? Strings.MoonfallLevelsComing : sel.State is MoonfallStageState.Sealed or MoonfallStageState.Veiled ? Strings.MoonfallNotReached : Strings.MoonfallChooseLevel;
+        // Revealable only when the road has come to it and its levels are built: a reveal must always open something.
+        var veiledComing = sel.State == MoonfallStageState.Veiled && sel.Reached && !modes.StageBuilt(sel.Stage);
+        panelRevealable = sel.State == MoonfallStageState.Veiled && sel.Reached && !veiledComing;
+        panelComing |= veiledComing;
+        panelPlay = panelRevealable ? Strings.MoonfallStageRevealButton : panelComing ? Strings.MoonfallLevelsComing : sel.State is MoonfallStageState.Sealed or MoonfallStageState.Veiled ? Strings.MoonfallNotReached : Strings.MoonfallChooseLevel;
 
         // At 640 the panel's state line stands in for the legend and the stop's tooltip.
-        var veiledLine = sel.Reached ? Strings.MoonfallStageVeiledLine : Strings.MoonfallStageVeiledSealedLine;
+        var veiledLine = !sel.Reached ? Strings.MoonfallStageVeiledSealedLine : veiledComing ? Strings.MoonfallStageVeiledComingLine : Strings.MoonfallStageVeiledLine;
         panelVeiledLines = sel.State == MoonfallStageState.Veiled && !m.Small ? Wrap(m, MoonfallFace.Axis, 14.5f, veiledLine, 300f) : [];
-        panelState = sel.State == MoonfallStageState.Veiled ? (m.Small ? Strings.MoonfallStageVeiledShort : veiledLine)
+        panelState = sel.State == MoonfallStageState.Veiled ? (!m.Small ? veiledLine : panelRevealable ? Strings.MoonfallStageVeiledShort : !sel.Reached ? Strings.MoonfallStopVeiledSealedLine : Strings.MoonfallStopVeiledComingLine)
             : sel.Companion == MoonfallCompanionState.NotMet && !sel.Stage.PlayerPicks ? Strings.MoonfallStopNotMetLine
             : sel.State == MoonfallStageState.Sealed && !selComing ? Strings.MoonfallStopSealedLine
             : panelCarrier;

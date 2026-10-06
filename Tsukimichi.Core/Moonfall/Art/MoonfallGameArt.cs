@@ -449,6 +449,10 @@ public sealed class MoonfallGameArt<T> : IDisposable
         return null;
     }
 
+    /// <summary>Whether <paramref name="which"/> could not be read or graded (its painting is missing): its screen falls back.</summary>
+    public bool BackdropFailed(MoonfallBackdrop which) =>
+        backdropBuilds.TryGetValue(which, out var build) && build.IsCompleted && (!build.IsCompletedSuccessfully || build.Result is null);
+
     /// <summary>Reads and grades a backdrop off the framework thread (its own method: the asking path captures nothing, so a frame allocates nothing).</summary>
     private Task<MoonfallRgba?> BuildBackdrop(MoonfallBackdrop which) => Task.Run(async () =>
     {

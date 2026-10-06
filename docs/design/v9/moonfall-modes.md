@@ -65,9 +65,9 @@ After `FinishLevel`, `FinishChallenge` or `FinishDuel`, save the progress the sa
   10. The Archon's Crossing
   11. The Courier's Wake
   12. The Sea of Sorrows (the moon, decision 20)
-- **The Far Shore follows the spoiler shield** (owner's decision). Each stage, and each shipped scene, is set in an area on the shield's era scale (`MoonfallPlaces`): the Lantern Quay in Limsa Lominsa Lower Decks, the Twin Lights in Western Thanalan, the Skyward Deck over the Sea of Clouds, the Sunlit Isles on the Ruby Sea, the Admiral's Sea in Western La Noscea, the Ferry in the Stars nowhere (our own painting), the Floating Grove in Il Mheg, the Floating Market in Kugane, the Domes of Sharlayan in Old Sharlayan, the Archon's Crossing in Labyrinthos, the Courier's Wake in the Churning Mists, the Sea of Sorrows in Mare Lamentorum. A stage whose area the shield hides is `Veiled`: its name prints as the shield's placeholder (with its hover and "Reveal this name"), its levels have no names and no scene, and Adventure, Quick Play, duels and challenges cannot play them, until the story reaches the area or the player reveals it. The map marks such a stop with the shield's eye-slash, not the padlock. The companions keep their own gating.
-- **Adventure steps over a veiled stage** (owner's ruling). The road's frontier skips a stage set past the story: the next stage the story allows opens, so no story-safe stage (the moogle's Storm Post included) waits behind a veiled one. The veiled stage waits on the map with the shield's mark (and the padlock too while the road has not come to it), its levels unwon; "all won" and The Far Shore's completion still need it. When nothing else is left to play, the title's Continue says the road waits past the story and opens the map on that stage; the tally says so when it has no Next because of it. Pressing the stage's Play opens the shield's "Reveal this name" (for this session), as a right-click on its name does.
-- **Scenes and backdrops follow the same rule.** A level on a veiled stage has no scene art (the night sky). A level whose stage is open but whose scene's own place is past the story is drawn over the recipe's declared story-safe fallback picture (every veilable recipe declares one; a test holds it). The menus' backdrops are tagged too: the title's painting is Sohm Al (Heavensward), and while the shield hides it the title is drawn over the chart (Eorzea's world map, no story place).
+- **The Far Shore follows the spoiler shield** (owner's decision). Each stage, and each shipped scene, is set in an area on the shield's era scale (`MoonfallPlaces`): the Lantern Quay in Limsa Lominsa Lower Decks, the Twin Lights in Western Thanalan, the Skyward Deck over the Sea of Clouds, the Sunlit Isles on the Ruby Sea, the Admiral's Sea in Western La Noscea, the Ferry in the Stars nowhere (our own painting), the Floating Grove in Il Mheg, the Floating Market in Kugane, the Domes of Sharlayan in Old Sharlayan, the Archon's Crossing in Labyrinthos, the Courier's Wake nowhere (our own painting, the owner's answer of 6 October 2026: the moogle, met in the first hours of any start, and its Storm Post open at every era), the Sea of Sorrows in Mare Lamentorum. A stage whose area the shield hides is `Veiled`: its name prints as the shield's placeholder (with its hover and "Reveal this name"), its levels have no names and no scene, and Adventure, Quick Play, duels and challenges cannot play them, until the story reaches the area or the player reveals it. The map marks such a stop with the shield's eye-slash, not the padlock. The companions keep their own gating.
+- **Adventure steps over a veiled stage** (owner's ruling). The road's frontier skips a stage set past the story: the next stage the story allows opens, so no story-safe stage (the moogle's Storm Post included) waits behind a veiled one. The veiled stage waits on the map with the shield's mark (and the padlock too while the road has not come to it), its levels unwon; "all won" and The Far Shore's completion still need it. When nothing else is left to play, the title's Continue says the road waits past the story and opens the map on that stage; the tally says so when it has no Next because of it. When the road has come to the stage and its levels are built, pressing its "Reveal its place" pill opens the shield's "Reveal this name" (for this session), as a right-click on its name does. Otherwise the pill is the padlock's "Not reached" (the road has not come to it) or "Levels on their way" (none of its levels is built yet), and a reveal is left to the name's right-click: a reveal is offered only where it opens something.
+- **Scenes and backdrops follow the same rule.** A level on a veiled stage has no scene art (the night sky). A level whose stage is open but whose scene's own place is past the story is drawn over the recipe's declared story-safe fallback picture (every veilable recipe declares one; a test holds it). The menus' backdrops are tagged too: the title's painting is Sohm Al (Heavensward). While the shield hides it, the title is Ul'dah's loading-screen painting (A Realm Reborn, tagged "Ul'dah - Steps of Nald", so the shield test confirms its era; the owner's answer of 6 October 2026). The chart (Eorzea's world map, no story place) is only the last fallback, when neither painting can be shown or read.
 - **Levels are referenced by id.** Content is authored separately. `MoonfallCampaigns.Find(id)` returns the shipped level, or null when no level of that id is shipped yet, in which case the slot is `Missing` and Adventure stops before it.
 
 **Unlocks** [R §6 l.126]:
@@ -76,7 +76,8 @@ After `FinishLevel`, `FinishChallenge` or `FinishDuel`, save the progress the sa
 level i of a campaign:  Veiled   if its stage is set past the player's story (the spoiler shield; MoonfallPlaces)
                         Missing  else if no level of its id ships
                         Cleared  else if won
-                        Open     else if the campaign is open and (i <= the frontier, or level i - 1 is won)
+                        Open     else if the campaign is open and (i <= the frontier, or level i - 1 is won, or i is the
+                                 campaign's reach: the furthest the frontier has ever stood)
                         Sealed   otherwise
 the frontier = the first level neither won nor on a veiled stage (MoonfallModes.Frontier): the road steps over a veiled stage
 The Moon Road is always open; The Far Shore opens when all 55 of The Moon Road are won.
@@ -88,9 +89,12 @@ stage is not itself veiled (MoonfallModes.CompanionReached).
 - **The frontier** steps over veiled stages, so a stage the story allows is never stuck behind one set past it. The count
   (`BaseCleared`, `ExpansionCleared`) is still the run of consecutive wins, so a veiled stage's unwon levels keep "all won"
   and the Far Shore's completion waiting.
-- **Winning a level opens the next, for good.** A level whose predecessor is won stays open whatever the frontier says now, so a
-  reveal, or the story reaching a stepped-over stage (which pulls the frontier back to it), never closes a level the player
-  had come to.
+- **A level the road came to stays open, for good.** A level whose predecessor is won stays open whatever the frontier says
+  now. So does the level the frontier has reached furthest (the campaign's reach, `MoonfallProgress.BaseReach` and
+  `ExpansionReach`, a high-water mark noted after every level's end and saved and merged like the counts), even when the
+  road stepped to it over a veiled stage and it is not yet played. So a reveal, or the story reaching a stepped-over stage
+  (which pulls the frontier back to it), never closes a level the player had come to, and never locks the moogle again.
+  Veiled still ranks first, so an alt with less story sees nothing new.
 - **Where Adventure goes next** (`MoonfallModes.Next`, the title's Continue): the frontier's level when it can be played;
   otherwise the first veiled stage before the frontier that has levels built (the road waits there, the map opens on it); a
   stage whose levels are not built is never "past your story", it is "levels on their way" (`MoonfallLooks.Coming`, measured
@@ -109,7 +113,7 @@ State(companion) =
 
 - **The story** is `MoonfallStory.FromShield(SpoilerMask)`. A name is met once `SpoilerMask.IsNameMasked(SpoilerKind.Npc, name)` is false. That is the shield's own NPC rule with the player's own setting: with the shield off, everyone is met, and a name the data doesn't place counts as met, because the shield never guesses.
 - **The twins** need both "Alphinaud" and "Alisaie", so their card stays face down until Alisaie is met (decision 23).
-- **The moogle** has no story names (met in the first hours of any start), and it is reached at The Far Shore's stage 11.
+- **The moogle** has no story names (met in the first hours of any start), and it is reached at The Far Shore's stage 11, which is set nowhere, so it is reached at every era once the road comes to stage 11.
 - **Quick Play** offers only `Available` companions. The research gives Quick Play no unlocks of its own ("Quick Play replays unlocked levels" [R §6 l.126]).
 
 ## 4. Quick Play and Ace scores

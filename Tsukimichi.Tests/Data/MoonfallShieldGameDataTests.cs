@@ -41,6 +41,12 @@ public sealed class MoonfallShieldGameDataTests(UnlockIndexFixture fixture, ITes
         {
             yield return (titleZone, title.Era, "the title's backdrop");
         }
+
+        // The title before Heavensward (m13): the shield must place it in A Realm Reborn.
+        if (MoonfallPlaces.OfBackdrop(Core.Moonfall.Art.MoonfallBackdrop.TitleEarly) is { Zone: { } earlyZone } early)
+        {
+            yield return (earlyZone, early.Era, "the early title's backdrop");
+        }
     }
 
     /// <summary>The first main scenario quest of <paramref name="expansion"/> in story order; the story's length past the last.</summary>

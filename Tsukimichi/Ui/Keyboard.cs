@@ -89,6 +89,9 @@ public static class Keyboard
         ImGui.IsKeyDown(ImGuiKey.UpArrow) || ImGui.IsKeyDown(ImGuiKey.DownArrow) || ImGui.IsKeyDown(ImGuiKey.LeftArrow) || ImGui.IsKeyDown(ImGuiKey.RightArrow)
         || ImGui.IsKeyDown(ImGuiKey.Tab) || ImGui.IsKeyDown(ImGuiKey.Enter) || ImGui.IsKeyDown(ImGuiKey.KeypadEnter) || ImGui.IsKeyDown(ImGuiKey.Space);
 
+    /// <summary>Esc is held down (pressed this frame or earlier): a window that closed a popup with it keeps the press from also closing itself.</summary>
+    public static bool EscapeHeld() => ImGui.IsKeyDown(ImGuiKey.Escape);
+
     /// <summary>The gamepad's Start button went down in the window that has the keys (Moonfall pauses with it, as games do).</summary>
     public static bool StartPressed() => WindowHasKeys() && ImGui.IsKeyPressed(ImGuiKey.GamepadStart, false);
 

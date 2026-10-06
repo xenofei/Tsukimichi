@@ -607,6 +607,7 @@ public sealed partial class MoonfallWindow
         var x = min.X + pad;
         var y = min.Y + pad;
 
+        TextSinkForRender?.Invoke(tallyBanner);
         dl.AddText(ImGui.GetFont(), ImGui.GetFontSize() * 1.3f, new Vector2(x, y), Theme.U32(Theme.GoldHigh), tallyBanner);
         y += line * 1.6f;
         if (rows > 0 && g.Tally is { } tally)
@@ -615,6 +616,8 @@ public sealed partial class MoonfallWindow
             for (var k = 0; k < tallyLines.Length; k += 2)
             {
                 var total = k == tallyLines.Length - 2;
+                TextSinkForRender?.Invoke(tallyLines[k]);
+                TextSinkForRender?.Invoke(tallyLines[k + 1]);
                 dl.AddText(new Vector2(x, y), Theme.U32(total ? Theme.Surface.Text : Theme.Surface.TextSecondary), tallyLines[k]);
                 var valueWidth = ImGui.CalcTextSize(tallyLines[k + 1]).X;
                 dl.AddText(new Vector2(max.X - pad - valueWidth, y), Theme.U32(total ? Theme.Gold : Theme.Surface.Text), tallyLines[k + 1]);
@@ -624,7 +627,9 @@ public sealed partial class MoonfallWindow
             // A win with no Next says why (the road waits past the story, or this was the last level built).
             if (tallyNoteOnWin)
             {
-                dl.AddText(new Vector2(x, y + (line * 0.4f)), Theme.U32(Theme.Surface.TextSecondary), tallyNote);
+                // Wrapped to the panel, so a longer note never runs past it.
+                TextSinkForRender?.Invoke(tallyNote);
+                dl.AddText(ImGui.GetFont(), ImGui.GetFontSize(), new Vector2(x, y + (line * 0.4f)), Theme.U32(Theme.Surface.TextSecondary), tallyNote, panel.X - (2 * pad));
             }
         }
         else
@@ -646,11 +651,18 @@ public sealed partial class MoonfallWindow
             ImGui.SameLine();
         }
 
+        TextSinkForRender?.Invoke(tallyHome);
         if (ImGui.Button(tallyHomeLabel))
         {
             SoundClick();
             LeaveBoard();
             return;
+        }
+
+        if (tallyVeil is not null)
+        {
+            // The note says Map opens on the waiting stage: Map is the default press, not Replay.
+            ImGui.SetItemDefaultFocus();
         }
 
         if (tallyNext is { } next)

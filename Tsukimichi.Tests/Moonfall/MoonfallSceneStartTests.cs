@@ -15,6 +15,15 @@ namespace Tsukimichi.Tests.Moonfall;
 /// </summary>
 public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
 {
+    /// <summary>A game painting that needs no install: solid magenta at the loading screens' size.</summary>
+    private static readonly Func<string, MoonfallImage?> Sentinel = _ =>
+    {
+        var image = new MoonfallImage(1920, 1080, alpha: true);
+        Array.Fill(image.R.Data, 1f);
+        Array.Fill(image.B.Data, 1f);
+        return image;
+    };
+
     private sealed record Tex(string Name, long Bytes);
 
     private sealed class Host : IMoonfallGameArtHost<Tex>
@@ -28,7 +37,13 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
 
         public ConcurrentBag<string> Pictures { get; } = [];
 
-        public Task<MoonfallImage?> ReadGameTexture(string path) => Gate.ContinueWith(_ => MoonfallSceneKit.GameTexture(path), TaskScheduler.Default);
+        /// <summary>Each thumbnail uploaded, by a hash of its pixels.</summary>
+        public ConcurrentBag<string> ThumbHashes { get; } = [];
+
+        /// <summary>Reads a game texture; the install's by default, or a stand-in that needs no game.</summary>
+        public Func<string, MoonfallImage?> Texture { get; init; } = MoonfallSceneKit.GameTexture;
+
+        public Task<MoonfallImage?> ReadGameTexture(string path) => Gate.ContinueWith(_ => Texture(path), TaskScheduler.Default);
 
         public Task<MoonfallImage?> ReadPicture(string name)
         {
@@ -39,6 +54,11 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         public Task<Tex> Upload(MoonfallRgba pixels, string name)
         {
             Uploaded.Add((name, pixels.Bytes));
+            if (name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal))
+            {
+                ThumbHashes.Add(Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(pixels.Pixels)));
+            }
+
             return Task.FromResult(new Tex(name, pixels.Bytes));
         }
 
@@ -132,10 +152,15 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         // Lantern night (Kugane) is built for a thumbnail with its scene shown; while its painting is still being read,
         // the shield comes to hide the scene's place. The finished Kugane build is dropped unlanded, and the thumbnail is
         // built again over the recipe's story-safe fallback.
-        var gate = new TaskCompletionSource();
-        var host = new Host { Gate = gate.Task };
-        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
+        // Every game painting reads as a solid magenta sentinel, so the test means the same with or without the game:
+        // the Kugane build (over the sentinel) and the story-safe one (over the fallback picture) land different pixels.
         var (level, recipe) = MoonfallSceneKit.ShippedScenes().First(s => s.Recipe.Name == "lantern-night");
+        var safe = SentinelThumb(level, MoonfallSceneHide.Fallback);
+        Assert.NotEqual(safe, SentinelThumb(level, MoonfallSceneHide.Shown));
+
+        var gate = new TaskCompletionSource();
+        var host = new Host { Gate = gate.Task, Texture = Sentinel };
+        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
         var hide = MoonfallSceneHide.Shown;
         art.HidesScene = (_, _) => hide;
 
@@ -158,6 +183,17 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         // One thumbnail landed, and it was built from the fallback picture, never from the Kugane build.
         Assert.Single(host.Uploaded, static u => u.Name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal));
         Assert.Contains(recipe.Fallback!, host.Pictures);
+        Assert.Equal(safe, Assert.Single(host.ThumbHashes));
+    }
+
+    /// <summary>The pixels' hash of <paramref name="level"/>'s thumbnail built over the sentinel with its scene <paramref name="hide"/>.</summary>
+    private static string SentinelThumb(MoonfallLevel level, MoonfallSceneHide hide)
+    {
+        var host = new Host { Texture = Sentinel };
+        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
+        art.HidesScene = (_, _) => hide;
+        Until(() => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
+        return Assert.Single(host.ThumbHashes);
     }
 
     [Fact]

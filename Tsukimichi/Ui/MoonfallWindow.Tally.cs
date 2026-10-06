@@ -126,7 +126,7 @@ public sealed partial class MoonfallWindow
                 if (HasNext(g))
                 {
                     tallyNext = playKind == MoonfallPlayKind.Adventure
-                        ? string.Format(CultureInfo.CurrentCulture, Strings.MoonfallNextCodeFormat, LevelCode(AdventureNext() ?? levelIndex + 1))
+                        ? string.Format(CultureInfo.CurrentCulture, Strings.MoonfallNextCodeFormat, AdventureNext() is { } np ? PlaceCode(np) : LevelCode(levelIndex + 1))
                         : Strings.MoonfallNextLevel;
                 }
                 else if (won && playKind == MoonfallPlayKind.Adventure && modes.Next() is { Veiled: true } waits
@@ -138,8 +138,9 @@ public sealed partial class MoonfallWindow
                     tallyNote = string.Format(CultureInfo.CurrentCulture, Strings.MoonfallTallyVeiledFormat, veil.Number);
                     tallyNoteOnWin = true;
                 }
-                else if (won && playKind == MoonfallPlayKind.Adventure)
+                else if (won && playKind == MoonfallPlayKind.Adventure && modes.Next() is null)
                 {
+                    // Nothing to play anywhere on the road: the last level built so far.
                     tallyNote = Strings.MoonfallLastLevel;
                     tallyNoteOnWin = true;
                 }
@@ -156,6 +157,10 @@ public sealed partial class MoonfallWindow
     /// <summary>A level's code in its campaign, "3-4".</summary>
     private static string LevelCode(int index) =>
         string.Create(CultureInfo.InvariantCulture, $"{MoonfallCharacters.Stage(index)}-{MoonfallCharacters.LevelInStage(index)}");
+
+    /// <summary>A level's code with its campaign when that is The Far Shore ("FS 1-1"), as Quick Play writes it.</summary>
+    private static string PlaceCode(MoonfallLevelPlace place) =>
+        place.Campaign == MoonfallCampaignKind.Expansion ? "FS " + LevelCode(place.Index) : LevelCode(place.Index);
 
     private static string OpponentName(MoonfallDuel d) =>
         MoonfallCompanions.TryGet(d.Companion(MoonfallDuel.OpponentSide), out var info) ? info.Name : string.Empty;
@@ -301,7 +306,7 @@ public sealed partial class MoonfallWindow
         if (tallyAgainLabel is { } againLabel)
         {
             var w = room * widths[index++];
-            if (PillButton(c, bx, by0, bx + w, by0 + bh, tallyAgain!, againLabel, focus: !nextFocus && won))
+            if (PillButton(c, bx, by0, bx + w, by0 + bh, tallyAgain!, againLabel, focus: !nextFocus && won && tallyVeil is null))
             {
                 SoundClick();
                 Restart();
@@ -313,7 +318,7 @@ public sealed partial class MoonfallWindow
 
         {
             var w = room * widths[index++];
-            if (PillButton(c, bx, by0, bx + w, by0 + bh, tallyHome, tallyHomeLabel, focus: !nextFocus && (!won || tallyAgain is null)))
+            if (PillButton(c, bx, by0, bx + w, by0 + bh, tallyHome, tallyHomeLabel, focus: !nextFocus && (!won || tallyAgain is null || tallyVeil is not null)))
             {
                 SoundClick();
                 LeaveBoard();

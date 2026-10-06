@@ -432,21 +432,23 @@ public sealed partial class MoonfallWindow
     }
 
     private (MoonfallCampaignKind Campaign, int Index, int Epoch) adventureNextFor = (MoonfallCampaignKind.Base, -1, -1);
-    private int? adventureNext;
-    private MoonfallStage? adventureVeil;
+    private MoonfallLevelPlace? adventureNext;
     private MoonfallLevel? adventureNextLevel;
 
     /// <summary>
-    /// Adventure's next level after the one played (stepping over stages set past the player's story), worked out once
-    /// per level and progress; <see cref="adventureVeil"/> is the first veiled stage stepped over, if any.
+    /// Adventure's next level after the one played, worked out once per level and progress: the next reached level in
+    /// its campaign (stepping over stages set past the player's story), or else wherever Adventure goes next when that
+    /// is a level to play (The Moon Road's last win opens The Far Shore's first). Null when there is none to play.
     /// </summary>
-    private int? AdventureNext()
+    private MoonfallLevelPlace? AdventureNext()
     {
         if (adventureNextFor != (campaign, levelIndex, progressEpoch))
         {
             adventureNextFor = (campaign, levelIndex, progressEpoch);
-            adventureNext = modes.NextLevel(campaign, levelIndex, out adventureVeil);
-            adventureNextLevel = adventureNext is { } n ? modes.Slot(campaign, n).Level : null;
+            adventureNext = modes.NextLevel(campaign, levelIndex, out _) is { } index
+                ? new MoonfallLevelPlace(campaign, index)
+                : modes.Next() is { Veiled: false } next ? next.Place : null;
+            adventureNextLevel = adventureNext is { } n ? modes.Slot(n.Campaign, n.Index).Level : null;
         }
 
         return adventureNext;
@@ -493,11 +495,11 @@ public sealed partial class MoonfallWindow
         switch (playKind)
         {
             case MoonfallPlayKind.Adventure:
-                var nextIndex = AdventureNext() ?? levelIndex + 1;
-                var pick = MoonfallStages.StageOf(campaign, nextIndex) is { PlayerPicks: true }
+                var nextPlace = AdventureNext() ?? new MoonfallLevelPlace(campaign, levelIndex + 1);
+                var pick = MoonfallStages.StageOf(nextPlace.Campaign, nextPlace.Index) is { PlayerPicks: true }
                     ? (adventurePick != MoonfallCompanion.None ? adventurePick : MoonfallCompanions.Carrying(game?.Power ?? MoonfallPower.None))
                     : MoonfallCompanion.None;
-                if (!PlayAdventure(campaign, nextIndex, pick))
+                if (!PlayAdventure(nextPlace.Campaign, nextPlace.Index, pick))
                 {
                     LeaveBoard();
                 }

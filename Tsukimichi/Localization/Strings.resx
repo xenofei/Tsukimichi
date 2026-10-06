@@ -17188,7 +17188,7 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall map: a stop's state in its hover line, for a stage set past the player's story (the spoiler shield).</comment>
   </data>
   <data name="MoonfallStageVeiledLine" xml:space="preserve">
-    <value>Set past your story. Right-click its name, or press Reveal its place, to reveal the place for this session.</value>
+    <value>Set past your story. Right-click its name or press Reveal its place. It shows for this session only.</value>
     <comment>Moonfall map: why a stage set past the player's story is closed, and how it opens (the spoiler shield's reveal).</comment>
   </data>
   <data name="MoonfallStageVeiledButton" xml:space="preserve">
@@ -17268,11 +17268,19 @@ Another job or society: a job, class or allied society you don't play now.</valu
     <comment>Moonfall map: the button of a reached stage set past the player's story; pressing it opens the spoiler shield's reveal for the session.</comment>
   </data>
   <data name="MoonfallStopVeiledLine" xml:space="preserve">
-    <value>Past your story: select it to reveal its place</value>
+    <value>Select it to reveal its place</value>
     <comment>Moonfall map: a veiled stop's short reason in its hover (the panel says it in full).</comment>
   </data>
   <data name="MoonfallStopVeiledSealedLine" xml:space="preserve">
     <value>Past your story, and not reached yet</value>
     <comment>Moonfall map: the short reason in the hover of a stop both past the player's story and not reached.</comment>
+  </data>
+  <data name="MoonfallStopVeiledComingLine" xml:space="preserve">
+    <value>Past your story; its levels are on their way</value>
+    <comment>Moonfall map: a veiled stop the road has come to whose levels are not built yet (nothing to reveal).</comment>
+  </data>
+  <data name="MoonfallStageVeiledComingLine" xml:space="preserve">
+    <value>Set past your story, and its levels are on their way: there is nothing to reveal yet.</value>
+    <comment>Moonfall map: the panel line of a stage past the player's story whose levels are not built yet.</comment>
   </data>
 </root>

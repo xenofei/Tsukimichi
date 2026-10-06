@@ -81,6 +81,39 @@ public sealed class MoonfallProgress
 
     public int Cleared(MoonfallCampaignKind kind) => kind == MoonfallCampaignKind.Expansion ? ExpansionCleared : BaseCleared;
 
+    /// <summary>
+    /// The furthest level The Moon Road's frontier has opened (stepping over stages past the story): a high-water mark,
+    /// so a reveal or the story moving on (which can pull the frontier back) never closes the level the road had come
+    /// to. Optional; 0 in older files.
+    /// </summary>
+    public int BaseReach { get; set; }
+
+    /// <summary>The furthest level The Far Shore's frontier has opened (<see cref="BaseReach"/>).</summary>
+    public int ExpansionReach { get; set; }
+
+    /// <summary>The campaign's high-water mark of the frontier.</summary>
+    public int Reach(MoonfallCampaignKind kind) => kind == MoonfallCampaignKind.Expansion ? ExpansionReach : BaseReach;
+
+    /// <summary>Raises the campaign's high-water mark to <paramref name="index"/> when that is further; true when it moved.</summary>
+    public bool RecordReach(MoonfallCampaignKind kind, int index)
+    {
+        if (index <= Reach(kind))
+        {
+            return false;
+        }
+
+        if (kind == MoonfallCampaignKind.Expansion)
+        {
+            ExpansionReach = index;
+        }
+        else
+        {
+            BaseReach = index;
+        }
+
+        return true;
+    }
+
     /// <summary>The key of the duels against <paramref name="opponent"/> at <paramref name="difficulty"/>: "louisoix/adept".</summary>
     public static string DuelKey(MoonfallCompanion opponent, MoonfallAiDifficulty difficulty) =>
         (MoonfallCompanions.TryGet(opponent, out var info) ? info.Key : "none") + "/" + difficulty.ToString().ToLowerInvariant();
@@ -239,9 +272,11 @@ public sealed class MoonfallProgress
     public bool Absorb(MoonfallProgress other)
     {
         ArgumentNullException.ThrowIfNull(other);
-        var moved = other.BaseCleared > BaseCleared || other.ExpansionCleared > ExpansionCleared;
+        var moved = other.BaseCleared > BaseCleared || other.ExpansionCleared > ExpansionCleared || other.BaseReach > BaseReach || other.ExpansionReach > ExpansionReach;
         BaseCleared = Math.Max(BaseCleared, other.BaseCleared);
         ExpansionCleared = Math.Max(ExpansionCleared, other.ExpansionCleared);
+        BaseReach = Math.Max(BaseReach, other.BaseReach);
+        ExpansionReach = Math.Max(ExpansionReach, other.ExpansionReach);
         foreach (var (id, theirs) in other.Levels)
         {
             var mine = Level(id);
@@ -326,6 +361,8 @@ public sealed class MoonfallProgress
     {
         progress.BaseCleared = Math.Max(0, progress.BaseCleared);
         progress.ExpansionCleared = Math.Max(0, progress.ExpansionCleared);
+        progress.BaseReach = Math.Clamp(progress.BaseReach, 0, MoonfallStages.BaseLevels);
+        progress.ExpansionReach = Math.Clamp(progress.ExpansionReach, 0, MoonfallStages.ExpansionLevels);
 
         // A hand-edited or damaged entry (null, a negative score or count, an empty key) reads as nothing.
         progress.Levels = Rebuild(progress.Levels, static r => r is null ? null : r.Best >= 0 ? r : new MoonfallLevelRecord { Cleared = r.Cleared, Aced = r.Aced });

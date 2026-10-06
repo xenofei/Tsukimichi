@@ -134,11 +134,14 @@ public sealed partial class MoonfallWindow : Window
     /// <summary>A popup (the shield's reveal menu) was open at the end of the last frame: its closing key is not also Back.</summary>
     private bool popupWasOpen;
 
+    /// <summary>Esc closed a popup and is still held: the window's close key waits until it is let go.</summary>
+    private bool escAfterPopup;
+
     /// <summary>The offline renderer: the board's clock is held (while the art loads), so a staged moment renders the same every run.</summary>
     internal bool HoldBoardForRender { get; set; }
 
     /// <summary>The title's painting (Sohm Al) is past the player's story: the chart stands in.</summary>
-    private bool titleBackdropHidden;
+    private MoonfallBackdrop titleBackdrop = MoonfallBackdrop.Title;
 
     /// <summary>The shield version the menus' words and the scene veil were made for.</summary>
     private int shieldSeen = int.MinValue;
@@ -154,7 +157,10 @@ public sealed partial class MoonfallWindow : Window
 
         shieldSeen = version;
         gameArt?.VeilChanged();
-        titleBackdropHidden = modes.Shield.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title));
+        // The title's painting by the story: Sohm Al, else Ul'dah (A Realm Reborn), else (neither shown) the chart.
+        titleBackdrop = !modes.Shield.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)) ? MoonfallBackdrop.Title
+            : !modes.Shield.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly)) ? MoonfallBackdrop.TitleEarly
+            : MoonfallBackdrop.Chart;
 
         // The menus' views and words are made per progress epoch: a shield change remakes them as a win does.
         progressEpoch++;
@@ -242,7 +248,10 @@ public sealed partial class MoonfallWindow : Window
         SoundFrame(inPlay && pause.Paused);
         HandleKeys();
         // Esc closes the window from the title alone (Dalamud's close key); everywhere else it goes back, or pauses.
-        RespectCloseHotkey = flow.Current == MoonfallScreen.Title;
+        // An Esc that dismissed a popup (the shield's reveal menu) never also closes the window: latched until Esc is let go,
+        // because Dalamud reads the key as held after the window draws.
+        escAfterPopup = (escAfterPopup || popupWasOpen || ImGui.IsPopupOpen(string.Empty, ImGuiPopupFlags.AnyPopupId | ImGuiPopupFlags.AnyPopupLevel)) && Keyboard.EscapeHeld();
+        RespectCloseHotkey = flow.Current == MoonfallScreen.Title && !escAfterPopup;
         if (flow.Version != screenVersion)
         {
             screenVersion = flow.Version;
@@ -585,11 +594,12 @@ public sealed partial class MoonfallWindow : Window
         }
 
         // Whole parts only, in priority order, until one does not fit: a duel's turn first, then the balls, the oranges
-        // and the multiplier (game state), then the level's code and name; in a level, the code and name lead.
+        // and the multiplier (game state), then the level's code and name; in a level, the code, then the game state,
+        // and the name last, so a narrow window drops the name before anything the player is playing with.
         var levelName = playLevel is null ? string.Empty : PlayLevelName(playLevel);
         ReadOnlySpan<string> parts = duel is not null
             ? [turn, ballsText, orangesText, multiplierText, stageText, levelName]
-            : [stageText, levelName, ballsText, orangesText, multiplierText];
+            : [stageText, ballsText, orangesText, multiplierText, levelName];
         for (var i = 0; i < parts.Length; i++)
         {
             var part = parts[i];
@@ -601,12 +611,6 @@ public sealed partial class MoonfallWindow : Window
             var w = ImGui.CalcTextSize(part).X;
             if (x + w > right)
             {
-                // In a level the name gives way and the game state after it still shows; elsewhere the run stops here.
-                if (duel is null && ReferenceEquals(part, levelName))
-                {
-                    continue;
-                }
-
                 break;
             }
 

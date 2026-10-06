@@ -25,7 +25,7 @@ public sealed class MoonfallShieldTests
             }
         }
 
-        foreach (var place in MoonfallPlaces.Scenes.Values.Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)))
+        foreach (var place in MoonfallPlaces.Scenes.Values.Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)).Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly)))
         {
             if (place.Zone is { } zone)
             {
@@ -76,7 +76,9 @@ public sealed class MoonfallShieldTests
         {
             var place = MoonfallPlaces.OfStage(stage);
             Assert.InRange(place.Era, MoonfallPlaces.ARealmReborn, MoonfallPlaces.Dawntrail);
-            Assert.True(place.Zone is not null || stage.Number == 6, $"stage {stage.Number} {stage.Name} names no place");
+            // Our own two paintings name no place: the Ferry in the Stars (6) and the Courier's Wake (11, the owner's
+            // answer of 6 October 2026, so the moogle opens at every era).
+            Assert.True((place.Zone is not null) == (stage.Number is not (6 or 11)), $"stage {stage.Number} {stage.Name}: only 6 and 11 name no place");
         }
 
         // The owner's examples: Sharlayan's domes and the archons are Endwalker; the Sea of Sorrows is Endwalker's moon.
@@ -84,6 +86,7 @@ public sealed class MoonfallShieldTests
         Assert.Equal(MoonfallPlaces.Endwalker, MoonfallPlaces.OfStage(far[9]).Era);
         Assert.Equal(new MoonfallPlace(MoonfallPlaces.Endwalker, "Mare Lamentorum"), MoonfallPlaces.OfStage(far[11]));
         Assert.Equal("The Floating Market", far[7].Name);
+        Assert.Equal(MoonfallPlace.Nowhere, MoonfallPlaces.OfStage(far[10]));
 
         foreach (var stage in MoonfallStages.Of(MoonfallCampaignKind.Base))
         {
@@ -237,6 +240,90 @@ public sealed class MoonfallShieldTests
         Assert.True(MoonfallLooks.Coming(stage5, modes.Frontier(MoonfallCampaignKind.Expansion)));
         Assert.Null(modes.NextLevel(MoonfallCampaignKind.Expansion, (3 * MoonfallCharacters.LevelsPerStage) - 1, out var veil));
         Assert.Null(veil);
+
+        // Stage 4 is veiled and the road has come to it, but none of its levels is built: the map offers no reveal there
+        // (a reveal would spend a later expansion's name on "levels on their way"; m14). The map's rule is
+        // Veiled && Reached && StageBuilt (the lint holds the map to it).
+        var stage4 = modes.Stages(MoonfallCampaignKind.Expansion)[3];
+        Assert.Equal(MoonfallStageState.Veiled, stage4.State);
+        Assert.True(stage4.Reached);
+        Assert.False(modes.StageBuilt(stage4.Stage));
+        Assert.True(modes.StageBuilt(modes.Stages(MoonfallCampaignKind.Expansion)[2].Stage));
+    }
+
+    [Fact]
+    public void A_level_the_road_stepped_to_stays_open_when_the_story_moves_on_unplayed()
+    {
+        // Heavensward, walked until Continue is 11-1 (stages 4, 7 to 10 and 12 stepped over), 11-1 not played. The story
+        // reaches Stormblood: stages 4 and 8 unveil and the frontier returns to 4-1, but 11-1 stays open (the road's
+        // high-water mark) and the moogle stays reached (m15).
+        var heavensward = FarShoreStart(StoryAt(MoonfallPlaces.Heavensward));
+        var stormPost = 10 * MoonfallCharacters.LevelsPerStage;
+        for (var guard = 0; guard < 200 && heavensward.Continue() is { } next && next.Index < stormPost; guard++)
+        {
+            heavensward.Progress.RecordLevel(MoonfallStages.LevelId(next.Campaign, next.Index), won: true, score: 100_000);
+            heavensward.NoteReach();
+        }
+
+        Assert.Equal(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, stormPost), heavensward.Continue());
+        Assert.Equal(stormPost, heavensward.Progress.Reach(MoonfallCampaignKind.Expansion));
+
+        var stormblood = new MoonfallModes(heavensward.Campaigns, heavensward.Progress, MoonfallStory.Everyone, []) { Shield = StoryAt(MoonfallPlaces.Stormblood) };
+        Assert.Equal(3 * MoonfallCharacters.LevelsPerStage, stormblood.Frontier(MoonfallCampaignKind.Expansion));
+        Assert.Equal(MoonfallLevelState.Open, stormblood.Slot(MoonfallCampaignKind.Expansion, stormPost).State);
+        Assert.Equal(MoonfallCompanionState.Available, stormblood.CompanionState(MoonfallCompanion.Moogle));
+
+        // Only the level the road came to: the one after it waits for a win, as ever.
+        Assert.Equal(MoonfallLevelState.Sealed, stormblood.Slot(MoonfallCampaignKind.Expansion, stormPost + 1).State);
+
+        // The mark is saved and merged like the counts: a copy keeps it, and a merge keeps the further.
+        Assert.Equal(stormPost, heavensward.Progress.Copy().Reach(MoonfallCampaignKind.Expansion));
+        var behind = new MoonfallProgress { ExpansionReach = 3 };
+        behind.Absorb(heavensward.Progress);
+        Assert.Equal(stormPost, behind.Reach(MoonfallCampaignKind.Expansion));
+    }
+
+    [Fact]
+    public void Revealing_a_stepped_over_stage_never_closes_the_level_continue_had_offered()
+    {
+        // Heavensward after 3-5: the road steps over stage 4 (The Ruby Sea) and Continue offers 5-1. Revealing stage 4
+        // from its own pill pulls the frontier back to 4-1, and 5-1 stays open (m15, case 1b).
+        var heavensward = FarShoreStart(StoryAt(MoonfallPlaces.Heavensward));
+        var five = 4 * MoonfallCharacters.LevelsPerStage;
+        for (var i = 0; i < 3 * MoonfallCharacters.LevelsPerStage; i++)
+        {
+            heavensward.Progress.RecordLevel(MoonfallStages.LevelId(MoonfallCampaignKind.Expansion, i), won: true, score: 100_000);
+            heavensward.NoteReach();
+        }
+
+        Assert.Equal(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, five), heavensward.Continue());
+        var revealed = new MoonfallModes(heavensward.Campaigns, heavensward.Progress, MoonfallStory.Everyone, []) { Shield = StoryAt(MoonfallPlaces.Heavensward, "The Ruby Sea") };
+        Assert.Equal(3 * MoonfallCharacters.LevelsPerStage, revealed.Frontier(MoonfallCampaignKind.Expansion));
+        Assert.Equal(MoonfallLevelState.Open, revealed.Slot(MoonfallCampaignKind.Expansion, five).State);
+        Assert.Equal(MoonfallStageState.Open, revealed.Stages(MoonfallCampaignKind.Expansion)[4].State);
+    }
+
+    [Fact]
+    public void Winning_the_moon_roads_last_level_leads_on_to_the_far_shore_not_to_the_last_level_note()
+    {
+        // Base-55 won with the Far Shore built: Adventure's next within The Moon Road is none, but Next() is FS 1-1,
+        // playable, so the tally offers it (m16) and the "last level for now" note is not drawn.
+        var modes = FarShoreStart(StoryAt(MoonfallPlaces.ARealmReborn));
+        Assert.Null(modes.NextLevel(MoonfallCampaignKind.Base, MoonfallStages.BaseLevels - 1, out var over));
+        Assert.Null(over);
+        Assert.Equal(new MoonfallNext(new MoonfallLevelPlace(MoonfallCampaignKind.Expansion, 0), false), modes.Next());
+    }
+
+    [Fact]
+    public void The_courier_stages_shipped_levels_show_scenes_of_no_place()
+    {
+        // Stage 11 is set nowhere so the moogle opens at every era; its levels' scenes must name no place either, or the
+        // stage would show a scene past an early story (the owner's answer of 6 October 2026).
+        var stage = MoonfallStages.Of(MoonfallCampaignKind.Expansion)[10];
+        foreach (var level in MoonfallCampaigns.LoadBuiltIn().Expansion.Levels.Where(l => stage.LevelIds.Contains(l.Id)))
+        {
+            Assert.True(MoonfallPlaces.OfScene(level.Scene) is null or { Zone: null }, $"{level.Id}'s scene {level.Scene} names a place");
+        }
     }
 
     [Fact]
@@ -275,6 +362,9 @@ public sealed class MoonfallShieldTests
             var start = modes.Adventure(next.Campaign, next.Index, MoonfallCompanion.Minfilia);
             Assert.NotNull(start);
             modes.Progress.RecordLevel(start.LevelId, won: true, score: 100_000);
+
+            // As FinishLevel does after every level: the road's high-water mark follows the frontier.
+            modes.NoteReach();
         }
     }
 
@@ -307,22 +397,22 @@ public sealed class MoonfallShieldTests
             }
         }
 
-        // Before Endwalker, from Heavensward, the moogle's Storm Post (stage 11, the Churning Mists) is reached.
-        // The companion follows its stage: the moogle is Available, offered by Quick Play, and plays Storm Post's levels.
-        if (reach is >= MoonfallPlaces.Heavensward and < MoonfallPlaces.Endwalker)
-        {
-            Assert.DoesNotContain(11, veiledLeft);
-            Assert.Equal(MoonfallCompanionState.Available, modes.CompanionState(MoonfallCompanion.Moogle));
-            Assert.Contains(MoonfallCompanion.Moogle, modes.QuickPlayCompanions());
-            Assert.NotNull(modes.QuickPlay("expansion-51", MoonfallCompanion.Moogle));
-        }
+        // At every era the moogle's Storm Post (stage 11, the Courier's Wake, set nowhere: the owner's answer of 6 October
+        // 2026) is reached. The companion follows its stage: the moogle is Available, offered by Quick Play, and plays
+        // Storm Post's levels.
+        Assert.DoesNotContain(11, veiledLeft);
+        Assert.Equal(MoonfallCompanionState.Available, modes.CompanionState(MoonfallCompanion.Moogle));
+        Assert.Contains(MoonfallCompanion.Moogle, modes.QuickPlayCompanions());
+        Assert.NotNull(modes.QuickPlay("expansion-51", MoonfallCompanion.Moogle));
 
-        // Every companion whose stage is won is reached; one whose stage is veiled is not.
+        // The rule itself: a Far Shore companion is reached when its stage is not veiled and the stage's first level is
+        // open by the road's rule, or a level of it is won.
         foreach (var view in modes.Stages(MoonfallCampaignKind.Expansion))
         {
             if (view.Stage.Companion is var who && who != MoonfallCompanion.None && MoonfallCompanions.Get(who).Campaign == MoonfallCampaignKind.Expansion)
             {
-                Assert.Equal(view.State == MoonfallStageState.Done, modes.CompanionReached(who));
+                var reached = view.State != MoonfallStageState.Veiled && (view.Levels[0].Reached || view.Levels.Any(slot => modes.Progress.IsCleared(slot.Id)));
+                Assert.Equal(reached, modes.CompanionReached(who));
             }
         }
 
@@ -409,9 +499,15 @@ public sealed class MoonfallShieldTests
             }
         }
 
-        // The title's backdrop is tagged too (Sohm Al, Heavensward): the menus follow the same rule.
+        // The title's backdrop is tagged too (Sohm Al, Heavensward): the menus follow the same rule. Before Heavensward the
+        // title is Ul'dah's painting, A Realm Reborn's (m13); the chart, of no place, is the last fallback.
         Assert.Equal(MoonfallPlaces.Heavensward, MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title).Era);
+        Assert.Equal(MoonfallPlaces.ARealmReborn, MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly).Era);
+        Assert.NotNull(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly).Zone);
         Assert.Equal(MoonfallPlace.Nowhere, MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Chart));
+        var early = Everything(StoryAt(MoonfallPlaces.ARealmReborn)).Shield;
+        Assert.True(early.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)));
+        Assert.False(early.Hides(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly)));
     }
 
     [Fact]

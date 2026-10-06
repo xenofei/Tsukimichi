@@ -10,6 +10,12 @@ public enum MoonfallBackdrop : byte
 
     /// <summary>The map and level select: the world map (<c>ui/map/world/01/world01_m.tex</c>) as a moonlit chart, sapphire lands and teal seas.</summary>
     Chart,
+
+    /// <summary>
+    /// The title for a story not yet in Heavensward (the owner's answer, 6 October 2026): Ul'dah
+    /// (<c>ui/loadingimage/-nowloading_base02.tex</c>), A Realm Reborn's, graded as the title is.
+    /// </summary>
+    TitleEarly,
 }
 
 /// <summary>
@@ -41,9 +47,12 @@ public static class MoonfallBackdrops
     private const float ChartTop = 587f;
 
     /// <summary>The game path a backdrop reads.</summary>
-    public static string PathOf(MoonfallBackdrop backdrop) => backdrop == MoonfallBackdrop.Chart
-        ? "ui/map/world/01/world01_m.tex"
-        : "ui/loadingimage/-nowloading_base07.tex";
+    public static string PathOf(MoonfallBackdrop backdrop) => backdrop switch
+    {
+        MoonfallBackdrop.Chart => "ui/map/world/01/world01_m.tex",
+        MoonfallBackdrop.TitleEarly => "ui/loadingimage/-nowloading_base02.tex",
+        _ => "ui/loadingimage/-nowloading_base07.tex",
+    };
 
     /// <summary>Builds <paramref name="backdrop"/> from its painting.</summary>
     public static MoonfallRgba Build(MoonfallBackdrop backdrop, MoonfallImage painting)

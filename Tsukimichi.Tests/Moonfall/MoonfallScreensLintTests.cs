@@ -84,7 +84,13 @@ public sealed class MoonfallScreensLintTests
     public void Dalamuds_close_key_closes_the_window_only_from_the_title()
     {
         var draw = Member(Ui("MoonfallWindow.cs"), "private void DrawWindow(");
-        Assert.Contains("RespectCloseHotkey = flow.Current == MoonfallScreen.Title;", draw, StringComparison.Ordinal);
+        Assert.Contains("RespectCloseHotkey = flow.Current == MoonfallScreen.Title && !escAfterPopup;", draw, StringComparison.Ordinal);
+
+        // An Esc that dismissed a popup on the title (the shield's reveal menu) never also closes the window (UX m27):
+        // latched from the popup until Esc is let go, and set before the close key is gated on it.
+        Assert.Contains("escAfterPopup = (escAfterPopup || popupWasOpen || ImGui.IsPopupOpen(", draw, StringComparison.Ordinal);
+        Assert.Contains("&& Keyboard.EscapeHeld();", draw, StringComparison.Ordinal);
+        Assert.True(draw.IndexOf("escAfterPopup = ", StringComparison.Ordinal) < draw.IndexOf("RespectCloseHotkey = ", StringComparison.Ordinal));
         Assert.Equal(1, Regex.Count(string.Concat(Directory.GetFiles(Path.Combine(Root, "Tsukimichi", "Ui"), "MoonfallWindow*.cs").Select(f => Code(File.ReadAllText(f)))), @"RespectCloseHotkey\s*=\s*flow"));
     }
 
@@ -230,9 +236,40 @@ public sealed class MoonfallScreensLintTests
         Assert.Contains("ShieldText.RequestMenu(SpoilerKind.Area, zone, panelName);", reveal, StringComparison.Ordinal);
         Assert.Contains("panelRevealable", reveal, StringComparison.Ordinal);
 
+        // A reveal is offered only where it opens something: the road has come to the stage and its levels are built
+        // (GD m14). The 640 short line that names the reveal is drawn only then (GD m17, UX m28).
+        Assert.Contains("var veiledComing = sel.State == MoonfallStageState.Veiled && sel.Reached && !modes.StageBuilt(sel.Stage);", map, StringComparison.Ordinal);
+        Assert.Contains("panelRevealable = sel.State == MoonfallStageState.Veiled && sel.Reached && !veiledComing;", map, StringComparison.Ordinal);
+        Assert.Equal(1, Regex.Count(map, @"Strings\.MoonfallStageVeiledShort"));
+        Assert.Contains("panelRevealable ? Strings.MoonfallStageVeiledShort :", map, StringComparison.Ordinal);
+        Assert.Contains("!view.Reached ? Strings.MoonfallStopVeiledSealedLine : modes.StageBuilt(view.Stage) ? Strings.MoonfallStopVeiledLine : Strings.MoonfallStopVeiledComingLine", map, StringComparison.Ordinal);
+
         var small = Member(map, "private void SmallStagePanel(");
         Assert.Contains("var headOpens = view.State is MoonfallStageState.Open or MoonfallStageState.Done;", small, StringComparison.Ordinal);
         Assert.Contains("if ((hovered || nav) && headOpens)", small, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_tallys_next_and_notes_follow_where_the_road_goes_next()
+    {
+        // Next leads on to the road's next playable level even outside the stage order's reach (base-55 to FS 1-1; GD m16).
+        var next = Member(Ui("MoonfallWindow.Flow.cs"), "private MoonfallLevelPlace? AdventureNext(");
+        Assert.Contains(": modes.Next() is { Veiled: false } next ? next.Place : null;", next, StringComparison.Ordinal);
+
+        // "The last level for now" only when nothing anywhere is left to play; the veil note when the road waits.
+        var tally = Ui("MoonfallWindow.Tally.cs");
+        Assert.Contains("modes.Next() is { Veiled: true } waits", tally, StringComparison.Ordinal);
+        Assert.Contains("modes.Next() is null)", tally, StringComparison.Ordinal);
+        Assert.Contains("focus: !nextFocus && won && tallyVeil is null", tally, StringComparison.Ordinal);
+        Assert.Contains("tallyVeil is not null)))", tally, StringComparison.Ordinal);
+
+        // Leaving the board over a road-waits tally, by any way, opens the map on the waiting stage (UX m25), and the
+        // plain tally's default press is then Map (UX m29).
+        var end = Member(Ui("MoonfallWindow.Flow.cs"), "private void EndBoard(");
+        Assert.Contains("tallyVeil is { } waiting", end, StringComparison.Ordinal);
+        Assert.Contains("mapStage = waiting.Number - 1;", end, StringComparison.Ordinal);
+        var plain = Ui("MoonfallWindow.Board.cs");
+        Assert.True(plain.IndexOf("if (tallyVeil is not null)", StringComparison.Ordinal) < plain.IndexOf("ImGui.SetItemDefaultFocus();", plain.IndexOf("if (tallyVeil is not null)", StringComparison.Ordinal), StringComparison.Ordinal));
     }
 
     [Fact]
@@ -240,6 +277,8 @@ public sealed class MoonfallScreensLintTests
     {
         var bar = Member(Ui("MoonfallWindow.cs"), "private float DrawPlainBar(");
         Assert.Contains("? [turn, ballsText, orangesText, multiplierText, stageText, levelName]", bar, StringComparison.Ordinal);
+        // Solo play keeps the level's code, then the game state, and the name last: a narrow window drops the name first.
+        Assert.Contains(": [stageText, ballsText, orangesText, multiplierText, levelName];", bar, StringComparison.Ordinal);
         Assert.Contains("if (x + w > right)", bar, StringComparison.Ordinal);
         Assert.DoesNotContain("PushClipRect", bar, StringComparison.Ordinal);
     }

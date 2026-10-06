@@ -485,7 +485,7 @@ internal static class Render
     {
         string[] expansions = ["A Realm Reborn", "Heavensward", "Stormblood", "Shadowbringers", "Endwalker", "Dawntrail"];
         var eras = new Dictionary<string, (byte Era, int Number)>(StringComparer.Ordinal);
-        foreach (var place in MoonfallStages.Of(MoonfallCampaignKind.Expansion).Select(MoonfallPlaces.OfStage).Concat(MoonfallPlaces.Scenes.Values).Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)))
+        foreach (var place in MoonfallStages.Of(MoonfallCampaignKind.Expansion).Select(MoonfallPlaces.OfStage).Concat(MoonfallPlaces.Scenes.Values).Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.Title)).Append(MoonfallPlaces.OfBackdrop(MoonfallBackdrop.TitleEarly)))
         {
             if (place.Zone is { } zone && !eras.ContainsKey(zone))
             {

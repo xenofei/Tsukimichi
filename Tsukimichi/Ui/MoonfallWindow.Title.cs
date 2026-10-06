@@ -190,32 +190,29 @@ public sealed partial class MoonfallWindow
     private void DrawTitle(in MenuPen m)
     {
         var dl = m.Dl;
-        // The backdrop: Sohm Al, graded; the night stands in while it builds. Sohm Al is Heavensward's: while the shield
-        // hides it, the title is drawn over the chart (no story place), as a hidden scene is (the backdrop policy).
-        if (titleBackdropHidden)
+        // The backdrop by the story (the backdrop policy): Sohm Al (Heavensward), else Ul'dah's painting (A Realm Reborn),
+        // graded alike; the chart (no story place) only when neither can be shown or read; the night while it builds.
+        var which = titleBackdrop;
+        if (which != MoonfallBackdrop.Chart && gameArt is not null && gameArt.BackdropFailed(which))
         {
-            if (gameArt?.Backdrop(MoonfallBackdrop.Chart) is { } chart)
+            which = MoonfallBackdrop.Chart;
+        }
+
+        if (gameArt?.Backdrop(which) is { } backdrop)
+        {
+            if (which == MoonfallBackdrop.Chart)
             {
-                Cover(dl, chart.Handle, m.AreaMin, m.AreaMax, Vector2.Zero, Vector2.One, MoonfallBackdrops.ChartWidth / (float)MoonfallBackdrops.ChartHeight);
+                Cover(dl, backdrop.Handle, m.AreaMin, m.AreaMax, Vector2.Zero, Vector2.One, MoonfallBackdrops.ChartWidth / (float)MoonfallBackdrops.ChartHeight);
                 dl.AddRectFilled(m.AreaMin, m.AreaMax, Ink(MoonfallColor.Hex("#04050E"), 0.35f));
             }
             else
             {
-                if (gameArt is not null)
-                {
-                    menuArtPending++;
-                }
-
-                JewelNight(m);
+                Cover(dl, backdrop.Handle, m.AreaMin, m.AreaMax, Vector2.Zero, Vector2.One, MoonfallBackdrops.TitleWidth / (float)MoonfallBackdrops.TitleHeight);
             }
-        }
-        else if (gameArt?.Backdrop(MoonfallBackdrop.Title) is { } backdrop)
-        {
-            Cover(dl, backdrop.Handle, m.AreaMin, m.AreaMax, Vector2.Zero, Vector2.One, MoonfallBackdrops.TitleWidth / (float)MoonfallBackdrops.TitleHeight);
         }
         else
         {
-            if (gameArt is not null)
+            if (gameArt is not null && !gameArt.BackdropFailed(which))
             {
                 menuArtPending++;
             }
