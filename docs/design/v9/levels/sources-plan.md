@@ -196,3 +196,14 @@ Candidates were downloaded only to the session scratchpad.
 
 **Contact sheets** (scratchpad, not the repo: they contain game art): one per stage in the session scratchpad's
 `mf/sheets/`, `<stage>.png` plus `full_<stage>.png` with each crop boxed on its whole texture.
+
+## Owner's answers (7 October 2026)
+
+- **Fan Kit art.** Ship the two cropped wallpapers with a "© SQUARE ENIX" notice, and remove them if Square Enix asks. They are ships at anchor for FS 1-2 and Leviathan for FS 1-5. They are credited in `Tsukimichi/THIRD-PARTY-NOTICES.txt` and the README's credits. The licence, as read on 6 October 2026, covers personal, non-commercial use and doesn't mention software; the owner accepts that.
+- **Far Shore stage 2:** two crops of the faint Western Thanalan region map, richly dressed, plus three of our own sky, water or light paintings.
+- **Subjects and moves accepted:**
+  - 9-2 shows Dalamud's spined hull and 9-4 Dalamud's shell;
+  - FS 3-5 shows the Coerthas peaks and FS 7-3 the falls in the lake;
+  - the seven moves to our paintings stand;
+  - FS 7-5 keeps game art with a third crop of the Il Mheg painting, recorded as an exception to the twice-per-stage rule.
+- **Crop fixes:** 5-4 moves to [2400, 700, 1440, 1080]. 4-5 switches from the blurred west strip to an Ul'dah city map.
