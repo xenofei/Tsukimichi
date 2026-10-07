@@ -1,6 +1,6 @@
 # Handoff
 
-Updated 2026-10-06. To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
+Updated 2026-10-07. To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
 
 ## Goal
 Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimichi.
@@ -19,28 +19,34 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
   - `.claude/settings.json`: fallback model, `autoCompactWindow` 400k, retry watchdog;
   - the global CLAUDE.md trimmed;
   - the smoke-test pages removed.
-- **Charter for the 105 levels:** `docs/design/v9/levels/charter.md`, merged at 1c744af0.
+- **Charter for the 105 levels:** `docs/design/v9/levels/charter.md`, with the owner's answers of 7 October.
+- **Gate wrapper and caches:** `pwsh tools/gate.ps1` (skips an unchanged tree) and the caches for `mfl.py build`/`stage` and MoonfallRender `--cache`.
 
 ## In flight
-- **Gate wrapper and result caches.** A background agent is building them in worktree `.claude/worktrees/agent-a283f4ad98f1c793e`. When it hands back:
-  1. review its summary;
-  2. merge with `--no-ff`;
-  3. run `pwsh tools/gate.ps1`, or the raw gates if it fails.
+Three background agents are running, each in its own worktree. When one hands back:
+1. review its summary;
+2. merge with `--no-ff`;
+3. run `pwsh tools/gate.ps1`;
+4. remove the worktree.
+
+The three jobs:
+- **Pipeline prep:**
+  - `mfl.py stage` learns Moon Road stages 3–11 and Far Shore stages 1–12, keyed by campaign;
+  - a challenge-carrier check;
+  - the Ace rule for hard levels: the top 40% of wins below about 14 per 48.
+- **Sourcing (Opus):** `docs/design/v9/levels/sources-plan.md`, with a source and crop for every level marked "needs a source".
+  - Fan Kit wallpapers are for the 5 figurative levels with no game picture. Check the licence terms before shipping any.
+- **Flaky tests:** root-cause fixes for the three tests that fail under load. After that, the gate's rerun list is empty.
 
 ## Next
-1. **The owner answers the charter's questions** (section 5 of the charter). The defaults are in its summary.
-2. **Prepare for level production:**
-   - teach `mfl.py stage` stages 3–11 and a campaign key, so Far Shore stage numbers don't collide with Moon Road ones;
-   - add the challenge-carrier check (the greedy player must win at 35 and 45 oranges);
-   - source the 55 game paintings the charter marks "needs a source".
-3. **Pilot stage 3 as a workflow:**
+1. **Pilot stage 3 as a workflow,** once pipeline prep and sourcing are merged:
    - one short author agent per level;
-   - the pipeline gates and a review pack;
-   - one round by fresh reviewers (game designer, UX/UI, level critic);
+   - `mfl.py build`, `stage mr3` and `convert --check`, plus a review pack;
+   - one round by fresh reviewers (game designer, UX/UI, level critic), with reports through `tools/claude-usage/save_report.py`;
    - a fixer, then a check.
 
-   Reviewer reports go through `tools/claude-usage/save_report.py` into `docs/design/v9/levels/supervisor/`. Then scale stage by stage, three stages in flight.
-4. **After each phase,** run `py -3 tools/claude-usage/monitor.py <session-id>` and compare it with the baseline snapshot at `%TEMP%/tsukimichi-claude-usage-baseline-2026-10-06.json`.
+   Then run the remaining stages the same way, three in flight.
+2. **After each phase,** run `py -3 tools/claude-usage/monitor.py <session-id>` and compare it with `%TEMP%/tsukimichi-claude-usage-baseline-2026-10-06.json`.
 
 ## Open
 - **Owner items:**
@@ -52,7 +58,7 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Not verified in game:** GPU drawing, live motion, the keyboard and gamepad reveal, scene build speed, and 1-3's Fever moon.
 
 ## Gates
-`pwsh tools/gate.ps1`, once merged. Until then, use the raw commands in `docs/team/agent-brief-common.md`. Levels: `py -3 tools/moonfall-levels/mfl.py selftest`, `stage 1`, `stage 2` and `convert --all --check`.
+`pwsh tools/gate.ps1`. The raw commands are the fallback, in `docs/team/agent-brief-common.md`. Levels: `py -3 tools/moonfall-levels/mfl.py selftest`, `stage 1`, `stage 2` and `convert --all --check`.
 
 ## Do not
 - Never push, tag or release without asking the owner.
