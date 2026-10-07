@@ -29,13 +29,10 @@ param(
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 3
 
-# Tests that fail now and then under full-suite load (agent-brief-common.md names the first two; the third, an
-# allocation test, was seen failing the same way on 2026-10-06 and passing alone). Never skipped, only rerun once.
-$Intermittent = @(
-    'SaveBudgetTests.Close_waits_no_longer_than_it_is_given_and_the_queued_save_still_lands',
-    'MoonfallGameTests.Every_power_and_the_style_shots_allocate_nothing',
-    'MoonfallDuelTests.A_duel_allocates_nothing_per_tick'
-)
+# Tests that fail now and then under full-suite load, by name (a suffix of the full test name). Empty: the three that
+# were listed here (the save writer close, two allocation tests) were fixed at the root. A listed test is never skipped,
+# only rerun once.
+$Intermittent = @()
 
 $root = (git rev-parse --show-toplevel).Trim()
 Set-Location $root

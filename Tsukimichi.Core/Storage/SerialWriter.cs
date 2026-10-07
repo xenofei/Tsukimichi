@@ -5,7 +5,8 @@ namespace Tsukimichi.Core.Storage;
 /// <summary>
 /// One background queue for the plugin's file saves (snapshots and their sidecars, pins, overrides), so the framework
 /// thread never waits on the disk, a slow reader in another game client, or the cross-client lock (D11). Work runs on
-/// the thread pool one item at a time, in the order it was queued, so two saves of one file never race each other.
+/// one dedicated background thread (never the shared thread pool, which other work can starve) one item at a time, in
+/// the order it was queued, so two saves of one file never race each other.
 /// Each item may name a completion; completions are collected and run by whoever calls <see cref="DrainCompletions"/>
 /// (the plugin does so on the framework thread), never on the worker.
 /// </summary>
@@ -15,6 +16,7 @@ public sealed class SerialWriter : IDisposable
     public static readonly TimeSpan DefaultDrainWait = TimeSpan.FromSeconds(5);
 
     private readonly object gate = new();
+    private readonly WriterScheduler scheduler = new();
     private readonly ConcurrentQueue<Action> completions = new();
     private readonly TimeSpan drainWait;
     private Task tail = Task.CompletedTask;
@@ -46,7 +48,7 @@ public sealed class SerialWriter : IDisposable
                     _ => Run(work, done),
                     CancellationToken.None,
                     TaskContinuationOptions.None,
-                    TaskScheduler.Default);
+                    scheduler);
                 return;
             }
         }
@@ -142,7 +144,7 @@ public sealed class SerialWriter : IDisposable
     /// <summary>
     /// <see cref="Dispose"/> with the wait given by the caller (the plugin's unload shares one deadline among its
     /// waits): stops queueing and waits up to <paramref name="wait"/> for what is queued to land. False when the wait
-    /// ran out first; the queued work still runs, on the thread pool.
+    /// ran out first; the queued work still runs, on the writer's thread.
     /// </summary>
     public bool Close(TimeSpan wait)
     {
@@ -174,6 +176,60 @@ public sealed class SerialWriter : IDisposable
         if (done is not null)
         {
             completions.Enqueue(() => done(result, error));
+        }
+    }
+
+    /// <summary>
+    /// Runs queued tasks one at a time on a dedicated background thread that exists only while there is work, so a
+    /// save never waits for the thread pool to hand out (or grow) a worker.
+    /// </summary>
+    private sealed class WriterScheduler : TaskScheduler
+    {
+        private readonly Queue<Task> queue = new();
+        private bool running;
+
+        protected override void QueueTask(Task task)
+        {
+            lock (queue)
+            {
+                queue.Enqueue(task);
+                if (running)
+                {
+                    return;
+                }
+
+                running = true;
+            }
+
+            new Thread(Loop) { IsBackground = true, Name = "Tsukimichi save writer" }.Start();
+        }
+
+        protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) => false;
+
+        protected override IEnumerable<Task> GetScheduledTasks()
+        {
+            lock (queue)
+            {
+                return queue.ToArray();
+            }
+        }
+
+        private void Loop()
+        {
+            while (true)
+            {
+                Task? task;
+                lock (queue)
+                {
+                    if (!queue.TryDequeue(out task))
+                    {
+                        running = false;
+                        return;
+                    }
+                }
+
+                TryExecuteTask(task);
+            }
         }
     }
 }

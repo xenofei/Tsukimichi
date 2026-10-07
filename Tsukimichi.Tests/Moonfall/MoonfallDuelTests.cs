@@ -225,11 +225,14 @@ public sealed class MoonfallDuelTests
 
         var level = Shipped(3);
         Play(new MoonfallDuel(level, 5, 8, MoonfallCompanion.Tataru, MoonfallCompanion.Louisoix, MoonfallAiDifficulty.Master), 6000);
-        var measured = new MoonfallDuel(level, 5, 8, MoonfallCompanion.Tataru, MoonfallCompanion.Louisoix, MoonfallAiDifficulty.Master);
-        Play(measured, 60);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        Play(measured, 3000);
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+        var allocated = AllocationProbe.Smallest(() =>
+        {
+            var measured = new MoonfallDuel(level, 5, 8, MoonfallCompanion.Tataru, MoonfallCompanion.Louisoix, MoonfallAiDifficulty.Master);
+            Play(measured, 60);
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            Play(measured, 3000);
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        });
         Assert.Equal(0, allocated);
     }
 

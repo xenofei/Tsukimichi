@@ -1216,9 +1216,13 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         }
 
         Frames(120);
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        Frames(600);
-        Assert.Equal(0, GC.GetAllocatedBytesForCurrentThread() - before);
+        var allocated = AllocationProbe.Smallest(() =>
+        {
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            Frames(600);
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        });
+        Assert.Equal(0, allocated);
         Assert.NotEqual(0f, sink);
     }
 

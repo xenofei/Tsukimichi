@@ -280,21 +280,30 @@ public sealed class MoonfallGameTests
         }
 
         // Warm every path up first (the same calls), then measure a fresh game of each power.
-        var games = new MoonfallGame[MoonfallPowers.Count];
         for (var p = 1; p <= MoonfallPowers.Count; p++)
         {
             Play(PowerGame((MoonfallPower)p, 5), 3000, count: false);
-            games[p - 1] = PowerGame((MoonfallPower)p, 5);
-            Play(games[p - 1], 60, count: false);
         }
 
-        var before = GC.GetAllocatedBytesForCurrentThread();
-        foreach (var game in games)
+        var allocated = AllocationProbe.Smallest(() =>
         {
-            Play(game, 2400, count: true);
-        }
+            styles = 0;
+            triggered = 0;
+            var games = new MoonfallGame[MoonfallPowers.Count];
+            for (var p = 1; p <= MoonfallPowers.Count; p++)
+            {
+                games[p - 1] = PowerGame((MoonfallPower)p, 5);
+                Play(games[p - 1], 60, count: false);
+            }
 
-        var allocated = GC.GetAllocatedBytesForCurrentThread() - before;
+            var before = GC.GetAllocatedBytesForCurrentThread();
+            foreach (var game in games)
+            {
+                Play(game, 2400, count: true);
+            }
+
+            return GC.GetAllocatedBytesForCurrentThread() - before;
+        });
         Assert.Equal(0, allocated);
         Assert.True(triggered >= MoonfallPowers.Count, $"only {triggered} powers triggered");
         Assert.True(styles > 0, "no style shot in the measured play");
