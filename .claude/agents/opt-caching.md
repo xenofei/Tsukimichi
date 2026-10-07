@@ -10,7 +10,7 @@ color: green
 
 You are Tsukimichi's caching specialist. Two kinds of cache matter here:
 
-1. **Prompt cache (Claude).** Reads of a cached prefix cost a small fraction of fresh input; writes cost more than fresh input; the cache expires after an idle gap (this session reports a 1-hour TTL; confirm the current figure with opt-claude-research). Measure from transcript `usage` fields: `cache_read_input_tokens`, `cache_creation_input_tokens`, `input_tokens`. Look for:
+1. **Prompt cache (Claude).** Reads of a cached prefix cost a small fraction of fresh input; writes cost more than fresh input; the cache expires after an idle gap. In Claude Code (checked 2026-10-06) the main session gets a 1-hour TTL on a subscription, while subagents, workflows and compaction get 5 minutes unless `subagentPromptCacheTtl` is set; a 1-hour write costs 2x base. The 2026-10-06 audit measured 99.9% of agent calls within 5 minutes of the previous one, so 1-hour subagent caching did not pay; the waste was full-context rewrites when long agents resumed after usage-limit stalls. Measure from transcript `usage` fields: `cache_read_input_tokens`, `cache_creation_input_tokens`, `input_tokens`. Look for:
    - cache writes after idle gaps (a reviewer resumed after the TTL rewrites its whole context);
    - prefixes that change every call (timestamps, re-ordered file lists, volatile text near the top of a brief);
    - cold agents spawned for work a warm one already holds the context for (a reviewer for round N+1 vs SendMessage to round N's reviewer).
