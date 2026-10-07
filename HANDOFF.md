@@ -45,11 +45,12 @@ When it finishes:
    - Far Shore stage 1 ships the two Fan Kit wallpapers with a "© SQUARE ENIX" notice in `THIRD-PARTY-NOTICES.txt` (owner's answer).
    - Point `challenges.json` ch-03 and ch-04 at `base-27` and `base-37` when those levels ship.
 2. **The full release,** after all 115 levels: version 1.24.0 or later, What's new, changelog. Ask the owner before pushing.
+   - The owner decided on 7 October: at the full release, Moonfall gets its own button on the main window, not just the status-bar pill.
 
 ## Open
 - **Owner items:**
   - unused user-level agents and skills (they can only be removed globally);
-  - a toolbar button for Moonfall (explained to the owner on 7 October; answer pending).
+
 - **Not verified in game:** GPU drawing, live motion, the keyboard and gamepad reveal, scene build speed, and 1-3's Fever moon.
 
 ## Gates
