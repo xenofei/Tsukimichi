@@ -3,9 +3,11 @@
   selftest                      every checker against its known-bad and known-good cases
   fetch                         dump every game texture the scene recipes and the chrome read into the cache
   trace <scene|level-id>        the tracing sheet: graded scene, grid, features and (for a level) its pieces
-  build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check
+  build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check;
+        [--force]               a level unchanged since its last PASS is skipped unless --force
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
-  stage <n>                     the stage's table: the held-out ramp, jewels of neighbours, game paintings against ours
+  stage <n> [--force]           (games already played on an unchanged level file are re-used unless --force)
+                                the stage's table: the held-out ramp, jewels of neighbours, game paintings against ours
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
@@ -16,6 +18,7 @@
 See README.md next to this file.
 """
 import json
+import os
 import sys
 import time
 
@@ -85,14 +88,55 @@ def cmd_trace(args):
     return 0
 
 
+def unchanged(lid, want2x, load_layout, load_recipe, cache):
+    """The stamp's time when this level's last build passed on exactly these inputs and its outputs are still there."""
+    meta = load_layout(lid).LEVEL
+    try:
+        key = cache.build_key(lid, meta, load_recipe(meta["scene"]))
+    except (OSError, SystemExit):
+        return None
+    st_ = cache.read_stamp(f"build-{lid}")
+    if not st_ or st_["key"] != key:
+        return None
+    outs = [paths.JSON_OUT / f"{lid}.json", paths.COMPOSITES / f"{lid}.png", REPORT / f"{lid}.json"]
+    if want2x:
+        outs.append(paths.COMPOSITES / f"{lid}@2x.png")
+    if not all(o.exists() for o in outs):
+        return None
+    try:
+        if json.loads(outs[2].read_text(encoding="utf-8")).get("verdict") != "PASS":
+            return None
+    except ValueError:
+        return None
+    return st_["time"]
+
+
 def cmd_build(args):
     keep2x = set()
     if "--keep2x" in args:
         i = args.index("--keep2x")
         keep2x = set(args[i + 1].split(","))
         args = args[:i] + args[i + 2:]
+    force = "--force" in args
+    args = [a for a in args if a != "--force"]
+    if force:
+        os.environ["MFL_NO_CACHE"] = "1"
     ids = level_ids() if args == ["--all"] or not args else args
     engine.ensure_built()
+    from mflkit import cache
+    from mflkit.build import load_layout
+    from mflkit.scene import load_recipe
+    todo = []
+    for lid in ids:
+        when = None if force else unchanged(lid, lid in keep2x, load_layout, load_recipe, cache)
+        if when:
+            print(f"[{lid}] unchanged since last PASS ({when}); skipped (--force rebuilds)")
+        else:
+            todo.append(lid)
+    if not todo:
+        print(f"built 0 of {len(ids)}: all unchanged since their last PASS")
+        return 0
+    ids_all, ids = ids, todo
     if not st.run(verbose=False):
         st.run(verbose=True)
         print("a checker failed its own self-test: nothing is built")
@@ -102,10 +146,15 @@ def cmd_build(args):
     bad = []
     t0 = time.time()
     for lid in ids:
+        meta = load_layout(lid).LEVEL
+        key = cache.build_key(lid, meta, load_recipe(meta["scene"]))
         rep = build(lid, keep2x=lid in keep2x)
         if rep["verdict"] != "PASS":
             bad.append(lid)
-    print(f"built {len(ids) - len(bad)} of {len(ids)} in {time.time() - t0:.0f} s" + (f"; refused: {', '.join(bad)}" if bad else ""))
+        else:
+            cache.write_stamp(f"build-{lid}", key)
+    print(f"built {len(ids) - len(bad)} of {len(ids)} in {time.time() - t0:.0f} s" + (f"; refused: {', '.join(bad)}" if bad else "")
+          + (f"; {len(ids_all) - len(ids)} unchanged, skipped" if len(ids_all) > len(ids) else ""))
     return 1 if bad else 0
 
 
@@ -113,6 +162,9 @@ def cmd_stage(args):
     """The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp (1728 games, about +-0.55 per 48), the
     random player, the jewels; then every level pooled over 6912 games; it faults neighbours with the same jewels, a step
     or a finale gap not resolved by one standard error, and a stage outside its band."""
+    if "--force" in args:
+        os.environ["MFL_NO_CACHE"] = "1"
+        args = [a for a in args if a != "--force"]
     n = int(args[0])
     reps = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
     reps = sorted([r for r in reps if r["stage"] == n], key=lambda r: r["number"])

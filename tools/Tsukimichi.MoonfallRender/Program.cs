@@ -14,7 +14,7 @@ using LuminaGameData = Lumina.GameData;
 // Moonfall's offline renderer (see the project file):
 //   Tsukimichi.MoonfallRender <out.png> [--screen title|map|levels|characters|quickplay|challenges|duel|options|play|pause|tally|duelhud]
 //                              [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally|cleared]
-//                              [--marks] [--hint] [--reduce-motion] [--decoration full|simple|off] [--no-game-art] [--seconds N]
+//                              [--cache <dir>] [--marks] [--hint] [--reduce-motion] [--decoration full|simple|off] [--no-game-art] [--seconds N]
 //   Tsukimichi.MoonfallRender <out.png> --level base-01 --scene-only 1|2 [--no-grain] [--upto paint|palette]   (the level's bare scene)
 // The board is the plugin's own window, drawn by its own code under a headless ImGui, rasterized to the PNG.
 var dalamud = Environment.GetEnvironmentVariable("DALAMUD_HOME") is { Length: > 0 } home ? home
@@ -54,12 +54,26 @@ internal static class Render
         var (w, h) = (int.Parse(size[0], CultureInfo.InvariantCulture), int.Parse(size[1], CultureInfo.InvariantCulture));
         var moment = Arg(args, "--moment") ?? "hud";
         var repo = FindRepo();
+        var cacheDir = Arg(args, "--cache");
+        var cacheKey = cacheDir is not null && RenderCache.Applies(args) ? RenderCache.Key(args, repo) : null;
+        if (cacheKey is not null && RenderCache.TryServe(cacheDir!, cacheKey, outPath))
+        {
+            Console.WriteLine($"{outPath}: cached ({cacheKey[..12]})");
+            return 0;
+        }
+
         var gamePath = Environment.GetEnvironmentVariable("TSUKIMICHI_GAME_PATH") ?? @"C:\Program Files (x86)\Steam\steamapps\common\FINAL FANTASY XIV Online\game\sqpack";
         using var game = new LuminaGameData(gamePath, new LuminaOptions { PanicOnSheetChecksumMismatch = false });
         if (Arg(args, "--scene-only") is { } tier)
         {
-            return SceneOnly(repo, args.Contains("--no-game-art") ? null : game, levelName, int.Parse(tier, CultureInfo.InvariantCulture), args.Contains("--no-grain"), Arg(args, "--upto"),
+            var rc = SceneOnly(repo, args.Contains("--no-game-art") ? null : game, levelName, int.Parse(tier, CultureInfo.InvariantCulture), args.Contains("--no-grain"), Arg(args, "--upto"),
                 Arg(args, "--hide-zone"), outPath);
+            if (rc == 0 && cacheKey is not null)
+            {
+                RenderCache.Store(cacheDir!, cacheKey, outPath);
+            }
+
+            return rc;
         }
 
         Loc.SetLanguage(Loc.English);
@@ -377,6 +391,11 @@ internal static class Render
 
         Frame(1f / 60f, draw: true);
         File.WriteAllBytes(outPath, MoonfallPng.Encode(raster.ToRgba(), w, h));
+        if (cacheKey is not null)
+        {
+            RenderCache.Store(cacheDir!, cacheKey, outPath);
+        }
+
         Console.WriteLine($"{outPath}: {levelName} {moment} {w} x {h}");
         return 0;
     }

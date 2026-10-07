@@ -11,6 +11,12 @@ This page holds the standing rules for every Tsukimichi agent. Your own brief ad
 - **Read-only work:** a reviewer or researcher edits nothing in the repo or worktree, and runs no `dotnet build`, `dotnet test` or `mfl.py build`/`convert`/`stage`/`selftest` there. Use the prebuilt outputs and renders your brief names.
 
 ## Gates (implementers, after the last edit)
+Run `pwsh tools/gate.ps1`. It runs the four gates below, writes the full logs outside the repo (`$env:TEMP/tsukimichi-gates/<hash>/logs`), and prints only each gate's exit code, the test counts, the first ~15 error lines of a failure and the log folder.
+- **Skip if unchanged:** after a full run that passed, a rerun with the same HEAD, the same changed and untracked file contents prints `unchanged since last PASS (<time>)` and exits 0 in about a second. Any edit, even one `.cs` file, runs everything again. `-Force` reruns regardless; `-Only build,test` (also `load`, `themes`) runs a subset and never stamps.
+- **Intermittent tests:** a failing test from the list below is rerun alone once; if it passes, the summary says `intermittent, passed on rerun: <name>` and the gate passes. Any other failure fails. Quote that note in your hand-back.
+- Exit code 0 means every gate passed, 1 otherwise.
+
+The raw commands (the fallback, and what `gate.ps1` runs):
 ```
 dotnet build Tsukimichi.sln -c Release -warnaserror > "$LOG/build.log" 2>&1; echo "build $?"
 dotnet run --project tools/Tsukimichi.LoadCheck -c Release --no-build > "$LOG/load.log" 2>&1; echo "load $?"
@@ -20,7 +26,13 @@ py -3 tools/themes/build_themes.py --check > "$LOG/themes.log" 2>&1; echo "theme
 ```
 - `$LOG` is a folder in your scratchpad.
 - The tests pass only when the output contains `Failed:     0,`.
-- Two tests fail now and then under full-suite load: `SaveBudgetTests.Close_waits_no_longer...` and `MoonfallGameTests.Every_power_and_the_style_shots_allocate_nothing`. If one fails, rerun it alone before reporting a failure.
+- Three tests fail now and then under full-suite load: `SaveBudgetTests.Close_waits_no_longer...`, `MoonfallGameTests.Every_power_and_the_style_shots_allocate_nothing` and `MoonfallDuelTests.A_duel_allocates_nothing_per_tick` (the last seen 2026-10-06, passing alone). If one fails, rerun it alone before reporting a failure.
+
+## Result caches (do not redo work on unchanged inputs)
+- **Level builds:** `py -3 tools/moonfall-levels/mfl.py build <ids>` skips a level whose layout, scene recipe, painting or game texture, the `mflkit`/design-kit sources and the built mfcheck are unchanged since its last PASS (it prints `unchanged since last PASS`). `--force` rebuilds. The self-test is skipped too when nothing needs building.
+- **Greedy-play games:** `engine.play` (used by `build`, `stage`, `ease`) re-uses a run on an unchanged level file, seed range and mfcheck build. `stage <n> --force` or `MFL_NO_CACHE=1` replays.
+- **Renders:** `Tsukimichi.MoonfallRender <out.png> ... --cache <dir>` copies the stored PNG when its arguments, the loaded `Tsukimichi.Core.dll` and `Tsukimichi.dll`, and the level/scene JSON and shipped Moonfall art all match; without the flag nothing changes. A game patch needs a fresh cache folder.
+- The level caches live in `docs/design/v9/levels/build/cache` (gitignored). They never change a gate's rule or threshold; delete the folder to reset.
 
 ## Keep your context small
 - **Read narrowly:** read files by line range (`wc -l` first, never `cat` several files at once). Cap search output (`rg -n pat | head -40`). Run `git diff --stat` before a full diff.

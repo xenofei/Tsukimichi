@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 
+from . import cache
 from .paths import DOTNET, MFCHECK, TEXDUMP
 
 GREEDY_GAMES = 48
@@ -97,9 +98,12 @@ def play(path, number, games=RAMP_GAMES, first=0):
     `first` + 1, and the random player over 40. With first 0 the rule's verdict is the first 48 seeds. Tuning plays the
     first 864 (about +-0.8 per 48); the build reports the ramp on HELD_GAMES held-out seeds after them, since a layout
     tuned on the first block carries that block's luck (game designer round 3, G10: about 0.8 per 48)."""
-    code, out = _run("play", path, games, number, first)
-    if code != 0:
-        raise RuntimeError(out)
+    key, out = cache.play_get(path, number, games, first)
+    if out is None:
+        code, out = _run("play", path, games, number, first)
+        if code != 0:
+            raise RuntimeError(out)
+        cache.play_put(key, out)
     g48 = re.search(r"greedy48: won (\d+) of (\d+); oranges left when lost ([\d,]*)", out)
     g = re.search(r"greedy: won (\d+) of (\d+); shots mean ([\d.]+); oranges left when lost ([\d,]*); stuck-rule fires (\d+)", out)
     r = re.search(r"random: won (\d+) of 40; oranges cleared mean ([\d.]+)", out)
