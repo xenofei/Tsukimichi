@@ -19,7 +19,7 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py fetch` | Dumps every game texture the recipes name, plus the chrome's UI art, the cards and the fonts, into `docs/design/v9/rich/.cache` (gitignored) |
 | `py -3 tools/moonfall-levels/mfl.py selftest` | Runs every checker against its known-bad and known-good cases |
 | `py -3 tools/moonfall-levels/mfl.py trace <scene or level-id>` | The tracing sheet (`docs/design/v9/levels/build/trace/`): the graded scene at 2x, a 50-unit grid, the opening, the launcher's swing, the bucket's lane, the recipe's features, and for a level its pieces (oranges ringed orange, never-green pegs barred, skipped points as red crosses) plus the pre-flight |
-| `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...]` | The full pipeline (below); exit 1 if any level is refused |
+| `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force` |
 | `py -3 tools/moonfall-levels/mfl.py stage <n>` | The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a level not at least 0.5 per 48 harder than the one before, a finale that is not the stage's hardest by 2.5 below its 4th level, and band ends more than 1.2 (two standard errors) harder than the stage's band, or far easier |
 | `py -3 tools/moonfall-levels/mfl.py stuck <id>` | Where balls come to rest on the first shots the stuck rule fires on |
 | `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane |
@@ -27,6 +27,24 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py sources` | Writes `docs/design/v9/levels/sources.json`: every game file a scene reads, and which level uses it |
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all` | The converter (`mflkit/convert.py`): each level's runtime recipe (`Tsukimichi.Core/Moonfall/Levels/scenes/<scene>.json`), our painting undressed at 2x and the dress's plates (`Tsukimichi/assets/moonfall/scenes/`) |
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all --check` | The converter's gate: the game's bare scene (MoonfallRender `--scene-only`) against this pipeline's dressed scene; diffs in `build/convert/` |
+
+## Result caches
+
+Nothing is redone on unchanged inputs; no check's rule or threshold changes. Caches live in
+`docs/design/v9/levels/build/cache` (gitignored; delete the folder to reset).
+
+- **`build`** writes a stamp after a level's PASS, keyed on its layout file, its scene recipe, the painter source or the
+  game texture the scene reads, the chrome art's file list, `mflkit/*.py` and `mfl.py`, the design kit it imports
+  (`docs/design/v9/src`, `rich/src`, `rich2/src`) and the built mfcheck and engine DLLs. The next `build` of the same
+  level prints `unchanged since last PASS (<time>)` and skips it, provided its outputs and a PASS report still exist
+  (and the 2x composite, when `--keep2x` names it). A rebuilt level reports exactly as before. `--force` rebuilds.
+- **Greedy-play games** (`engine.play`, so `build`, `stage` and `ease`): the raw `mfcheck play` output is stored per
+  (level file hash, level number, games, first seed block, mfcheck build hash) and re-read for an unchanged level, so
+  `stage <n>` replays only the levels that changed. `stage <n> --force`, or `MFL_NO_CACHE=1` for any command, replays.
+- **MoonfallRender** has the same idea for pictures: `Tsukimichi.MoonfallRender <out.png> ... --cache <dir>`.
+  See `docs/team/agent-brief-common.md`.
+
+The raw commands stay as they were: without a cache hit (or with `--force`) every step runs.
 
 ## What `build` does, in order
 
