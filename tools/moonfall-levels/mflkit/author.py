@@ -21,7 +21,7 @@ import math
 
 import numpy as np
 
-from . import paths  # noqa: F401  (the design kit on the path)
+from . import challenge, paths  # noqa: F401  (the design kit on the path)
 from layout import (LEFT, RIGHT, Layout, brick_samples, direct_reach, in_bounds, point_at, resample,  # noqa: F401
                     smooth_path)
 
@@ -80,6 +80,7 @@ class Board(Layout):
     def __init__(self, recipe=None):
         super().__init__()
         self.recipe = recipe or {}
+        self.level_id = None        # set by the build; only the recorded candidate exception (challenge.EXCEPTIONS) reads it
         self.features = (self.recipe.get("features") or {})
         self.skipped = []           # (where, why) for points a trace could not place
         self.runs = []              # brick runs (kept for the authors' notes; the cup check is geometric)
@@ -505,8 +506,11 @@ class Board(Layout):
                     P.append(f"peg ({p['x']}, {p['y']}) stands inside the subject '{name}' (keep its face open)")
         # orange candidates: 28-35 (25 and 3-7 more that carry the subject), every one in some first free flight
         cands = [p for p in pegs if p["canBeOrange"]] + [b for b in bricks if b["canBeOrange"]]
-        if not 28 <= len(cands) <= 35:
-            P.append(f"{len(cands)} orange candidates (28 to 35: the 25 and 3-7 more, so the deal varies)")
+        lo, hi = challenge.candidate_range(self.level_id)
+        if not lo <= len(cands) <= hi:
+            P.append(f"{len(cands)} orange candidates (28 to 35: the 25 and 3-7 more, so the deal varies"
+                     + (f"; {self.level_id} is the recorded exception and takes exactly {lo}" if (lo, hi) != challenge.STANDARD_CANDIDATES else "")
+                     + ")")
         for c in cands:
             if not self.piece_in_reach(c):
                 P.append(f"orange candidate at ({c.get('x', c.get('x1'))}, {c.get('y', c.get('y1'))}) is out of every first free flight")
@@ -634,6 +638,18 @@ def selftest(verbose=True):
     for p in b.pegs[12:]:
         p["canBeOrange"] = p["y"] < 330
     cases.append(("candidates only in the upper half", faults(b), "spread"))
+
+    def cand_faults(n, level_id):
+        b = grid_board()
+        b.level_id = level_id
+        for i, p in enumerate(b.pegs):
+            p["canBeOrange"] = i < n
+        return [q for q in faults(b) if "orange candidates" in q]
+    cases.append(("45 candidates on an ordinary level (28 to 35)", cand_faults(45, "base-36"), "orange candidates"))
+    cases.append(("45 candidates on the recorded exception, 8-2 (ch-04)", cand_faults(45, "base-37"), None))
+    cases.append(("40 candidates on the recorded exception (it takes exactly 45)", cand_faults(40, "base-37"), "exactly 45"))
+    cases.append(("30 candidates on the recorded exception", cand_faults(30, "base-37"), "exactly 45"))
+    cases.append(("30 candidates on an ordinary level", cand_faults(30, "base-36"), None))
     b = grid_board()
     for p in b.pegs:
         p["canBeGreen"] = False

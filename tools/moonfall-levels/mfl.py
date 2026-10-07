@@ -6,8 +6,11 @@
   build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check;
         [--force]               a level unchanged since its last PASS is skipped unless --force
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
-  stage <n> [--force]           (games already played on an unchanged level file are re-used unless --force)
+  stage <key> [--force]         key: mr1-mr11 (The Moon Road; a bare 1-11 means the same) or fs1-fs12 (The Far Shore)
+                                (games already played on an unchanged level file are re-used unless --force)
                                 the stage's table: the held-out ramp, jewels of neighbours, game paintings against ours
+  challenge <ch-id> | <level-id> <oranges>   the greedy player at a challenge's orange count on its carrier level(s):
+                                at least 5 of 48 wins (ch-03 35 oranges on base-27; ch-04 45 on base-37, the one exception)
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
@@ -165,11 +168,18 @@ def cmd_stage(args):
     if "--force" in args:
         os.environ["MFL_NO_CACHE"] = "1"
         args = [a for a in args if a != "--force"]
-    n = int(args[0])
-    reps = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
-    reps = sorted([r for r in reps if r["stage"] == n], key=lambda r: r["number"])
+    from mflkit import stagecheck
+    try:
+        key = stagecheck.stage_key(args[0])
+    except (IndexError, ValueError) as e:
+        print(e if args else "stage <mr1-mr11 | fs1-fs12 | 1-11> [--force]")
+        return 2
+    camp, n = key[:2], int(key[2:])
+    allr = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
+    # a stage is a campaign and a number: the Far Shore's stages number from 1 again, so the id's prefix says which
+    reps = sorted([r for r in allr if stagecheck.level_campaign(r["id"]) == camp and r["stage"] == n], key=lambda r: r["number"])
     fails = []
-    print(f"stage {n}: {len(reps)} levels")
+    print(f"stage {key}: {len(reps)} levels")
     print(f"{'level':8} {'name':28} {'pieces':>6} {'greedy':>7} {'ramp/48':>8} {'random':>7} {'jewels':>10} {'source'}")
     rows = []
     for r in reps:
@@ -185,7 +195,6 @@ def cmd_stage(args):
     # gap are judged on the pooled games by one standard error (game designer rounds 4-6, G19, G20 and G22; critic
     # N22). The shipped file is played, not the build copy (critic N16).
     from concurrent.futures import ThreadPoolExecutor
-    from mflkit import stagecheck
     pooled, games = {}, {}
     total = engine.HELD_GAMES + stagecheck.CONFIRM_GAMES
 
@@ -204,19 +213,56 @@ def cmd_stage(args):
     rows = [(lid, pooled.get(lid, ramp), pair) for (lid, ramp, pair) in rows]
     steps = [f"{ra - rb:.2f} +- {stagecheck.step_se(ra, rb, total, total):.2f}" for (_a, ra, _), (_b, rb, _) in zip(rows, rows[1:])]
     print(f"  pooled steps: {', '.join(steps)}")
-    allr = [json.loads(p.read_text(encoding="utf-8")) for p in sorted(REPORT.glob("*.json"))]
-    last = [r for r in allr if r["stage"] == n - 1]
+    # the level the player meets just before this stage's first: the previous stage's last, in the same campaign (the Far
+    # Shore's stage 1 has nothing before it)
+    prev = stagecheck.previous_stage(key)
+    last = [r for r in allr if prev and stagecheck.level_campaign(r["id"]) == camp and r["stage"] == int(prev[2:])]
     before = None
     if last:
         r = max(last, key=lambda r: r["number"])
         jw = r["checks"].get("readcheck", {}).get("report", {}).get("jewels", {})
         before = (r["id"], r["checks"].get("play", {}).get("ramp_per_48"), (jw.get("first_jewel_hue"), jw.get("second_jewel_hue")))
-    fails += stagecheck.faults(n, rows, before, games)
+    fails += stagecheck.faults(key, rows, before, games)
     game = sum(1 for r in reps if not r["source"].startswith("our painting"))
     print(f"game paintings {game} of {len(reps)}; verdicts: " + ", ".join(f"{r['id']} {r['verdict']}" for r in reps))
     for f in fails:
         print("  !", f)
     return 1 if fails else 0
+
+
+def cmd_challenge(args):
+    """The challenge carrier check (mflkit/challenge.py): `challenge ch-03` plays every carrier of a recorded challenge at
+    its orange count; `challenge <level-id> <oranges>` plays one level at any count. At least 5 of the rule's 48 games
+    must be won; more than 35 oranges only on a recorded exception. A carrier not built yet is reported, not failed,
+    when a recorded challenge names it."""
+    from mflkit import challenge
+    if "--force" in args:
+        os.environ["MFL_NO_CACHE"] = "1"
+        args = [a for a in args if a != "--force"]
+    if args and args[0] in challenge.CARRIERS and len(args) == 1:
+        c = challenge.CARRIERS[args[0]]
+        jobs, recorded = [(lid, c["oranges"]) for lid in c["levels"]], True
+        print(f"{args[0]}: {c['note']}")
+    elif len(args) == 2 and args[1].isdigit():
+        jobs, recorded = [(args[0], int(args[1]))], False
+    else:
+        print("challenge <ch-id> | <level-id> <oranges> [--force]; recorded: " + ", ".join(challenge.CARRIERS))
+        return 2
+    bad = 0
+    for lid, oranges in jobs:
+        ex = challenge.EXCEPTIONS.get(lid)
+        res = challenge.play(lid, oranges)
+        if res is None:
+            print(f"  {lid}: {oranges} oranges: not built yet (no {paths.JSON_OUT / (lid + '.json')})" + ("" if recorded else " "))
+            bad += 0 if recorded else 1
+            continue
+        cands, wins, probs = res
+        print(f"  {lid}: {oranges} oranges over {cands} candidates: the greedy player wins {wins} of {challenge.GAMES}"
+              + (f" [exception: {ex['reason']}]" if ex and oranges > challenge.MAX_ORANGES else ""))
+        for q in probs:
+            print("  !", q)
+        bad += 1 if probs else 0
+    return 1 if bad else 0
 
 
 def cmd_sources(_args):
@@ -361,7 +407,7 @@ def cmd_convert(args):
 
 
 COMMANDS = {"convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
-            "sources": cmd_sources}
+            "challenge": cmd_challenge, "sources": cmd_sources}
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:

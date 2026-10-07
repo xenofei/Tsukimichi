@@ -61,8 +61,10 @@ The shipped ramp, from the reports (held out) and the game designer's runtime ro
 - **The Far Shore starts over (question 1).** Its stages are numbered from 1, and greens only come at level 3
   (`MoonfallLevelPlace.Number`), so its first two levels have none. FS 1 therefore opens near MR 6's level. Twelve more
   stages could not keep falling from MR 11's 13 without going below the floor.
-- **Tooling, before production.** `stagecheck.BANDS` holds only stages 1 and 2, and it keys stages by number alone, so the
-  Far Shore's 1-11 would collide with The Moon Road's. Add MR 3-11, and key the bands by campaign.
+- **Tooling (done, 7 October 2026).** `stagecheck.BANDS` holds every stage of the tables above, keyed by campaign and stage
+  (`mr3`, `fs1`); `mfl.py stage mr3` / `stage fs1` read the level ids' prefix (`base-`, `expansion-`) to pick the campaign, a
+  bare number still means the Moon Road, and a stage's first level is compared with the previous stage's last level in the same
+  campaign (Far Shore stage 1: nothing).
 
 ### 1.2 Jewels
 
@@ -194,8 +196,11 @@ Silent Stars) is a sky stage of our own paintings. The per-stage targets:
   - It needs a recorded pre-flight exception for this one level. Every other rule still holds: 10 per 200 × 200, 60-160
     pieces, the reach of every candidate.
   - Both carriers are the second level of a mid-campaign stage, so the challenge starts from an easier board.
-  - **Acceptance:** the greedy player wins at least 5 of 48 at 35 or 45 oranges, which needs a challenge mode in `mfcheck`
-    *[a new check, not yet in the pipeline]*.
+  - **Acceptance:** the greedy player wins at least 5 of 48 at 35 or 45 oranges. Done: `mfcheck play` takes the orange count and
+    `mfl.py challenge ch-03` / `ch-04` (or `challenge <level-id> <oranges>`) runs it on the carriers recorded in
+    `mflkit/challenge.py`, which also holds the one allow-list entry for 45 candidates (`base-37`, with this section as its reason;
+    the pre-flight's 28-35 candidate rule reads it, so no other level can take 45).
+  - `challenges.json` still names the shipped carriers (`base-04`, `base-03`) until 6-2 and 8-2 ship; the coordinator moves them then.
 - **Other challenges already point at levels made here.** Their stages keep these in mind, and the coordinator recalibrates
   ch-01, ch-05, ch-07 and ch-09 on the built levels, as `moonfall-modes.md` already plans for ch-01, ch-05 and ch-07.
 
@@ -214,8 +219,11 @@ Silent Stars) is a sky stage of our own paintings. The per-stage targets:
   level ships. The shipped ten are 240-300k, reached by 18.8-21.5% of games.
 - **No hand-set Aces.** A level whose Ace drifts beyond 15-25% of games on 576 fresh seeds is re-suggested, never set by hand.
 - **Hard levels (question 4).** Under 20% wins (9.6 per 48), `Suggest` falls back to the lowest win, so the floor of 11 in
-  section 1.1 keeps every Ace defined. Below about 14 per 48 the Ace sits near the lowest winning score, and almost every win
-  aces it.
+  section 1.1 keeps every Ace defined. Below about 14 per 48 the Ace sat near the lowest winning score, and almost every win
+  would ace it.
+- **Done (the owner's answer 4, 7 October 2026).** `MoonfallAces.Suggest` keeps the rule at 14 of 48 or more. Below it, the Ace is
+  the score 40% of the winning games reach (`HardWins` 14, `HardOf` 48, `HardWinShare` 0.40; a rate, so exactly 14 of 48 keeps the
+  rule). The shipped ten (252-389 wins of 576) are all above it, and their Aces re-suggest unchanged.
 
 ### 1.8 Motion
 
