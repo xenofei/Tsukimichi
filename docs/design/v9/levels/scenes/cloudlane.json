@@ -1,0 +1,50 @@
+{
+ "name": "cloudlane",
+ "about": "Our own painting: the airship lane by night, the cloud sea's banks sliding past beneath the moon and the lane's beacon lamps closing toward the horizon, no hull (painters/cloudlane.py; shipped as a JPEG).",
+ "source": {"kind": "painting", "painter": "cloudlane", "params": {}},
+ "ceilingExempt": [[596, 118, 64]],
+ "veil": 0.22,
+ "dress": {
+  "palette": {
+   "name": "Violet night over a sea-green cloud lane",
+   "sky": "#141048",
+   "deep": "#060818",
+   "jewel1": "#7040C0",
+   "jewel2": "#3EAA54",
+   "warm": "#FFB45E",
+   "rim": "#C0C8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#7040C0"], [300, "#6A3CBC"], [600, "#5832A0"]],
+   "valueHues": [[0.08, "#3A1A7E"], [0.45, "#E4D0FF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#3EAA54",
+     "chroma": 0.15,
+     "mask": [["y", 262, 300], ["y", 548, 478], ["luma", 0.28, 0.40, 3], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [60, 25],
+   "regionQuiet": 0.3
+  },
+  "shafts": [
+   {"origin": [596, 118], "angles": [75, 92, 110, 128], "widths": [14, 22, 18, 12], "k": 0.04, "col": "#D8DCFF", "reach": 600, "near": 60}
+  ],
+  "framing": [
+   {"kind": "rope", "a": [560, 30], "b": [725, 50], "sag": 16, "width": 1.6}
+  ],
+  "silhouette": {"body": "#06061A", "inner": "#16144A", "rim": "#C0C8FF", "rimK": 0.0, "seed": 19}
+ },
+ "runtime": {
+  "motion": {
+   "stars": 36,
+   "mist": [
+    {"y": [520, 592], "speed": 6, "alpha": 0.10, "cell": 120, "seed": 11, "colour": "#C8C0E8"}
+   ],
+   "starWhere": [["poly", "star sky", 8], ["disc", 596, 118, 40, -8]]
+  },
+  "feverMoon": [596, 118, 24]
+ }
+}
