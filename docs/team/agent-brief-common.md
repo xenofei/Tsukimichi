@@ -1,0 +1,59 @@
+# Every agent reads this first
+
+This page holds the standing rules for every Tsukimichi agent. Your own brief adds the goal, the files and the acceptance criteria. If your brief and this page disagree, your brief wins.
+
+## Never
+- **Repo:** never push, merge, tag or release, and never change `Version` in `Tsukimichi/Tsukimichi.csproj` or edit `CHANGELOG.md`. Return changelog bullets instead.
+- **Config:** never edit Claude or hub settings, hooks, memory files or `~/.claude/*`.
+- **Secrets:** never read or print secrets (.env files, credential stores, tokens).
+- **Tests and checks:** never delete, skip or loosen tests, analyzers, warnings or pipeline checks to get green. Never add `#pragma warning disable`, `[SuppressMessage]`, `<NoWarn>` or `Skip`. If a check looks wrong, stop and report it.
+- **Localization:** it's frozen. Add English strings only.
+- **Read-only work:** a reviewer or researcher edits nothing in the repo or worktree, and runs no `dotnet build`, `dotnet test` or `mfl.py build`/`convert`/`stage`/`selftest` there. Use the prebuilt outputs and renders your brief names.
+
+## Gates (implementers, after the last edit)
+```
+dotnet build Tsukimichi.sln -c Release -warnaserror > "$LOG/build.log" 2>&1; echo "build $?"
+dotnet run --project tools/Tsukimichi.LoadCheck -c Release --no-build > "$LOG/load.log" 2>&1; echo "load $?"
+export TSUKIMICHI_GAME_PATH="C:/Program Files (x86)/Steam/steamapps/common/FINAL FANTASY XIV Online/game/sqpack"
+dotnet test Tsukimichi.sln -c Release --no-build --filter "Category!=Perf" > "$LOG/test.log" 2>&1; echo "test $?"; grep -E "Passed!|Failed!|\[FAIL\]" "$LOG/test.log" | head
+py -3 tools/themes/build_themes.py --check > "$LOG/themes.log" 2>&1; echo "themes $?"
+```
+- `$LOG` is a folder in your scratchpad.
+- The tests pass only when the output contains `Failed:     0,`.
+- Two tests fail now and then under full-suite load: `SaveBudgetTests.Close_waits_no_longer...` and `MoonfallGameTests.Every_power_and_the_style_shots_allocate_nothing`. If one fails, rerun it alone before reporting a failure.
+
+## Keep your context small
+- **Read narrowly:** read files by line range (`wc -l` first, never `cat` several files at once). Cap search output (`rg -n pat | head -40`). Run `git diff --stat` before a full diff.
+- **Logs to files:** send build, test, render and pipeline logs to files and print only exit codes and pass/fail lines.
+- **Scratch:** scratch files go in your scratchpad, never the repo root.
+- **Hand over before you get big:** at about 300k context, or at a green commit after a phase, write a handoff and say so in your hand-back. A fresh agent continues from it.
+
+## Handoff (about one page)
+```
+PHASE <n> -> <n+1>   branch/worktree: <path>   last green commit: <sha>
+GOAL: 2 lines, plus the brief's path
+DONE: bullets, each with its commit
+DECISIONS: owner or reviewer decisions, one line each, with where they are recorded
+NEXT: an ordered list; the first item concrete (file, function, command)
+OPEN: questions, flaky tests, reviewer findings not yet fixed
+GATES: exact commands and the last result
+DO NOT: traps found
+READ FIRST: at most 5 paths
+```
+
+## Returning your result
+- **Implementers** (at most about 450 words):
+  - branch and commit;
+  - `git diff --stat`;
+  - gate commands with exit codes and test counts;
+  - deviations from the brief;
+  - open items and what's unverified;
+  - changelog bullets.
+- **Reviewers and supervisors:**
+  - the full report is your final message, and it is saved verbatim to the record;
+  - start it with `VERDICT: APPROVE|REVISE (B blockers, M majors, m minors)` on one line;
+  - next, give a table of findings: id, severity, item, one-line issue, file:line or render evidence;
+  - then the detail;
+  - keep it under about 12 KB;
+  - no preamble, and don't restate the brief.
+- **Researchers** (at most about 700 words): answer, actions, cited evidence, confidence.

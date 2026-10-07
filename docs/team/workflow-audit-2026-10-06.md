@@ -94,3 +94,23 @@ Claude Code logs each reply once per content block, so a naive count doubles eve
 - Their definitions are corrected with this audit's facts: agent cache lifetime, price facts, and the monitor script, which moved to Haiku.
 - The monitor is committed.
 - The project memory is refreshed: it had still described plan v6 and 1.22.1 as current.
+
+## Status after the owner's approval (6 October 2026)
+
+The owner approved every recommendation. Here is where each stands:
+
+| Recommendation | Status |
+|---|---|
+| 1–5, the working practices | In force. The rules every agent reads are in `docs/team/agent-brief-common.md`. |
+| 6, gate wrapper | Being built |
+| 7, result caches | Being built |
+| 8, shared brief | Done: `docs/team/agent-brief-common.md` |
+| 9, monitor | Done: `tools/claude-usage/monitor.py` |
+| 2, verbatim report saver | Done: `tools/claude-usage/save_report.py` (byte-identical to the jq method) |
+| 10, workflow for the remaining 105 levels | A charter for all 21 stages comes first, then a pilot workflow on stage 3, then the rest stage by stage |
+| 11, unattended-run settings | Done in `.claude/settings.json`: fallback model, `autoCompactWindow` 400000, `CLAUDE_CODE_RETRY_WATCHDOG=1` |
+| 11, unused plugins | Not done: see below |
+| 12, global CLAUDE.md | Done: about 340 characters of duplicates removed; the workflow line moved under Delegation |
+| 13, old smoke-test pages | Done: removed |
+
+The unused reviewers and skills can't be switched off for this project alone. They are user-level files (`~/.claude/agents/review|workflow|research|design`, `~/.claude/skills/`) and plugins synced from claude.ai, not entries in `enabledPlugins`. Removing them would change every project, so that is left for the owner.
