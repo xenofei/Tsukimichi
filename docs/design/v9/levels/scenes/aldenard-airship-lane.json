@@ -1,0 +1,160 @@
+{
+ "name": "aldenard-airship-lane",
+ "about": "The north-west of the game's own world painting The Three Great Continents at its high-resolution size (Aldenard: Gridania, Coerthas and Ishgard, the cloud sea's western shore, the chart's airship and dragons over the Northern Sea), read as a chart under the moon: lapis sea and silver clouds, the land's forests in sea-green, the airship's lane engraved over it in gilt from Gridania to Ishgard and on past the airship, with a branch west and the lane in from the south. Crop [0, 555, 1280, 960]: under 25% of its own area over 2-3's crop, 3-5's charter crop and 5-2's charter crop (5-2's parked recipe merlthor-strait, [0, 1200, 960, 720], is 24.6% of this crop).",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "mirror": false,
+  "crop": [0, 555, 1280, 960],
+  "grade": {
+   "gamma": 1.2,
+   "exposure": 0.72,
+   "ceiling": 0.35,
+   "warm_keep": 0.25,
+   "chroma_mid": 0.45
+  }
+ },
+ "masks": {
+  "land": {
+   "kind": "rim-fill",
+   "threshold": 0.45,
+   "grow": 3
+  }
+ },
+ "veil": 0.34,
+ "features": {
+  "gridania": [[485, 417]],
+  "ishgard": [[365, 322]],
+  "western hold": [[192, 350]],
+  "airship": {
+   "circle": [255, 108, 52],
+   "from": 50,
+   "sweep": 80
+  },
+  "lane gridania": {
+   "points": [[485, 417], [452, 390], [420, 365], [392, 342], [365, 322]],
+   "smooth": 6
+  },
+  "lane north": {
+   "points": [[365, 322], [350, 290], [328, 258], [305, 225], [285, 195], [268, 170]],
+   "smooth": 6
+  },
+  "lane west": {
+   "points": [[365, 322], [330, 342], [290, 352], [250, 353], [222, 352], [192, 350]],
+   "smooth": 6
+  },
+  "lane south": {
+   "points": [[452, 418], [410, 421], [372, 426], [334, 446], [300, 480]],
+   "smooth": 6
+  },
+  "cloud shore": {
+   "points": [[566, 160], [560, 200], [558, 230], [574, 262], [596, 292], [620, 320], [646, 346], [672, 370], [700, 390]],
+   "smooth": 6
+  },
+  "north coast": {
+   "points": [[400, 276], [440, 281], [480, 281], [520, 287], [552, 298]],
+   "smooth": 6
+  },
+  "isles": [[472, 168], [458, 200], [528, 216], [422, 228]],
+  "dragon": [[207, 222], [214, 256], [276, 252]],
+  "flying dragon": [[110, 272], [100, 304]],
+  "compass": [[180, 276]],
+  "peak": [[285, 310]],
+  "ridges": [[470, 348], [532, 338]],
+  "cloud humps": [[646, 232], [676, 284]],
+  "west coast": {
+   "points": [[206, 404], [228, 432], [246, 462], [258, 494]],
+   "smooth": 6
+  },
+  "gridania castle": [[522, 470]]
+ },
+ "dress": {
+  "palette": {
+   "name": "Lapis and sea-green (the northern chart)",
+   "sky": "#10204E",
+   "deep": "#050A1C",
+   "jewel1": "#2A48C0",
+   "jewel2": "#1E9E7E",
+   "warm": "#FFB45E",
+   "rim": "#A9E6D8"
+  },
+  "jewel": {
+   "bands": [[0, "#2A68C8"], [600, "#2262B8"]],
+   "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9DCFF"]],
+   "chroma": 1.8,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#48B07E",
+     "chroma": 0.4,
+     "mask": [["mask", "land", 10], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [54, 20],
+   "regionQuiet": 0.8
+  },
+  "shafts": [
+   {
+    "origin": [-60, -160],
+    "angles": [48, 57, 66],
+    "widths": [44, 30, 50],
+    "k": 0.04,
+    "col": "#E0E6FF"
+   }
+  ],
+  "extras": [
+   {
+    "kind": "chart_border"
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16204E",
+   "rim": "#A9E6D8",
+   "rimK": 0.0,
+   "seed": 16
+  }
+ },
+ "overlays": [
+  {
+   "kind": "route",
+   "points": [[485, 417], [452, 390], [420, 365], [392, 342], [365, 322], [350, 290], [328, 258], [305, 225], [285, 195], [268, 170], [252, 150], [222, 132], [180, 115], [130, 100], [90, 92]],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.55
+  },
+  {
+   "kind": "route",
+   "points": [[365, 322], [330, 342], [290, 352], [250, 353], [222, 352], [192, 350]],
+   "color": "#D9BE82",
+   "width": 1.6,
+   "alpha": 0.45
+  },
+  {
+   "kind": "route",
+   "points": [[485, 417], [452, 418], [410, 421], [372, 426], [334, 446], [300, 480], [278, 525], [262, 600]],
+   "color": "#D9BE82",
+   "width": 1.6,
+   "alpha": 0.45
+  }
+ ],
+ "runtime": {
+  "motion": {
+   "dust": 18
+  },
+  "glints": [
+   {
+    "overlay": 0,
+    "speed": 30,
+    "every": 30,
+    "offset": 0
+   },
+   {
+    "overlay": 1,
+    "speed": 30,
+    "every": 30,
+    "offset": 15
+   }
+  ]
+ }
+}
