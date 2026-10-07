@@ -1,0 +1,125 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "cloudlane",
+ "source": {
+  "picture": "cloudlane"
+ },
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "palette": {
+  "bands": [[0, "#7040C0"], [300, "#6A3CBC"], [600, "#5832A0"]],
+  "chroma": 1.1,
+  "floor": 0.04,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#3A1A7E"], [0.45, "#E4D0FF"]],
+  "regions": [
+   {
+    "hue": "#3EAA54",
+    "chroma": 0.15,
+    "where": [
+     {
+      "y": [262, 300]
+     },
+     {
+      "y": [548, 478]
+     },
+     {
+      "lum": [0.28, 0.4],
+      "blur": 3
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [60, 25],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.3
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [60, 25],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "shafts",
+   "origin": [596, 118],
+   "angles": [75, 92, 110, 128],
+   "widths": [14, 22, 18, 12],
+   "k": 0.04,
+   "colour": "#D8DCFF",
+   "seed": 3,
+   "reach": 600,
+   "near": 60,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "veil": 0.22,
+ "motion": {
+  "stars": 36,
+  "mist": [
+   {
+    "y": [520, 592],
+    "speed": 6,
+    "alpha": 0.1,
+    "cell": 120,
+    "seed": 11,
+    "colour": "#C8C0E8"
+   }
+  ],
+  "starWhere": [
+   {
+    "poly": [[76.0, 132.0], [200.0, 112.0], [300.0, 120.0], [500.0, 150.0], [540.0, 60.0], [700.0, 44.0], [724.0, 44.0], [724.0, 196.0], [650.0, 206.0], [626.0, 258.0], [306.0, 258.0], [290.0, 190.0], [240.0, 158.0], [150.0, 158.0], [110.0, 196.0], [76.0, 232.0]],
+    "blur": 4.0
+   },
+   {
+    "disc": [596, 118, 40, 8],
+    "invert": true
+   }
+  ]
+ },
+ "feverMoon": [596, 118, 24],
+ "chrome": {
+  "sky": "#141048",
+  "deep": "#060818",
+  "jewel1": "#7040C0",
+  "jewel2": "#3EAA54"
+ }
+}

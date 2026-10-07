@@ -1,0 +1,8 @@
+  skipped ((449, 388), 'lane', '-3.4 from the peg at (456, 400)')
+  skipped ((344, 281), 'lane', '4.8 from the peg at (365, 288)')
+  skipped ((325, 344), 'lane west', '-5.0 from the peg at (336, 339)')
+  skipped ((442, 419), 'lane south', '3.5 from the peg at (456, 434)')
+  skipped ((400, 276), 'north coast', '12.5 from the peg at (394, 305)')
+  skipped ((206, 404), 'west coast', '7.4 from the peg at (192, 384)')
+  pieces 64 (pegs 59, bricks 5, movers 0); candidates 29; green-only 22; skipped while tracing 6
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_e874cb78-8d2-6\docs\design\v9\levels\build\trace\base-11.png

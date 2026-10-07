@@ -86,12 +86,12 @@
    "regions": [
     {
      "hex": "#48B07E",
-     "chroma": 0.4,
+     "chroma": 0.3,
      "mask": [["mask", "land", 10], ["x", 75, 135], ["x", 725, 665]]
     }
    ],
    "quiet": [54, 20],
-   "regionQuiet": 0.8
+   "regionQuiet": 0.7
   },
   "shafts": [
    {

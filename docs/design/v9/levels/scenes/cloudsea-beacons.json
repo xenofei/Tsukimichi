@@ -83,7 +83,7 @@
    "dust": 10,
    "stars": 30,
    "mist": [
-    {"y": [540, 594], "speed": 4, "alpha": 0.10, "cell": 150, "seed": 41, "colour": "#B8D4F0"}
+    {"y": [540, 594], "speed": 4, "alpha": 0.10, "cell": 150, "seed": 11, "colour": "#B8D4F0"}
    ],
    "starWhere": [["y", 236, 220]]
   },

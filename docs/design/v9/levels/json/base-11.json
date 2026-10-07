@@ -125,14 +125,14 @@
       "x": 162.6,
       "y": 367.0,
       "r": 9,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
       "x": 162.6,
       "y": 333.0,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {

@@ -1,0 +1,204 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "sky-whale",
+ "source": {
+  "game": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "crop": [870, 312, 1400, 1050]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.35,
+  "exposure": 0.86,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "land": [0.62, 0],
+     "blur": 1.0
+    },
+    {
+     "disc": [192, 262, 110, 30]
+    }
+   ],
+   "mul": 0.7
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [240, 430, 150, 60]
+    }
+   ],
+   "mul": 0.76
+  },
+  {
+   "kind": "plate",
+   "picture": "sky-whale-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "sky-whale-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#4C42D2"], [600, "#3A32AC"]],
+  "chroma": 1.8,
+  "floor": 0.05,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#22228E"], [0.45, "#D2D4FF"]],
+  "regions": [
+   {
+    "hue": "#52AE6C",
+    "chroma": 0.11,
+    "where": [
+     {
+      "lum": [0.16, 0.24],
+      "blur": 4
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [44, 12],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [44, 12],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 120,
+   "y": 90,
+   "r": 260,
+   "colour": "#FFC27A",
+   "k": 0.025
+  },
+  {
+   "kind": "glow",
+   "x": 192,
+   "y": 262,
+   "r": 120,
+   "colour": "#CFE0FF",
+   "k": 0.06
+  },
+  {
+   "kind": "shafts",
+   "origin": [-60, -160],
+   "angles": [50, 58, 67],
+   "widths": [46, 32, 52],
+   "k": 0.04,
+   "colour": "#E0E6FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "sky-whale-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "sky-whale-ticks",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "sky-whale-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "sky-whale-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "sky-whale-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "lights": [
+  {
+   "x": 86.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  },
+  {
+   "x": 714.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  }
+ ],
+ "veil": 0.34,
+ "motion": {
+  "dust": 16,
+  "glints": [
+   {
+    "points": [[582, 252], [548, 262], [508, 270], [470, 276], [436, 284]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 24,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[398, 292], [366, 286], [330, 281], [296, 278]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 24,
+    "offset": 12,
+    "colour": "#FFE6B0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#10204E",
+  "deep": "#050A1C",
+  "jewel1": "#2A48C0",
+  "jewel2": "#1E9E7E"
+ }
+}

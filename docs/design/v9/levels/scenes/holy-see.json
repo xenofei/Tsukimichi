@@ -74,7 +74,7 @@
     {
      "hex": "#BA506C",
      "chroma": 0.17,
-     "mask": [["luma", 0.2, 0.32, 4], ["poly", "below the crest", 30], ["y", 540, 470], ["not-poly", "cathedral", 30], ["x", 75, 190], ["x", 725, 665]]
+     "mask": [["luma", 0.2, 0.32, 4], ["poly", "below the crest", 30], ["y", 540, 470], ["not-poly", "cathedral", 30], ["x", 75, 190]]
     }
    ],
    "quiet": [40, 18],

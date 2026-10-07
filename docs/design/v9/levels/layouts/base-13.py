@@ -14,7 +14,7 @@ The crest, the arches, the spire tips and the rose window are the subject's own 
 What changed from the pilot (the shipped rules): the crest's bricks are 28 long, not 24 (24 left 16-unit notches
 between every other brick); the summit moons, the bridge lamps and one flank moon stand clear of the wedge band; the
 fog's lowest row of piers lost a peg and the lower town rose 4 units, so 3 pieces reach into the bucket's lane; a fourth
-blue moon in the high cloud (402, 222), a blue moon on a mid spire (566, 222) and one on the cloud sea under the slope
+blue moon in the high cloud (402, 222; removed at stage integration, below), a blue moon on a mid spire (566, 222) and one on the cloud sea under the slope
 (276, 256) were added.
 
 Candidates (30, the charter's count): the summits, the billow hearts, the bridge lamps, the gate spire, two spire tips,
@@ -23,6 +23,10 @@ two oranges on the piers and the third on the cathedral's foot moved up to the f
 oranges were 41% of the oranges left in lost games against 27% of the candidates (the cheap-difficulty gate's 1.5
 times). The east spire tip (624, 134) stays blue: as a candidate it was left in 36% of lost games. Tuned on seeds
 1-864 and 20001-23456 (23.9 and 23.8 per 48) toward the charter's 24.
+
+Stage integration (mr3): the bridge's arches went from 8 to 10 thick (the runtime's mark test, below), which made the
+board 0.7 per 48 harder and left the step to 3-4 unresolved (0.73 +- 0.41 pooled); the fourth high-cloud blue moon
+(402, 222) came out to give it back (tuning 22.7, second block 23.8; pooled 23.73, step to 3-4 1.03).
 """
 
 LEVEL = dict(id="base-13", name="The Holy See", stage=3, number=13, scene="holy-see",
@@ -48,7 +52,7 @@ def build(b):
     b.bricks_along(ridge[top:], length=28, gap=2.5, t=12, green=False, tag="ridge")
     for (x, y) in b.f("summits"):
         b.place(x, y, orange=(x, y) in SUMMIT_ORANGE, green=False, tag="moon over a summit")
-    for (x, y) in ((228, 118), (292, 132), (330, 166), (402, 222)):
+    for (x, y) in ((228, 118), (292, 132), (330, 166)):
         b.place(x, y, orange=(x, y) == (292, 132), tag="high cloud")
     # ---- the sea of clouds: three billow tops as gentle humps of brick, a heart in the trough under each, a dotted
     # row lower and one moon under the slope
@@ -60,8 +64,10 @@ def build(b):
     for (x, y) in ((100, 392), (140, 404), (190, 398), (232, 394), (276, 256)):
         b.place(x, y, orange=(x, y) == (190, 398), tag="cloud sea")
     # ---- the bridge: three arches as bricks in the painted arches (never green), its lamps dotted along the deck
+    # (10 thick, as every shipped brick: at 8 the runtime's one-unit clearance field put the middle arch's mark off its
+    # middle line, MoonfallRuntimeArtTests.Peg_marks_sit_on_every_brick_inside_its_face; stage integration, mr3)
     for x in (374, 428, 482):
-        b.arc(x, deck_y(x) + 37, 20, 220, 100, t=8, green=False, tag="arch")
+        b.arc(x, deck_y(x) + 37, 20, 220, 100, t=10, green=False, tag="arch")
     for x in (300, 340, 380, 420):
         b.place(x, deck_y(x) - 18, orange=True, tag="bridge lamp")
     b.place(250, 362, orange=True, green=False, tag="gate spire")

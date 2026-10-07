@@ -1,0 +1,7 @@
+  skipped ((642, 181), 'north flock', '9.9 from the peg at (622, 195)')
+  skipped ((704, 233), 'north flock', '10.0 from the peg at (680, 236)')
+  skipped ((488, 328), 'south flock', '9.8 from the peg at (465, 320)')
+  skipped ((406, 404), 'south flock', '9.9 from the peg at (408, 381)')
+  skipped ((547, 164), 'vortex', '12.0 from the peg at (569, 143)')
+  pieces 72 (pegs 61, bricks 11, movers 0); candidates 32; green-only 33; skipped while tracing 5
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_e874cb78-8d2-6\docs\design\v9\levels\build\trace\base-15.png

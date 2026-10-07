@@ -17,7 +17,9 @@ the isles, the coast and the cloud shore, chosen with `mfl.py ease` on the tunin
 (10 per 200 x 200, one at y 400 or lower on each half). Gridania's lower moons and the castle stay blue: they were the
 places left most often (`ease`, 0.14-0.26). The south lane's two candidates (410, 421) and (378, 424) sit just above
 y 430, so no orange is low. Tuning seeds 1-864 and the second block (20001-23456) both read 27.2 per 48 against the
-opener's target of 27 (charter, MR 3).
+opener's target of 27 (charter, MR 3). Stage integration (mr3): the pooled step to 3-2 read 0.88 +- 0.41, not resolvably 0.5, so the
+western hold's lower-left moon (163, 367), left in 0.21 of lost games, gave its candidate to the ring's upper-left moon
+(163, 333) (`ease` 0.04): tuning 28.4, second block 28.1 (from 27.2 and 27.2), inside the band's easy end (27 + 1.8).
 """
 import math
 
@@ -72,7 +74,7 @@ def build(b):
 
 CANDS = {(365, 288), (394, 305), (336, 305),                          # Ishgard
          (485, 383), (456, 400),                                       # Gridania
-         (192, 316), (221, 367), (163, 367),                           # the western hold
+         (192, 316), (221, 367), (163, 333),                           # the western hold
          (222, 148), (255, 160), (288, 148),                           # the airship's berth
          (207, 222), (276, 252), (110, 272),                           # the dragons
          (472, 168), (422, 228), (528, 216),                           # the floating isles
