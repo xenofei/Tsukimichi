@@ -13,7 +13,7 @@ This page holds the standing rules for every Tsukimichi agent. Your own brief ad
 ## Gates (implementers, after the last edit)
 Run `pwsh tools/gate.ps1`. It runs the four gates below, writes the full logs outside the repo (`$env:TEMP/tsukimichi-gates/<hash>/logs`), and prints only each gate's exit code, the test counts, the first ~15 error lines of a failure and the log folder.
 - **Skip if unchanged:** after a full run that passed, a rerun with the same HEAD, the same changed and untracked file contents prints `unchanged since last PASS (<time>)` and exits 0 in about a second. Any edit, even one `.cs` file, runs everything again. `-Force` reruns regardless; `-Only build,test` (also `load`, `themes`) runs a subset and never stamps.
-- **Intermittent tests:** a failing test from the list below is rerun alone once; if it passes, the summary says `intermittent, passed on rerun: <name>` and the gate passes. Any other failure fails. Quote that note in your hand-back.
+- **Intermittent tests:** a failing test named in `$Intermittent` in `tools/gate.ps1` is rerun alone once; if it passes, the summary says `intermittent, passed on rerun: <name>` and the gate passes. The list is empty now, so every failure fails the gate; a test that starts failing now and then gets fixed at its root, not listed. Quote any such note in your hand-back.
 - Exit code 0 means every gate passed, 1 otherwise.
 
 The raw commands (the fallback, and what `gate.ps1` runs):
@@ -26,7 +26,7 @@ py -3 tools/themes/build_themes.py --check > "$LOG/themes.log" 2>&1; echo "theme
 ```
 - `$LOG` is a folder in your scratchpad.
 - The tests pass only when the output contains `Failed:     0,`.
-- Three tests fail now and then under full-suite load: `SaveBudgetTests.Close_waits_no_longer...`, `MoonfallGameTests.Every_power_and_the_style_shots_allocate_nothing` and `MoonfallDuelTests.A_duel_allocates_nothing_per_tick` (the last seen 2026-10-06, passing alone). If one fails, rerun it alone before reporting a failure.
+- No test is known to fail now and then. If one fails, rerun it alone and report it with the failure; do not assume it is a flake.
 
 ## Result caches (do not redo work on unchanged inputs)
 - **Level builds:** `py -3 tools/moonfall-levels/mfl.py build <ids>` skips a level whose layout, scene recipe, painting or game texture, the `mflkit`/design-kit sources and the built mfcheck are unchanged since its last PASS (it prints `unchanged since last PASS`). `--force` rebuilds. The self-test is skipped too when nothing needs building.
