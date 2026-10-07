@@ -48,9 +48,7 @@ When it finishes:
    - The owner decided on 7 October: at the full release, Moonfall gets its own button on the main window, not just the status-bar pill.
 
 ## Open
-- **Owner items:**
-  - unused user-level agents and skills (they can only be removed globally);
-
+- **Owner items:** none open. The unused user-level agents and skills stay as they are (owner, 7 October).
 - **Not verified in game:** GPU drawing, live motion, the keyboard and gamepad reveal, scene build speed, and 1-3's Fever moon.
 
 ## Gates
