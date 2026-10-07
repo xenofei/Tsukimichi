@@ -50,11 +50,11 @@ The three jobs:
 
 ## Open
 - **Owner items:**
-  - the charter's questions;
+  - the Fan Kit licence check, before any wallpaper ships;
   - the four levels whose colours changed (sheets in `docs/design/v9/levels/runtime/approved-vs-shipped-base-0{4,5,8,9}.jpg`);
   - unused user-level agents and skills (they can only be removed globally);
   - the toolbar button.
-- **Flaky under full-suite load:** `SaveBudgetTests.Close_waits...` and `MoonfallGameTests.Every_power..._allocate_nothing`.
+- **Flaky under full-suite load:** three tests, being fixed (see In flight).
 - **Not verified in game:** GPU drawing, live motion, the keyboard and gamepad reveal, scene build speed, and 1-3's Fever moon.
 
 ## Gates
