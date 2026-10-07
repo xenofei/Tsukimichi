@@ -427,6 +427,16 @@ designer flagged in rounds 2-6 (G4) that stage 4 had no source list. These are i
    *[assumed: the count of Mor Dhona paintings among the 37 is unknown]*. If the sources are thin, MR 10 moves 10-1 and 10-3
    to our water and sky paintings, which drops its game share to 1 of 5. Is that acceptable?
 
+### Owner's answers (7 October 2026)
+
+| Question | Answer |
+|---|---|
+| 1. The Far Shore's difficulty | **It restarts near Moon Road stage 6** and falls to the moon's finale. |
+| 2. Figures with no game picture | **Use official Fan Kit art.** It is an official FFXIV Fan Kit wallpaper without logo or text, shipped as a picture. |
+| 3. and 6. Repetition | **Allowed in distinct regions.** No two neighbouring levels share a picture. If Mor Dhona's sources are thin, two of its levels move to our water or sky paintings. |
+| 4. Aces on the hardest levels | **The top 40% of wins.** Below about 14 per 48, the Ace is set at the score 40% of winning games reach. This needs a change to `MoonfallAces`. |
+| 5. ch-04 | **The recommendation is taken.** 8-2 carries 45 candidates as a recorded exception. |
+
 **Unverified here.**
 - The crops and what sits in each region: the chart's airship, dragons, whale, firebird and ships, and base02's red craft.
   They were read from the cached paintings at reduced scale.
