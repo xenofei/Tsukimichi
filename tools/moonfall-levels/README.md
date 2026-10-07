@@ -295,7 +295,7 @@ round 2's fold-in lifts 1-2's lower sea toward its approved lightness with a sec
 What ships is this lightness-kept form. `docs/design/v9/levels/runtime/approved-vs-shipped-base-NN.jpg` sets each level's
 round-6 approved composite beside the pipeline's composite in the shipped form and the engine's own render. Where the
 shipped form still differs most from the approved look (1-5's aurora, 2-4, 1-4 and 2-3; critic runtime rounds 1 and 2,
-m1), the owner's look at those sheets is pending.
+m1), the owner accepted the shipped colours on 7 October 2026.
 
 The runtime's own scene-recipe format (`moonfall-scene` version 1: `docs/design/v9/scene-recipe.md` on main, files in
 `Tsukimichi.Core/Moonfall/Levels/scenes/<name>.json`) has since landed on main. It covers the same ground under other

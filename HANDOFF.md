@@ -9,9 +9,7 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Running alongside:** the workflow changes from `docs/team/workflow-audit-2026-10-06.md`, all approved by the owner.
 
 ## Done
-- **1.23.0 is released,** with the tag pushed and pluginmaster checked. The owner reported not seeing the Moonfall button. It is a small "● Moonfall" pill at the bottom right of the main window's status bar, and `/tsuki moonfall` also opens it.
-  - Still waiting on the owner: a screenshot, or confirmation that `/tsuki moonfall` works.
-  - Offered and not yet answered: a toolbar button.
+- **1.23.0 is released,** with the tag pushed and pluginmaster checked. The owner tested it in game on 7 October and the preview works.
 - **Optimization team:** eight `opt-*` specialists in `.claude/agents/`. The roster is in `docs/team/optimization-team.md`.
 - **Audit and owner approvals:**
   - the shared brief `docs/team/agent-brief-common.md`;
@@ -50,9 +48,8 @@ When it finishes:
 
 ## Open
 - **Owner items:**
-  - the four levels whose colours changed (sheets in `docs/design/v9/levels/runtime/approved-vs-shipped-base-0{4,5,8,9}.jpg`);
   - unused user-level agents and skills (they can only be removed globally);
-  - the toolbar button.
+  - a toolbar button for Moonfall (explained to the owner on 7 October; answer pending).
 - **Not verified in game:** GPU drawing, live motion, the keyboard and gamepad reveal, scene build speed, and 1-3's Fever moon.
 
 ## Gates
