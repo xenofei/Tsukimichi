@@ -84,11 +84,11 @@ def _atomic(path, text):
     os.replace(tmp, path)
 
 
-def play_get(path, number, games, first):
+def play_get(path, number, games, first, oranges=None):
     """(key, cached stdout of `mfcheck play` for this level file, number and seed range, or None)."""
     if disabled():
         return None, None
-    key = digest("play", file_hash(path), number, games, first, mfcheck_hash())
+    key = digest("play", file_hash(path), number, games, first, mfcheck_hash(), *(() if oranges is None else (f"oranges={oranges}",)))
     try:
         return key, (DIR / "play" / f"{key}.txt").read_text(encoding="utf-8")
     except OSError:

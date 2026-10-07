@@ -43,6 +43,25 @@ public sealed class MoonfallPlayabilityTests
     }
 
     /// <summary>
+    /// Re-suggests a shipped level's Ace over <see cref="MoonfallAces.SuggestGames"/> games (the rule's 576): none is a hard
+    /// level (14 of 48 or more win), so the fifth-of-all-games rule still applies and the shipped Ace holds. Slow, so it is a
+    /// Perf test and runs on request: <c>dotnet test --filter "FullyQualifiedName~Shipped_Aces_are_unchanged"</c>.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(ShippedLevels))]
+    [Trait("Category", "Perf")]
+    public void Shipped_Aces_are_unchanged_by_the_hard_level_rule(string id)
+    {
+        var level = MoonfallCampaigns.LoadBuiltIn().Find(id);
+        Assert.NotNull(level);
+        var report = MoonfallPlayability.Check(level, MoonfallAces.SuggestGames);
+        var suggested = MoonfallAces.Suggest(report);
+        output.WriteLine($"{id}: won {report.Wins} of {report.Games.Count}; Ace {MoonfallAces.For(id)}, suggested {suggested}");
+        Assert.True(report.Wins * MoonfallAces.HardOf >= MoonfallAces.HardWins * report.Games.Count, $"{id} is a hard level");
+        Assert.Equal(MoonfallAces.For(id), suggested);
+    }
+
+    /// <summary>
     /// The port plays the designer's tool's games move for move: these are <c>mfcheck play base-01.json 48 5</c>'s first
     /// two games, its tenth (the first it wins) and its total (run on 6 October 2026 against this engine, on the level
     /// pipeline's Road to Horizon), so a change that moves the greedy player's verdicts shows here before it moves a level's.

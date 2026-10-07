@@ -10,7 +10,10 @@ namespace Tsukimichi.Core.Moonfall;
 /// Ace: no badge, no bonus. [J] Each value is set from the greedy player (<see cref="Suggest"/>) over
 /// <see cref="SuggestGames"/> games: the score that <see cref="AceShare"/> of all its games win at or above, rounded to
 /// 10,000, so every level's Ace is about as hard to reach (levels runtime round 1: a quartile of 48 games' wins gave
-/// shares from 6% to 26%).
+/// shares from 6% to 26%). On the hardest levels (the greedy player wins under <see cref="HardWins"/> of
+/// <see cref="HardOf"/>) a fifth of all games is little more than "any win", so the Ace is set at the score
+/// <see cref="HardWinShare"/> of the winning games reach instead (the owner's answer to question 4 of the Moonfall
+/// production charter, 7 October 2026).
 /// </summary>
 public static class MoonfallAces
 {
@@ -22,6 +25,15 @@ public static class MoonfallAces
 
     /// <summary>The share of the greedy player's games that win at or above a level's Ace.</summary>
     public const double AceShare = 0.20;
+
+    /// <summary>A level is hard when the greedy player wins under <see cref="HardWins"/> of every <see cref="HardOf"/> games (14 of 48).</summary>
+    public const int HardWins = 14;
+
+    /// <summary>See <see cref="HardWins"/>.</summary>
+    public const int HardOf = 48;
+
+    /// <summary>On a hard level, the share of the winning games that reach the Ace (the top 40% of wins).</summary>
+    public const double HardWinShare = 0.40;
 
     /// <summary>How many of the greedy player's games an Ace is suggested from (48 gave Aces from 7% to 26% of games).</summary>
     public const int SuggestGames = 576;
@@ -43,8 +55,9 @@ public static class MoonfallAces
 
     /// <summary>
     /// The Ace score the greedy player suggests for a level: the score <see cref="AceShare"/> of all its games win at or
-    /// above (the lowest of its wins when fewer win), rounded to the nearest 10,000; null when it won none. Play it over
-    /// <see cref="SuggestGames"/> games.
+    /// above (the lowest of its wins when fewer win), rounded to the nearest 10,000; null when it won none. On a hard level
+    /// (wins below <see cref="HardWins"/> of <see cref="HardOf"/>, exactly 14 of 48 is not hard) it is instead the score
+    /// <see cref="HardWinShare"/> of the winning games reach. Play it over <see cref="SuggestGames"/> games.
     /// </summary>
     public static long? Suggest(MoonfallPlayabilityReport report)
     {
@@ -55,7 +68,9 @@ public static class MoonfallAces
             return null;
         }
 
-        var at = won[Math.Min(won.Count, Math.Max(1, (int)Math.Ceiling(report.Games.Count * AceShare))) - 1];
+        var hard = (long)won.Count * HardOf < (long)HardWins * report.Games.Count;
+        var reaching = hard ? (int)Math.Ceiling(won.Count * HardWinShare) : (int)Math.Ceiling(report.Games.Count * AceShare);
+        var at = won[Math.Min(won.Count, Math.Max(1, reaching)) - 1];
         return (at + 5_000) / 10_000 * 10_000;
     }
 

@@ -4,7 +4,35 @@ they prove themselves on synthetic stages before `mfl.py stage` trusts them."""
 
 # the bands (the held-out ramp, 1728 games at each level's own number): the stage's first level about this easy, its
 # last about this hard, within the ramp's noise
-BANDS = {1: (30.0, 21.0), 2: (27.0, 20.0)}
+# keyed by campaign and stage ("mr" The Moon Road, "fs" The Far Shore: the Far Shore's stages number from 1 again). Stages
+# 3-11 and the Far Shore's are the production charter's section 1.1 (opener, then L - 1.5, L - 3, L - 4.5, the finale)
+BANDS = {"mr1": (30.0, 21.0), "mr2": (27.0, 20.0),
+         "mr3": (27.0, 19.0), "mr4": (26.5, 18.5), "mr5": (26.0, 18.0), "mr6": (25.0, 17.0), "mr7": (24.5, 16.5),
+         "mr8": (24.0, 16.0), "mr9": (23.0, 15.0), "mr10": (22.5, 14.5), "mr11": (22.0, 13.0),
+         "fs1": (25.0, 17.0), "fs2": (24.5, 16.5), "fs3": (24.0, 16.0), "fs4": (23.5, 15.5), "fs5": (23.0, 15.0),
+         "fs6": (22.5, 14.5), "fs7": (22.0, 14.0), "fs8": (21.5, 13.5), "fs9": (21.0, 13.0), "fs10": (20.5, 12.5),
+         "fs11": (20.0, 12.0), "fs12": (19.5, 11.0)}
+
+
+def stage_key(arg):
+    """A stage argument as its key: "mr3", "fs1", or a bare number (a Moon Road stage, as before). ValueError if it is
+    none of the charter's stages."""
+    a = str(arg).strip().lower()
+    key = ("mr" + a) if a.isdigit() else a
+    if key not in BANDS:
+        raise ValueError(f"unknown stage {arg!r}: use mr1-mr11, fs1-fs12 (a bare number is a Moon Road stage)")
+    return key
+
+
+def level_campaign(level_id):
+    """The campaign key of a level id: base-NN is The Moon Road ("mr"), expansion-NN The Far Shore ("fs")."""
+    return {"base": "mr", "expansion": "fs"}.get(str(level_id).split("-")[0])
+
+
+def previous_stage(key):
+    """The stage the player meets just before this one within its campaign, or None (the Far Shore's first)."""
+    camp, n = key[:2], int(key[2:])
+    return f"{camp}{n - 1}" if n > 1 else None
 NOISE = 0.6                 # one standard error per 48 over 1728 games ("about" a band end: within two of them)
 STEP = 0.5                  # each level at least this much harder than the one before (game designer round 2, G2)
 FINALE_GAP = 2.5            # the finale at least this far below its 4th level
@@ -44,8 +72,9 @@ def same_jewels(a, b):
 
 
 def faults(stage, rows, before=None, games=None):
+    stage = stage_key(stage)
     """rows: [(id, ramp, (first hue, second hue))] in play order; before: the previous stage's last row, which the
-    player meets just before this stage's first; games: {id: games its ramp is over} (HELD when absent). The problems,
+    player meets just before this stage's first (None for the Far Shore's stage 1: nothing); games: {id: games its ramp is over} (HELD when absent). The problems,
     empty if none."""
     games = games or {}
     P = []
@@ -85,32 +114,59 @@ def faults(stage, rows, before=None, games=None):
     return P
 
 
+def _raises(arg):
+    try:
+        stage_key(arg)
+    except ValueError:
+        return True
+    return False
+
+
 def selftest(verbose=True):
     good = [("a", 29.5, (280, 350)), ("b", 27.0, (270, 190)), ("c", 25.0, (300, 0)), ("d", 23.5, (250, 330)),
             ("e", 20.5, (265, 180))]
     G = {i: HELD + CONFIRM_GAMES for i in "abcde"}
-    cases = [("a good stage 1, confirmed", faults(1, good, games=G), None),
+    cases = [("a good stage 1, confirmed", faults("mr1", good, games=G), None),
              ("the same stage on the held-out block alone (steps of 1.5 and a gap of 3.0 are not resolved)",
-              faults(1, good), "resolvably"),
+              faults("mr1", good), "resolvably"),
              ("a held-out step of 1.2 that pools to 0.7 (game designer G22)",
-              faults(1, good[:1] + [("b", 28.8, (270, 190))] + good[2:], games=G), "resolvably"),
+              faults("mr1", good[:1] + [("b", 28.8, (270, 190))] + good[2:], games=G), "resolvably"),
              ("a finale gap of 2.7 over 6912 games (critic N22)",
-              faults(1, good[:4] + [("e", 20.8, (265, 180))], games=G), "finale is not resolvably"),
-             ("neighbours with the same jewels", faults(1, [good[0], ("b", 27.0, (285, 345))] + good[2:]), "F7"),
-             ("a level easier than the one before", faults(1, good[:2] + [("c", 27.4, (300, 0))] + good[3:]), "not at least"),
-             ("a finale only 1 below its 4th", faults(1, good[:4] + [("e", 22.5, (265, 180))]), "finale"),
-             ("a stage opening at 26", faults(1, [("a", 26.0, (280, 350))] + [(i, r - 3.5, p) for (i, r, p) in good[1:]]),
+              faults("mr1", good[:4] + [("e", 20.8, (265, 180))], games=G), "finale is not resolvably"),
+             ("neighbours with the same jewels", faults("mr1", [good[0], ("b", 27.0, (285, 345))] + good[2:]), "F7"),
+             ("a level easier than the one before", faults("mr1", good[:2] + [("c", 27.4, (300, 0))] + good[3:]), "not at least"),
+             ("a finale only 1 below its 4th", faults("mr1", good[:4] + [("e", 22.5, (265, 180))]), "finale"),
+             ("a stage opening at 26", faults("mr1", [("a", 26.0, (280, 350))] + [(i, r - 3.5, p) for (i, r, p) in good[1:]]),
               "opens"),
-             ("a finale at 17", faults(1, good[:4] + [("e", 17.0, (265, 180))]), "closes"),
-             ("a stage much easier than its band", faults(1, [(i, r + 4, p) for (i, r, p) in good]), "much easier"),
-             ("the same palette swapped round", faults(1, [good[0], ("b", 27.0, (350, 280))] + good[2:]), "F7"),
-             ("the stage before's last level", faults(2, good, before=("z", 20.0, (283, 352))), "F7"),
+             ("a finale at 17", faults("mr1", good[:4] + [("e", 17.0, (265, 180))]), "closes"),
+             ("a stage much easier than its band", faults("mr1", [(i, r + 4, p) for (i, r, p) in good]), "much easier"),
+             ("the same palette swapped round", faults("mr1", [good[0], ("b", 27.0, (350, 280))] + good[2:]), "F7"),
+             ("the stage before's last level", faults("mr2", good, before=("z", 20.0, (283, 352))), "F7"),
              ("a step of 0.8 on the held-out block alone (game designer G20)",
-              faults(1, good[:1] + [("b", 28.7, (270, 190))] + good[2:]), "resolvably"),
+              faults("mr1", good[:1] + [("b", 28.7, (270, 190))] + good[2:]), "resolvably"),
              ("a step of 0.6 over 6912 games each (game designer G20)",
-              faults(1, good[:1] + [("b", 28.9, (270, 190))] + good[2:], games={"a": 6912, "b": 6912}), "resolvably"),
-             ("a step of 0.95 over 6912 games each", faults(1, good[:1] + [("b", 28.55, (270, 190))] + good[2:],
+              faults("mr1", good[:1] + [("b", 28.9, (270, 190))] + good[2:], games={"a": 6912, "b": 6912}), "resolvably"),
+             ("a step of 0.95 over 6912 games each", faults("mr1", good[:1] + [("b", 28.55, (270, 190))] + good[2:],
                                                              games=G), None)]
+    fs = [("f", 24.0, (300, 20)), ("g", 22.5, (260, 160)), ("h", 21.0, (330, 175)), ("i", 19.5, (250, 200)),
+          ("j", 16.5, (280, 345))]
+    GF = {i: HELD + CONFIRM_GAMES for i in "fghij"}
+    cases += [("a bare number is a Moon Road stage, and the key is case-blind",
+               [] if stage_key(2) == "mr2" and stage_key("FS1") == "fs1" else ["bad"], None),
+              ("a stage that is not in the charter",
+               [] if all(_raises(a) for a in ("fs13", "mr12", "x", "0")) else ["bad"], None),
+              ("a good Far Shore stage 1 (nothing before it), confirmed", faults("fs1", fs, games=GF), None),
+              ("Far Shore stage 1 as Moon Road stage 3 (the band 27 to 19) opens too hard",
+               faults("mr3", fs, games=GF), "band: the stage opens"),
+              ("Far Shore stage 2 opening on stage 1's last palette", faults("fs2", [fs[0]], before=("z", 16.5, (300, 20))), "F7"),
+              ("Far Shore stage 2 opening at 24.5 after a stage 1 finale of 17",
+               faults("fs2", [("k", 24.5, (250, 330))], before=("j", 17.0, (320, 175))), None),
+              ("the previous stage stays inside a campaign",
+               [] if previous_stage("mr3") == "mr2" and previous_stage("fs1") is None and previous_stage("fs12") == "fs11"
+               else ["bad"], None),
+              ("the campaign of a level id",
+               [] if level_campaign("base-11") == "mr" and level_campaign("expansion-01") == "fs"
+               and level_campaign("x-1") is None else ["bad"], None)]
     ok = True
     for name, probs, want in cases:
         good_ = (not probs) if want is None else any(want in q for q in probs)

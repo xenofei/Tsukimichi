@@ -33,6 +33,7 @@ def make_board(level_id):
     meta = dict(mod.LEVEL)
     recipe = scene.load_recipe(meta["scene"])
     b = author.Board(recipe)
+    b.level_id = level_id
     mod.build(b)
     return meta, recipe, b
 

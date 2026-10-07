@@ -20,7 +20,8 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py selftest` | Runs every checker against its known-bad and known-good cases |
 | `py -3 tools/moonfall-levels/mfl.py trace <scene or level-id>` | The tracing sheet (`docs/design/v9/levels/build/trace/`): the graded scene at 2x, a 50-unit grid, the opening, the launcher's swing, the bucket's lane, the recipe's features, and for a level its pieces (oranges ringed orange, never-green pegs barred, skipped points as red crosses) plus the pre-flight |
 | `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force` |
-| `py -3 tools/moonfall-levels/mfl.py stage <n>` | The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a level not at least 0.5 per 48 harder than the one before, a finale that is not the stage's hardest by 2.5 below its 4th level, and band ends more than 1.2 (two standard errors) harder than the stage's band, or far easier |
+| `py -3 tools/moonfall-levels/mfl.py stage <key>` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. Bands for every stage are the charter's (`stagecheck.BANDS`). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a level not at least 0.5 per 48 harder than the one before, a finale that is not the stage's hardest by 2.5 below its 4th level, and band ends more than 1.2 (two standard errors) harder than the stage's band, or far easier |
+| `py -3 tools/moonfall-levels/mfl.py challenge <ch-id>` or `challenge <level-id> <oranges>` | The challenge carrier check (`mflkit/challenge.py`): the greedy player on the carrier level(s) at the challenge's orange count (`mfcheck play ... <oranges>`); at least 5 of the rule's 48 games must win, and the level must have at least that many candidates. Recorded carriers (charter 1.6): ch-03 35 oranges on `base-27`, ch-04 45 on `base-37`, and ch-06, ch-08, ch-09, ch-11, ch-12 at the standard 25 on the levels the charter lists. More than 35 oranges, and a candidate count outside 28-35 in the pre-flight, are allowed only for the entries of `challenge.EXCEPTIONS` (today `base-37` at exactly 45, with the reason recorded there); no other level can take them. A recorded carrier not built yet is reported, not failed |
 | `py -3 tools/moonfall-levels/mfl.py stuck <id>` | Where balls come to rest on the first shots the stuck rule fires on |
 | `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane |
 | `py -3 tools/moonfall-levels/mfl.py ease <id> [tags] [--pick N] [--skip tags]` | A scratch copy with every (tagged) peg a candidate, 864 games: each place ranked by how often it is the orange left behind; `--pick` proposes the N most readily cleared places that keep the spread rule and stay above y 430 |
@@ -41,10 +42,20 @@ Nothing is redone on unchanged inputs; no check's rule or threshold changes. Cac
 - **Greedy-play games** (`engine.play`, so `build`, `stage` and `ease`): the raw `mfcheck play` output is stored per
   (level file hash, level number, games, first seed block, mfcheck build hash) and re-read for an unchanged level, so
   `stage <n>` replays only the levels that changed. `stage <n> --force`, or `MFL_NO_CACHE=1` for any command, replays.
+- A challenge run (`challenge`, `engine.play(..., oranges=n)`) keys its stored games on the orange count too.
 - **MoonfallRender** has the same idea for pictures: `Tsukimichi.MoonfallRender <out.png> ... --cache <dir>`.
   See `docs/team/agent-brief-common.md`.
 
 The raw commands stay as they were: without a cache hit (or with `--force`) every step runs.
+
+## Aces
+
+`MoonfallAces.Suggest` (C#, `Tsukimichi.Core/Moonfall/MoonfallAces.cs`) sets a level's Ace from 576 greedy games. A level
+the greedy player wins at 14 of 48 or more (a rate, so 28 of 96 is the same) keeps the rule: the score a fifth of all games
+reach. Below that, the Ace is the score 40% of the *winning* games reach (the owner's answer, 7 October 2026), since a
+fifth of all games is then close to any win. Each Ace is recorded in `Moonfall/Modes/aces.json` when the level ships. The
+Perf-category test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` re-suggests the shipped ten (all well above 14 of
+48, 252-389 wins of 576) and holds each to its recorded Ace.
 
 ## What `build` does, in order
 
@@ -84,7 +95,7 @@ The raw commands stay as they were: without a cache hit (or with `--force`) ever
    clearance along their paths (against movers of another period over real time, the common cycle of their exact
    periods, or every pair of phases when that cycle is longer than 240 s),
    every orange candidate (movers' paths and bricks too) in a direct flight's reach, the spread rule (10 per
-   200 x 200), 28-35 candidates (the deal's 25 and 3-7 more, so the deal varies), 60-160 pieces, format v2's greens (8
+   200 x 200), 28-35 candidates (the deal's 25 and 3-7 more, so the deal varies; exactly 45 on `base-37`, ch-04's carrier, and nowhere else), 60-160 pieces, format v2's greens (8
    or more sure greens; every greenable peg, brick and mover in reach), the bucket's lane (pegs and bricks: at most 5,
    covering at most 120 units of its width).
 2. **The shipped loader** (`mfcheck validate`, `MoonfallLevelLoader`).
@@ -173,6 +184,7 @@ The raw commands stay as they were: without a cache hit (or with `--force`) ever
    - `b.bricks_along(feature)`, `b.arc_bricks(cx, cy, R, start, sweep, n)`: brick runs and crowns (concave down only);
    - `b.slide(x, y, dx, dy, period)`: a slide mover checked along its whole path (movers drifting together are
      checked against each other as still pegs); orbit movers via `b.peg(..., move=...)`;
+   - `b.level_id` is set by the build; the pre-flight reads it only for the recorded 45-candidate exception (`base-37`).
    - `b.key(x, y, orange=True, green=False)`: mark the subject's features; `b.greens_in_reach()`: pegs no direct flight
      touches may never be green.
 5. **Dress it** (the recipe's `dress`: palette, jewel bands and regions, shafts, glows, framing, silhouette, lights;

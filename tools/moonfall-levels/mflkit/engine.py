@@ -93,14 +93,15 @@ def sweep(path, number, seed=1, step=SWEEP_STEP):
             "unreached": [int(v) for v in (u.group(3) or "").split(",") if v.strip()], "pieces": int(u.group(2))}
 
 
-def play(path, number, games=RAMP_GAMES, first=0):
+def play(path, number, games=RAMP_GAMES, first=0, oranges=None):
     """mfcheck's greedy player (one-shot lookahead, aim error +-1.5 deg) over `games` seeded games from seed block
     `first` + 1, and the random player over 40. With first 0 the rule's verdict is the first 48 seeds. Tuning plays the
     first 864 (about +-0.8 per 48); the build reports the ramp on HELD_GAMES held-out seeds after them, since a layout
-    tuned on the first block carries that block's luck (game designer round 3, G10: about 0.8 per 48)."""
-    key, out = cache.play_get(path, number, games, first)
+    tuned on the first block carries that block's luck (game designer round 3, G10: about 0.8 per 48). `oranges` plays a
+    challenge's orange count (35, 45) instead of the standard 25 (see mflkit/challenge.py)."""
+    key, out = cache.play_get(path, number, games, first, oranges)
     if out is None:
-        code, out = _run("play", path, games, number, first)
+        code, out = _run("play", path, games, number, first, *(() if oranges is None else (oranges,)))
         if code != 0:
             raise RuntimeError(out)
         cache.play_put(key, out)

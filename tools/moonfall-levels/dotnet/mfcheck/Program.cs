@@ -1,7 +1,7 @@
 // mfcheck: validates Moonfall level files with the shipped loader and plays them with the shipped engine.
 //   validate <file.json>...                 the loader's verdict, counts, and the layout checks below
 //   sweep <file.json> [level] [seed] [step] one fresh shot at every aim angle: what each angle reaches
-//   play <file.json> [games] [level] [first]  a greedy one-shot-lookahead player (aim error +-1.5 deg) over seeds first+1.., and a random player
+//   play <file.json> [games] [level] [first] [oranges]  a greedy one-shot-lookahead player (aim error +-1.5 deg) over seeds first+1.., and a random player
 // Everything runs the real MoonfallLevelLoader and MoonfallGame from Tsukimichi.Core; nothing here changes them.
 using System.Collections.Concurrent;
 using System.Globalization;
@@ -61,7 +61,8 @@ switch (args[0])
         var games = args.Length > 2 ? int.Parse(args[2], inv) : 4;
         var number = args.Length > 3 ? int.Parse(args[3], inv) : 5;
         var first = args.Length > 4 ? int.Parse(args[4], inv) : 0;
-        Play(level, games, number, first);
+        var oranges = args.Length > 5 ? int.Parse(args[5], inv) : MoonfallRules.OrangeCount;
+        Play(level, games, number, first, oranges);
         return 0;
     }
 
@@ -282,7 +283,7 @@ void Sweep(MoonfallLevel level, int number, ulong seed, double step)
     Console.WriteLine($"pieces no first shot reaches: {never.Count} of {level.Pegs.Count}" + (never.Count > 0 ? ": " + string.Join(", ", never.Take(60)) : string.Empty));
 }
 
-void Play(MoonfallLevel level, int games, int number, int first = 0)
+void Play(MoonfallLevel level, int games, int number, int first = 0, int oranges = MoonfallRules.OrangeCount)
 {
     // The greedy player: before each shot it tries every angle 2 deg apart on a replay of the game so far and takes the
     // one that lights the most (oranges worth 6 pegs, a bucket catch worth 5), then misses its aim by up to 1.5 deg.
@@ -296,8 +297,8 @@ void Play(MoonfallLevel level, int games, int number, int first = 0)
         var stuckTotal = 0;
         // The live game is copied for every trial (MoonfallGame.CopyFrom: the same game bit for bit, as
         // MoonfallPlayability does), instead of replaying it from the start: the same moves, far faster.
-        var g = new MoonfallGame(level, number, seed);
-        var trial = new MoonfallGame(level, number, seed);
+        var g = new MoonfallGame(level, number, seed, oranges: oranges);
+        var trial = new MoonfallGame(level, number, seed, oranges: oranges);
         while (true)
         {
             if (g.Phase is MoonfallPhase.Won or MoonfallPhase.Lost || shotsSoFar.Count > 40)

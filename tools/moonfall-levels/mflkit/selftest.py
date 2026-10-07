@@ -3,7 +3,7 @@ supervisors' rule since rich pass 2, round 3). `mfl.py build` runs this first an
 import json
 import math
 
-from . import author, engine, frames, readability, stagecheck
+from . import author, challenge, engine, frames, readability, stagecheck
 from .paths import BUILD, RICH
 
 
@@ -84,7 +84,13 @@ def engine_cases(verbose=True):
     sw_good, sw_decks = engine.sweep(good, 5), engine.sweep(decks, 5)
     rc_good, rc_corner = engine.reach(good, 5), engine.reach(corner_path, 5)
     n_corner = len(corner["pegs"]) - 1
-    cases = [("loader: an approved pilot", ok_good, True), ("loader: a peg in the launcher's swing", ok_bad, False),
+    # a challenge's orange count reaches the engine: the standard 25 given outright plays the same games, and 1 orange
+    # is no harder than 25 (the carrier check, mflkit/challenge.py)
+    play_25 = engine.play(good, 5, games=48, oranges=25)["greedy_won"]
+    play_1 = engine.play(good, 5, games=48, oranges=1)["greedy_won"]
+    cases = [("play: 25 oranges given outright are the standard games", play_25 == play_good, True),
+             (f"play: 1 orange wins {play_1} of 48, no fewer than 25 ({play_good})", play_1 >= play_good, True),
+             ("loader: an approved pilot", ok_good, True), ("loader: a peg in the launcher's swing", ok_bad, False),
              ("loader: the sealed and the decks boards load (their faults are play)", ok_sealed and ok_decks, True),
              (f"play: an approved pilot wins {play_good} of 48", play_good >= engine.GREEDY_MIN_WINS, True),
              (f"play: oranges sealed in rings win {play_sealed} of 48", play_sealed >= engine.GREEDY_MIN_WINS, False),
@@ -114,7 +120,7 @@ def engine_cases(verbose=True):
 def run(verbose=True):
     from . import convert
     results = {"preflight": author.selftest(verbose), "framecheck": frames.selftest(verbose),
-               "readcheck": readability.selftest(verbose), "stage": stagecheck.selftest(verbose),
+               "readcheck": readability.selftest(verbose), "stage": stagecheck.selftest(verbose), "challenge": challenge.selftest(verbose),
                "engine": engine_cases(verbose), "convert": convert.selftest(verbose)}
     if verbose:
         print("self-test:", ", ".join(f"{k} {'ok' if v else 'FAILED'}" for k, v in results.items()))
