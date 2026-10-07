@@ -1,0 +1,569 @@
+{
+ "name": "sky-whale",
+ "about": "The cloud sea north of the Rhotano as the game's own world painting The Three Great Continents draws it: the chart's whale swimming the clouds under the great vortex, and two chevrons of birds flying its way along the chart's dotted lanes; read as a chart under the moon, seen from an airship's deck.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "mirror": false,
+  "crop": [
+   870,
+   312,
+   1400,
+   1050
+  ],
+  "grade": {
+   "gamma": 1.35,
+   "exposure": 0.86,
+   "warm_keep": 0.25,
+   "chroma_mid": 0.45
+  }
+ },
+ "veil": 0.34,
+ "features": {
+  "whale": {
+   "points": [
+    [
+     126,
+     239
+    ],
+    [
+     144,
+     233
+    ],
+    [
+     160,
+     228
+    ],
+    [
+     159,
+     239
+    ],
+    [
+     166,
+     245
+    ],
+    [
+     173,
+     251
+    ],
+    [
+     196,
+     256
+    ],
+    [
+     218,
+     253
+    ],
+    [
+     225,
+     259
+    ],
+    [
+     246,
+     265
+    ],
+    [
+     260,
+     269
+    ],
+    [
+     261,
+     275
+    ],
+    [
+     257,
+     280
+    ],
+    [
+     233,
+     285
+    ],
+    [
+     206,
+     283
+    ],
+    [
+     174,
+     281
+    ],
+    [
+     182,
+     277
+    ],
+    [
+     177,
+     269
+    ],
+    [
+     164,
+     253
+    ],
+    [
+     153,
+     245
+    ]
+   ]
+  },
+  "whale ring": {
+   "points": [
+    [
+     122,
+     238
+    ],
+    [
+     140,
+     230
+    ],
+    [
+     160,
+     225
+    ],
+    [
+     172,
+     241
+    ],
+    [
+     200,
+     251
+    ],
+    [
+     226,
+     253
+    ],
+    [
+     250,
+     262
+    ],
+    [
+     263,
+     271
+    ],
+    [
+     258,
+     282
+    ],
+    [
+     235,
+     287
+    ],
+    [
+     200,
+     286
+    ],
+    [
+     167,
+     283
+    ],
+    [
+     150,
+     263
+    ],
+    [
+     134,
+     248
+    ]
+   ]
+  },
+  "north flock upper wing": {
+   "points": [
+    [
+     593,
+     246
+    ],
+    [
+     600,
+     226
+    ],
+    [
+     611,
+     206
+    ],
+    [
+     627,
+     190
+    ],
+    [
+     647,
+     178
+    ]
+   ]
+  },
+  "north flock lower wing": {
+   "points": [
+    [
+     593,
+     246
+    ],
+    [
+     630,
+     245
+    ],
+    [
+     661,
+     239
+    ],
+    [
+     680,
+     236
+    ],
+    [
+     705,
+     233
+    ]
+   ]
+  },
+  "south flock east wing": {
+   "points": [
+    [
+     412,
+     293
+    ],
+    [
+     429,
+     304
+    ],
+    [
+     458,
+     319
+    ],
+    [
+     478,
+     323
+    ],
+    [
+     495,
+     331
+    ],
+    [
+     512,
+     343
+    ],
+    [
+     520,
+     356
+    ]
+   ]
+  },
+  "south flock west wing": {
+   "points": [
+    [
+     412,
+     293
+    ],
+    [
+     412,
+     326
+    ],
+    [
+     413,
+     355
+    ],
+    [
+     406,
+     394
+    ],
+    [
+     406,
+     415
+    ]
+   ]
+  },
+  "vortex": {
+   "ellipse": [
+    400,
+    112,
+    180,
+    90
+   ]
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Lapis night and sea-green (the cloud sea)",
+   "sky": "#10204E",
+   "deep": "#050A1C",
+   "jewel1": "#2A48C0",
+   "jewel2": "#1E9E7E",
+   "warm": "#FFB45E",
+   "rim": "#A9E6D8"
+  },
+  "jewel": {
+   "bands": [
+    [
+     0,
+     "#4C42D2"
+    ],
+    [
+     600,
+     "#3A32AC"
+    ]
+   ],
+   "valueHues": [
+    [
+     0.08,
+     "#22228E"
+    ],
+    [
+     0.45,
+     "#D2D4FF"
+    ]
+   ],
+   "chroma": 1.8,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#52AE6C",
+     "chroma": 0.11,
+     "mask": [
+      [
+       "luma",
+       0.16,
+       0.24,
+       4
+      ],
+      [
+       "x",
+       75,
+       135
+      ],
+      [
+       "x",
+       725,
+       665
+      ]
+     ]
+    }
+   ],
+   "quiet": [
+    44,
+    12
+   ]
+  },
+  "glows": [
+   {
+    "x": 120,
+    "y": 90,
+    "r": 260,
+    "col": "#FFC27A",
+    "k": 0.025
+   },
+   {
+    "x": 192,
+    "y": 262,
+    "r": 120,
+    "col": "#CFE0FF",
+    "k": 0.06
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [
+     -60,
+     -160
+    ],
+    "angles": [
+     50,
+     58,
+     67
+    ],
+    "widths": [
+     46,
+     32,
+     52
+    ],
+    "k": 0.04,
+    "col": "#E0E6FF"
+   }
+  ],
+  "extras": [
+   {
+    "kind": "chart_border"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "lantern_post",
+    "x": 86,
+    "base": 600,
+    "height": 50
+   },
+   {
+    "kind": "lantern_post",
+    "x": 714,
+    "base": 600,
+    "height": 50
+   },
+   {
+    "kind": "rope",
+    "a": [
+     60,
+     300
+    ],
+    "b": [
+     110,
+     600
+    ],
+    "sag": 6,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [
+     740,
+     300
+    ],
+    "b": [
+     690,
+     600
+    ],
+    "sag": 6,
+    "width": 1.4
+   },
+   {
+    "kind": "rope",
+    "a": [
+     75,
+     40
+    ],
+    "b": [
+     220,
+     30
+    ],
+    "sag": 14,
+    "width": 1.6
+   },
+   {
+    "kind": "rope",
+    "a": [
+     580,
+     30
+    ],
+    "b": [
+     725,
+     40
+    ],
+    "sag": 14,
+    "width": 1.6
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16204E",
+   "rim": "#A9E6D8",
+   "rimK": 0.0,
+   "seed": 16
+  },
+  "lights": [
+   {
+    "posts": true,
+    "col": "#FFB45E",
+    "r": 2.4,
+    "k": 0.95,
+    "halo": 12,
+    "hk": 0.17
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16
+  },
+  "glints": [
+   {
+    "overlay": 0,
+    "speed": 30,
+    "every": 24,
+    "offset": 0
+   },
+   {
+    "overlay": 1,
+    "speed": 30,
+    "every": 24,
+    "offset": 12
+   }
+  ],
+  "flicker": [
+   0
+  ]
+ },
+ "overlays": [
+  {
+   "kind": "route",
+   "points": [
+    [
+     582,
+     252
+    ],
+    [
+     548,
+     262
+    ],
+    [
+     508,
+     270
+    ],
+    [
+     470,
+     276
+    ],
+    [
+     436,
+     284
+    ]
+   ],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.5
+  },
+  {
+   "kind": "route",
+   "points": [
+    [
+     398,
+     292
+    ],
+    [
+     366,
+     286
+    ],
+    [
+     330,
+     281
+    ],
+    [
+     296,
+     278
+    ]
+   ],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.5
+  }
+ ],
+ "masks": {
+  "whale dark": {
+   "kind": "rim-fill",
+   "threshold": 0.62,
+   "grow": 0
+  }
+ },
+ "tone": [
+  {
+   "mask": [
+    [
+     "mask",
+     "whale dark",
+     2
+    ],
+    [
+     "disc",
+     192,
+     262,
+     110,
+     30
+    ]
+   ],
+   "mul": 0.7
+  }
+ ]
+}
