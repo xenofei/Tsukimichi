@@ -1,0 +1,444 @@
+{
+  "format": "moonfall-level",
+  "version": 2,
+  "id": "base-27",
+  "name": "The Wheel of the Twelve",
+  "scene": "wheel-of-the-twelve",
+  "playfield": {
+    "width": 800,
+    "height": 600
+  },
+  "pegs": [
+    {
+      "x": 353.1,
+      "y": 174.5,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 330.6,
+      "y": 199.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 309.9,
+      "y": 221.5,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 358.8,
+      "y": 215.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 461.9,
+      "y": 168.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 437.5,
+      "y": 189.6,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 448.7,
+      "y": 219.6,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 480.7,
+      "y": 221.5,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 584.0,
+      "y": 203.6,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 552.1,
+      "y": 199.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 531.4,
+      "y": 226.2,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 559.6,
+      "y": 246.9,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 642.0,
+      "y": 261.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 625.0,
+      "y": 287.3,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 658.9,
+      "y": 287.3,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 642.0,
+      "y": 313.7,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 615.6,
+      "y": 398.1,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 636.3,
+      "y": 373.6,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 657.0,
+      "y": 398.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 670.2,
+      "y": 368.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 533.3,
+      "y": 472.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 557.7,
+      "y": 449.6,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 582.1,
+      "y": 428.9,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 525.7,
+      "y": 440.2,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 453.8,
+      "y": 448.6,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 453.8,
+      "y": 480.6,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 431.2,
+      "y": 503.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 476.3,
+      "y": 503.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 331.2,
+      "y": 450.5,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 359.4,
+      "y": 467.4,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 333.1,
+      "y": 488.1,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 361.3,
+      "y": 505.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 242.3,
+      "y": 425.2,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 216.0,
+      "y": 455.3,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 268.6,
+      "y": 455.3,
+      "r": 9,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 242.3,
+      "y": 477.9,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 141.1,
+      "y": 368.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 141.1,
+      "y": 401.8,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 175.0,
+      "y": 375.5,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 175.0,
+      "y": 409.3,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 158.0,
+      "y": 315.5,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 158.0,
+      "y": 283.6,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 133.6,
+      "y": 262.9,
+      "r": 9,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 182.5,
+      "y": 262.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 229.4,
+      "y": 198.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 263.2,
+      "y": 198.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 229.4,
+      "y": 246.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 263.2,
+      "y": 246.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 400.0,
+      "y": 338.0,
+      "r": 12,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 400.0,
+      "y": 290.0,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 448.0,
+      "y": 338.0,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 400.0,
+      "y": 386.0,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 352.0,
+      "y": 338.0,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 558.5,
+      "y": 280.7,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 600.0,
+      "y": 338.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 558.5,
+      "y": 395.3,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 482.7,
+      "y": 423.6,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 400.0,
+      "y": 432.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 317.3,
+      "y": 423.6,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 241.5,
+      "y": 395.3,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 200.0,
+      "y": 338.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 241.5,
+      "y": 280.7,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    }
+  ],
+  "bricks": []
+}
