@@ -1,0 +1,538 @@
+{
+  "format": "moonfall-level",
+  "version": 2,
+  "id": "base-20",
+  "name": "Ul'dah from the Sands",
+  "scene": "uldah-from-the-sands",
+  "playfield": {
+    "width": 800,
+    "height": 600
+  },
+  "pegs": [
+    {
+      "x": 248.4,
+      "y": 217.9,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 233.2,
+      "y": 189.5,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 242.1,
+      "y": 158.5,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 270.0,
+      "y": 142.4,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 301.3,
+      "y": 150.2,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "x": 318.3,
+      "y": 177.5,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "x": 345.0,
+      "y": 199.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 373.3,
+      "y": 195.3,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 401.0,
+      "y": 186.8,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 429.6,
+      "y": 182.2,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 458.4,
+      "y": 178.4,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 487.3,
+      "y": 177.6,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 516.1,
+      "y": 180.4,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 544.8,
+      "y": 184.1,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 572.5,
+      "y": 192.6,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 599.2,
+      "y": 203.9,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 621.4,
+      "y": 222.2,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 322.0,
+      "y": 250.0,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 346.0,
+      "y": 229.0,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 284.8,
+      "y": 230.8,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 265.8,
+      "y": 256.1,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 254.4,
+      "y": 304.1,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 261.1,
+      "y": 347.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 215.8,
+      "y": 365.6,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 213.4,
+      "y": 395.5,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 211.0,
+      "y": 425.4,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 240.7,
+      "y": 436.4,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 298.7,
+      "y": 351.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 328.7,
+      "y": 363.0,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 356.7,
+      "y": 378.2,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 385.6,
+      "y": 388.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 417.5,
+      "y": 388.3,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 440.8,
+      "y": 366.2,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 470.9,
+      "y": 372.4,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 502.0,
+      "y": 364.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 521.2,
+      "y": 341.2,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 562.0,
+      "y": 317.8,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 593.0,
+      "y": 310.2,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 624.7,
+      "y": 307.9,
+      "r": 8,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 184.0,
+      "y": 398.2,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 154.1,
+      "y": 400.1,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 122.2,
+      "y": 402.8,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 546.2,
+      "y": 133.4,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 654.9,
+      "y": 278.9,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 684.7,
+      "y": 275.5,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 124.9,
+      "y": 490.3,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 156.2,
+      "y": 484.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 187.6,
+      "y": 477.8,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 312.0,
+      "y": 482.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 430.0,
+      "y": 420.0,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 426.3,
+      "y": 449.8,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 420.9,
+      "y": 479.3,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 490.0,
+      "y": 420.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 495.5,
+      "y": 449.5,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 501.1,
+      "y": 479.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 616.2,
+      "y": 492.8,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 589.7,
+      "y": 477.5,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 572.8,
+      "y": 451.7,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 565.5,
+      "y": 421.7,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 567.1,
+      "y": 390.9,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 577.9,
+      "y": 362.0,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 598.5,
+      "y": 339.2,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 656.5,
+      "y": 339.9,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 676.7,
+      "y": 363.1,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 687.1,
+      "y": 392.1,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 688.4,
+      "y": 423.0,
+      "r": 7,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "x": 680.7,
+      "y": 452.9,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 663.4,
+      "y": 478.3,
+      "r": 7,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 276.0,
+      "y": 185.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    },
+    {
+      "x": 527.0,
+      "y": 275.0,
+      "r": 8,
+      "canBeOrange": false,
+      "canBeGreen": true
+    }
+  ],
+  "bricks": [
+    {
+      "kind": "arc",
+      "x": 527.0,
+      "y": 275.0,
+      "r": 40.0,
+      "start": 200.0,
+      "sweep": 44.3,
+      "thickness": 12.0,
+      "canBeOrange": false,
+      "canBeGreen": false
+    },
+    {
+      "kind": "arc",
+      "x": 527.0,
+      "y": 275.0,
+      "r": 40.0,
+      "start": 247.9,
+      "sweep": 44.3,
+      "thickness": 12.0,
+      "canBeOrange": true,
+      "canBeGreen": false
+    },
+    {
+      "kind": "arc",
+      "x": 527.0,
+      "y": 275.0,
+      "r": 40.0,
+      "start": 295.7,
+      "sweep": 44.3,
+      "thickness": 12.0,
+      "canBeOrange": false,
+      "canBeGreen": false
+    }
+  ]
+}
