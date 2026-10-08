@@ -1,0 +1,818 @@
+{
+ "id": "base-18",
+ "name": "Lamps on the Steps",
+ "stage": 4,
+ "number": 18,
+ "scene": "lamp-steps",
+ "subject": "a stair of lamp glows climbing a dark terrace, the pegs in the lamps' pools of light",
+ "technique": "light and shadow (moons in the lanterns' pools, the handrails dotted)",
+ "source": "our painting (lampsteps)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 86,
+   "pegs": 84,
+   "bricks": 2,
+   "movers": 0,
+   "orange_candidates": 29,
+   "never_green": 10,
+   "skipped_while_tracing": [
+    [
+     [
+      520,
+      274
+     ],
+     "pool",
+     "9.9 from the peg at (495, 287)"
+    ],
+    [
+     [
+      491,
+      257
+     ],
+     "pool",
+     "9.8 from the peg at (466, 270)"
+    ],
+    [
+     [
+      667,
+      483
+     ],
+     "handrail",
+     "-7.8 from the peg at (669, 473)"
+    ],
+    [
+     [
+      633,
+      477
+     ],
+     "handrail",
+     "3.9 from the peg at (640, 456)"
+    ],
+    [
+     [
+      600,
+      471
+     ],
+     "handrail",
+     "-6.8 from the peg at (611, 473)"
+    ],
+    [
+     [
+      466,
+      447
+     ],
+     "handrail",
+     "4.8 from the peg at (447, 433)"
+    ],
+    [
+     [
+      432,
+      441
+     ],
+     "handrail",
+     "10.4 from the peg at (418, 416)"
+    ],
+    [
+     [
+      399,
+      435
+     ],
+     "handrail",
+     "8.7 from the peg at (418, 416)"
+    ],
+    [
+     [
+      365,
+      429
+     ],
+     "handrail",
+     "5.7 from the peg at (389, 433)"
+    ],
+    [
+     [
+      198,
+      399
+     ],
+     "handrail",
+     "-3.4 from the peg at (189, 387)"
+    ],
+    [
+     [
+      165,
+      393
+     ],
+     "handrail",
+     "5.3 from the peg at (160, 370)"
+    ],
+    [
+     [
+      160,
+      392
+     ],
+     "handrail",
+     "4.0 from the peg at (160, 370)"
+    ],
+    [
+     [
+      193,
+      385
+     ],
+     "handrail",
+     "-13.6 from the peg at (189, 387)"
+    ],
+    [
+     [
+      226,
+      378
+     ],
+     "handrail",
+     "9.6 from the peg at (232, 405)"
+    ],
+    [
+     [
+      326,
+      356
+     ],
+     "handrail",
+     "5.0 from the peg at (348, 363)"
+    ],
+    [
+     [
+      359,
+      349
+     ],
+     "handrail",
+     "4.6 from the peg at (348, 329)"
+    ],
+    [
+     [
+      393,
+      342
+     ],
+     "handrail",
+     "-2.1 from the peg at (377, 346)"
+    ],
+    [
+     [
+      426,
+      335
+     ],
+     "handrail",
+     "-0.6 from the peg at (437, 321)"
+    ],
+    [
+     [
+      459,
+      327
+     ],
+     "handrail",
+     "6.5 from the peg at (466, 304)"
+    ],
+    [
+     [
+      492,
+      320
+     ],
+     "handrail",
+     "13.0 from the peg at (466, 304)"
+    ],
+    [
+     [
+      592,
+      299
+     ],
+     "handrail",
+     "-0.7 from the peg at (603, 285)"
+    ],
+    [
+     [
+      625,
+      291
+     ],
+     "handrail",
+     "6.4 from the peg at (632, 268)"
+    ],
+    [
+     [
+      632,
+      290
+     ],
+     "handrail",
+     "4.0 from the peg at (632, 268)"
+    ],
+    [
+     [
+      599,
+      282
+     ],
+     "handrail",
+     "-13.1 from the peg at (603, 285)"
+    ],
+    [
+     [
+      566,
+      273
+     ],
+     "handrail",
+     "5.5 from the peg at (549, 257)"
+    ],
+    [
+     [
+      533,
+      265
+     ],
+     "handrail",
+     "10.5 from the peg at (520, 240)"
+    ],
+    [
+     [
+      500,
+      257
+     ],
+     "handrail",
+     "8.2 from the peg at (520, 240)"
+    ],
+    [
+     [
+      467,
+      249
+     ],
+     "handrail",
+     "3.4 from the peg at (466, 270)"
+    ],
+    [
+     [
+      368,
+      224
+     ],
+     "handrail",
+     "-0.9 from the peg at (359, 209)"
+    ],
+    [
+     [
+      335,
+      215
+     ],
+     "handrail",
+     "5.9 from the peg at (330, 192)"
+    ],
+    [
+     [
+      92,
+      392
+     ],
+     "handrail",
+     "wall pinch 7.5"
+    ],
+    [
+     [
+      126,
+      392
+     ],
+     "handrail",
+     "-11.2 from the peg at (131, 387)"
+    ],
+    [
+     [
+      160,
+      392
+     ],
+     "handrail",
+     "4.0 from the peg at (160, 370)"
+    ],
+    [
+     [
+      632,
+      290
+     ],
+     "handrail",
+     "4.0 from the peg at (632, 268)"
+    ],
+    [
+     [
+      666,
+      290
+     ],
+     "handrail",
+     "-11.2 from the peg at (661, 285)"
+    ],
+    [
+     [
+      284,
+      206
+     ],
+     "parapet",
+     "-0.1 from the peg at (301, 209)"
+    ],
+    [
+     [
+      470,
+      206
+     ],
+     "parapet",
+     "9.6 from the peg at (491, 223)"
+    ],
+    [
+     [
+      506,
+      206
+     ],
+     "parapet",
+     "-3.0 from the peg at (520, 206)"
+    ],
+    [
+     [
+      542,
+      206
+     ],
+     "parapet",
+     "5.0 from the peg at (520, 206)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-18.json  id=base-18 \"Lamps on the Steps\"  pieces=86 (round 84, bricks 2, movers 0)  mayBeOrange=29",
+    "     still round pegs 84: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 158..490"
+   ]
+  },
+  "sweep": {
+   "angles": 681,
+   "pegs_median": 10,
+   "pegs_mean": 10.1,
+   "pegs_max": 23,
+   "oranges_mean": 3.64,
+   "no_hit": 0,
+   "stuck": 14,
+   "stuck_share": 0.021,
+   "long_flights": 0,
+   "bucket": 106,
+   "unreached": [],
+   "pieces": 86
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 26,
+   "games": 48,
+   "oranges_left_when_lost": [
+    1,
+    6,
+    8,
+    1,
+    2,
+    1,
+    2,
+    4,
+    1,
+    4,
+    2,
+    1,
+    5,
+    1,
+    1,
+    1,
+    1,
+    1,
+    7,
+    5,
+    5,
+    2
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 850,
+   "ramp_per_48": 23.6,
+   "shots_mean": 13.9,
+   "stuck_fires": 155,
+   "random_won": 0,
+   "random_oranges_mean": 19.1,
+   "low_left_share": 0.0,
+   "lost_with_low_orange": 0.0,
+   "holdouts": [
+    {
+     "piece": 1,
+     "at": [
+      418,
+      416
+     ],
+     "share_of_lost_games": 0.27
+    },
+    {
+     "piece": 10,
+     "at": [
+      640,
+      422
+     ],
+     "share_of_lost_games": 0.25
+    },
+    {
+     "piece": 76,
+     "at": [
+      700,
+      290
+     ],
+     "share_of_lost_games": 0.21
+    },
+    {
+     "piece": 69,
+     "at": [
+      232,
+      405
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 71,
+     "at": [
+      291,
+      364
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 24,
+     "at": [
+      189,
+      387
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 23,
+     "at": [
+      189,
+      353
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 21,
+     "at": [
+      389,
+      399
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 22,
+     "at": [
+      160,
+      336
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 56,
+     "at": [
+      196,
+      238
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 44,
+     "at": [
+      603,
+      285
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 45,
+     "at": [
+      603,
+      251
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 80,
+     "at": [
+      248,
+      206
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 72,
+     "at": [
+      528,
+      313
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 55,
+     "at": [
+      301,
+      175
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 35,
+     "at": [
+      495,
+      287
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 82,
+     "at": [
+      614,
+      206
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 34,
+     "at": [
+      466,
+      270
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 47,
+     "at": [
+      549,
+      223
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 79,
+     "at": [
+      212,
+      206
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 46,
+     "at": [
+      520,
+      206
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 29,
+     "at": [
+      377,
+      312
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 78,
+     "at": [
+      176,
+      206
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 50,
+     "at": [
+      330,
+      158
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 81,
+     "at": [
+      578,
+      206
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 75,
+     "at": [
+      401,
+      232
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 77,
+     "at": [
+      140,
+      206
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 49,
+     "at": [
+      491,
+      223
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 52,
+     "at": [
+      359,
+      209
+     ],
+     "share_of_lost_games": 0.01
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.404,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 0.0,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": null,
+    "longest_rim_run": 0.0,
+    "longest_rim_at": null,
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 0,
+    "lights_nearest": 99,
+    "darkened_min_clearance": null,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 58,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.684,
+      "orange": 0.614,
+      "green": 0.718,
+      "purple": 0.593
+     },
+     "0.8x": {
+      "blue": 0.673,
+      "orange": 0.609,
+      "green": 0.707,
+      "purple": 0.571
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.356,
+      "at": [
+       466,
+       304
+      ],
+      "undressed": 0.353,
+      "drop": -0.003
+     },
+     "orange 1x": {
+      "worst": 0.289,
+      "at": [
+       418,
+       416
+      ],
+      "undressed": 0.287,
+      "drop": -0.002
+     },
+     "green 1x": {
+      "worst": 0.395,
+      "at": [
+       466,
+       338
+      ],
+      "undressed": 0.395,
+      "drop": 0.0
+     },
+     "purple 1x": {
+      "worst": 0.265,
+      "at": [
+       466,
+       304
+      ],
+      "undressed": 0.262,
+      "drop": -0.003
+     },
+     "blue 0.8x": {
+      "worst": 0.345,
+      "at": [
+       520,
+       240
+      ],
+      "undressed": 0.34,
+      "drop": -0.005
+     },
+     "orange 0.8x": {
+      "worst": 0.283,
+      "at": [
+       418,
+       416
+      ],
+      "undressed": 0.281,
+      "drop": -0.002
+     },
+     "green 0.8x": {
+      "worst": 0.387,
+      "at": [
+       466,
+       338
+      ],
+      "undressed": 0.386,
+      "drop": -0.001
+     },
+     "purple 0.8x": {
+      "worst": 0.242,
+      "at": [
+       520,
+       240
+      ],
+      "undressed": 0.237,
+      "drop": -0.005
+     }
+    },
+    "worst_margin": 0.242,
+    "largest_drop": 0.0,
+    "bricks_min_margin": [
+     0.433,
+     "blue"
+    ],
+    "protan_orange_p10": 0.103,
+    "protan_places": 29,
+    "protan_worst_at": [
+     418,
+     416
+    ],
+    "protan_min": 0.095,
+    "jewels": {
+     "coloured_px_pct": 98.7,
+     "mean_chroma": 0.075,
+     "second_at_walls_x": 0.01,
+     "second_at_walls_worst_window": [
+      0.03,
+      416
+     ],
+     "first_jewel_hue": 283,
+     "first_share": 0.811,
+     "second_jewel_hue": 357,
+     "second_share": 0.189,
+     "apart_deg": 74,
+     "bins_pct": [
+      7.1,
+      0.1,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      71.8,
+      9.3,
+      11.7
+     ]
+    },
+    "ghost_median": null,
+    "ghost_worst": null,
+    "ghost_isolated_pegs": 0,
+    "print": {
+     "median": 0.0015,
+     "p90": 0.0345,
+     "worst": [
+      0.0587,
+      [
+       196,
+       272
+      ]
+     ],
+     "samples": 78,
+     "mode": "pegs",
+     "hue_median": 0.0186
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 48.0,
+ "verdict": "PASS"
+}
