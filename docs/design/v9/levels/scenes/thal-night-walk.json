@@ -1,6 +1,6 @@
 {
  "name": "thal-night-walk",
- "about": "Ul'dah's Steps of Thal on the game's own city map (w1t2/01), read as a plan by night: the Gate of Thal on the east, the market arcade of the Sapphire Avenue Exchange running north from it, the bridge west to the head of Pearl Lane's pillared hall, the Gold Court's ring and the stair up to the Steps of Nald; the Coliseum, the guilds and Onyx Lane round them. The city's footprint (a rim-fill of the plan's hatched shadow, grown until the exits close) is lit rose stone, its darkest hatching left in the night's blue so each block keeps its edge; the parchment round it falls to deep blue night (x 0.66), and the faint ghost of the lower floor in the north-west is lifted (x 1.4) so that corner is not bare. The walk is engraved in gilt, where the runtime's glints run; a few lamps flicker on the market's east wall and in the lower guilds. The map's red exit arrows are erased (plain parchment fills them) except the two the walk uses: the Gate of Thal's, where it comes in, and the Gold Court's stair arrow, where it leaves for the Steps of Nald. Crop [660, 740, 920, 690]: the plan fills the opening (sources-plan's [560, 620, 960, 720] left its north-west quarter empty and cut the city's south off at the bucket); 920 px is a little under 2-3's 960, and the map's flat style holds at 2x.",
+ "about": "Ul'dah's Steps of Thal on the game's own city map (w1t2/01), read as a plan by night: the Gate of Thal on the east, the market arcade of the Sapphire Avenue Exchange running north from it, the bridge west to the head of Pearl Lane's pillared hall, the Gold Court's ring and the stair up to the Steps of Nald; the Coliseum, the guilds and Onyx Lane round them. The city's footprint (a rim-fill of the plan's hatched shadow, grown until the exits close) is lit rose stone, its darkest hatching left in the night's blue so each block keeps its edge; the parchment round it falls to deep blue night (x 0.66), and the faint ghost of the lower floor in the north-west is lifted (x 1.4) so that corner is not bare. The walk is engraved in gilt, where the runtime's glints run: long, faint dashes (10 on, 6 off, alpha 0.45-0.5, width 2) so the trail never reads as the aim guide's dots at 640, and broken where it passes under the launcher (the route from the Gate stops at (468, 185), 68 from the guide's first 60 units under the ball; the Court's stair route starts at its fountain), so a straight or shallow aim never lies beside a second dotted line (UX MR 4 round 1, m2); a few lamps flicker on the market's east wall and in the lower guilds. The map's red exit arrows are erased (plain parchment fills them) except the two the walk uses: the Gate of Thal's, where it comes in, and the Gold Court's stair arrow, where it leaves for the Steps of Nald. Crop [660, 740, 920, 690]: the plan fills the opening (sources-plan's [560, 620, 960, 720] left its north-west quarter empty and cut the city's south off at the bucket); 920 px is a little under 2-3's 960, and the map's flat style holds at 2x.",
  "source": {
   "kind": "game",
   "texture": "ui/map/w1t2/01/w1t201_m.tex",
@@ -576,33 +576,15 @@
      189
     ],
     [
-     460,
-     184
-    ],
-    [
-     436,
-     180
-    ],
-    [
-     405,
-     195
-    ],
-    [
-     375,
-     212
-    ],
-    [
-     345,
-     230
-    ],
-    [
-     315,
-     247
+     468,
+     185
     ]
    ],
    "color": "#D9BE82",
-   "width": 2.8,
-   "alpha": 0.7
+   "width": 2.0,
+   "alpha": 0.45,
+   "dash": 10,
+   "gap": 6
   },
   {
    "kind": "route",
@@ -629,8 +611,10 @@
     ]
    ],
    "color": "#D9BE82",
-   "width": 2.2,
-   "alpha": 0.6
+   "width": 2.0,
+   "alpha": 0.5,
+   "dash": 10,
+   "gap": 6
   }
  ],
  "runtime": {

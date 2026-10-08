@@ -25,7 +25,7 @@ and the verdict (PASS).
 
 | Code | Id | Name | Held out | Pooled | Jewels | F6 worst | Protan p10 / min | Source | Place (shield) |
 |---|---|---|---|---|---|---|---|---|---|
-| 4-1 | base-16 | The Steps of Thal | 25.9 | 26.5 | 270 / 339 | 0.304 | 0.109 / 0.104 | Steps of Thal city map, w1t201 | Ul'dah - Steps of Thal |
+| 4-1 | base-16 | The Steps of Thal | 27.0 | 27.23 | 270 / 339 | 0.318 | 0.109 / 0.104 | Steps of Thal city map, w1t201 | Ul'dah - Steps of Thal |
 | 4-2 | base-17 | The Spire of the Sands | 24.8 | 25.4 | 232 / 159 | 0.220 | 0.120 / 0.119 | Thanalan painting, base02_hr1 (east strip) | Ul'dah - Steps of Nald |
 | 4-3 | base-18 | Lamps on the Steps | 23.6 | 23.45 | 282 / 360 | 0.232 | 0.107 / 0.101 | ours (lampsteps) | Ul'dah - Steps of Nald |
 | 4-4 | base-19 | The Coliseum | 23.3 | 22.18 | 254 / 190 | 0.304 | 0.101 / 0.083 | Steps of Thal city map, w1t202 | Ul'dah - Steps of Thal |
