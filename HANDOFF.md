@@ -35,6 +35,7 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
   5. one fixer per level, then a stage fixer;
   6. round-2 verification, recorded.
 - A stage that isn't approved stops the chain.
+- 2026-10-08: the stage-4 fixer hit the 5-hour usage limit and the run stopped. It was resumed at 15:57 with the same `resumeFromRunId`; finished agents replay from the journal. If a limit stops it again, resume it the same way after the reset.
 - It returns one entry per stage: `approved`, `branch`, `worktree` and the verdict lines.
 
 When it finishes:
