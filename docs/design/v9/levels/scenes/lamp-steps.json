@@ -1,6 +1,6 @@
 {
  "name": "lamp-steps",
- "about": "Our own painting: a stair of lamp glows climbing a dark sandstone terrace below the Steps of Nald, Ul'dah by night; three balustraded flights zigzag up the terrace's face, brass lanterns on their newel posts each throwing a pool of light on the stone, a lit doorway and a great gateway in the wall, crimson banners under the parapet and the city's domes and minaret against a violet sky with the moon over the great dome, well off the launcher's axis (painters/lampsteps.py; shipped as a JPEG). Light only, no figure. The flames are gold, but the stone they light and the glow they throw into the air are rose and rose-lilac: an amber pool round every ring read as orange's own family under protan (F9 p10 0.094), the rose pool reads 0.107. The second jewel (crimson) is the lamplit stone by its lightness, the two banners and the gateway's opening; the luma region fades out below y 452 so the gateway does not glow as a blob.",
+ "about": "Our own painting: a stair of lamp glows climbing a dark sandstone terrace below the Steps of Nald, Ul'dah by night; three balustraded flights zigzag up the terrace's face, brass lanterns on their newel posts each throwing a pool of light on the stone, a lit doorway and a great gateway in the wall, crimson banners under the parapet and the city's domes and minaret against a violet sky with the moon over the great dome, well off the launcher's axis (painters/lampsteps.py; shipped as a JPEG). Light only, no figure. The flames are gold, but the stone they light and the glow they throw into the air are rose and rose-lilac: an amber pool round every ring read as orange's own family under protan (F9 p10 0.094), the rose pool reads 0.107. The second jewel (crimson) is the lamplit stone by its lightness, the two banners and the gateway's opening; the luma region fades out below y 452 so the gateway does not glow as a blob. No moon stands on a flame: the lamps' small lights are a warm gold core with a short halo that ends well inside each ring, and they flicker at runtime (MR 4 round 1, game designer m1).",
  "source": {
   "kind": "painting",
   "painter": "lampsteps",
@@ -210,11 +210,11 @@
       0.85
      ]
     ],
-    "col": "#FFD48A",
-    "r": 1.6,
-    "k": 0.6,
-    "halo": 8,
-    "hk": 0.14
+    "col": "#FFC264",
+    "r": 3.0,
+    "k": 1.0,
+    "halo": 10,
+    "hk": 0.5
    }
   ]
  },

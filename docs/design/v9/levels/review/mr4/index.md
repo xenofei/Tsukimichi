@@ -13,7 +13,7 @@ Each level `base-NN` (16 to 20) has these files:
 | `base-NN-composite.png` | The pipeline's composite at 1x (`mfl.py build`), the board as reviewed |
 | `base-NN-engine-1280.png` | The plugin's own render at 1280 x 800 (MoonfallRender `--moment start --cache`): the board as dealt, before the first shot |
 | `base-NN-engine-640.png` | The same at 640 x 400 (the small window) |
-| `base-NN-cleared-1280.png` | The board near cleared (`--moment cleared`), 1280 x 800: what the scene shows once the pegs go |
+| `base-NN-cleared-1280.png` | The board near cleared (`--moment cleared`), 1280 x 800: what the scene shows once the pegs go. On 4-3 that moment ends the level (its last orange clears too and the tally shows: UX m3, GD n5, round 1), so `base-18-cleared-1280.png` is the bare scene (`--scene-only 2`, scaled to 1280 wide) |
 | `base-NN-trace.png` | The trace sheet (`mfl.py trace`): the graded scene at 2x, the grid, the features, the pieces and the pre-flight |
 | `base-NN-trace.txt` | The trace sheet's report: the points skipped while tracing, the piece and candidate counts |
 | `base-NN-report.json` | The pipeline's full report for the level (every check, the ramp and the jewels) |
@@ -27,7 +27,7 @@ and the verdict (PASS).
 |---|---|---|---|---|---|---|---|---|---|
 | 4-1 | base-16 | The Steps of Thal | 27.0 | 27.23 | 270 / 339 | 0.318 | 0.109 / 0.104 | Steps of Thal city map, w1t201 | Ul'dah - Steps of Thal |
 | 4-2 | base-17 | The Spire of the Sands | 26.1 | 25.85 | 233 / 62 | 0.223 | 0.121 / 0.120 | Thanalan painting, base02_hr1 (east strip) | Ul'dah - Steps of Nald |
-| 4-3 | base-18 | Lamps on the Steps | 23.6 | 23.45 | 282 / 360 | 0.232 | 0.107 / 0.101 | ours (lampsteps) | Ul'dah - Steps of Nald |
+| 4-3 | base-18 | Lamps on the Steps | 23.6 | 24.05 | 282 / 1 | 0.256 | 0.108 / 0.106 | ours (lampsteps) | Ul'dah - Steps of Nald |
 | 4-4 | base-19 | The Coliseum | 23.3 | 22.18 | 254 / 190 | 0.304 | 0.101 / 0.083 | Steps of Thal city map, w1t202 | Ul'dah - Steps of Thal |
 | 4-5 | base-20 | Ul'dah from the Sands | 18.3 | 18.75 | 319 / 237 | 0.302 | 0.117 / 0.090 | Steps of Nald city map, w1t101 | Ul'dah - Steps of Nald |
 
@@ -37,7 +37,7 @@ Every scene falls back to `moon-road-night` when the shield hides it. 4-4 is tag
 Nald: the Coliseum is on the Thal map (`sources-plan.md`, which wins). 4-5 is on the Steps of Nald city map, not the
 charter's west strip of base02 (the owner's crop fix in `sources-plan.md`).
 
-Aces, from `MoonfallAces.Suggest` over 576 games: 4-1 240,000 (322 wins), 4-2 250,000 (320), 4-3 280,000 (293),
+Aces, from `MoonfallAces.Suggest` over 576 games: 4-1 240,000 (322 wins), 4-2 250,000 (320), 4-3 260,000 (294),
 4-4 240,000 (253), 4-5 260,000 (223). All are above the hard-level line (14 of 48).
 
 The converter gate (`convert base-16 ... base-20 --check`) passes 10 of 10. 2x max / p99.9, then 1x p99: 4-1 0.019 / 0.008,

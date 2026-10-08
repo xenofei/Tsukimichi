@@ -122,6 +122,107 @@
    "blend": "screen"
   }
  ],
+ "lights": [
+  {
+   "x": 640.0,
+   "y": 456.0,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 418.0,
+   "y": 416.2,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 160.0,
+   "y": 370.0,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 348.0,
+   "y": 329.4,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 466.0,
+   "y": 304.0,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 632.0,
+   "y": 268.0,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 520.0,
+   "y": 239.8,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 330.0,
+   "y": 192.0,
+   "size": 1.0,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  },
+  {
+   "x": 196.0,
+   "y": 272.0,
+   "size": 0.85,
+   "colour": "#FFC264",
+   "core": 3.0,
+   "k": 1.0,
+   "halo": 10,
+   "haloK": 0.5,
+   "flicker": true
+  }
+ ],
  "veil": 0.22,
  "motion": {
   "dust": 14,
