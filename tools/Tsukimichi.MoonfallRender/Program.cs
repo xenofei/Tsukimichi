@@ -448,8 +448,14 @@ internal static class Render
             case "cleared":
             {
                 // The board cleared but its lowest orange: every other piece lit, the ball dropped by the wall, the turn
-                // ended, so the scene shows as it does when the pieces are gone (no Fever, no tally).
-                var keep = Enumerable.Range(0, g.PegCount).Where(i => g.Peg(i).Colour == PegColour.Orange && !g.Peg(i).Cleared).OrderBy(i => g.Peg(i).Y).Last();
+                // ended, so the scene shows as it does when the pieces are gone (no Fever, no tally). Lighting a green
+                // fires the stage's power: Lunar Burst (stage 4) lights every piece near it, so the orange kept is the
+                // lowest one out of a burst's reach of every green (round 1 of MR 4: on 4-3 the lowest orange sat by a
+                // green, cleared, and the level ended on the tally). The margin covers the kept piece's own size.
+                var oranges = Enumerable.Range(0, g.PegCount).Where(i => g.Peg(i).Colour == PegColour.Orange && !g.Peg(i).Cleared).OrderByDescending(i => g.Peg(i).Y).ToList();
+                var greens = Enumerable.Range(0, g.PegCount).Where(i => g.Peg(i).Colour == PegColour.Green && !g.Peg(i).Cleared).Select(i => g.Peg(i)).ToList();
+                var reach = MoonfallRules.BurstRadius + MoonfallRules.BallRadius + 40;
+                var keep = oranges.FirstOrDefault(i => greens.All(p => Math.Sqrt(((p.X - g.Peg(i).X) * (p.X - g.Peg(i).X)) + ((p.Y - g.Peg(i).Y) * (p.Y - g.Peg(i).Y))) > reach), oranges[0]);
 
                 // The shot first (it starts the turn's list of pieces hit), then every piece lit on it.
                 g.PlaceBall(MoonfallRules.LeftWall + 8, 590, 0, 200);
@@ -462,6 +468,12 @@ internal static class Render
                 for (var k = 0; k < 60 * 240 && (k < 2 || g.Phase != MoonfallPhase.Aiming || Enumerable.Range(0, g.PegCount).Any(i => i != keep && !g.Peg(i).Cleared)); k++)
                 {
                     frame(1f / 60f, false);
+                }
+
+                // Never pass off the Level Clear tally as the cleared board: fail loudly instead.
+                if (g.Peg(keep).Cleared)
+                {
+                    throw new InvalidOperationException("--moment cleared: the orange kept was cleared too, so the level ended; render the bare scene with --scene-only instead");
                 }
 
                 window.AimForRender = -0.35;

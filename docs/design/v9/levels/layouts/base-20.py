@@ -29,6 +29,15 @@ streets, the west face and the ramparts. Tuning (seeds 1-864) 16.3, second block
 (round 1: 18.3 and 18.8; over the 6,048 games about 0.45 harder); held out 18.0 (round 1: 18.3). The line bricks are 12
 thick, not 10: at 10 the east rampart's first brick failed `Peg_marks_sit_on_every_brick_inside_its_face` (its mark's
 centre off the middle line on the 1-unit clearance grid, as 4-4's did at integration).
+
+MR 4 round 2 (game designer M1, n3; critic m6, n7): the sands now read as desert. The jewel turns from the night's
+plum to warm umber below y 430 (hue about 35 degrees at the foot, was 320), the dunes are warm dark sand with a bright
+moonlit crest (rim 0.7, was black humps at 0.35), and the Thal ghost's curved street and inner arc are lifted 1.5
+(was 1.35; 1.8 took F6 under 0.20 on the moons that trace them), so the east third's arcs sit on streets at 640. The
+west sand star is never green (dealt green alone in the open it read as a stray). The inner face's notch at (373, 371),
+which held 6 of 13 stuck sweep angles, is opened: its middle moon stands 8 above the face's line, 16 clear of each
+neighbour. Sweep stuck 6 of 681 (was 13); play 64 per 1,728 (was 51; under the shipped 88); held out 18.1, pooled 17.88,
+gap to 4-4 4.07 (6,912 games); Ace 220,000 (199 of 576).
 """
 import math
 
@@ -66,6 +75,13 @@ def build(b):
     b.trace("west face south", spacing=30, r=8, offset=18, tag="west wall")
     # the crescent's inner face, toward the Steps of Thal
     b.trace("inner face", spacing=32, r=8, offset=18, tag="inner wall")
+    # the notch between the inner face's moons at (357, 378) and (386, 389) held half the sweep's stuck first shots
+    # (critic round 2, m6: a 14.8 gap, a ball's width and a little more). The middle moon stands 8 units above the line
+    # from its west neighbour to its east one, 16 clear of each, so a ball rolls off its crown rather than sitting in a V
+    # (straight up 4.5 left a 13.5 gap to the west neighbour that the ball wedged in: 77 stuck fires per 1,728, not 51)
+    for p in b.pegs:
+        if math.hypot(p["x"] - 356.7, p["y"] - 378.2) < 1.5:
+            p["x"], p["y"] = 360.5, 368.7
     # the roads out of the gates into the sands
     b.trace("west road", spacing=32, r=7, start=35, tag="west road")
     b.trace("north road", spacing=30, r=7, start=16, tag="north road")
@@ -73,8 +89,9 @@ def build(b):
     b.trace("guild roof", spacing=32, r=8, offset=-16, tag="guild roof")
     b.place(312, 482, r=8, tag="chapel")
     # stars low over the open sands, west where the road runs out and east beyond the wall's sweep
-    for (x, y) in SAND_STARS:
-        b.place(x, y, r=7, tag="sand star")
+    # (the west one never green: dealt green alone in the open sands it read as a stray; game designer round 2, n3)
+    for (x, y), green in zip(SAND_STARS, (False, True)):
+        b.place(x, y, r=7, tag="sand star", green=green)
     # the Steps of Thal beyond: moons down its curved street and its pale inner arc, and one on its east block
     b.trace("thal arc", spacing=30, r=7, tag="thal arc")
     b.trace("thal inner arc", spacing=30, r=7, tag="thal inner arc")

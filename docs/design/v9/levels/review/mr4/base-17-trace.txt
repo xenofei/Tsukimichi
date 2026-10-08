@@ -1,4 +1,4 @@
   skipped ((153, 107), 'west flank', '8.5 from a brick')
   skipped ((260, 102), 'east flank', '10.5 from a brick')
-  pieces 68 (pegs 64, bricks 4, movers 0); candidates 28; green-only 32; skipped while tracing 2
+  pieces 67 (pegs 63, bricks 4, movers 0); candidates 28; green-only 31; skipped while tracing 2
 wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_2529e0f6-97c-6\docs\design\v9\levels\build\trace\base-17.png

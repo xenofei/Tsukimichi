@@ -32,9 +32,11 @@ RING_START_AT = {"D": -90.0}
 # the orange candidates (28), by place: the lanterns' pools, the handrails and the parapets' copings, spread so no
 # 200 x 200 square holds more than 10. Tuned on seeds 1-864 and the second block (seeds 20001-23456) to sit between
 # 4-2 and 4-4 (round 1: swapped by `ease` toward the pools' harder members once the flames went bare, which eased
-# the board by about 2 per 48).
+# the board by about 2 per 48). Round 2: the pool's (578, 206) gave its candidacy to the east pool's (649, 297),
+# reviewed in the round-2 tree (critic: 23.91 on 13,824 fresh games, 71 stuck per 1,728; UX: protan 0.114, F6 0.360
+# there); held out 23.7, pooled 23.55.
 CANDIDATES = [(140, 206), (359, 175), (248, 206), (213, 243), (230, 272), (301, 175), (330, 158), (359, 209),
-              (401, 232), (503, 210), (537, 210), (554, 240), (578, 206), (614, 206), (615, 239), (598, 268),
+              (401, 232), (503, 210), (537, 210), (554, 240), (649, 297), (614, 206), (615, 239), (598, 268),
               (700, 290), (483, 274), (500, 304), (365, 300), (559, 306), (177, 341), (194, 370), (293, 363),
               (401, 387), (177, 399), (232, 405), (657, 426)]
 

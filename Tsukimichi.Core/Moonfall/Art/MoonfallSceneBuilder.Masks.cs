@@ -133,6 +133,65 @@ public static partial class MoonfallSceneBuilder
     }
 
     /// <summary>
+    /// Fills each box (x, y, w, h, source pixels) with the picture's own pixels (dx, dy) away (the pipeline's
+    /// <c>scene._clone</c>), laid in with the erase's 3-pixel feather over a 12-pixel window, so a hatched field keeps its
+    /// hatching where a map's arrow was. A box whose source window falls outside the picture is skipped. Returns a new
+    /// picture; alpha is kept as it was.
+    /// </summary>
+    public static MoonfallImage Clone(MoonfallImage source, IReadOnlyList<(Vector4 Box, Vector2 From)> boxes)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(boxes);
+        var out_ = source.Copy();
+        int sw = source.Width, sh = source.Height;
+        foreach (var (box, from) in boxes)
+        {
+            int x0 = Math.Max(0, (int)box.X), y0 = Math.Max(0, (int)box.Y);
+            int x1 = Math.Min(sw, (int)(box.X + box.Z)), y1 = Math.Min(sh, (int)(box.Y + box.W));
+            int dx = (int)from.X, dy = (int)from.Y;
+            int px0 = Math.Max(0, x0 - ErasePad), py0 = Math.Max(0, y0 - ErasePad), px1 = Math.Min(sw, x1 + ErasePad), py1 = Math.Min(sh, y1 + ErasePad);
+            if (x1 <= x0 || y1 <= y0 || px0 + dx < 0 || py0 + dy < 0 || px1 + dx > sw || py1 + dy > sh)
+            {
+                continue;
+            }
+
+            int w = px1 - px0, h = py1 - py0;
+            var inside = new MoonfallPlane(w, h);
+            for (var y = y0 - py0; y < y1 - py0; y++)
+            {
+                for (var x = x0 - px0; x < x1 - px0; x++)
+                {
+                    inside.Data[(y * w) + x] = 1;
+                }
+            }
+
+            var feather = MoonfallFilters.Blur(inside, 3f);
+            foreach (var plane in new[] { out_.R, out_.G, out_.B })
+            {
+                var patch = new float[w * h];
+                var fill = new float[w * h];
+                for (var y = 0; y < h; y++)
+                {
+                    Array.Copy(plane.Data, ((py0 + y) * sw) + px0, patch, y * w, w);
+                    Array.Copy(plane.Data, ((py0 + dy + y) * sw) + px0 + dx, fill, y * w, w);
+                }
+
+                for (var y = 0; y < h; y++)
+                {
+                    for (var x = 0; x < w; x++)
+                    {
+                        var i = (y * w) + x;
+                        var m = feather.Data[i];
+                        plane.Data[((py0 + y) * sw) + px0 + x] = (patch[i] * (1 - m)) + (fill[i] * m);
+                    }
+                }
+            }
+        }
+
+        return out_;
+    }
+
+    /// <summary>
     /// A map's land (the pipeline's <c>scene.derived_mask</c>, rim-fill), at <paramref name="s"/> pixels a unit, 0 or 1 before
     /// the term's own blur: the source cut at 1 px a unit (<paramref name="cut1"/>, 800 × 600, ungraded), its OKLab lightness
     /// blurred 1.5 px; under <paramref name="threshold"/> is a wall (a map's dark rim), grown <paramref name="grow"/> pixels (four

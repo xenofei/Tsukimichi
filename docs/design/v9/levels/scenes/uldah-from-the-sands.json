@@ -1,6 +1,6 @@
 {
  "name": "uldah-from-the-sands",
- "about": "Ul'dah's western half, the Steps of Nald, on its own city map, read as a traveller's chart seen from the sands of Western Thanalan by night: the crescent of the great wall with its north-west tower and the Exchange's dome, the Hall of Flames, the Gate of the Sultana and the Gate of Nald. The map's red exit arrows are erased (each in two passes, so the parchment around them fills the strip) and the roads out of the gates run on as gilt routes into the sands, where the glints run. The city (the map's rim-filled footprint) is moonlit stone in sea-blue; the sands outside recede (x 0.8) in desert rose, warming and lifting (x 1.12) toward the foot under a low sand-glow, with moonlit dunes (warm-rimmed) rising at both lower corners. To the south-east the map's own faint ghost of the Steps of Thal is lifted along its streets (its curved street, its east street with the crossing and the east block, and the pale inner arc: x 1.35), so the city beyond reads under the haze. A sand-haze mist along the foot and the roads' glints are the signature (no runtime stars: the map's field has no bright points of its own, and round 1's stars sat on the chart border's seam along the frame, now removed); dust.",
+ "about": "Ul'dah's western half, the Steps of Nald, on its own city map, read as a traveller's chart seen from the sands of Western Thanalan by night: the crescent of the great wall with its north-west tower and the Exchange's dome, the Hall of Flames, the Gate of the Sultana and the Gate of Nald. The map's red exit arrows are erased (each in two passes, so the parchment around them fills the strip) and the roads out of the gates run on as gilt routes into the sands, where the glints run. The city (the map's rim-filled footprint) is moonlit stone in sea-blue; the sands outside recede (x 0.8) under the night's plum and turn to warm umber below y 430 (the jewel's hue about 35 degrees at the foot: MR 4 round 2, game designer M1), lifting (x 1.12) toward the foot under a low sand-glow, with dunes of warm dark sand and a bright moonlit crest rising at both lower corners. To the south-east the map's own faint ghost of the Steps of Thal is lifted along its streets (its curved street, its east street with the crossing and the east block, and the pale inner arc: x 1.5, its east street x 1.35; round 2, so they read at 640), so the city beyond reads under the haze. A sand-haze mist along the foot and the roads' glints are the signature (no runtime stars: the map's field has no bright points of its own, and round 1's stars sat on the chart border's seam along the frame, now removed); dust.",
  "source": {
   "kind": "game",
   "texture": "ui/map/w1t1/01/w1t101_m.tex",
@@ -14,9 +14,9 @@
  },
  "tone": [
   {"mask": [["not-mask", "city", 12]], "mul": 0.8},
-  {"mask": [["near", "thal arc", 7, 15], ["not-mask", "city", 12]], "mul": 1.35},
+  {"mask": [["near", "thal arc", 7, 15], ["not-mask", "city", 12]], "mul": 1.5},
   {"mask": [["near", "thal east streets", 7, 15], ["not-mask", "city", 12]], "mul": 1.35},
-  {"mask": [["near", "thal inner arc", 7, 15], ["not-mask", "city", 12]], "mul": 1.35},
+  {"mask": [["near", "thal inner arc", 7, 15], ["not-mask", "city", 12]], "mul": 1.5},
   {"mask": [["y", 420, 600], ["not-mask", "city", 12]], "mul": 1.12}
  ],
  "overlays": [
@@ -28,7 +28,7 @@
  "dress": {
   "palette": {"name": "Desert rose and moonlit stone (the city map)", "sky": "#1A1040", "deep": "#07000F", "jewel1": "#80146F", "jewel2": "#0091A4", "warm": "#FFB45E", "rim": "#9CD8F0"},
   "jewel": {
-   "bands": [[0, "#741680"], [600, "#881C66"]],
+   "bands": [[0, "#741680"], [430, "#7A2862"], [525, "#7A6040"], [600, "#86704A"]],
    "chroma": 1.8,
    "floor": 0.07,
    "regions": [
@@ -49,7 +49,7 @@
    {"kind": "outcrop", "points": [[60, 505], [100, 515], [140, 532], [180, 552], [220, 572], [258, 590], [276, 600]], "seed": 41, "rough": 7},
    {"kind": "outcrop", "points": [[560, 600], [586, 586], [614, 570], [646, 558], [680, 550], [740, 544]], "seed": 43, "rough": 7}
   ],
-  "silhouette": {"body": "#0B0414", "inner": "#2E1634", "rim": "#F0C890", "rimK": 0.35, "seed": 7}
+  "silhouette": {"body": "#24150D", "inner": "#5A3A22", "rim": "#F6D49A", "rimK": 0.7, "seed": 7}
  },
  "runtime": {
   "motion": {

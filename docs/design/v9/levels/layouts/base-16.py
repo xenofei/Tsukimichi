@@ -39,7 +39,8 @@ LEVEL = dict(id="base-16", name="The Steps of Thal", stage=4, number=16, scene="
 
 CANDS = {(269, 247), (282, 214), (315, 201), (348, 214), (315, 247),     # the Gold Court and its fountain
          (531, 248), (560, 199), (589, 248),                             # the Exchange
-         (465, 164), (465, 196),                                         # the head of Pearl Lane
+         (563, 302),                                                     # the Gate of Thal
+         (465, 164),                                                     # the head of Pearl Lane
          (690, 352), (661, 339), (504, 190), (384, 222),                 # the walk
          (293, 171), (285, 142), (243, 120),                             # the steps and the Steps of Nald
          (514, 108), (527, 137), (539, 167),                             # the arcade

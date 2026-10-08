@@ -19,6 +19,15 @@ lens (nine: five on its top, four on its underside), the high streak (one), the 
 (three), the dome's needle and the haze curl (two). None is at y 430 or lower (the cheap-difficulty gate), and only
 (140, 404) and the haze curl's (522, 404) sit in y 400-430 (round 1's top holdouts at y 419-426, critic m2, are blue or
 gone). Tuned on seeds 1-864 (25.7) and 20001-23456 (25.4); the lens seam is the ramp's knob (see build).
+
+MR 4 round 2 (game designer m1 and m2, critic m3): east of the seam the lens's two edges ran parallel to the wall as
+rows. They now open as they reach the wall, the lit top rising to (700, 248) and the underside falling to (700, 404),
+so the lens is a tongue from the spire's flank that widens east; the horizon is a low dune crest (up to y 434 at x 626,
+down to 460 at the wall), not a ruled row. The sand grade rises softly from the painted horizon (y 415-472, was a
+55-unit band from 430 that cut the far dome in two) and runs to the wall (its fade is now x 700-740, was 665-725), so
+the whole dome is sand. Round 2's uncommitted swap of a keel candidate (413, 210) for the lens's (689, 222) was dropped:
+it made the level 1.27 per 48 harder on the critic's fresh seeds and closed the step to 4-3 (critic M4). Held out 25.6,
+pooled 25.3 (6,912 games); stuck 11 per 1,728, none in the sweep.
 """
 import math
 

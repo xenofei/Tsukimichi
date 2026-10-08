@@ -1,6 +1,6 @@
 {
  "name": "uldah-spire-sands",
- "about": "Ul'dah's east edge from the game's own Thanalan loading-screen painting (the image the game shows for Ul'dah and every Thanalan zone), at its high-resolution size, unmirrored: the east strip beyond 1-4's crop, with the tall gilt spire, the skyway running into it, the blue dome and shell roofs of the far city, and the red hull of an airship crossing overhead; night graded. The spire is lifted a little (tone x 1.22) and its painted lights carry small lamps (lamp flicker); moonlight comes from the upper left in beams, a pale glow behind the airship at the upper right silhouettes its hull, which keeps its painted red (a jewel region on its dark hull only), and the ground below the horizon is graded to desert sand (the second jewel, kept off the candidates for F9; MR 4 round 1 found the earlier sage green read as lawn).",
+ "about": "Ul'dah's east edge from the game's own Thanalan loading-screen painting (the image the game shows for Ul'dah and every Thanalan zone), at its high-resolution size, unmirrored: the east strip beyond 1-4's crop, with the tall gilt spire, the skyway running into it, the blue dome and shell roofs of the far city, and the red hull of an airship crossing overhead; night graded. The spire is lifted a little (tone x 1.22) and its painted lights carry small lamps (lamp flicker); moonlight comes from the upper left in beams, a pale glow behind the airship at the upper right silhouettes its hull, which keeps its painted red (a jewel region on its dark hull only), and the ground below the horizon is graded to desert sand (the second jewel, kept off the candidates for F9; MR 4 round 1 found the earlier sage green read as lawn; round 2 feathers it up from the painted horizon, y 415-472, and runs it to the wall, so the far dome is sand whole, game designer m2).",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base02_hr1.tex",
@@ -40,16 +40,16 @@
    "points": [[360, 206], [372, 210], [410, 194], [450, 174], [492, 154], [532, 134], [572, 116], [604, 98], [640, 86], [690, 80], [728, 90], [770, 76], [800, 52], [800, 0], [528, 0], [478, 52], [430, 118], [392, 160], [362, 190]]
   },
   "cloud lens top": {
-   "points": [[386, 334], [412, 306], [452, 290], [500, 282], [552, 278], [606, 276], [660, 276], [714, 278]]
+   "points": [[386, 334], [412, 306], [452, 290], [500, 282], [552, 278], [604, 274], [654, 264], [700, 248]]
   },
   "cloud lens underside": {
-   "points": [[386, 334], [418, 354], [462, 364], [514, 368], [566, 370], [618, 370], [670, 368], [720, 366]]
+   "points": [[386, 334], [418, 354], [462, 364], [514, 368], [566, 372], [614, 378], [658, 390], [700, 404]]
   },
   "high streak": {
    "points": [[540, 238], [600, 230], [660, 224], [720, 220]]
   },
   "horizon": {
-   "points": [[468, 448], [530, 446], [592, 446], [654, 448], [716, 450]]
+   "points": [[468, 456], [522, 446], [576, 436], [626, 434], [672, 444], [716, 460]]
   },
   "far dome": {
    "circle": [372, 522, 50],
@@ -82,7 +82,7 @@
     {
      "hex": "#B88E5C",
      "chroma": 0.17,
-     "mask": [["y", 430, 485], ["x", 75, 135], ["x", 725, 665]]
+     "mask": [["y", 415, 472], ["x", 75, 135], ["x", 740, 700]]
     },
     {
      "hex": "#C8442E",

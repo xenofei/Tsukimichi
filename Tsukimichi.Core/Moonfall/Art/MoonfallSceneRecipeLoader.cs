@@ -419,10 +419,41 @@ public static partial class MoonfallSceneRecipeLoader
                 }
             }
 
+            var clone = new List<(Vector4 Box, Vector2 From)>();
+            if (s.TryGetProperty("clone", out var cl) && cl.ValueKind != JsonValueKind.Null)
+            {
+                if (cl.ValueKind != JsonValueKind.Array || cl.GetArrayLength() > MaxErase)
+                {
+                    errors.Add($"source.clone must be a list of at most {MaxErase} [x, y, w, h, dx, dy] boxes");
+                }
+                else
+                {
+                    var k = 0;
+                    foreach (var box in cl.EnumerateArray())
+                    {
+                        var at = $"source.clone[{k++}]";
+                        var b = Floats(box, at, 6, -8192, 8192);
+                        if (b.Length != 6)
+                        {
+                            continue;
+                        }
+
+                        if (!(b[0] >= 0 && b[1] >= 0 && b[2] >= 1 && b[3] >= 1 && b[2] <= 1024 && b[3] <= 1024))
+                        {
+                            errors.Add(at + "'s x and y must be at least 0, and w and h 1 to 1024");
+                            continue;
+                        }
+
+                        clone.Add((new Vector4(b[0], b[1], b[2], b[3]), new Vector2(b[4], b[5])));
+                    }
+                }
+            }
+
             return new MoonfallSceneSource(game is not null ? MoonfallSourceKind.Game : MoonfallSourceKind.Picture, game ?? picture!,
                 Bool(s, "mirror"), pad.Length == 2 ? (int)pad[0] : 0, pad.Length == 2 ? (int)pad[1] : 0, mode == "reflect", crop)
             {
                 Erase = erase,
+                CloneBoxes = clone,
             };
         }
 
