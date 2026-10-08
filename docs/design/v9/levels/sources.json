@@ -3,7 +3,7 @@
   "base-03 \"The Cactuar\": scene sagolii-cactuar"
  ],
  "(our own painting) cloudlane": [
-  "base-14 \"The Airship Under Way\": scene cloudlane"
+  "base-14 \"The Lane by Starlight\": scene cloudlane"
  ],
  "(our own painting) cloudsea": [
   "base-12 \"Above the Cloud Sea\": scene cloudsea-beacons"
@@ -35,7 +35,7 @@
  "ui/loadingimage/-nowloading_base05_hr1.tex": [
   "base-08 \"The Kraken's Sea\": scene rhotano-wonders, crop [1080, 1300, 960, 720] (read from the install at load, graded, never shipped)",
   "base-11 \"The Airship Road\": scene aldenard-airship-lane, crop [0, 555, 1280, 960] (read from the install at load, graded, never shipped)",
-  "base-15 \"The Sky Whale\": scene sky-whale, crop [870, 312, 1400, 1050] (read from the install at load, graded, never shipped)"
+  "base-15 \"The Sky Whale\": scene sky-whale, crop [940, 330, 960, 720] (read from the install at load, graded, never shipped)"
  ],
  "ui/map/w1f1/00/w1f100_m.tex": [
   "base-01 \"Road to Horizon\": scene thanalan-road-chart, crop [284, 340, 1429, 1071] (read from the install at load, graded, never shipped)"

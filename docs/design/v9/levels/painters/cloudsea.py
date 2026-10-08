@@ -28,10 +28,10 @@ HORIZON = 246.0
 FOCAL = 400.0                 # px per world unit at depth 1
 CAM = 150.0                   # the eye's height above the cloud floor
 MOON = (400.0, 220.0, 30.0)
-# The moon rises through the cloud sea's haze, misted: its face (OKLab L about 0.68) stays darker than the ball (0.885)
+# The moon rises through the cloud sea's haze, misted: its face (OKLab L about 0.65, 0.69 at most) stays darker than the ball (0.885)
 # and the aim guide's dots (0.96), since it sits on the launcher's axis where every central shot starts (UX MR 3 round
 # 1, M1: the bright face, L 0.934, swallowed both), and its glow in the sky is halved.
-MOON_MIST = 0.56              # the face's sRGB under the haze (maria kept)
+MOON_MIST = 0.53              # the face's sRGB under the haze (maria kept)
 MOON_GLOW = 0.10
 LANE = 58.0                   # the lane's half-width (world)
 HEAD = 100.0                  # the lanterns' height (world)

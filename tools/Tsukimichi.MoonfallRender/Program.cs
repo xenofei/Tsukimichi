@@ -13,7 +13,7 @@ using LuminaGameData = Lumina.GameData;
 
 // Moonfall's offline renderer (see the project file):
 //   Tsukimichi.MoonfallRender <out.png> [--screen title|map|levels|characters|quickplay|challenges|duel|options|play|pause|tally|duelhud]
-//                              [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally|cleared]
+//                              [--level base-01|base-p1] [--size 1280x800] [--moment start|hud|power|fever|tally|cleared]
 //                              [--cache <dir>] [--marks] [--hint] [--reduce-motion] [--decoration full|simple|off] [--no-game-art] [--seconds N]
 //   Tsukimichi.MoonfallRender <out.png> --level base-01 --scene-only 1|2 [--no-grain] [--upto paint|palette]   (the level's bare scene)
 // The board is the plugin's own window, drawn by its own code under a headless ImGui, rasterized to the PNG.
@@ -44,7 +44,7 @@ internal static class Render
     {
         if (args.Length == 0)
         {
-            Console.Error.WriteLine("usage: Tsukimichi.MoonfallRender <out.png> [--level base-01|base-p1] [--size 1280x800] [--moment hud|power|fever|tally|cleared] [--marks] [--reduce-motion] [--no-game-art]");
+            Console.Error.WriteLine("usage: Tsukimichi.MoonfallRender <out.png> [--level base-01|base-p1] [--size 1280x800] [--moment start|hud|power|fever|tally|cleared] [--marks] [--reduce-motion] [--no-game-art]");
             return 2;
         }
 
@@ -419,8 +419,9 @@ internal static class Render
             }
         }
 
-        // Two shots in, as a game under way: a score, a few pegs gone, the multiplier still low.
-        foreach (var aim in new[] { -0.32, 0.41 })
+        // Two shots in, as a game under way: a score, a few pegs gone, the multiplier still low ("start" is the board as
+        // dealt, before the first shot, so a render matches the level file piece for piece).
+        foreach (var aim in moment == "start" ? [] : new[] { -0.32, 0.41 })
         {
             g.Shoot(aim);
             UntilAiming();
@@ -429,6 +430,7 @@ internal static class Render
         switch (moment)
         {
             case "hud":
+            case "start":
                 window.AimForRender = -0.35;
                 Run(0.2);
                 break;

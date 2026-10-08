@@ -55,7 +55,7 @@ the greedy player wins at 14 of 48 or more (a rate, so 28 of 96 is the same) kee
 reach. Below that, the Ace is the score 40% of the *winning* games reach (the owner's answer, 7 October 2026), since a
 fifth of all games is then close to any win. Each Ace is recorded in `Moonfall/Modes/aces.json` when the level ships. The
 Perf-category test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` re-suggests every shipped level (stages 1-3, all
-above 14 of 48: 183-389 wins of 576, 3-5 the lowest) and holds each to its recorded Ace.
+above 14 of 48: 213-389 wins of 576, 3-5 the lowest) and holds each to its recorded Ace.
 
 ## What `build` does, in order
 
@@ -319,3 +319,11 @@ scale, since dropping round 5's disc on 2-3 moved it by only 0.018, and the form
 and F9 measured here then stand for the game (once they are measured in the game's gamut: see "The jewel's gamut").
 `mfl.py convert --all --check` runs it at 2x (max 0.04 and 99.9th percentile 0.015, both) and at 1x (99th percentile
 0.035), and fails a level whose build dropped a moon, a mist band, a part or more than half its stars.
+
+**Grade parity at the cut** (MR 3 round 1, critic B1). The pipeline crops a game painting with PIL's `LANCZOS` on an
+8-bit picture, whose horizontal pass writes an 8-bit image the vertical pass reads (an overshoot past white at a sharp
+light is clipped in between); the runtime's cut (`MoonfallSceneBuilder.Cut`) now resamples the same way
+(`MoonfallFilters.Resample(..., eightBit: true)`), and the graded paintings of 3-1, 3-3 and 3-5 agree to p99 0.0000 at
+2x where they had differed by up to 15 levels in a channel. What is left is OKLab's own steepness at black: sRGB 0 and
+1 lie 0.067 apart, so a dressed scene whose dark land sits on sRGB 0-1 fails the 2x maximum on a rounding step. 3-1 and
+3-5 lift their floor a few levels with a faint board-wide glow (radius 2000) rather than any change to the gate.

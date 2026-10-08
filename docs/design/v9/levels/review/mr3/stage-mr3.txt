@@ -1,14 +1,14 @@
 stage mr3: 5 levels
 level    name                         pieces  greedy  ramp/48  random     jewels source
-base-11  The Airship Road                 64      31     27.6       0    253/171 ui/loadingimage/-nowloading_base05_hr1.tex
+base-11  The Airship Road                 64      25     27.1       0    254/173 ui/loadingimage/-nowloading_base05_hr1.tex
 base-12  Above the Cloud Sea              77      25     25.4       0    290/211 our painting (cloudsea)
-base-13  The Holy See                     87      19     23.8       3    254/339 ui/loadingimage/-nowloading_base03.tex
-base-14  The Airship Under Way            72      27     22.4       0    289/180 our painting (cloudlane)
-base-15  The Sky Whale                    72      19     19.2       1    251/160 ui/loadingimage/-nowloading_base05_hr1.tex
-  base-11: held-out 27.6, 5184 fresh 27.7, pooled 27.67 per 48 (+-0.29) over 6912 games
+base-13  The Holy See                     88      24     23.8       0    254/338 ui/loadingimage/-nowloading_base03.tex
+base-14  The Lane by Starlight            72      28     22.4       1    275/208 our painting (cloudlane)
+base-15  The Sky Whale                    74      23     18.8       1    258/176 ui/loadingimage/-nowloading_base05_hr1.tex
+  base-11: held-out 27.1, 5184 fresh 28.0, pooled 27.77 per 48 (+-0.29) over 6912 games
   base-12: held-out 25.4, 5184 fresh 25.9, pooled 25.77 per 48 (+-0.29) over 6912 games
-  base-13: held-out 23.8, 5184 fresh 23.7, pooled 23.73 per 48 (+-0.29) over 6912 games
-  base-14: held-out 22.4, 5184 fresh 22.8, pooled 22.7 per 48 (+-0.29) over 6912 games
-  base-15: held-out 19.2, 5184 fresh 17.9, pooled 18.22 per 48 (+-0.28) over 6912 games
-  pooled steps: 1.90 +- 0.41, 2.04 +- 0.41, 1.03 +- 0.41, 4.48 +- 0.40
+  base-13: held-out 23.8, 5184 fresh 24.5, pooled 24.32 per 48 (+-0.29) over 6912 games
+  base-14: held-out 22.4, 5184 fresh 21.7, pooled 21.88 per 48 (+-0.29) over 6912 games
+  base-15: held-out 18.8, 5184 fresh 18.5, pooled 18.57 per 48 (+-0.28) over 6912 games
+  pooled steps: 2.00 +- 0.41, 1.45 +- 0.41, 2.44 +- 0.41, 3.31 +- 0.40
 game paintings 3 of 5; verdicts: base-11 PASS, base-12 PASS, base-13 PASS, base-14 PASS, base-15 PASS

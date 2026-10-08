@@ -17,7 +17,12 @@ from the right wall round under the isle and up its left side. The lower half tr
 of small moons along the lit crests of the cloud lobes where the chart's dark gaps open beneath them (found on the
 graded painting, so each line is a painted crest).
 
-The finale's difficulty comes from the whole board, not its bottom: no candidate sits at y 430 or lower.
+The finale's difficulty comes from the whole board, not its bottom: no candidate sits at y 430 or lower. The ring of
+moons round the vortex's west eddy and the inner wall's moons (blue, in the open sky) carry most of it; the inner wall
+stops short of the isle's banner (F6), the high middle crest is set so a moon stands on the launcher's axis and the
+flight line's three moons close the last open lane (no dead first shot). Tuning 18.1, second block 18.1; held out
+18.8, pooled 18.57: 3.31 below 3-4 (the charter plans 3.5; critic m6 asked the held-out and fresh figures to agree:
+18.8 and 18.5).
 """
 import math
 

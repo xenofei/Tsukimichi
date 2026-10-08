@@ -451,31 +451,31 @@
       "drop": 0.01
      },
      "blue 0.8x": {
-      "worst": 0.379,
+      "worst": 0.38,
       "at": [
        308,
        229
       ],
       "undressed": 0.389,
-      "drop": 0.01
+      "drop": 0.009
      },
      "orange 0.8x": {
-      "worst": 0.315,
+      "worst": 0.316,
       "at": [
        308,
        229
       ],
       "undressed": 0.325,
-      "drop": 0.01
+      "drop": 0.009
      },
      "green 0.8x": {
-      "worst": 0.405,
+      "worst": 0.406,
       "at": [
        308,
        229
       ],
       "undressed": 0.415,
-      "drop": 0.01
+      "drop": 0.009
      },
      "purple 0.8x": {
       "worst": 0.267,
@@ -490,40 +490,40 @@
     "worst_margin": 0.267,
     "largest_drop": 0.01,
     "bricks_min_margin": [
-     0.432,
+     0.434,
      "blue"
     ],
-    "protan_orange_p10": 0.104,
+    "protan_orange_p10": 0.105,
     "protan_places": 29,
     "protan_worst_at": [
      262,
      353
     ],
-    "protan_min": 0.102,
+    "protan_min": 0.103,
     "jewels": {
-     "coloured_px_pct": 69.7,
-     "mean_chroma": 0.078,
+     "coloured_px_pct": 68.7,
+     "mean_chroma": 0.079,
      "second_at_walls_x": 0.39,
      "second_at_walls_worst_window": [
-      0.92,
+      0.9,
       91
      ],
-     "first_jewel_hue": 253,
-     "first_share": 0.827,
+     "first_jewel_hue": 254,
+     "first_share": 0.839,
      "second_jewel_hue": 173,
-     "second_share": 0.171,
-     "apart_deg": 80,
+     "second_share": 0.159,
+     "apart_deg": 81,
      "bins_pct": [
       0.0,
       0.0,
       0.1,
       0.2,
       0.0,
-      12.0,
-      5.1,
-      15.5,
-      66.6,
-      0.5,
+      11.0,
+      4.8,
+      14.5,
+      68.3,
+      1.0,
       0.0,
       0.0
      ]
@@ -535,7 +535,7 @@
      "median": 0.0,
      "p90": 0.0,
      "worst": [
-      0.0337,
+      0.0336,
       [
        192,
        384
@@ -543,13 +543,13 @@
      ],
      "samples": 56,
      "mode": "pegs",
-     "hue_median": 0.0113
+     "hue_median": 0.0115
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 25.6,
+ "seconds": 26.5,
  "verdict": "PASS"
 }

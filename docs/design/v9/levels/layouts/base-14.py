@@ -17,7 +17,11 @@ MR 3 round 1 (game designer M2, m5; critic M1, m4, m5; UX n3): renamed from "The
 hull the board never shows; the moon and its ringed limb gave way to the star river (its two candidates moved onto the
 river). Each mover now slides along its crest, from a point on the crest to the crest's own height further east (a
 straight slide in x left crest 5's movers up to 24 units off it at the ends), and a mover whose run would cross a
-beacon's post is left out, so no moon looks stemmed on a post. Mist bands drift along the slid crests (the recipe).
+beacon's post is left out, so no moon looks stemmed on a post (UX n3's three moons on the lamps are still pegs, the
+lamps' own). Mist along the slid crests cannot be had: the runtime keeps every mist band clear of the pieces across the
+board's width. The lamp at (301, 392), the board's lowest protan place and its top holdout, is no longer a candidate,
+and the candidates were retuned toward the step critic M1 asked for (3-4 at least 0.7 harder than 3-3): tuning 23.7,
+second block 22.4, held out 22.4; pooled with the stage's fresh games 21.88, 2.44 below 3-3.
 """
 import numpy as np
 

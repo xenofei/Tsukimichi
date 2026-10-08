@@ -1,6 +1,6 @@
 {
  "name": "sky-whale",
- "about": "The cloud sea north of the Rhotano as the game's own world painting The Three Great Continents draws it: the chart's whale swimming the clouds under the great vortex, and a chevron of birds flying its way along the chart's dotted lane; read as a chart under the moon, seen from an airship's deck. MR 3 round 1 (game designer M1, m1; critic M2): the crop zooms in on the whale, [940, 330, 960, 720] (it was [870, 312, 1400, 1050]: wider than 3-1's 1280, with the whale a sixth of the board), overlapping 3-1's crop by 24.3% of its own area; the whale is lit (a tone of x 1.5 on its own silhouette) against cloud darkened round it (x 0.82 in a 60-unit band), where it had been darkened into the slate; the cloud sea's green keeps off the vortex's upper rim (UX m1: protan), and the whale's glow is softer (its ring's F6 drop).",
+ "about": "The cloud sea north of the Rhotano as the game's own world painting The Three Great Continents draws it: the chart's whale swimming the clouds under the great vortex, and a chevron of birds flying its way along the chart's dotted lane; read as a chart under the moon, seen from an airship's deck. MR 3 round 1 (game designer M1, m1; critic M2): the crop zooms in on the whale, [940, 330, 960, 720] (it was [870, 312, 1400, 1050]: wider than 3-1's 1280, with the whale a sixth of the board), overlapping 3-1's crop by 24.3% of its own area; the whale is lit (a tone of x 1.5 on its own silhouette) against cloud darkened round it (x 0.82 in a 60-unit band), where it had been darkened into the slate; the cloud sea's green keeps off the vortex's upper rim (UX m1: protan), and the whale's glow is softer (its ring's F6 drop). A broad tone (x 0.85, radius 110) quietens the bright swirl round the west eddy, and the moonbeams are softer (k 0.03), for F6 (UX m3).",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
@@ -107,7 +107,7 @@
     "origin": [-60, -160],
     "angles": [50, 58, 67],
     "widths": [46, 32, 52],
-    "k": 0.04,
+    "k": 0.03,
     "col": "#E0E6FF",
     "reach": 700
    }
@@ -208,6 +208,10 @@
   {
    "mask": [["near", "whale", 10, 60], ["not-poly", "whale", 3]],
    "mul": 0.82
+  },
+  {
+   "mask": [["disc", 180, 176, 110, 60]],
+   "mul": 0.85
   }
  ]
 }

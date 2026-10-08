@@ -43,6 +43,15 @@
    "mul": 0.82
   },
   {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [180, 176, 110, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
    "kind": "plate",
    "picture": "sky-whale-route-cut",
    "blend": "multiply"
@@ -130,7 +139,7 @@
    "origin": [-60, -160],
    "angles": [50, 58, 67],
    "widths": [46, 32, 52],
-   "k": 0.04,
+   "k": 0.03,
    "colour": "#E0E6FF",
    "seed": 3,
    "reach": 700,

@@ -1,6 +1,6 @@
 {
  "name": "aldenard-airship-lane",
- "about": "The north-west of the game's own world painting The Three Great Continents at its high-resolution size (Aldenard: Gridania, Coerthas and Ishgard, the cloud sea's western shore, the chart's airship and dragons over the Northern Sea), read as a chart under the moon: lapis sea and silver clouds, the land's forests in sea-green, the airship's lane engraved over it in gilt from Gridania to Ishgard and on past the airship, with a branch west and the lane in from the south. Crop [0, 555, 1280, 960]: under 25% of its own area over 2-3's crop, 3-5's charter crop and 5-2's charter crop (5-2's parked recipe merlthor-strait, [0, 1200, 960, 720], is 24.6% of this crop). MR 3 round 1: a faint sea-green lift over the whole board (a glow of radius 2000) keeps the chart's black land off sRGB 0-1, where one rounding step reads 0.067 in OKLab and the converter's gate failed (critic B1); four broad tones (x 0.85, radius 110-130) quieten the bright banners and the pale cloud shore round Ishgard, Gridania, the western hold and the cloud humps, lifting F6 from 0.222 to 0.267 (UX m3).",
+ "about": "The north-west of the game's own world painting The Three Great Continents at its high-resolution size (Aldenard: Gridania, Coerthas and Ishgard, the cloud sea's western shore, the chart's airship and dragons over the Northern Sea), read as a chart under the moon: lapis sea and silver clouds, the land's forests in sea-green, the airship's lane engraved over it in gilt from Gridania to Ishgard and on past the airship, with a branch west and the lane in from the south. Crop [0, 555, 1280, 960]: under 25% of its own area over 2-3's crop, 3-5's charter crop and 5-2's charter crop (5-2's parked recipe merlthor-strait, [0, 1200, 960, 720], is 24.6% of this crop). MR 3 round 1: a faint grey-green lift over the whole board (a glow of radius 2000) keeps the chart's black land off sRGB 0-1, where one rounding step reads 0.067 in OKLab and the converter's gate failed (critic B1); four broad tones (x 0.85, radius 110-130) quieten the bright banners and the pale cloud shore round Ishgard, Gridania, the western hold and the cloud humps, lifting F6 from 0.222 to 0.267 (UX m3).",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
@@ -119,8 +119,8 @@
     "x": 400,
     "y": 318,
     "r": 2000,
-    "col": "#6AC0A0",
-    "k": 0.03
+    "col": "#98C4B4",
+    "k": 0.024
    }
   ]
  },

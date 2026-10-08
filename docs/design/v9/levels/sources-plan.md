@@ -50,7 +50,7 @@ Plate backgrounds (`BannerBg`, 512 × 840) are too small to use.
 
 | Code | Source | Crop | Place (era) | Why it fits |
 |---|---|---|---|---|
-| 3-4 | **ours (re-subject):** `cloudlane` (new). DR: cloud banks sliding past under the moon, with the lane's beacon lamps and no hull | — | nowhere | No airship art at a usable size anywhere. The chart's airships on `base05` are about 100 px, and stage 3 already uses `base05` twice. `base02`'s red craft is a blurred brushstroke, and stage 4 reserves that painting. No Fan Kit wallpaper shows an airship |
+| 3-4 | **ours (re-subject):** `cloudlane` (new). DR: cloud banks sliding past under the moon, with the lane's beacon lamps and no hull. MR 3 round 1: renamed "The Lane by Starlight" (the name had promised a hull); the moon is set and the star river crosses the sky | — | nowhere | No airship art at a usable size anywhere. The chart's airships on `base05` are about 100 px, and stage 3 already uses `base05` twice. `base02`'s red craft is a blurred brushstroke, and stage 4 reserves that painting. No Fan Kit wallpaper shows an airship |
 | 4-1 | game `ui/map/w1t2/01/w1t201_m.tex` | [560, 620, 960, 720] | Ul'dah - Steps of Thal (ARR) | The Steps of Thal plan: the Gold Court's ring, the streets and the gates, ready for a walk with ring stops |
 | 4-4 | game `ui/map/w1t2/02/w1t202_m.tex` | [560, 640, 960, 720] | Ul'dah - Steps of Thal (ARR). The Coliseum is on the Thal map, not Nald | The lower floor's ring and wings, over the faint city ring and spokes: rings and spokes of brick |
 | 5-5 | game `ui/map/s1f4/00/s1f400_m.tex` | [560, 360, 1360, 1020] | Western La Noscea (ARR) | The Swiftperch and Aleport coast and its headlands, where the lighthouse stops go. Pale map style |
