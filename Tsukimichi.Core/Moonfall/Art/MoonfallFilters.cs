@@ -222,7 +222,10 @@ public static class MoonfallFilters
     /// source pixels, fractional allowed, parts outside held at the edge) resampled to <paramref name="width"/> ×
     /// <paramref name="height"/> with a separable Lanczos-3 (widened when shrinking, as PIL does).
     /// </summary>
-    public static MoonfallPlane Resample(MoonfallPlane source, double x, double y, double w, double h, int width, int height)
+    /// <param name="eightBit">Each pass's result held to 8-bit steps (clipped, rounded half up), as PIL resamples an 8-bit
+    /// picture: its horizontal pass writes an 8-bit image the vertical pass reads, so a Lanczos overshoot past white at a
+    /// sharp light is clipped before the second pass.</param>
+    public static MoonfallPlane Resample(MoonfallPlane source, double x, double y, double w, double h, int width, int height, bool eightBit = false)
     {
         ArgumentNullException.ThrowIfNull(source);
         var across = Weights(x, w, width);
@@ -242,7 +245,7 @@ public static class MoonfallFilters
                     sum += src[o + Math.Clamp(start + k, 0, sw - 1)] * kw[k];
                 }
 
-                mid[(row * width) + c] = (float)sum;
+                mid[(row * width) + c] = eightBit ? EightBit(sum) : (float)sum;
             }
         });
         var out_ = new MoonfallPlane(width, height);
@@ -257,22 +260,24 @@ public static class MoonfallFilters
                     sum += mid[(Math.Clamp(start + k, 0, source.Height - 1) * width) + c] * kw[k];
                 }
 
-                out_.Data[(r * width) + c] = (float)sum;
+                out_.Data[(r * width) + c] = eightBit ? EightBit(sum) : (float)sum;
             }
         });
         return out_;
     }
 
     /// <summary>Every plane of <paramref name="image"/> resampled (see the plane overload).</summary>
-    public static MoonfallImage Resample(MoonfallImage image, double x, double y, double w, double h, int width, int height)
+    public static MoonfallImage Resample(MoonfallImage image, double x, double y, double w, double h, int width, int height, bool eightBit = false)
     {
         ArgumentNullException.ThrowIfNull(image);
         return new MoonfallImage(
-            Clip(Resample(image.R, x, y, w, h, width, height)),
-            Clip(Resample(image.G, x, y, w, h, width, height)),
-            Clip(Resample(image.B, x, y, w, h, width, height)),
-            image.A is { } a ? Clip(Resample(a, x, y, w, h, width, height)) : null);
+            Clip(Resample(image.R, x, y, w, h, width, height, eightBit)),
+            Clip(Resample(image.G, x, y, w, h, width, height, eightBit)),
+            Clip(Resample(image.B, x, y, w, h, width, height, eightBit)),
+            image.A is { } a ? Clip(Resample(a, x, y, w, h, width, height, eightBit)) : null);
     }
+
+    private static float EightBit(double v) => (float)(Math.Floor((Math.Clamp(v, 0.0, 1.0) * 255.0) + 0.5) / 255.0);
 
     /// <summary>The whole picture resized (see <see cref="Resample(MoonfallImage, double, double, double, double, int, int)"/>).</summary>
     public static MoonfallImage Resize(MoonfallImage image, int width, int height)

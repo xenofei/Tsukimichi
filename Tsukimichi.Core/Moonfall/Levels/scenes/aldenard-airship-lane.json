@@ -1,0 +1,170 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "aldenard-airship-lane",
+ "source": {
+  "game": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "crop": [0, 555, 1280, 960]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.2,
+  "exposure": 0.72,
+  "ceiling": 0.35,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [345, 330, 110, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [490, 430, 110, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [660, 320, 130, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [192, 355, 110, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
+   "kind": "plate",
+   "picture": "aldenard-airship-lane-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "aldenard-airship-lane-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#2A68C8"], [600, "#2262B8"]],
+  "chroma": 1.8,
+  "floor": 0.05,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9DCFF"]],
+  "regions": [
+   {
+    "hue": "#48B07E",
+    "chroma": 0.3,
+    "where": [
+     {
+      "land": [0.45, 3],
+      "blur": 5.0
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [54, 20],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.7
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [54, 20],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 400,
+   "y": 318,
+   "r": 2000,
+   "colour": "#98C4B4",
+   "k": 0.024
+  },
+  {
+   "kind": "shafts",
+   "origin": [-60, -160],
+   "angles": [48, 57, 66],
+   "widths": [44, 30, 50],
+   "k": 0.04,
+   "colour": "#E0E6FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "aldenard-airship-lane-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "aldenard-airship-lane-ticks",
+   "blend": "multiply"
+  }
+ ],
+ "veil": 0.34,
+ "motion": {
+  "dust": 18,
+  "glints": [
+   {
+    "points": [[485, 417], [452, 390], [420, 365], [392, 342], [365, 322], [350, 290], [328, 258], [305, 225], [285, 195], [268, 170], [252, 150], [222, 132], [180, 115], [130, 100], [90, 92]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[365, 322], [330, 342], [290, 352], [250, 353], [222, 352], [192, 350]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 15,
+    "colour": "#FFE6B0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#10204E",
+  "deep": "#050A1C",
+  "jewel1": "#2A48C0",
+  "jewel2": "#1E9E7E"
+ }
+}

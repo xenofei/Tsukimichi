@@ -1,0 +1,126 @@
+{
+ "name": "cloudsea-beacons",
+ "about": "Our own painting: the airship lane's beacons over a moonlit sea of clouds, the full moon rising at the lane's end, each lantern's beam fanning up into the night (painters/cloudsea.py; shipped as a JPEG). MR 3 round 1 (UX M1): the moon rises misted through the haze (its face OKLab L about 0.65 and 0.69 at most, under the ball's 0.885 and the aim guide's 0.96, with two strata of mist across its lower half), since it sits on the launcher's axis where every central shot starts; a broad tone (x 0.8) over the horizon band quietens the far crests' silver lining behind the first orange pair, lifting F6 from 0.216 to 0.237 (UX m3).",
+ "source": {
+  "kind": "painting",
+  "painter": "cloudsea",
+  "params": {}
+ },
+ "ceilingExempt": [[400, 220, 64]],
+ "veil": 0.22,
+ "features": {},
+ "dress": {
+  "palette": {
+   "name": "Violet night and aether cyan (the cloud sea's beacons)",
+   "sky": "#1E1450",
+   "deep": "#080A20",
+   "jewel1": "#8A30C0",
+   "jewel2": "#24B070",
+   "warm": "#FFB45E",
+   "rim": "#BFE6FF"
+  },
+  "jewel": {
+   "bands": [[0, "#8A30C0"], [246, "#8C34C0"], [600, "#7A2CB0"]],
+   "valueHues": [[0.08, "#4A1C8A"], [0.45, "#EAD0FF"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#24B070",
+     "chroma": 0.15,
+     "mask": [["y", 256, 320], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [60, 25],
+   "regionQuiet": 0.35
+  },
+  "shafts": [
+   {
+    "origin": [400, 220],
+    "angles": [-158, -134, -46, -22],
+    "widths": [20, 26, 26, 20],
+    "k": 0.045,
+    "col": "#D8DCFF",
+    "reach": 560,
+    "near": 60
+   },
+   {
+    "origin": [400, 220],
+    "angles": [78, 90, 102],
+    "widths": [18, 26, 18],
+    "k": 0.04,
+    "col": "#D8DCFF",
+    "reach": 520,
+    "near": 50
+   }
+  ],
+  "framing": [
+   {
+    "kind": "rope",
+    "a": [75, 44],
+    "b": [210, 34],
+    "sag": 16,
+    "width": 1.6
+   },
+   {
+    "kind": "rope",
+    "a": [590, 34],
+    "b": [725, 44],
+    "sag": 16,
+    "width": 1.6
+   },
+   {
+    "kind": "festoon",
+    "spans": [[60, 120, 30], [120, 176, 20], [176, 214, 12]],
+    "col": "#2A1E50"
+   },
+   {
+    "kind": "festoon",
+    "spans": [[586, 624, 12], [624, 680, 20], [680, 740, 30]],
+    "col": "#2A1E50"
+   }
+  ],
+  "silhouette": {
+   "body": "#06071A",
+   "inner": "#141E4E",
+   "rim": "#BFE6FF",
+   "rimK": 0.4,
+   "seed": 12
+  },
+  "lights": [
+   {
+    "points": [[139.3, 470.7, 1.3], [660.7, 470.7, 1.3], [374.2, 268.2, 0.6], [425.8, 268.2, 0.6]],
+    "col": "#CFF4FF",
+    "r": 1.6,
+    "k": 0.6,
+    "halo": 8,
+    "hk": 0.14
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 10,
+   "stars": 30,
+   "mist": [
+    {
+     "y": [540, 594],
+     "speed": 4,
+     "alpha": 0.1,
+     "cell": 150,
+     "seed": 11,
+     "colour": "#B8D4F0"
+    }
+   ],
+   "starWhere": [["y", 236, 220]]
+  },
+  "flicker": [0],
+  "feverMoon": [400, 220, 30]
+ },
+ "tone": [
+  {
+   "mask": [["y", 236, 252], ["y", 300, 276]],
+   "mul": 0.8
+  }
+ ]
+}

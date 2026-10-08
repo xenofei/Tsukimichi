@@ -1,0 +1,6 @@
+  skipped ((174, 487), 'string', '-11.5 from the peg at (169, 488)')
+  skipped ((331, 341), 'string', '12.6 from the peg at (304, 329)')
+  skipped ((626, 487), 'string', '-11.5 from the peg at (631, 488)')
+  skipped ((469, 341), 'string', '12.6 from the peg at (496, 329)')
+  pieces 77 (pegs 70, bricks 7, movers 0); candidates 30; green-only 29; skipped while tracing 4
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_e874cb78-8d2-6\docs\design\v9\levels\build\trace\base-12.png

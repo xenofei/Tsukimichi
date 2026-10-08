@@ -1,0 +1,115 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "cloudlane",
+ "source": {
+  "picture": "cloudlane"
+ },
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "palette": {
+  "bands": [[0, "#6450DC"], [300, "#604CD8"], [600, "#5444B8"]],
+  "chroma": 1.1,
+  "floor": 0.04,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#2E2284"], [0.45, "#DCD8FF"]],
+  "regions": [
+   {
+    "hue": "#34A878",
+    "chroma": 0.15,
+    "where": [
+     {
+      "poly": [[452.0, 268.0], [110.0, 600.0], [700.0, 600.0]],
+      "blur": 20.0
+     },
+     {
+      "y": [262, 300]
+     },
+     {
+      "lum": [0.1, 0.36],
+      "blur": 3
+     },
+     {
+      "near": [60, 25],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.3
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [60, 25],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "shafts",
+   "origin": [868, -60],
+   "angles": [118, 128, 138],
+   "widths": [22, 30, 18],
+   "k": 0.035,
+   "colour": "#D8E0FF",
+   "seed": 3,
+   "reach": 900,
+   "near": 60,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "cloudlane-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "veil": 0.22,
+ "motion": {
+  "stars": 36,
+  "mist": [
+   {
+    "y": [520, 592],
+    "speed": 6,
+    "alpha": 0.1,
+    "cell": 120,
+    "seed": 11,
+    "colour": "#C0D0EC"
+   }
+  ],
+  "starWhere": [
+   {
+    "poly": [[76.0, 132.0], [200.0, 112.0], [300.0, 110.0], [420.0, 60.0], [700.0, 44.0], [724.0, 44.0], [724.0, 196.0], [650.0, 206.0], [626.0, 258.0], [306.0, 258.0], [290.0, 190.0], [240.0, 158.0], [150.0, 158.0], [110.0, 196.0], [76.0, 232.0]],
+    "blur": 4.0
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#0C1440",
+  "deep": "#040818",
+  "jewel1": "#6450DC",
+  "jewel2": "#34A878"
+ }
+}

@@ -1,0 +1,555 @@
+{
+ "id": "base-11",
+ "name": "The Airship Road",
+ "stage": 3,
+ "number": 11,
+ "scene": "aldenard-airship-lane",
+ "subject": "the airship's lane on the old world chart, from Gridania north over Coerthas past the chart's own airship and dragons",
+ "technique": "a trail on a map",
+ "source": "ui/loadingimage/-nowloading_base05_hr1.tex",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 64,
+   "pegs": 59,
+   "bricks": 5,
+   "movers": 0,
+   "orange_candidates": 29,
+   "never_green": 26,
+   "skipped_while_tracing": [
+    [
+     [
+      449,
+      388
+     ],
+     "lane",
+     "-3.4 from the peg at (456, 400)"
+    ],
+    [
+     [
+      344,
+      281
+     ],
+     "lane",
+     "4.8 from the peg at (365, 288)"
+    ],
+    [
+     [
+      325,
+      344
+     ],
+     "lane west",
+     "-5.0 from the peg at (336, 339)"
+    ],
+    [
+     [
+      442,
+      419
+     ],
+     "lane south",
+     "3.5 from the peg at (456, 434)"
+    ],
+    [
+     [
+      400,
+      276
+     ],
+     "north coast",
+     "12.5 from the peg at (394, 305)"
+    ],
+    [
+     [
+      206,
+      404
+     ],
+     "west coast",
+     "7.4 from the peg at (192, 384)"
+    ]
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-11.json  id=base-11 \"The Airship Road\"  pieces=64 (round 59, bricks 5, movers 0)  mayBeOrange=29",
+    "     still round pegs 59: closest surfaces 14.7 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 148..491"
+   ]
+  },
+  "sweep": {
+   "angles": 681,
+   "pegs_median": 9,
+   "pegs_mean": 9.0,
+   "pegs_max": 19,
+   "oranges_mean": 3.72,
+   "no_hit": 0,
+   "stuck": 10,
+   "stuck_share": 0.015,
+   "long_flights": 0,
+   "bucket": 97,
+   "unreached": [],
+   "pieces": 64
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 25,
+   "games": 48,
+   "oranges_left_when_lost": [
+    5,
+    2,
+    4,
+    3,
+    3,
+    3,
+    2,
+    1,
+    6,
+    2,
+    4,
+    2,
+    4,
+    1,
+    4,
+    4,
+    5,
+    4,
+    1,
+    4,
+    2,
+    3,
+    3
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 977,
+   "ramp_per_48": 27.1,
+   "shots_mean": 13.5,
+   "stuck_fires": 49,
+   "random_won": 0,
+   "random_oranges_mean": 19.6,
+   "low_left_share": 0.0,
+   "lost_with_low_orange": 0.0,
+   "holdouts": [
+    {
+     "piece": 1,
+     "at": [
+      514,
+      400
+     ],
+     "share_of_lost_games": 0.23
+    },
+    {
+     "piece": 0,
+     "at": [
+      485,
+      383
+     ],
+     "share_of_lost_games": 0.22
+    },
+    {
+     "piece": 45,
+     "at": [
+      591,
+      286
+     ],
+     "share_of_lost_games": 0.21
+    },
+    {
+     "piece": 28,
+     "at": [
+      378,
+      424
+     ],
+     "share_of_lost_games": 0.21
+    },
+    {
+     "piece": 5,
+     "at": [
+      456,
+      400
+     ],
+     "share_of_lost_games": 0.2
+    },
+    {
+     "piece": 17,
+     "at": [
+      163,
+      333
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 14,
+     "at": [
+      221,
+      367
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 44,
+     "at": [
+      572,
+      258
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 26,
+     "at": [
+      262,
+      353
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 35,
+     "at": [
+      110,
+      272
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 53,
+     "at": [
+      534,
+      291
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 41,
+     "at": [
+      566,
+      160
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 12,
+     "at": [
+      192,
+      316
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 32,
+     "at": [
+      207,
+      222
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 51,
+     "at": [
+      468,
+      281
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 43,
+     "at": [
+      558,
+      227
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 7,
+     "at": [
+      394,
+      305
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 20,
+     "at": [
+      222,
+      148
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 19,
+     "at": [
+      255,
+      160
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 42,
+     "at": [
+      561,
+      194
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 39,
+     "at": [
+      528,
+      216
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 11,
+     "at": [
+      336,
+      305
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 34,
+     "at": [
+      276,
+      252
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 6,
+     "at": [
+      365,
+      288
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 40,
+     "at": [
+      422,
+      228
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 18,
+     "at": [
+      288,
+      148
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 24,
+     "at": [
+      290,
+      202
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 37,
+     "at": [
+      472,
+      168
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 23,
+     "at": [
+      308,
+      229
+     ],
+     "share_of_lost_games": 0.0
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.39,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 0.0,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": null,
+    "longest_rim_run": 0.0,
+    "longest_rim_at": null,
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 0,
+    "lights_nearest": 99,
+    "darkened_min_clearance": 15.55,
+    "elements_dropped_for_clearance": 0
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 36,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.685,
+      "orange": 0.614,
+      "green": 0.704,
+      "purple": 0.588
+     },
+     "0.8x": {
+      "blue": 0.672,
+      "orange": 0.608,
+      "green": 0.698,
+      "purple": 0.56
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.39,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.4,
+      "drop": 0.01
+     },
+     "orange 1x": {
+      "worst": 0.319,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.329,
+      "drop": 0.01
+     },
+     "green 1x": {
+      "worst": 0.409,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.418,
+      "drop": 0.009
+     },
+     "purple 1x": {
+      "worst": 0.293,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.303,
+      "drop": 0.01
+     },
+     "blue 0.8x": {
+      "worst": 0.38,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.389,
+      "drop": 0.009
+     },
+     "orange 0.8x": {
+      "worst": 0.316,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.325,
+      "drop": 0.009
+     },
+     "green 0.8x": {
+      "worst": 0.406,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.415,
+      "drop": 0.009
+     },
+     "purple 0.8x": {
+      "worst": 0.267,
+      "at": [
+       308,
+       229
+      ],
+      "undressed": 0.276,
+      "drop": 0.009
+     }
+    },
+    "worst_margin": 0.267,
+    "largest_drop": 0.01,
+    "bricks_min_margin": [
+     0.434,
+     "blue"
+    ],
+    "protan_orange_p10": 0.105,
+    "protan_places": 29,
+    "protan_worst_at": [
+     262,
+     353
+    ],
+    "protan_min": 0.103,
+    "jewels": {
+     "coloured_px_pct": 68.7,
+     "mean_chroma": 0.079,
+     "second_at_walls_x": 0.39,
+     "second_at_walls_worst_window": [
+      0.9,
+      91
+     ],
+     "first_jewel_hue": 254,
+     "first_share": 0.839,
+     "second_jewel_hue": 173,
+     "second_share": 0.159,
+     "apart_deg": 81,
+     "bins_pct": [
+      0.0,
+      0.0,
+      0.1,
+      0.2,
+      0.0,
+      11.0,
+      4.8,
+      14.5,
+      68.3,
+      1.0,
+      0.0,
+      0.0
+     ]
+    },
+    "ghost_median": null,
+    "ghost_worst": null,
+    "ghost_isolated_pegs": 0,
+    "print": {
+     "median": 0.0,
+     "p90": 0.0,
+     "worst": [
+      0.0336,
+      [
+       192,
+       384
+      ]
+     ],
+     "samples": 56,
+     "mode": "pegs",
+     "hue_median": 0.0115
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 26.5,
+ "verdict": "PASS"
+}

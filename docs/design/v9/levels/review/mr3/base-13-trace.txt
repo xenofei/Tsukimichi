@@ -1,0 +1,2 @@
+  pieces 88 (pegs 71, bricks 17, movers 0); candidates 30; green-only 40; skipped while tracing 0
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_e874cb78-8d2-6\docs\design\v9\levels\build\trace\base-13.png

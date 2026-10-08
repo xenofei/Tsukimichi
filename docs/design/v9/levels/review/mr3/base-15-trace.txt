@@ -1,0 +1,12 @@
+  skipped ((185, 380), 'whale', '13.0 from the peg at (183, 409)')
+  skipped ((643, 458), 'south flock', '9.9 from the peg at (620, 452)')
+  skipped ((544, 496), 'south flock', '10.0 from the peg at (543, 472)')
+  skipped ((534, 579), 'south flock', "off the board (walls, launcher's swing or bucket)")
+  skipped ((752, 214), 'vortex', "off the board (walls, launcher's swing or bucket)")
+  skipped ((714, 239), 'vortex', 'wall pinch 1.7')
+  skipped ((706, 132), 'vortex wall', 'wall pinch 9.5')
+  skipped ((708, 156), 'vortex wall', 'wall pinch 7.4')
+  skipped ((676, 201), 'vortex wall', '12.7 from the peg at (698, 180)')
+  skipped ((185, 436), 'crest', '11.7 from the peg at (183, 409)')
+  pieces 74 (pegs 74, bricks 0, movers 0); candidates 29; green-only 37; skipped while tracing 10
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_e874cb78-8d2-6\docs\design\v9\levels\build\trace\base-15.png

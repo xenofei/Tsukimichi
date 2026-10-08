@@ -1,0 +1,197 @@
+{
+ "name": "holy-see",
+ "about": "Ishgard over the sea of clouds: the game's own Coerthas loading-screen painting (read from the install, never shipped), mirrored so its light comes from the upper left, night graded, in the approved pilot base-p2's crop. Glacier-blue stone and sky over a rose cloud sea, the rose fading out toward the walls; snow-laden fir boughs from both top corners and firs in the lower corners, four moonbeams from the upper left with snow drifting in them.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base03.tex",
+  "mirror": true,
+  "crop": [430, 60, 1293, 970],
+  "grade": {
+   "gamma": 1.7,
+   "exposure": 0.7,
+   "ceiling": 0.36
+  },
+  "skyDrop": 0.3,
+  "glow": [-50, -60]
+ },
+ "veil": 0.42,
+ "features": {
+  "ridge": {
+   "points": [[100, 178], [113, 172], [138, 161], [162, 149], [186, 163], [212, 172], [238, 181], [262, 190], [286, 205], [310, 222], [334, 237], [360, 248], [395, 258], [428, 272]]
+  },
+  "summits": [[162, 116], [256, 150], [341, 200]],
+  "billow west": {
+   "circle": [150, 350, 50],
+   "from": 230,
+   "sweep": 80
+  },
+  "billow middle": {
+   "circle": [268, 340, 50],
+   "from": 230,
+   "sweep": 80
+  },
+  "billow east": {
+   "circle": [392, 356, 50],
+   "from": 230,
+   "sweep": 80
+  },
+  "billow hearts": [[100, 352], [209, 328], [330, 316]],
+  "bridge deck": {
+   "points": [[312, 441], [490, 379.4]]
+  },
+  "spire tips": [[514, 100], [624, 134], [484, 150], [566, 222]],
+  "left flank": [[478, 194], [472, 232], [462, 270], [457, 306], [446, 346]],
+  "right flank": [[642, 176], [654, 212], [668, 248], [676, 284], [678, 320], [670, 356], [662, 392]],
+  "rose window": {
+   "circle": [546, 333, 44]
+  },
+  "cathedral foot": [[480, 478], [516, 506], [552, 478], [588, 506], [624, 478], [660, 506]],
+  "piers": [[322, 496], [362, 486], [404, 476], [444, 470], [346, 530], [392, 524], [438, 520]],
+  "lower town": [[108, 470], [150, 448], [192, 470], [128, 508], [172, 508], [216, 506], [236, 456]],
+  "cathedral": {
+   "points": [[436, 520], [440, 360], [458, 250], [470, 180], [500, 120], [530, 40], [600, 50], [636, 130], [664, 220], [690, 330], [686, 520]]
+  },
+  "below the crest": {
+   "points": [[40, 192], [100, 188], [138, 172], [162, 160], [212, 182], [262, 200], [310, 232], [360, 258], [428, 282], [470, 300], [470, 560], [40, 560]]
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Glacier blue and rose cloud (Coerthas)",
+   "sky": "#14204F",
+   "deep": "#080B22",
+   "jewel1": "#1A7AD4",
+   "jewel2": "#B4506E",
+   "warm": "#FFC27A",
+   "rim": "#DCE8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#1890E8"], [300, "#147CC8"], [600, "#0F68A8"]],
+   "valueHues": [[0.08, "#105090"], [0.45, "#C0E8FF"]],
+   "chroma": 1.5,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#BA506C",
+     "chroma": 0.17,
+     "mask": [["luma", 0.2, 0.32, 4], ["poly", "below the crest", 30], ["y", 540, 470], ["not-poly", "cathedral", 30], ["x", 75, 190]]
+    }
+   ],
+   "quiet": [40, 18],
+   "regionQuiet": 0.15
+  },
+  "shafts": [
+   {
+    "origin": [-120, -200],
+    "angles": [50, 57, 64, 72],
+    "widths": [34, 22, 40, 26],
+    "k": 0.08,
+    "col": "#CFE0FF"
+   }
+  ],
+  "framing": [
+   {
+    "kind": "frond",
+    "style": "fir",
+    "x": 70,
+    "y": 34,
+    "length": 175,
+    "angle": 14,
+    "droop": 0.5,
+    "leaf": 7,
+    "n": 70,
+    "seed": 1,
+    "width": 2.4,
+    "twigs": 6
+   },
+   {
+    "kind": "frond",
+    "style": "fir",
+    "x": 86,
+    "y": 36,
+    "length": 130,
+    "angle": 46,
+    "droop": 0.35,
+    "leaf": 7,
+    "n": 70,
+    "seed": 2,
+    "width": 2.4,
+    "twigs": 6
+   },
+   {
+    "kind": "frond",
+    "style": "fir",
+    "x": 70,
+    "y": 70,
+    "length": 110,
+    "angle": 30,
+    "droop": 0.6,
+    "leaf": 7,
+    "n": 70,
+    "seed": 3,
+    "width": 2.4,
+    "twigs": 6
+   },
+   {
+    "kind": "frond",
+    "style": "fir",
+    "x": 730,
+    "y": 34,
+    "length": 175,
+    "angle": 166,
+    "droop": 0.5,
+    "leaf": 7,
+    "n": 70,
+    "seed": 4,
+    "width": 2.4,
+    "twigs": 6
+   },
+   {
+    "kind": "frond",
+    "style": "fir",
+    "x": 714,
+    "y": 36,
+    "length": 130,
+    "angle": 134,
+    "droop": 0.35,
+    "leaf": 7,
+    "n": 70,
+    "seed": 5,
+    "width": 2.4,
+    "twigs": 6
+   },
+   {
+    "kind": "frond",
+    "style": "fir",
+    "x": 730,
+    "y": 70,
+    "length": 110,
+    "angle": 150,
+    "droop": 0.6,
+    "leaf": 7,
+    "n": 70,
+    "seed": 6,
+    "width": 2.4,
+    "twigs": 6
+   },
+   {
+    "kind": "pines",
+    "seed": 9,
+    "trees": [[92, 600, 150, 30], [122, 606, 108, 22], [150, 610, 70, 15], [708, 604, 160, 32], [680, 608, 112, 23], [655, 612, 64, 14]]
+   }
+  ],
+  "silhouette": {
+   "body": "#060818",
+   "inner": "#16204E",
+   "rim": "#DCE8FF",
+   "rimK": 0.32,
+   "snow": "#E8F0FF",
+   "seed": 5
+  }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 40
+  }
+ }
+}

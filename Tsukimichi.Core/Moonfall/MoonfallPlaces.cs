@@ -111,6 +111,15 @@ public static class MoonfallPlaces
         ["vesper-moonpath"] = new(ARealmReborn, "Western Thanalan"),
         ["ferry-under-sail"] = new(ARealmReborn, "Western Thanalan"),
         ["vesper-twin-lanterns"] = new(ARealmReborn, "Western Thanalan"),
+
+        // The Moon Road's stage 3, The Night Skyway (charter section 2). 3-1 and 3-5 read the world painting "The Three
+        // Great Continents" as a chart (the airship's lane over Aldenard, the whale in the cloud sea): no place in the story,
+        // as rhotano-wonders. 3-2 and 3-4 are our own paintings of a cloud sea under the moon: no place either. 3-3 is the
+        // Coerthas painting (holy-see, tagged above), the stage's one scene the shield can hide.
+        ["aldenard-airship-lane"] = MoonfallPlace.Nowhere,
+        ["cloudsea-beacons"] = MoonfallPlace.Nowhere,
+        ["cloudlane"] = MoonfallPlace.Nowhere,
+        ["sky-whale"] = MoonfallPlace.Nowhere,
     };
 
     /// <summary>

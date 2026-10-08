@@ -77,7 +77,9 @@ def _post_free(recipe):
 
 def _silhouette_parts(ctx, mask, body="#05060E", rim="#9EB4FF", rim_k=0.55, rim_w=1.6, inner="#0C1230", inner_k=0.5,
                       alpha=1.0, light=(-0.707, -0.707), seed=1, snow=None):
-    """dress2.silhouette's arithmetic, returning its parts: (alpha, body colour, the light screened over it)."""
+    """dress2.silhouette's arithmetic, returning its parts: (alpha, body colour, the rim light and the snow screened over
+    it). The snow is a part of its own: screened before the rim it gives exactly the dress's light (screen is associative),
+    and only the rim is the framing's rim light that F3b measures (3-3's snow on the upper faces is not a rim run)."""
     S = ctx.S
     m = np.clip(mask, 0, 1)
     mb = blur(m, rim_w * S * 0.6)
@@ -89,12 +91,11 @@ def _silhouette_parts(ctx, mask, body="#05060E", rim="#9EB4FF", rim_k=0.55, rim_
     rim_a = np.clip(band * 3.0, 0, 1) * rim_k * alpha * breaker * thick
     shade = blur(m, 14 * S)
     body_col = hexc(body) * (1 - inner_k * (1 - shade))[..., None] + hexc(inner) * (inner_k * (1 - shade))[..., None]
-    lit = np.zeros(m.shape + (3,), np.float32)
+    snow_lit = None
     if snow is not None:
         up = np.clip(-gy * S * 6.0, 0, 1) * m
-        lit = screen(lit, hexc(snow) * (np.clip(up * 2, 0, 1) * 0.30 * breaker)[..., None])
-    lit = screen(lit, hexc(rim) * rim_a[..., None])
-    return m * alpha, body_col, lit
+        snow_lit = screen(np.zeros(m.shape + (3,), np.float32), hexc(snow) * (np.clip(up * 2, 0, 1) * 0.30 * breaker)[..., None])
+    return m * alpha, body_col, hexc(rim) * rim_a[..., None], snow_lit
 
 
 def small_lights(recipe, level, S=1):
@@ -130,8 +131,8 @@ def small_lights(recipe, level, S=1):
 def split_dress(recipe, sc, level, S, still=BEAMS_STILL):
     """(P, parts): the palette's output and the plates (see the module's docstring), at S. A: the shafts' still share and
     the chart's neat-line light (screened); T: the chart's ticks (multiplied); K: one less the framing's coverage
-    (multiplied); C: the framing's colour premultiplied (added); R: the rim and snow (screened). Glows and small lights
-    are left to the runtime (`runtime_recipe`)."""
+    (multiplied); C: the framing's colour premultiplied (added); W: the silhouette's snow, when it has any (screened);
+    R: the rim (screened). Glows and small lights are left to the runtime (`runtime_recipe`)."""
     from .dress import Ctx, dress, draw_framing
     P, _ = dress(_post_free(recipe), sc, level, S)
     d = recipe.get("dress") or {}
@@ -152,20 +153,24 @@ def split_dress(recipe, sc, level, S, still=BEAMS_STILL):
         else:
             raise ValueError(f"no plate form for extra {e['kind']}")
     m0 = np.zeros((h, w), np.float32)
+    W = None
     f0, _ = draw_framing(Ctx(level, S, recipe.get("features")), np.zeros((h, w, 3), np.float32), d.get("framing", []), m0)
     f1, _ = draw_framing(Ctx(level, S, recipe.get("features")), np.ones((h, w, 3), np.float32), d.get("framing", []),
                          np.zeros((h, w), np.float32))
     a1 = np.clip(1 - (f1 - f0).mean(-1), 0, 1)
     if m0.any():
         sil = d.get("silhouette", {})
-        a2, B, R = _silhouette_parts(ctx, m0, body=sil.get("body", "#05060E"), rim=sil.get("rim", "#9EB4FF"),
+        a2, B, R, W = _silhouette_parts(ctx, m0, body=sil.get("body", "#05060E"), rim=sil.get("rim", "#9EB4FF"),
                                      rim_k=sil.get("rimK", 0.45), inner=sil.get("inner", "#0C1230"),
                                      inner_k=sil.get("innerK", 0.5), seed=sil.get("seed", 5), snow=sil.get("snow"))
     else:
         a2, B, R = np.zeros((h, w), np.float32), np.zeros((h, w, 3), np.float32), np.zeros((h, w, 3), np.float32)
     K = (1 - a1) * (1 - a2)
     C = f0 * (1 - a2)[..., None] + B * a2[..., None]
-    return P, {"A": A, "T": T, "K": K, "C": C, "R": R}
+    parts = {"A": A, "T": T, "K": K, "C": C, "R": R}
+    if W is not None:
+        parts["W"] = W
+    return P, parts
 
 
 def recompose(P, parts, glows=(), S=2):
@@ -175,6 +180,8 @@ def recompose(P, parts, glows=(), S=2):
         X = D.glow(X, S, g["x"], g["y"], g["r"], g["col"], g["k"])
     X = screen(X, parts["A"]) * parts["T"][..., None]
     X = X * parts["K"][..., None] + parts["C"]
+    if "W" in parts:
+        X = screen(X, parts["W"])
     return np.clip(screen(X, parts["R"]), 0, 1)
 
 
@@ -254,8 +261,10 @@ def plate_names(recipe):
     if d.get("extras"):
         light.append((f"{name}-ticks", "multiply", False, "T"))
     if d.get("framing"):
-        light += [(f"{name}-cover", "multiply", True, "K"), (f"{name}-cloth", "add", False, "C"),
-                  (f"{name}-rim", "screen", "rim", "R")]
+        light += [(f"{name}-cover", "multiply", True, "K"), (f"{name}-cloth", "add", False, "C")]
+        if (d.get("silhouette") or {}).get("snow"):
+            light.append((f"{name}-snow", "screen", False, "W"))
+        light.append((f"{name}-rim", "screen", "rim", "R"))
     return paint, light
 
 
