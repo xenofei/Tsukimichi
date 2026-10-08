@@ -1,6 +1,6 @@
 {
  "name": "uldah-coliseum",
- "about": "The Coliseum's lower floor as the game's own Steps of Thal map draws it (read from the install, never shipped), by moonlight: the arena's sunken sands, its two tiers and its wings over the faint ring and spokes of the city above. The map's red exit arrows are erased; the parchment beyond the city ring recedes; the city's bronze ring has weathered to verdigris; the arena's rings are engraved in gilt.",
+ "about": "The Coliseum's lower floor as the game's own Steps of Thal map draws it (read from the install, never shipped), by moonlight: the arena's sunken sands, its two tiers and its wings over the faint ring and spokes of the city above. The map's red exit arrows are erased; the parchment beyond the city ring recedes; the city's bronze ring has weathered to verdigris on its outer face, the stone under the ring's pieces left lapis (so orange holds for a protanope); the arena's rings are engraved in gilt.",
  "source": {
   "kind": "game",
   "texture": "ui/map/w1t2/02/w1t202_m.tex",
@@ -51,6 +51,25 @@
     ]
    ],
    "mul": 0.78
+  },
+  {
+   "mask": [
+    [
+     "disc",
+     385,
+     282,
+     270,
+     50
+    ],
+    [
+     "disc",
+     385,
+     282,
+     160,
+     -60
+    ]
+   ],
+   "mul": 0.88
   }
  ],
  "overlays": [
@@ -896,21 +915,21 @@
    "regions": [
     {
      "hex": "#3AA064",
-     "chroma": 0.15,
+     "chroma": 0.3,
      "mask": [
       [
        "disc",
        385,
        282,
-       270,
+       300,
        50
       ],
       [
        "disc",
        385,
        282,
-       160,
-       -60
+       235,
+       -45
       ],
       [
        "x",
@@ -929,7 +948,7 @@
     60,
     25
    ],
-   "regionQuiet": 0.4
+   "regionQuiet": 0.5
   },
   "shafts": [
    {
@@ -1073,6 +1092,20 @@
  "runtime": {
   "motion": {
    "dust": 30
-  }
+  },
+  "glints": [
+   {
+    "overlay": 0,
+    "speed": 60,
+    "every": 50,
+    "offset": 0
+   },
+   {
+    "overlay": 2,
+    "speed": 40,
+    "every": 50,
+    "offset": 25
+   }
+  ]
  }
 }

@@ -11,15 +11,16 @@ Technique (LA, rings and spokes of brick): the board is a wheel centred on the s
   one slot over the next, so a ball falls through to the sands (a moon on the pit) instead of resting on a flat apex.
   The city ring (R 210 round its own centre) has crowns of brick on its upper flanks, clear of the launcher, and is
   dotted round its lower half; moons on its inner face under the crowns and on its outer face down the flanks give the
-  ring the map's thick band.
+  ring the map's thick band. The east faces close at 358 degrees (MR 4 round 1, game designer n2: the two moons that
+  stood alone outside the east ring now sit on its faces).
 - Spokes: the wings and the Promenade are runs of brick along the map's own corridors, and three spokes of the wheel
   (north-west, north-east, south-east) run from the stands toward the city ring. The recipe engraves the rings and six
   spokes in gilt under the pieces, so the lattice reads at 640 even as the pieces clear.
 
 Candidates (31): the sands, the inner walk, the outer tier's east moons and its west crown, the city ring's flanks and
 faces, the stands' south-west moon, a brick of the north-west spoke, the city's crowns, the inner tier's west brick,
-the south-east spoke and the Promenade, and the west city spoke. Three candidates sit at y 430 or lower (the city
-ring's (253, 445), the stands' (319, 439) and the south-east spoke's brick); low oranges are about 6% of those left in
+the south-east spoke's inner brick and the Promenade, and the west city spoke. Two candidates sit at y 430 or lower (the city
+ring's (253, 445) and the stands' (319, 439)); low oranges are about 6% of those left in
 lost games, and no holdout passes 25%. No candidate sits against a wall: the
 outer-face moon at (624, 231), as a candidate, decided 36-42% of lost games and is blue; two blue moons on the outer
 face above the flanks' columns (202 and 338 degrees, and 328) shield them instead.
@@ -28,6 +29,15 @@ Tuning (seeds 1-864 and 20001-23456): 21.7 and 21.5 per 48 toward the charter's 
 integration's mark-grid fix: the north-west crown starts at 224.5 and the Promenade is trimmed 1 at its north end). The stands' slot
 is 46 units (its ends slope about 10 degrees): at 30 a slow ball rested on its near-flat ends, and the inner tier's
 unopened apex under the two slots held balls too (play's stuck fires fell from 138 to 58 per 1728 on the tuning seeds).
+
+MR 4 round 1 (UX M1, critic m4: protan orange had no margin, p10 0.101 and min 0.083 at three orange-able bricks on the
+verdigris): the scene's verdigris moves out to the ring's outer face (the region's inner edge 160 -> 235, outer 270 ->
+300, chroma 0.15 -> 0.3, regionQuiet 0.4 -> 0.5) and the ring's band is toned 0.88, so the stone under the ring's
+pieces stays lapis; the south-east spoke's orange brick is its inner one (474, 403), where the green has faded. Protan
+p10/min 0.107/0.105 (target 0.105/0.10), bricks_min_margin 0.248 -> 0.266, jewels 261/179 (0.296). The east strays'
+move and the brick swap cancel on the tuning seeds (20.7 -> 21.2 on 1-864, 21.9 -> 21.9 on 20001-23456); held out
+22.1, pooled 21.95 over 6,912 games (22.18 before). Critic n5: the runtime runs glints round the city ring and the
+stands' ring (overlays 0 and 2, one at a time).
 """
 import math
 
@@ -86,19 +96,19 @@ def build(b):
     ring_pegs(b, cx, cy, R, (8, 19, 30, 41, 52, 63, 74, 85, 96, 107, 118, 129, 140, 151, 162, 173),
               oranges=(8, 19, 41, 129, 151, 173), tag="city ring")
     # the city ring's two faces: its inner face under the crowns, its outer face down the flanks
-    ring_pegs(b, cx, cy, 178, (194, 206, 218, 230, 310, 322, 334, 346), oranges=(206, 310, 322, 334, 346),
+    ring_pegs(b, cx, cy, 178, (194, 206, 218, 230, 310, 322, 334, 346, 358), oranges=(206, 310, 322, 334, 346),
               tag="city ring inner face")
-    ring_pegs(b, cx, cy, 244, (202, 192, 182, 172, 162, 152, 142, 8, 18, 28, 38, 348, 338, 328),
+    ring_pegs(b, cx, cy, 244, (202, 192, 182, 172, 162, 152, 142, 8, 18, 28, 38, 358, 348, 338, 328),
               oranges=(192, 182, 172, 162, 152, 18, 28),
               tag="city ring outer face")
     ring_pegs(b, ax, ay, 140, (12, 72, 120, 132, 228), oranges=(120,), tag="stands")
-    for (x, y) in ((104, 292), (690, 320), (100, 246), (692, 272)):
+    for (x, y) in ((104, 292), (100, 246)):
         b.place(x, y, orange=(x, y) == (104, 292), tag="city spoke")
     # ---- orange bricks: the stands' crown, the outer tier's crown, a brick of each spoke and of the city's crowns
     brick_tags = [t[1] for t in b.tags if t[0] == "brick"]
     for tag, ks in (("outer tier", (0,)), ("spoke north-west", (2,)),
                     ("inner tier", (0,)),
-                    ("spoke south-east", (1,)), ("city ring", (1, 4)), ("promenade", (1,))):
+                    ("spoke south-east", (0,)), ("city ring", (1, 4)), ("promenade", (1,))):
         bricks = [br for br, t in zip(b.bricks, brick_tags) if t == tag]
         for k in ks:
             bricks[k]["canBeOrange"] = True
