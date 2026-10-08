@@ -1,6 +1,6 @@
 {
  "name": "cloudsea-beacons",
- "about": "Our own painting: the airship lane's beacons over a moonlit sea of clouds, the full moon rising at the lane's end, each lantern's beam fanning up into the night (painters/cloudsea.py; shipped as a JPEG).",
+ "about": "Our own painting: the airship lane's beacons over a moonlit sea of clouds, the full moon rising at the lane's end, each lantern's beam fanning up into the night (painters/cloudsea.py; shipped as a JPEG). MR 3 round 1 (UX M1): the moon rises misted through the haze (its face OKLab L about 0.67, under the ball's 0.885 and the aim guide's 0.96, with two strata of mist across its lower half), since it sits on the launcher's axis where every central shot starts; a broad tone (x 0.8) over the horizon band quietens the far crests' silver lining behind the first orange pair, lifting F6 from 0.216 to 0.237 (UX m3).",
  "source": {
   "kind": "painting",
   "painter": "cloudsea",
@@ -55,16 +55,36 @@
    }
   ],
   "framing": [
-   {"kind": "rope", "a": [75, 44], "b": [210, 34], "sag": 16, "width": 1.6},
-   {"kind": "rope", "a": [590, 34], "b": [725, 44], "sag": 16, "width": 1.6},
-   {"kind": "festoon", "spans": [[60, 120, 30], [120, 176, 20], [176, 214, 12]], "col": "#2A1E50"},
-   {"kind": "festoon", "spans": [[586, 624, 12], [624, 680, 20], [680, 740, 30]], "col": "#2A1E50"}
+   {
+    "kind": "rope",
+    "a": [75, 44],
+    "b": [210, 34],
+    "sag": 16,
+    "width": 1.6
+   },
+   {
+    "kind": "rope",
+    "a": [590, 34],
+    "b": [725, 44],
+    "sag": 16,
+    "width": 1.6
+   },
+   {
+    "kind": "festoon",
+    "spans": [[60, 120, 30], [120, 176, 20], [176, 214, 12]],
+    "col": "#2A1E50"
+   },
+   {
+    "kind": "festoon",
+    "spans": [[586, 624, 12], [624, 680, 20], [680, 740, 30]],
+    "col": "#2A1E50"
+   }
   ],
   "silhouette": {
    "body": "#06071A",
    "inner": "#141E4E",
    "rim": "#BFE6FF",
-   "rimK": 0.40,
+   "rimK": 0.4,
    "seed": 12
   },
   "lights": [
@@ -83,11 +103,24 @@
    "dust": 10,
    "stars": 30,
    "mist": [
-    {"y": [540, 594], "speed": 4, "alpha": 0.10, "cell": 150, "seed": 11, "colour": "#B8D4F0"}
+    {
+     "y": [540, 594],
+     "speed": 4,
+     "alpha": 0.1,
+     "cell": 150,
+     "seed": 11,
+     "colour": "#B8D4F0"
+    }
    ],
    "starWhere": [["y", 236, 220]]
   },
   "flicker": [0],
   "feverMoon": [400, 220, 30]
- }
+ },
+ "tone": [
+  {
+   "mask": [["y", 236, 252], ["y", 300, 276]],
+   "mul": 0.8
+  }
+ ]
 }

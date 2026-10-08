@@ -1,16 +1,11 @@
 {
  "name": "sky-whale",
- "about": "The cloud sea north of the Rhotano as the game's own world painting The Three Great Continents draws it: the chart's whale swimming the clouds under the great vortex, and two chevrons of birds flying its way along the chart's dotted lanes; read as a chart under the moon, seen from an airship's deck.",
+ "about": "The cloud sea north of the Rhotano as the game's own world painting The Three Great Continents draws it: the chart's whale swimming the clouds under the great vortex, and a chevron of birds flying its way along the chart's dotted lane; read as a chart under the moon, seen from an airship's deck. MR 3 round 1 (game designer M1, m1; critic M2): the crop zooms in on the whale, [940, 330, 960, 720] (it was [870, 312, 1400, 1050]: wider than 3-1's 1280, with the whale a sixth of the board), overlapping 3-1's crop by 24.3% of its own area; the whale is lit (a tone of x 1.5 on its own silhouette) against cloud darkened round it (x 0.82 in a 60-unit band), where it had been darkened into the slate; the cloud sea's green keeps off the vortex's upper rim (UX m1: protan), and the whale's glow is softer (its ring's F6 drop).",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
   "mirror": false,
-  "crop": [
-   870,
-   312,
-   1400,
-   1050
-  ],
+  "crop": [940, 330, 960, 720],
   "grade": {
    "gamma": 1.35,
    "exposure": 0.86,
@@ -21,260 +16,43 @@
  "veil": 0.34,
  "features": {
   "whale": {
-   "points": [
-    [
-     126,
-     239
-    ],
-    [
-     144,
-     233
-    ],
-    [
-     160,
-     228
-    ],
-    [
-     159,
-     239
-    ],
-    [
-     166,
-     245
-    ],
-    [
-     173,
-     251
-    ],
-    [
-     196,
-     256
-    ],
-    [
-     218,
-     253
-    ],
-    [
-     225,
-     259
-    ],
-    [
-     246,
-     265
-    ],
-    [
-     260,
-     269
-    ],
-    [
-     261,
-     275
-    ],
-    [
-     257,
-     280
-    ],
-    [
-     233,
-     285
-    ],
-    [
-     206,
-     283
-    ],
-    [
-     174,
-     281
-    ],
-    [
-     182,
-     277
-    ],
-    [
-     177,
-     269
-    ],
-    [
-     164,
-     253
-    ],
-    [
-     153,
-     245
-    ]
-   ]
-  },
-  "whale ring": {
-   "points": [
-    [
-     122,
-     238
-    ],
-    [
-     140,
-     230
-    ],
-    [
-     160,
-     225
-    ],
-    [
-     172,
-     241
-    ],
-    [
-     200,
-     251
-    ],
-    [
-     226,
-     253
-    ],
-    [
-     250,
-     262
-    ],
-    [
-     263,
-     271
-    ],
-    [
-     258,
-     282
-    ],
-    [
-     235,
-     287
-    ],
-    [
-     200,
-     286
-    ],
-    [
-     167,
-     283
-    ],
-    [
-     150,
-     263
-    ],
-    [
-     134,
-     248
-    ]
-   ]
-  },
-  "north flock upper wing": {
-   "points": [
-    [
-     593,
-     246
-    ],
-    [
-     600,
-     226
-    ],
-    [
-     611,
-     206
-    ],
-    [
-     627,
-     190
-    ],
-    [
-     647,
-     178
-    ]
-   ]
-  },
-  "north flock lower wing": {
-   "points": [
-    [
-     593,
-     246
-    ],
-    [
-     630,
-     245
-    ],
-    [
-     661,
-     239
-    ],
-    [
-     680,
-     236
-    ],
-    [
-     705,
-     233
-    ]
-   ]
+   "points": [[125.5, 332.5], [130.5, 328.5], [142.5, 328.5], [145.5, 315.5], [157.5, 315.5], [168.5, 311.5], [169.5, 317.5], [175.5, 317.5], [181.5, 324.5], [185.5, 325.5], [185.5, 343.5], [198.5, 353.5], [237.5, 361.5], [255.5, 358.5], [259.5, 353.5], [263.5, 353.5], [269.5, 361.5], [304.5, 374.5], [324.5, 372.5], [323.5, 386.5], [314.5, 396.5], [296.5, 402.5], [204.5, 401.5], [197.5, 397.5], [202.5, 394.5], [202.5, 378.5], [192.5, 365.5], [179.5, 356.5], [178.5, 347.5], [154.5, 346.5], [137.5, 341.5]]
   },
   "south flock east wing": {
-   "points": [
-    [
-     412,
-     293
-    ],
-    [
-     429,
-     304
-    ],
-    [
-     458,
-     319
-    ],
-    [
-     478,
-     323
-    ],
-    [
-     495,
-     331
-    ],
-    [
-     512,
-     343
-    ],
-    [
-     520,
-     356
-    ]
-   ]
+   "points": [[542.5, 412.3], [567.3, 428.3], [609.6, 450.2], [638.7, 456.0], [663.5, 467.7], [688.3, 485.2], [700.0, 504.2]]
   },
   "south flock west wing": {
-   "points": [
-    [
-     412,
-     293
-    ],
-    [
-     412,
-     326
-    ],
-    [
-     413,
-     355
-    ],
-    [
-     406,
-     394
-    ],
-    [
-     406,
-     415
-    ]
-   ]
+   "points": [[542.5, 412.3], [542.5, 460.4], [544.0, 502.7], [533.7, 559.6], [533.7, 590.2]]
   },
   "vortex": {
-   "ellipse": [
-    400,
-    112,
-    180,
-    90
-   ]
+   "ellipse": [525.0, 148.3, 262.5, 131.2]
+  },
+  "flight line": {
+   "points": [[522.1, 410.8], [475.4, 402.1], [422.9, 394.8], [373.3, 390.4]]
+  },
+  "crest high east": {
+   "points": [[510, 321], [534, 322], [558, 322], [582, 324], [606, 316], [630, 314], [654, 320]]
+  },
+  "crest high middle": {
+   "points": [[304, 326], [326, 326], [350, 328], [374, 333], [398, 335], [422, 329], [446, 334], [462, 330]]
+  },
+  "crest west": {
+   "points": [[126, 430], [150, 429], [174, 436], [190, 436]]
+  },
+  "crest middle": {
+   "points": [[386, 449], [410, 454], [434, 453], [458, 460]]
+  },
+  "crest south": {
+   "points": [[318, 485], [342, 488], [366, 482], [382, 475]]
+  },
+  "crest south-west": {
+   "points": [[178, 472], [202, 478], [226, 492], [234, 493]]
+  },
+  "crest east": {
+   "points": [[622, 474], [646, 475], [670, 470], [694, 464], [710, 462]]
+  },
+  "crest east low": {
+   "points": [[602, 538], [626, 525], [650, 516], [682, 505]]
   }
  },
  "dress": {
@@ -288,56 +66,18 @@
    "rim": "#A9E6D8"
   },
   "jewel": {
-   "bands": [
-    [
-     0,
-     "#4C42D2"
-    ],
-    [
-     600,
-     "#3A32AC"
-    ]
-   ],
-   "valueHues": [
-    [
-     0.08,
-     "#22228E"
-    ],
-    [
-     0.45,
-     "#D2D4FF"
-    ]
-   ],
+   "bands": [[0, "#4C42D2"], [600, "#3A32AC"]],
+   "valueHues": [[0.08, "#22228E"], [0.45, "#D2D4FF"]],
    "chroma": 1.8,
    "floor": 0.05,
    "regions": [
     {
      "hex": "#52AE6C",
      "chroma": 0.11,
-     "mask": [
-      [
-       "luma",
-       0.16,
-       0.24,
-       4
-      ],
-      [
-       "x",
-       75,
-       135
-      ],
-      [
-       "x",
-       725,
-       665
-      ]
-     ]
+     "mask": [["luma", 0.16, 0.24, 4], ["y", 110, 170], ["y", 590, 530], ["x", 75, 135], ["x", 725, 665]]
     }
    ],
-   "quiet": [
-    44,
-    12
-   ]
+   "quiet": [44, 12]
   },
   "glows": [
    {
@@ -348,31 +88,28 @@
     "k": 0.025
    },
    {
-    "x": 192,
-    "y": 262,
-    "r": 120,
+    "x": 221.7,
+    "y": 367.1,
+    "r": 175,
     "col": "#CFE0FF",
-    "k": 0.06
+    "k": 0.02
+   },
+   {
+    "x": 400,
+    "y": 318,
+    "r": 2000,
+    "col": "#B0C8C0",
+    "k": 0.014
    }
   ],
   "shafts": [
    {
-    "origin": [
-     -60,
-     -160
-    ],
-    "angles": [
-     50,
-     58,
-     67
-    ],
-    "widths": [
-     46,
-     32,
-     52
-    ],
+    "origin": [-60, -160],
+    "angles": [50, 58, 67],
+    "widths": [46, 32, 52],
     "k": 0.04,
-    "col": "#E0E6FF"
+    "col": "#E0E6FF",
+    "reach": 700
    }
   ],
   "extras": [
@@ -395,53 +132,29 @@
    },
    {
     "kind": "rope",
-    "a": [
-     60,
-     300
-    ],
-    "b": [
-     110,
-     600
-    ],
+    "a": [60, 300],
+    "b": [110, 600],
     "sag": 6,
     "width": 1.4
    },
    {
     "kind": "rope",
-    "a": [
-     740,
-     300
-    ],
-    "b": [
-     690,
-     600
-    ],
+    "a": [740, 300],
+    "b": [690, 600],
     "sag": 6,
     "width": 1.4
    },
    {
     "kind": "rope",
-    "a": [
-     75,
-     40
-    ],
-    "b": [
-     220,
-     30
-    ],
+    "a": [75, 40],
+    "b": [220, 30],
     "sag": 14,
     "width": 1.6
    },
    {
     "kind": "rope",
-    "a": [
-     580,
-     30
-    ],
-    "b": [
-     725,
-     40
-    ],
+    "a": [580, 30],
+    "b": [725, 40],
     "sag": 14,
     "width": 1.6
    }
@@ -474,108 +187,27 @@
     "speed": 30,
     "every": 24,
     "offset": 0
-   },
-   {
-    "overlay": 1,
-    "speed": 30,
-    "every": 24,
-    "offset": 12
    }
   ],
-  "flicker": [
-   0
-  ]
+  "flicker": [0]
  },
  "overlays": [
   {
    "kind": "route",
-   "points": [
-    [
-     582,
-     252
-    ],
-    [
-     548,
-     262
-    ],
-    [
-     508,
-     270
-    ],
-    [
-     470,
-     276
-    ],
-    [
-     436,
-     284
-    ]
-   ],
-   "color": "#D9BE82",
-   "width": 2.0,
-   "alpha": 0.5
-  },
-  {
-   "kind": "route",
-   "points": [
-    [
-     398,
-     292
-    ],
-    [
-     366,
-     286
-    ],
-    [
-     330,
-     281
-    ],
-    [
-     296,
-     278
-    ]
-   ],
+   "points": [[522.1, 410.8], [475.4, 402.1], [422.9, 394.8], [373.3, 390.4]],
    "color": "#D9BE82",
    "width": 2.0,
    "alpha": 0.5
   }
  ],
- "masks": {
-  "whale dark": {
-   "kind": "rim-fill",
-   "threshold": 0.62,
-   "grow": 0
-  }
- },
  "tone": [
   {
-   "mask": [
-    [
-     "mask",
-     "whale dark",
-     2
-    ],
-    [
-     "disc",
-     192,
-     262,
-     110,
-     30
-    ]
-   ],
-   "mul": 0.7
+   "mask": [["poly", "whale", 3]],
+   "mul": 1.5
   },
   {
-   "mask": [
-    [
-     "disc",
-     240,
-     430,
-     150,
-     60
-    ]
-   ],
-   "mul": 0.76
+   "mask": [["near", "whale", 10, 60], ["not-poly", "whale", 3]],
+   "mul": 0.82
   }
  ]
 }

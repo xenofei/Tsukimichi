@@ -1,50 +1,79 @@
 {
  "name": "cloudlane",
- "about": "Our own painting: the airship lane by night, the cloud sea's banks sliding past beneath the moon and the lane's beacon lamps closing toward the horizon, no hull (painters/cloudlane.py; shipped as a JPEG).",
- "source": {"kind": "painting", "painter": "cloudlane", "params": {}},
- "ceilingExempt": [[596, 118, 64]],
+ "about": "Our own painting: the airship lane by starlight, the cloud sea's banks sliding past with their crests lined silver by a moon set beyond the upper right, the lane's beacon lamps closing toward the horizon, and the star river climbing the sky over it, no hull (painters/cloudlane.py; shipped as a JPEG). MR 3 round 1 (game designer M2, m5; UX m1; critic m4, m5): the moon's disc and the full-moon sky that echoed 3-2 are gone; the second jewel no longer lies on every crest (the banks read as green hills) but on the lane's own wedge of cloud, the current the airships ride, aqua between the beacons, so the banks either side stay lavender-silver cloud. (Mist bands along the slid crests were tried: the runtime keeps every mist band clear of the pieces across the board's width, so they cannot run over the movers; the movers instead ride at each run's mean crest height, and a run whose crest strays more than a peg's radius is left out.)",
+ "source": {
+  "kind": "painting",
+  "painter": "cloudlane",
+  "params": {}
+ },
  "veil": 0.22,
  "dress": {
   "palette": {
-   "name": "Violet night over a sea-green cloud lane",
-   "sky": "#141048",
-   "deep": "#060818",
-   "jewel1": "#7040C0",
-   "jewel2": "#3EAA54",
+   "name": "Indigo night, the lane aqua over its cloud",
+   "sky": "#0C1440",
+   "deep": "#040818",
+   "jewel1": "#6450DC",
+   "jewel2": "#34A878",
    "warm": "#FFB45E",
-   "rim": "#C0C8FF"
+   "rim": "#C8D8FF"
   },
   "jewel": {
-   "bands": [[0, "#7040C0"], [300, "#6A3CBC"], [600, "#5832A0"]],
-   "valueHues": [[0.08, "#3A1A7E"], [0.45, "#E4D0FF"]],
+   "bands": [[0, "#6450DC"], [300, "#604CD8"], [600, "#5444B8"]],
+   "valueHues": [[0.08, "#2E2284"], [0.45, "#DCD8FF"]],
    "chroma": 1.1,
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#3EAA54",
+     "hex": "#34A878",
      "chroma": 0.15,
-     "mask": [["y", 262, 300], ["y", 548, 478], ["luma", 0.28, 0.40, 3], ["x", 75, 135], ["x", 725, 665]]
+     "mask": [["poly", "lane", 40], ["y", 262, 300], ["luma", 0.1, 0.36, 3]]
     }
    ],
    "quiet": [60, 25],
    "regionQuiet": 0.3
   },
   "shafts": [
-   {"origin": [596, 118], "angles": [75, 92, 110, 128], "widths": [14, 22, 18, 12], "k": 0.04, "col": "#D8DCFF", "reach": 600, "near": 60}
+   {
+    "origin": [868, -60],
+    "angles": [118, 128, 138],
+    "widths": [22, 30, 18],
+    "k": 0.035,
+    "col": "#D8E0FF",
+    "reach": 900,
+    "near": 60
+   }
   ],
   "framing": [
-   {"kind": "rope", "a": [560, 30], "b": [725, 50], "sag": 16, "width": 1.6}
+   {
+    "kind": "rope",
+    "a": [560, 30],
+    "b": [725, 50],
+    "sag": 16,
+    "width": 1.6
+   }
   ],
-  "silhouette": {"body": "#06061A", "inner": "#16144A", "rim": "#C0C8FF", "rimK": 0.0, "seed": 19}
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16144A",
+   "rim": "#C0C8FF",
+   "rimK": 0.0,
+   "seed": 19
+  }
  },
  "runtime": {
   "motion": {
    "stars": 36,
    "mist": [
-    {"y": [520, 592], "speed": 6, "alpha": 0.10, "cell": 120, "seed": 11, "colour": "#C8C0E8"}
+    {
+     "y": [520, 592],
+     "speed": 6,
+     "alpha": 0.1,
+     "cell": 120,
+     "seed": 11,
+     "colour": "#C0D0EC"
+    }
    ],
-   "starWhere": [["poly", "star sky", 8], ["disc", 596, 118, 40, -8]]
-  },
-  "feverMoon": [596, 118, 24]
+   "starWhere": [["poly", "star sky", 8]]
+  }
  }
 }

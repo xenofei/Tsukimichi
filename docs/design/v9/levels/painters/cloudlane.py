@@ -1,16 +1,22 @@
-"""Our own painting for 3-4 "The Airship Under Way" (re-subjected: sources-plan.md, 3-4): the airship lane by night.
+"""Our own painting for 3-4 "The Lane by Starlight" (re-subjected: sources-plan.md, 3-4): the airship lane by night.
 
 No airship art exists at a usable size (sources-plan.md), so the level shows what an airship passes rather than the
-hull: the cloud sea sliding by beneath the moon and the lane's beacon lamps marching away to the horizon. The moon
-stands high in the upper right behind thin cirrus; under it the cloud sea runs in banks of billows, far ones low and
-hazed, near ones heaped and lit silver on their moonward (right, upper) sides, the troughs between them in deep shadow
-(the dress lays the level's sea-green on the moonlit crowns). Two lavender cloud towers stand on the far horizon. The
-lane is two rows of beacons, slim posts with a pale gold lamp at the head, rising out of the cloud tops and closing
-toward a vanishing point on the horizon; each lamp pools a little light on the billows round its foot, and a faint
-current with drifting motes runs between the rows. An overhang of dark cloud closes the upper left corner.
+hull: the cloud sea sliding by and the lane's beacon lamps marching away to the horizon, under the star river. The moon
+has set beyond the upper right corner; its light still rakes the cloud sea from the right, so the banks run in billows
+whose crests are lined with silver on their moonward (right, upper) sides, far ones low and hazed, near ones heaped,
+with smaller billows on their faces and the troughs between them in deep shadow (the dress lays the level's aqua on the
+lane's own wedge of cloud). Over the lane the sky is a deep indigo-blue, and the star river, a milky band of crowded small stars with a
+dark rift of dust winding along it, climbs from behind the left cloud tower to the upper right: the Night Skyway the
+airships steer by. Two slate-blue cloud towers stand on the far horizon. The lane is two rows of beacons, slim posts
+with a pale gold lamp at the head, rising out of the cloud tops and closing toward a vanishing point on the horizon;
+each lamp pools a little light on the billows round its foot, and a faint current with drifting motes runs between the
+rows. An overhang of dark cloud closes the upper left corner.
+
+MR 3 round 1 (game designer M2, m5): the full moon and the violet sky echoed 3-2, and the banks were flat and read as
+hills; the moon set, the star river, the indigo-blue sky and the silver-lined crests are that round's answer.
 
 FEATURES (board units): each bank's crest (the top edge of its billows), the beacons (lamp, perspective scale, side),
-the lane's two edges, the moon, and the open sky (for the stars' motion).
+the lane's two edges, the star river's spine, and the open sky (for the stars' motion).
 """
 import math
 
@@ -22,17 +28,22 @@ from brush import strokes
 from rich_lib import blur, fbm, hexc, normals_from_height, ramp, screen, smooth
 
 HORIZON = 268.0
-MOON = (596, 118, 24)
+# MR 3 round 1 (game designer M2: the board echoed 3-2's purple sky and full moon, and its banks read as green hills):
+# the moon is set beyond the frame's upper right, so its light rakes the banks from the right and silvers their
+# crests, and the sky over the lane holds the star river instead, the Night Skyway the airships steer by.
+MOON = (868, -60, 24)
+# the star river's spine across the sky, from behind the left tower up to the upper right (board units)
+GALAXY = [(232, 262), (300, 236), (372, 206), (446, 174), (522, 142), (600, 112), (676, 84), (740, 62)]
 VP = (452.0, 272.0)                               # the lane's vanishing point on the far cloud sea
 LANE_NEAR = ((150.0, 576.0), (660.0, 576.0))      # the lane's two edges where they leave the board
 SCALES = (0.78, 0.50, 0.32, 0.19, 0.09)           # the beacons' perspective scale, near to far
-LIGHT = np.array([0.55, -0.55, 0.63], np.float32)  # from the moon: right, up (screen y down), toward the viewer
+LIGHT = np.array([0.68, -0.60, 0.42], np.float32)  # from the set moon: right, up (screen y down), a little toward us
 LIGHT = LIGHT / np.linalg.norm(LIGHT)
 # the clouds' colour by light: the towers and the overhang in the sky's lavender, the cloud sea a near-neutral silver
 # (the dress lays the second jewel's sea-green on its moonlit crowns; a lavender paint there would cancel it where the
 # quiet keeps the paint)
 SILVER = [(0, "#0A0B1C"), (0.18, "#151A2E"), (0.40, "#2A3346"), (0.62, "#525C70"), (0.82, "#949CB0"), (1.0, "#D2D6E2")]
-LAVENDER = [(0, "#09081F"), (0.18, "#16133F"), (0.40, "#2C2A66"), (0.62, "#585498"), (0.82, "#9090CC"), (1.0, "#C8C6F0")]
+LAVENDER = [(0, "#070B1E"), (0.18, "#101C3C"), (0.40, "#22365E"), (0.62, "#4A6088"), (0.82, "#8298BE"), (1.0, "#C2D0EA")]
 
 # the banks, far to near (closer together toward the horizon): base y (the billows' feet), puff radius range, haze
 BANKS = [
@@ -149,8 +160,9 @@ FEATURES = {
     "lane right": {"points": [[b["lamp"][0], b["lamp"][1]] for b in BEACONS if b["side"] == 1]},
     "tower left": {"points": _tower_top(120, 300)},
     "tower right": {"points": _tower_top(630, 724)},
-    "moon": {"circle": [MOON[0], MOON[1], 54], "from": 70, "sweep": 90},
-    "star sky": [[76, 132], [200, 112], [300, 120], [500, 150], [540, 60], [700, 44], [724, 44], [724, 196],
+    "star river": {"points": [list(p) for p in GALAXY]},
+    "lane": [[VP[0], VP[1] - 4], [LANE_NEAR[0][0] - 40, 600.0], [LANE_NEAR[1][0] + 40, 600.0]],
+    "star sky": [[76, 132], [200, 112], [300, 110], [420, 60], [700, 44], [724, 44], [724, 196],
                  [650, 206], [626, 258], [306, 258], [290, 190], [240, 158], [150, 158], [110, 196], [76, 232]],
 }
 
@@ -189,7 +201,8 @@ def _cloud(px, S, X, Y, puffs, seed, depth, haze, sky_far, body_base=None, soft=
     cov = np.clip(cov * (0.75 + 0.5 * fuzz) * smooth(0.0, 0.35, cov) + cov * (1 - smooth(0.0, 0.35, cov)) * 0.4, 0, 1)         * smooth(0.02, 0.2, cov) + np.clip(cov - 0.999, 0, 1)
     cov = np.where(cov > 0.98, 1.0, cov)
     # the surface: the spheres' heights roughened with small billows, so each puff reads as cauliflower, not a ball
-    detail = (fbm(H, W, max(5.0, rmin * 1.2) * S, 3, seed + 7) - 0.5) * (rmin * 0.22)
+    detail = ((fbm(H, W, max(5.0, rmin * 1.2) * S, 3, seed + 7) - 0.5) * (rmin * 0.30)
+              + (fbm(H, W, max(2.5, rmin * 0.45) * S, 2, seed + 9) - 0.5) * (rmin * 0.12))
     hs = blur(hbuf + detail * np.clip(hbuf / 4, 0, 1), (2.6 + 0.16 * rmin) * S)
     nx, ny, nz = normals_from_height(hs, S)
     diffuse = np.clip((nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2] + 0.25) / 1.25, 0, 1)
@@ -203,7 +216,14 @@ def _cloud(px, S, X, Y, puffs, seed, depth, haze, sky_far, body_base=None, soft=
     rim = smooth(0.0, 0.5, cov) * smooth(0.9, 0.2, cov * 0 + np.clip(hbuf / (rmin * 0.8), 0, 1)) * np.clip(nx * 0.7 - ny * 0.6, 0, 1)
     moonward = 0.72 + 0.40 * np.exp(-((X - MOON[0]) / 330) ** 2)
     deep = smooth(0, 1, below)
-    lit = 0.05 + (0.74 * diffuse ** 1.9 + 0.14) * (1 - 0.86 * deep) * moonward + 0.34 * rim * moonward
+    # the crest's silver lining: the first few units under each column's top, caught by the raking moon
+    lining = np.exp(-np.clip(Y - top_row[None, :], 0, None) / 2.4) * smooth(0.3, 0.9, cov) * np.clip(0.35 + nx * 0.9, 0, 1)
+    # every billow's own upper outline, where it stands against the one behind it: a thinner line of the same light
+    sh = max(1, int(round(2.0 * S)))
+    outline = np.clip(cov - np.vstack([np.zeros((sh, cov.shape[1]), np.float32), cov[:-sh]]), 0, 1)
+    outline = np.maximum(outline, np.clip(smooth(0.5, 0.0, -ny) * 0 + np.clip(-ny - 0.55, 0, 1) * 1.6, 0, 1) * smooth(0.5, 0.9, cov))
+    lit = (0.03 + (0.80 * diffuse ** 2.2 + 0.10) * (1 - 0.90 * deep) * moonward + 0.40 * rim * moonward
+           + 0.55 * lining * moonward * (1 - haze) + 0.30 * outline * moonward * (1 - haze))
     lit = lit * (0.94 + 0.12 * fbm(H, W, 9 * S, 2, seed + 11)) * (1 - dark)
     col = ramp(np.clip(lit, 0, 1), stops or LAVENDER)
     mist = smooth(0.45, 1.0, below)[..., None] * 0.30          # the troughs fill with a faint mist, not black
@@ -234,7 +254,7 @@ def _beacon(px, S, X, Y, b):
     px = screen(px, hexc("#8E96D0") * (rim * 0.35)[..., None])
     d2 = (X - lx) ** 2 + (Y - ly) ** 2
     core = 1.3 + 2.6 * s
-    px = screen(px, hexc("#FFEAC4") * (np.exp(-d2 / (core * core)) * 0.95)[..., None])
+    px = screen(px, hexc("#FFEAC4") * (np.exp(-d2 / (core * core)) * 0.60)[..., None])     # (under its moon: F6)
     px = screen(px, hexc("#F0D8B4") * (np.exp(-d2 / (6 + 14 * s) ** 2) * (0.08 + 0.06 * s))[..., None])
     pool = np.exp(-(((X - bx) / (16 + 40 * s)) ** 2 + ((Y - by + 6 * s) / (5 + 12 * s)) ** 2))
     px = screen(px, hexc("#F4D8B0") * (pool * (0.06 + 0.08 * s))[..., None])
@@ -275,28 +295,73 @@ def _motes(px, S, lane, n=260, seed=91):
     return px
 
 
+def _star_river(S, X, Y):
+    """The star river's band (0..1: full on its spine, fading over about 40 units either side, soft along its length)
+    and the dark rift of dust that winds along it (0..1)."""
+    G = np.asarray(GALAXY, np.float32)
+    d = np.full(X.shape, 1e9, np.float32)
+    t_at = np.zeros(X.shape, np.float32)
+    total = 0.0
+    for (a, b) in zip(G, G[1:]):
+        ab = b - a
+        L2 = float(ab @ ab)
+        t = np.clip(((X - a[0]) * ab[0] + (Y - a[1]) * ab[1]) / L2, 0, 1)
+        dd = np.hypot(X - (a[0] + t * ab[0]), Y - (a[1] + t * ab[1]))
+        closer = dd < d
+        d = np.where(closer, dd, d)
+        t_at = np.where(closer, total + t * np.sqrt(L2), t_at)
+        total += float(np.sqrt(L2))
+    H, W = X.shape
+    wob = (fbm(H, W, 40 * S, 3, 97) - 0.5) * 22
+    band = np.exp(-((d + wob * 0.3) / 34) ** 2) * (0.75 + 0.5 * fbm(H, W, 26 * S, 3, 99))
+    band = band * smooth(HORIZON + 2, HORIZON - 26, Y) * smooth(0, 140, t_at)
+    rift = np.exp(-((d - 5 + wob * 0.4) / 9) ** 2) * smooth(0.30, 0.75, fbm(H, W, 70 * S, 2, 101))
+    return band.astype(np.float32), rift.astype(np.float32)
+
+
+def _river_stars(px, S, band, rift, ymax, n=4200, seed=103):
+    """The star river's own stars: small, crowded where the band is full, thinned in the rift."""
+    rng = np.random.default_rng(seed)
+    H, W, _ = px.shape
+    for _ in range(n):
+        x, y = rng.uniform(0, 800), rng.uniform(0, ymax)
+        k = float(band[min(H - 1, int(y * S)), min(W - 1, int(x * S))]) * (1 - 0.8 * float(rift[min(H - 1, int(y * S)), min(W - 1, int(x * S))]))
+        if rng.random() > k:
+            continue
+        r = (0.35 + 0.45 * rng.random() ** 3) * S
+        a = 0.10 + 0.45 * rng.random() ** 2.5
+        X0, X1, Y0, Y1 = int(max(0, x * S - 3 * r)), int(min(W, x * S + 3 * r + 1)), int(max(0, y * S - 3 * r)), int(min(H, y * S + 3 * r + 1))
+        yy, xx = np.mgrid[Y0:Y1, X0:X1].astype(np.float32)
+        g = np.exp(-((xx + 0.5 - x * S) ** 2 + (yy + 0.5 - y * S) ** 2) / (2 * r * r)) * a
+        px[Y0:Y1, X0:X1] = screen(px[Y0:Y1, X0:X1], hexc("#E4ECFF") * g[..., None])
+    return px
+
+
 def paint(S=1):
     W, H = int(800 * S), int(600 * S)
     yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
     X, Y = (xx + 0.5) / S, (yy + 0.5) / S
     mx, my, mr = MOON
     d_moon = np.sqrt((X - mx) ** 2 + (Y - my) ** 2)
-    # ---- the sky: deep violet-indigo overhead, a paler band of air along the far cloud sea, the moon's wide glow
-    sky = ramp(np.clip(Y / HORIZON, 0, 1), [(0, "#07051A"), (0.45, "#120E38"), (0.8, "#231E56"), (1.0, "#363270")])
-    sky = screen(sky, hexc("#C8CCF4") * (np.exp(-(d_moon / 120) ** 2) * 0.20 + np.exp(-(d_moon / 420) ** 2) * 0.08)[..., None])
+    # ---- the sky: deep indigo-blue overhead, a paler band of air along the far cloud sea, and the set moon's glow in
+    # the upper right corner
+    sky = ramp(np.clip(Y / HORIZON, 0, 1), [(0, "#03061A"), (0.45, "#0A1436"), (0.8, "#16285A"), (1.0, "#22396E")])
+    sky = screen(sky, hexc("#C8D4F4") * (np.exp(-(d_moon / 260) ** 2) * 0.16 + np.exp(-(d_moon / 520) ** 2) * 0.07)[..., None])
+    river = _star_river(S, X, Y)
     # thin cirrus in long streaks, lit where they cross the moon's glow
     cir = _stretched_noise(H, W, 22 * S, 4, 51, 6.0)
     cir = smooth(0.54, 0.72, cir) * smooth(50, 100, Y) * smooth(HORIZON - 30, 170, Y)
     sky = sky * (1 - 0.25 * cir[..., None]) + hexc("#6A70AE") * (cir * (0.10 + 0.50 * np.exp(-(d_moon / 240) ** 2)))[..., None]
     sky = strokes(sky, (Y < HORIZON + 10).astype(np.float32), S, lambda x, y: 0.03 * math.sin(x / 120), int(4200 * S * S),
                   length=(14, 30), width=(1.4, 2.8), jitter=0.025, hue_jitter=0.004, seed=53)
-    px = RL.stars(sky, S, 750, 57, (0, 0, W, (HORIZON - 4) * S),
-                  avoid=lambda x, y: float(np.clip((math.hypot(x / S - mx, y / S - my) - 50) / 150, 0, 1)), bright=0.5)
-    px, _ = RL.moon_emissive(px, S, mx, my, mr, seed=17)
-    ring = np.exp(-((d_moon - 62) / 9) ** 2) * 0.05          # a faint halo in the thin cloud round the moon
-    px = screen(px, hexc("#C8D0F8") * ring[..., None])
+    # the star river: a soft milky band, a dark rift of dust along it, and its stars crowded thick
+    band, rift = river
+    sky = screen(sky, hexc("#B8C8EE") * (band * 0.26 * (1 - 0.55 * rift))[..., None])
+    sky = sky * (1 - 0.16 * (rift * band)[..., None])
+    px = RL.stars(sky, S, 650, 57, (0, 0, W, (HORIZON - 4) * S), bright=0.5)
+    px = _river_stars(px, S, band, rift, (HORIZON - 4))
     # ---- the far cloud towers, then the cloud sea, far bank to near
-    sky_far = hexc("#363270")
+    sky_far = hexc("#22396E")
     sea_far = hexc("#30344E")
     px, _ = _cloud(px, S, X, Y, TOWERS, 371, 110, 0.58, sky_far, soft=1.6)
     flow = (np.zeros((H, W), np.float32), np.zeros((H, W), np.float32))
@@ -322,7 +387,7 @@ def paint(S=1):
     px, _ = _cloud(px, S, X, Y, OVERHANG, 389, 70, 0.0, sky_far, dark=0.45)
     # ---- the ceiling: keep the board's ground dark (the moon is exempt), then the vignette and the grain
     Yl = px @ RL.LUM
-    lim = np.where(d_moon < mr + 40, 1.0, 0.42)
+    lim = 0.42
     px = px * np.where(Yl > lim, lim / np.maximum(Yl, 1e-4), 1.0)[..., None]
     px = RL.vignette(px, 0.24)
     return RL.grain(px, 0.008, seed=67)

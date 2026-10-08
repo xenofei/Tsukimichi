@@ -397,7 +397,7 @@ public static partial class MoonfallSceneBuilder
         }
 
         var (x, y, cw, ch) = source.Crop.Value;
-        var cut = MoonfallFilters.Resample(src, x + source.PadLeft, y + source.PadTop, cw, ch, w, h);
+        var cut = MoonfallFilters.Resample(src, x + source.PadLeft, y + source.PadTop, cw, ch, w, h, eightBit: true);
         cut.A = null;
         return cut;
     }

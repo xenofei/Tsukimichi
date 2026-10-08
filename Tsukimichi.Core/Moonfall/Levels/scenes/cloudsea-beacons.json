@@ -7,6 +7,20 @@
  },
  "fallback": "moon-road-night",
  "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "y": [236, 252]
+    },
+    {
+     "y": [300, 276]
+    }
+   ],
+   "mul": 0.8
+  }
+ ],
  "palette": {
   "bands": [[0, "#8A30C0"], [246, "#8C34C0"], [600, "#7A2CB0"]],
   "chroma": 1.1,

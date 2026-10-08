@@ -20,7 +20,7 @@
       "x": 514.4,
       "y": 400.0,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -202,7 +202,7 @@
       "x": 410.1,
       "y": 421.0,
       "r": 8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {

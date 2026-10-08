@@ -19,6 +19,42 @@
  "grain": 0.008,
  "paint": [
   {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [345, 330, 110, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [490, 430, 110, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [660, 320, 130, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [192, 355, 110, 60]
+    }
+   ],
+   "mul": 0.85
+  },
+  {
    "kind": "plate",
    "picture": "aldenard-airship-lane-route-cut",
    "blend": "multiply"
@@ -71,6 +107,14 @@
   ]
  },
  "light": [
+  {
+   "kind": "glow",
+   "x": 400,
+   "y": 318,
+   "r": 2000,
+   "colour": "#6AC0A0",
+   "k": 0.03
+  },
   {
    "kind": "shafts",
    "origin": [-60, -160],

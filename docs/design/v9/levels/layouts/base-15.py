@@ -1,19 +1,23 @@
 """3-5 "The Sky Whale" (The Night Skyway, Cid): a creature in outline.
 
 Subject: the whale of the game's own world painting "The Three Great Continents", swimming the cloud sea north of the
-Rhotano under the great cloud vortex, with two chevrons of birds flying its way (read as a chart under the moon).
+Rhotano under the great cloud vortex, with a chevron of birds flying its way (read as a chart under the moon).
 
-Technique: an even ring of twelve moons runs 18 units outside the whale's silhouette (never green: the subject's own
-shape), so the ball reads its shape before the first shot; six of them are candidates. Each flock's chevron is a pair
-of dotted lanes of small moons from its lead bird, and the chart's dashed lanes (the recipe's overlays, where the glints
-run) lead from both flocks to the whale. The vortex's lower rim is an arc of moons under the launcher; the cloud sea's
-billows wear short arcs of brick on their crowns (a low row of three above the bucket's lane eases nothing and fills
-the lower sea), with moons on the open cloud.
+MR 3 round 1 (game designer M1, m1, m2, n4; critic M2, m6): the finale zooms in. The crop is [940, 330, 960, 720] (it was
+[870, 312, 1400, 1050], wider than 3-1's 1280), so the whale spans about 200 of the opening's 650 units and the board
+no longer shows the opener's chart zoomed out: it overlaps 3-1's crop by 24.3% of its own area (the rule's 25%), and
+the north flock is left beyond the right wall. The eleven identical billow arcs of the lower half, which traced nothing,
+are gone.
 
-The finale's difficulty comes from the whole board, not its bottom: no candidate sits at y 430 or lower. The hardest
-places are the south flock's west wing (413, 351), the right edge's (700, 290) and (620, 290), and the whale's tail
-(105, 232). Tuned on seeds 1-864 and then the second tuning block (seeds 20001-23456): the blue moons in the open sky,
-(545, 215) and (185, 165), placed last so the deal stays, take the board from 20.9 to 18.5 per 48 on that block.
+Technique: an even ring of moons runs 16 units outside the whale's own silhouette (taken from the painting's dark mask:
+the flukes, the tail stock, the dorsal fin, the head and the belly; never green), so the ball reads the creature, not an
+oval. The south flock's chevron is a pair of dotted lanes from its lead bird, and its flight line to the whale's head
+(the recipe's engraved route, where the glints run) carries two moons. The vortex is ringed along its whole visible rim,
+from the right wall round under the isle and up its left side. The lower half traces the cloud sea itself: dotted lines
+of small moons along the lit crests of the cloud lobes where the chart's dark gaps open beneath them (found on the
+graded painting, so each line is a painted crest).
+
+The finale's difficulty comes from the whole board, not its bottom: no candidate sits at y 430 or lower.
 """
 import math
 
@@ -61,34 +65,46 @@ def even_ring(b, name, offset, n, r, oranges, tag):
 
 def build(b):
     b.subject("whale")
-    even_ring(b, "whale ring", 18, 12, 9, oranges={0, 2, 4, 6, 8, 10}, tag="whale")
-    # the flocks: each chevron a pair of dotted lanes from its lead bird
-    b.trace("north flock upper wing", spacing=28, r=7, orange={0, 1, 2}, green=False, tag="north flock")
-    b.trace("north flock lower wing", spacing=28, r=7, start=28, orange={1}, tag="north flock")
-    b.trace("south flock east wing", spacing=28, r=7, orange={0, 2, 4}, green=False, tag="south flock")
-    b.trace("south flock west wing", spacing=28, r=7, start=28, orange={1}, tag="south flock")
-    # the vortex's lower rim under the launcher
+    even_ring(b, "whale", 16, 15, 8, oranges=set(), tag="whale")
+    # the south flock: its chevron a pair of dotted lanes from its lead bird
+    b.trace("south flock east wing", spacing=28, r=7, green=False, tag="south flock")
+    b.trace("south flock west wing", spacing=28, r=7, start=28, tag="south flock")
+    # its flight line to the whale's head: moons on the route
+    for (x, y) in ((480, 403), (450, 398), (420, 394)):
+        b.place(x, y, r=8, tag="flight line")
+    # the vortex's rim, from the right wall round under the isle and up its left side
     cx, cy, rx, ry = b.features["vortex"]["ellipse"]
-    for k, a in enumerate(range(20, 170, 15)):
+    for k, a in enumerate(range(30, 200, 14)):
         t = math.radians(a)
-        b.place(cx + rx * math.cos(t), cy + ry * math.sin(t), r=9, orange=k in (0, 3, 5, 6, 7, 8, 9), tag="vortex")
-    # the cloud sea's billows: short arcs of brick on their crowns, concave down, and moons on the open cloud
-    for (x, y) in BILLOWS:
-        b.arc(x, y + 30, 30, 235, 70, t=10, tag="billow")
-    # the lanes the flocks fly toward the whale: a moon on each
-    b.place(340, 278, r=8, tag="lane")
-    b.place(575, 300, r=8, orange=True, tag="lane")
-    for (x, y, o) in CLOUD:
-        b.place(x, y, r=8, orange=o, tag="cloud sea")
-    b.place(545, 215, r=8, tag="cloud sea")
-    b.place(185, 165, r=8, tag="cloud sea")
+        b.place(cx + rx * math.cos(t), cy + ry * math.sin(t), r=9, tag="vortex")
+    # the vortex's inner wall, where its clouds turn down into the eye round the isle
+    for k, a in enumerate(range(-10, 200, 15)):
+        t = math.radians(a)
+        x, y = cx + rx * INNER * math.cos(t), cy + ry * INNER * math.sin(t)
+        if x > 440:                     # (west of the isle the wall runs behind its bright banner: F6)
+            b.place(x, y, r=9, tag="vortex wall")
+    # the eddies the vortex throws off on its west side: a ring of moons round each painted curl
+    for (x, y, R) in EDDIES:
+        b.stop(x, y, R=R, n=5, r=8, oranges=(), green=True, tag="eddy")
+    # the cloud sea: dotted lines along the lit crests of its lobes (each found on the graded painting)
+    for name in CRESTS:
+        # (the high middle crest's moons are set so one stands on the launcher's axis: no first shot falls clear)
+        b.trace(name, spacing=30, r=7, start=6 if name == "crest high middle" else 0, tag="crest")
+    for (x, y) in CANDIDATES:
+        b.key(x, y, orange=True, within=6)
     b.greens_in_reach()
 
 
-BILLOWS = [(150, 340), (250, 420), (140, 460), (320, 480), (480, 440), (600, 400), (680, 320), (560, 480), (200, 505),
-           (420, 510), (640, 505)]
-CLOUD = [(300, 320, True), (620, 290, True), (470, 380, True), (350, 410, True), (650, 400, True), (520, 410, True),
-         (500, 245, False), (110, 400, False), (230, 345, False), (180, 400, True), (560, 340, False),
-         (600, 450, False), (430, 480, False), (380, 470, False), (260, 470, False), (200, 470, False),
-         (680, 470, False), (700, 360, False), (260, 380, False), (590, 370, False), (700, 290, True),
-         (300, 400, True), (440, 425, True)]
+EDDIES = ((178, 176, 28),)
+INNER = 0.70                    # the vortex's inner wall, as a share of its rim's radii
+CRESTS = ("crest high east", "crest high middle", "crest west", "crest middle", "crest south", "crest south-west",
+          "crest east low")
+# the orange candidates (29), by place: none at y 430 or lower
+CANDIDATES = (
+    (111, 340), (131, 309), (166, 296), (213, 341), (282, 350), (339, 390), (268, 419), (183, 409),     # the whale
+    (148, 362), (224, 418),
+    (542, 412), (568, 428), (480, 403), (420, 394),                                                     # the flock's line
+    (664, 260), (606, 273), (543, 279), (363, 252), (285, 202), (263, 139), (275, 108),                 # the vortex's rim
+    (643, 219), (509, 240),                                                                             # its inner wall
+    (510, 321), (570, 323), (628, 314), (340, 327), (370, 332), (428, 330),                             # the high crests
+)

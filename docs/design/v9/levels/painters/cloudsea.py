@@ -1,6 +1,6 @@
 """Our own painting for 3-2 "Above the Cloud Sea": the airship lane's beacons over a moonlit sea of clouds.
 
-The full moon is rising out of the cloud sea at the end of the lane, and it backlights the billows: every crest has a
+The full moon is rising, misted, out of the cloud sea at the end of the lane, and it backlights the billows: every crest has a
 silver lining toward it, every face toward us is in cool shadow. The lane runs straight at the moon between two rows of
 beacons, needles of stone standing out of the clouds, each with a brass lantern cage at its head; a farther pair, and
 a farther still, are only sparks on the way to the moon. Each near lantern throws a beam up into the night, the near
@@ -28,6 +28,11 @@ HORIZON = 246.0
 FOCAL = 400.0                 # px per world unit at depth 1
 CAM = 150.0                   # the eye's height above the cloud floor
 MOON = (400.0, 220.0, 30.0)
+# The moon rises through the cloud sea's haze, misted: its face (OKLab L about 0.68) stays darker than the ball (0.885)
+# and the aim guide's dots (0.96), since it sits on the launcher's axis where every central shot starts (UX MR 3 round
+# 1, M1: the bright face, L 0.934, swallowed both), and its glow in the sky is halved.
+MOON_MIST = 0.56              # the face's sRGB under the haze (maria kept)
+MOON_GLOW = 0.10
 LANE = 58.0                   # the lane's half-width (world)
 HEAD = 100.0                  # the lanterns' height (world)
 # the beacons: name, side (-1 left, +1 right), depth (world), the beam's lean from the vertical (degrees, outward), the
@@ -221,12 +226,19 @@ def paint(S=1):
     d_moon = np.sqrt((X - mx) ** 2 + (Y - my) ** 2)
     # ---- the sky: deep violet overhead, paling toward the horizon and the rising moon
     sky = ramp(np.clip(Y / HORIZON, 0, 1), [(0, "#080618"), (0.45, "#151034"), (0.85, "#2A2052"), (1.0, "#3C2E66")])
-    sky = screen(sky, hexc("#C6C4F0") * (np.exp(-(d_moon / 120) ** 2) * 0.20 + np.exp(-(d_moon / 420) ** 2) * 0.10)[..., None])
+    sky = screen(sky, hexc("#C6C4F0") * (np.exp(-(d_moon / 120) ** 2) * MOON_GLOW + np.exp(-(d_moon / 420) ** 2) * 0.10)[..., None])
     sky = strokes(sky, (Y < HORIZON + 8).astype(np.float32), S, lambda x, y: 0.05 * math.sin(x / 70), int(4200 * S * S),
                   length=(10, 22), width=(1.6, 3.0), jitter=0.02, hue_jitter=0.004, seed=21)
     px = RL.stars(sky, S, 950, 71, (0, 0, W, (HORIZON - 6) * S),
                   avoid=lambda x, y: float(np.clip((math.hypot(x / S - mx, y / S - my) - 60) / 170, 0, 1)), bright=0.55)
     px, _disc = RL.moon_emissive(px, S, mx, my, mr, seed=8)
+    # the haze it rises through: the face dimmed and cooled toward the haze's lilac, and two thin bars of mist lying across
+    # its lower half (in front of it, so they read as distance, not as marks on the face)
+    haze_face = px * MOON_MIST + hexc("#B4B0E6") * 0.10
+    px = px * (1 - _disc[..., None]) + haze_face * _disc[..., None]
+    for (yb, th, k) in ((my + 8, 2.6, 0.22), (my + 18, 3.4, 0.30)):
+        bar = np.exp(-((Y - yb - 2.0 * np.sin(X / 41)) / th) ** 2) * np.exp(-((X - mx) / (mr * 6.0)) ** 2)
+        px = px * (1 - k * bar[..., None]) + hexc("#4E4486") * (k * bar[..., None])
     # high streaks of cloud across the sky, lit from behind where they pass the moon
     streak = np.zeros((H, W), np.float32)
     for (y0, amp, th, k, seed) in ((200, 5, 3.2, 0.85, 3), (172, 7, 4.5, 0.6, 4), (128, 10, 6.0, 0.45, 5), (84, 12, 7.0, 0.3, 6)):
