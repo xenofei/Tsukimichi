@@ -42,7 +42,9 @@ internal static class Render
 {
     public static int Run(string[] args)
     {
-        if (args.Length == 0)
+        // The output path comes first; a first argument that is an option (e.g. --help) would otherwise become a PNG of
+        // that name in the working directory, which agents kept leaving in the repo root.
+        if (args.Length == 0 || args[0].StartsWith('-'))
         {
             Console.Error.WriteLine("usage: Tsukimichi.MoonfallRender <out.png> [--level base-01|base-p1] [--size 1280x800] [--moment start|hud|power|fever|tally|cleared] [--marks] [--reduce-motion] [--no-game-art]");
             return 2;
