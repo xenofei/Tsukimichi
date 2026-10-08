@@ -1,0 +1,538 @@
+{
+ "id": "base-24",
+ "name": "The Arches of the Bridge",
+ "stage": 5,
+ "number": 24,
+ "scene": "limsa-bridge-arches",
+ "subject": "the lamplit bridge: bricks in its arches, moons on its lamps",
+ "technique": "terrain emphasis (brick runs on crests, moons on summits)",
+ "source": "ui/loadingimage/-nowloading_base01_hr1.tex",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 83,
+   "pegs": 74,
+   "bricks": 9,
+   "movers": 0,
+   "orange_candidates": 31,
+   "never_green": 24,
+   "skipped_while_tracing": []
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-24.json  id=base-24 \"The Arches of the Bridge\"  pieces=83 (round 74, bricks 9, movers 0)  mayBeOrange=31",
+    "     still round pegs 74: closest surfaces 15.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 60..507"
+   ]
+  },
+  "sweep": {
+   "angles": 681,
+   "pegs_median": 11,
+   "pegs_mean": 10.7,
+   "pegs_max": 20,
+   "oranges_mean": 3.55,
+   "no_hit": 0,
+   "stuck": 0,
+   "stuck_share": 0.0,
+   "long_flights": 0,
+   "bucket": 99,
+   "unreached": [],
+   "pieces": 83
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 15,
+   "games": 48,
+   "oranges_left_when_lost": [
+    1,
+    1,
+    3,
+    6,
+    8,
+    5,
+    1,
+    1,
+    1,
+    1,
+    7,
+    1,
+    1,
+    1,
+    1,
+    2,
+    8,
+    3,
+    3,
+    1,
+    5,
+    3,
+    2,
+    1,
+    2,
+    2,
+    2,
+    1,
+    1,
+    5,
+    1,
+    1,
+    2
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 767,
+   "ramp_per_48": 21.3,
+   "shots_mean": 13.6,
+   "stuck_fires": 24,
+   "random_won": 0,
+   "random_oranges_mean": 17.8,
+   "low_left_share": 0.04,
+   "lost_with_low_orange": 0.108,
+   "holdouts": [
+    {
+     "piece": 35,
+     "at": [
+      652,
+      176
+     ],
+     "share_of_lost_games": 0.2
+    },
+    {
+     "piece": 34,
+     "at": [
+      618,
+      150
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 19,
+     "at": [
+      672,
+      368
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 42,
+     "at": [
+      652,
+      257
+     ],
+     "share_of_lost_games": 0.16
+    },
+    {
+     "piece": 80,
+     "at": [
+      504,
+      427
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 30,
+     "at": [
+      545,
+      107
+     ],
+     "share_of_lost_games": 0.15
+    },
+    {
+     "piece": 0,
+     "at": [
+      127,
+      331
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "piece": 12,
+     "at": [
+      392,
+      370
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 56,
+     "at": [
+      160,
+      170
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 18,
+     "at": [
+      632,
+      368
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 75,
+     "at": [
+      138,
+      417
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 82,
+     "at": [
+      688,
+      443
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 79,
+     "at": [
+      440,
+      427
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 40,
+     "at": [
+      584,
+      315
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 6,
+     "at": [
+      152,
+      372
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 3,
+     "at": [
+      478,
+      322
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 26,
+     "at": [
+      216,
+      237
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 4,
+     "at": [
+      519,
+      322
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 47,
+     "at": [
+      290,
+      334
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 1,
+     "at": [
+      169,
+      331
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 76,
+     "at": [
+      202,
+      417
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 2,
+     "at": [
+      441,
+      322
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 25,
+     "at": [
+      244,
+      214
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 38,
+     "at": [
+      584,
+      245
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 46,
+     "at": [
+      252,
+      334
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 21,
+     "at": [
+      420,
+      260
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 33,
+     "at": [
+      560,
+      150
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 55,
+     "at": [
+      250,
+      130
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 45,
+     "at": [
+      357,
+      262
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 44,
+     "at": [
+      314,
+      152
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 49,
+     "at": [
+      318,
+      230
+     ],
+     "share_of_lost_games": 0.0
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.415,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 1.77,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 7.33,
+    "longest_rim_run": 0.0,
+    "longest_rim_at": null,
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 2,
+    "lights_nearest": 624.0,
+    "darkened_min_clearance": 6.69,
+    "elements_dropped_for_clearance": 117
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 55,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.685,
+      "orange": 0.617,
+      "green": 0.728,
+      "purple": 0.584
+     },
+     "0.8x": {
+      "blue": 0.679,
+      "orange": 0.613,
+      "green": 0.7,
+      "purple": 0.576
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.348,
+      "at": [
+       318,
+       290
+      ],
+      "undressed": 0.356,
+      "drop": 0.008
+     },
+     "orange 1x": {
+      "worst": 0.297,
+      "at": [
+       250,
+       130
+      ],
+      "undressed": 0.296,
+      "drop": -0.001
+     },
+     "green 1x": {
+      "worst": 0.391,
+      "at": [
+       318,
+       290
+      ],
+      "undressed": 0.398,
+      "drop": 0.007
+     },
+     "purple 1x": {
+      "worst": 0.247,
+      "at": [
+       318,
+       290
+      ],
+      "undressed": 0.254,
+      "drop": 0.007
+     },
+     "blue 0.8x": {
+      "worst": 0.343,
+      "at": [
+       318,
+       290
+      ],
+      "undressed": 0.35,
+      "drop": 0.007
+     },
+     "orange 0.8x": {
+      "worst": 0.292,
+      "at": [
+       250,
+       130
+      ],
+      "undressed": 0.29,
+      "drop": -0.002
+     },
+     "green 0.8x": {
+      "worst": 0.364,
+      "at": [
+       318,
+       290
+      ],
+      "undressed": 0.371,
+      "drop": 0.007
+     },
+     "purple 0.8x": {
+      "worst": 0.239,
+      "at": [
+       318,
+       290
+      ],
+      "undressed": 0.247,
+      "drop": 0.008
+     }
+    },
+    "worst_margin": 0.239,
+    "largest_drop": 0.008,
+    "bricks_min_margin": [
+     0.3,
+     "blue"
+    ],
+    "protan_orange_p10": 0.124,
+    "protan_places": 31,
+    "protan_worst_at": [
+     314,
+     152
+    ],
+    "protan_min": 0.113,
+    "jewels": {
+     "coloured_px_pct": 100.0,
+     "mean_chroma": 0.073,
+     "second_at_walls_x": 0.16,
+     "second_at_walls_worst_window": [
+      0.21,
+      516
+     ],
+     "first_jewel_hue": 284,
+     "first_share": 0.727,
+     "second_jewel_hue": 357,
+     "second_share": 0.273,
+     "apart_deg": 72,
+     "bins_pct": [
+      18.5,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      58.7,
+      14.0,
+      8.8
+     ]
+    },
+    "ghost_median": 0.059,
+    "ghost_worst": [
+     0.0769745483994484,
+     [
+      600,
+      505
+     ]
+    ],
+    "ghost_isolated_pegs": 9,
+    "print": {
+     "median": 0.0,
+     "p90": 0.0037,
+     "worst": [
+      0.0319,
+      [
+       683,
+       102
+      ]
+     ],
+     "samples": 74,
+     "mode": "pegs",
+     "hue_median": 0.002
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "seconds": 42.9,
+ "verdict": "PASS"
+}
