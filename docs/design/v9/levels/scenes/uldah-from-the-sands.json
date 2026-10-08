@@ -1,0 +1,69 @@
+{
+ "name": "uldah-from-the-sands",
+ "about": "Ul'dah's western half, the Steps of Nald, on its own city map, read as a traveller's chart seen from the sands of Western Thanalan by night: the crescent of the great arc with its north-west tower and the Exchange's dome, the Hall of Flames, the Gate of the Sultana and the Gate of Nald. The map's red exit arrows are erased (each in two passes, so the parchment around them fills the strip) and the roads out of the gates run on as gilt routes into the sands, where the glints run. The city (the map's rim-filled footprint) is moonlit stone in sea-blue; the sands outside recede (x 0.8) in desert-rose plum, and the faint ghost of the Steps of Thal to the south-east is lifted a little (x 1.2) so its ring road reads under the haze. Stars over the roofline in the open sands, a sand-haze mist along the foot, dust.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/map/w1t1/01/w1t101_m.tex",
+  "mirror": false,
+  "crop": [330, 420, 1160, 870],
+  "erase": [[506, 960, 152, 72], [504, 958, 76, 76], [1086, 546, 82, 150], [1084, 544, 86, 84],
+            [1210, 808, 63, 66], [1144, 850, 64, 73], [927, 928, 61, 77], [1002, 932, 48, 79], [768, 1001, 97, 51]],
+  "grade": {"gamma": 1.6, "exposure": 0.66, "warm_keep": 0.25, "chroma_mid": 0.45}
+ },
+ "masks": {"city": {"kind": "rim-fill", "threshold": 0.75, "grow": 5}},
+ "tone": [{"mask": [["not-mask", "city", 12]], "mul": 0.8}, {"mask": [["disc", 627, 430, 120, 60], ["not-mask", "city", 12]], "mul": 1.2}],
+ "overlays": [
+  {"kind": "route", "points": [[214, 397], [180, 399], [146, 401], [112, 404], [80, 407]], "color": "#D9BE82", "width": 2.0, "alpha": 0.55},
+  {"kind": "route", "points": [[535, 182], [541, 152], [550, 118], [556, 92]], "color": "#D9BE82", "width": 2.0, "alpha": 0.55},
+  {"kind": "route", "points": [[645, 280], [680, 276], [722, 272]], "color": "#D9BE82", "width": 1.6, "alpha": 0.45}
+ ],
+ "veil": 0.4,
+ "dress": {
+  "palette": {"name": "Desert rose and moonlit stone (the city map)", "sky": "#1A1040", "deep": "#07000F",
+              "jewel1": "#80146F", "jewel2": "#0091A4", "warm": "#FFB45E", "rim": "#9CD8F0"},
+  "jewel": {
+   "bands": [[0, "#80146F"], [600, "#73176F"]],
+   "chroma": 1.8,
+   "floor": 0.07,
+   "regions": [{"hex": "#0091A4", "chroma": 0.08, "mask": [["mask", "city", 40], ["x", 75, 135], ["x", 725, 665]]}],
+   "quiet": [90, 40], "regionQuiet": 0.0
+  },
+  "glows": [{"x": 110, "y": 50, "r": 260, "col": "#FFC27A", "k": 0.03}],
+  "shafts": [{"origin": [-60, -160], "angles": [50, 58, 67], "widths": [46, 32, 52], "k": 0.05, "col": "#FFD9A0"}],
+  "extras": [{"kind": "chart_border"}],
+  "framing": [
+   {"kind": "outcrop", "points": [[60, 540], [90, 550], [115, 570], [130, 600]], "seed": 41, "rough": 8},
+   {"kind": "outcrop", "points": [[650, 600], [680, 572], [712, 552], [740, 546]], "seed": 43, "rough": 8}
+  ],
+  "silhouette": {"body": "#07000F", "inner": "#24123E", "rim": "#9CD8F0", "rimK": 0.35, "seed": 7}
+ },
+ "runtime": {
+  "motion": {
+   "dust": 20,
+   "stars": 30,
+   "starWhere": [["not-mask", "city", 14], ["y", 300, 240]],
+   "mist": [{"y": [520, 594], "speed": 5, "alpha": 0.1, "cell": 140, "seed": 13, "colour": "#D8B8E0"}]
+  },
+  "glints": [{"overlay": 0, "speed": 30, "every": 30, "offset": 0}, {"overlay": 1, "speed": 30, "every": 30, "offset": 15}]
+ },
+ "features": {
+  "nw tower": {"circle": [276, 185, 27], "from": 150, "sweep": 240},
+  "exchange dome": {"circle": [527, 275, 26], "from": 180, "sweep": 180},
+  "ghost ring": {"ellipse": [627, 412, 62, 82]},
+  "roofline": {"points": [[318, 212], [345, 214], [367, 219], [385, 210], [405, 204], [430, 201], [455, 197], [470, 194],
+                          [490, 198], [523, 198], [545, 203], [573, 212], [593, 220], [607, 233], [617, 250], [628, 265]],
+               "smooth": 4},
+  "west face": [[302, 236], [296, 256], [268, 276], [266, 292], [286, 304], [292, 320], [276, 345], [274, 372], [228, 378],
+                [226, 416], [258, 424], [266, 442], [262, 468], [228, 474]],
+  "inner face": [[305, 335], [345, 350], [380, 372], [410, 372], [440, 345], [470, 355], [500, 350], [520, 300], [560, 300],
+                 [600, 290], [640, 290]],
+  "west road": {"points": [[210, 397], [170, 399], [130, 402], [92, 406]], "smooth": 4},
+  "roofline band": {"points": [[345, 199], [362, 199], [391, 189], [418, 184], [446, 180], [477, 177], [509, 180], [536, 182],
+                               [564, 190], [592, 200], [618, 218], [637, 246]], "smooth": 4},
+  "north road": {"points": [[535, 178], [541, 150], [550, 122]], "smooth": 4},
+  "east road": {"points": [[645, 280], [680, 276], [715, 272]], "smooth": 4},
+  "guild roof": [[128, 506], [218, 488]],
+  "thal stair west": [[430, 420], [426, 452], [420, 484]],
+  "thal stair east": [[490, 420], [496, 452], [502, 484]]
+ }
+}
