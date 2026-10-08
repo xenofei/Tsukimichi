@@ -1,6 +1,6 @@
 # Handoff
 
-Updated 2026-10-07. To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
+Updated 2026-10-08. To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
 
 ## Goal
 Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimichi.
@@ -20,28 +20,31 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Sources plan:** `docs/design/v9/levels/sources-plan.md`, with the owner's answers (Fan Kit ships with a © notice).
 - **Pipeline prep, merged:** stage keys `mr1`–`mr11` and `fs1`–`fs12`, `mfl.py challenge`, and the Ace rule for hard levels.
 - **Flaky tests fixed:** the save writer has its own thread; the allocation tests take the smallest of 5 windows (owner-approved); the gate's rerun list is empty.
+- **Stage MR 3 shipped to main** (7be2978f): base-11 to base-15, approved in round 2. The pilot cost 391M input tokens; its single fold-in took 42%, so the fold-in is now split per level. The runtime crop rounds to 8-bit steps between passes, as the pipeline does.
 - **Charter for the 105 levels:** `docs/design/v9/levels/charter.md`, with the owner's answers of 7 October.
 - **Gate wrapper and caches:** `pwsh tools/gate.ps1` (skips an unchanged tree) and the caches for `mfl.py build`/`stage` and MoonfallRender `--cache`.
 
 ## In flight
-**The stage 3 pilot workflow** (run `wf_e874cb78-8d2`; resume with Workflow `resumeFromRunId`; watch with `/workflows`).
-- Script: `~/.claude/projects/C--Users-devon-Desktop-Tsukimichi--Main-Repo-/60059d08-377c-464c-af3e-c2638d2288a4/workflows/scripts/moonfall-stage-pilot-wf_e874cb78-8d2.js`.
-- Its steps:
-  1. five authors, one per level (base-11 to base-15), each in its own worktree;
-  2. an integrator: stage `mr3`, convert, wiring, gates and a review pack in `docs/design/v9/levels/review/mr3/`;
+**Stages MR 4, MR 5 and MR 6 in one chained workflow** (run `wf_2529e0f6-97c`; watch with `/workflows`; resume with Workflow `resumeFromRunId`).
+- Script: `~/.claude/projects/C--Users-devon-Desktop-Tsukimichi--Main-Repo-/60059d08-377c-464c-af3e-c2638d2288a4/workflows/scripts/moonfall-stages-wf_2529e0f6-97c.js`.
+- Per stage:
+  1. authors, one per level;
+  2. an integrator, which merges the previous stage's approved branch first;
   3. three fresh reviewers;
-  4. a fold-in that records round 1 verbatim in `docs/design/v9/levels/supervisor/*-mr3-round-1.md`;
-  5. three verifiers, with round 2 recorded verbatim.
-- It returns only verdict lines and branch, worktree and commit.
+  4. round 1 recorded verbatim;
+  5. one fixer per level, then a stage fixer;
+  6. round-2 verification, recorded.
+- A stage that isn't approved stops the chain.
+- It returns one entry per stage: `approved`, `branch`, `worktree` and the verdict lines.
 
 When it finishes:
-1. if every round-2 verdict is APPROVE, merge the integrator's branch with `--no-ff`;
-2. run `pwsh tools/gate.ps1` and the level self-test;
-3. clean up the worktrees;
-4. run `tools/claude-usage/monitor.py` and compare it with the baseline.
+1. merge the last approved stage's branch with `--no-ff` (it holds the stages before it);
+2. run `pwsh tools/gate.ps1`, `mfl.py selftest` and `convert --all --check` (run `mfl.py fetch` first if the cache is missing a painting);
+3. remove the `wf_2529e0f6-97c-*` worktrees and branches (paths contain a space: use `git worktree list --porcelain`);
+4. measure the cost per stage with a journal scan.
 
 ## Next
-1. **Stage 3:** if the pilot works, reuse the script for the other stages, about three in flight.
+1. **The remaining stages:** MR 7 to 11, then FS 1 to 12, with the same script.
    - Far Shore stage 1 ships the two Fan Kit wallpapers with a "© SQUARE ENIX" notice in `THIRD-PARTY-NOTICES.txt` (owner's answer).
    - Point `challenges.json` ch-03 and ch-04 at `base-27` and `base-37` when those levels ship.
 2. **The full release,** after all 115 levels: version 1.24.0 or later, What's new, changelog. Ask the owner before pushing.
