@@ -29,7 +29,7 @@ and the verdict (PASS).
 | 4-2 | base-17 | The Spire of the Sands | 26.1 | 25.85 | 233 / 62 | 0.223 | 0.121 / 0.120 | Thanalan painting, base02_hr1 (east strip) | Ul'dah - Steps of Nald |
 | 4-3 | base-18 | Lamps on the Steps | 23.6 | 24.05 | 282 / 1 | 0.256 | 0.108 / 0.106 | ours (lampsteps) | Ul'dah - Steps of Nald |
 | 4-4 | base-19 | The Coliseum | 22.1 | 21.95 | 261 / 179 | 0.304 | 0.107 / 0.105 | Steps of Thal city map, w1t202 | Ul'dah - Steps of Thal |
-| 4-5 | base-20 | Ul'dah from the Sands | 18.3 | 18.75 | 319 / 237 | 0.302 | 0.117 / 0.090 | Steps of Nald city map, w1t101 | Ul'dah - Steps of Nald |
+| 4-5 | base-20 | Ul'dah from the Sands | 18.0 | (stage fixer) | 320 / 235 | 0.270 | 0.113 / 0.103 | Steps of Nald city map, w1t101 | Ul'dah - Steps of Nald |
 
 The pooled steps are 1.10, 1.95, 1.27 and the finale gap 3.43 (each about ± 0.41). The mean is 23.26 (the charter's
 23.1, band 26.5 → 18.5). The jewel check against 3-5 (258 / 176) passes. The stage uses 4 game paintings and 1 of ours.
@@ -38,10 +38,10 @@ Nald: the Coliseum is on the Thal map (`sources-plan.md`, which wins). 4-5 is on
 charter's west strip of base02 (the owner's crop fix in `sources-plan.md`).
 
 Aces, from `MoonfallAces.Suggest` over 576 games: 4-1 240,000 (322 wins), 4-2 250,000 (320), 4-3 260,000 (294),
-4-4 240,000 (258), 4-5 260,000 (223). All are above the hard-level line (14 of 48).
+4-4 240,000 (258), 4-5 220,000 (186; round 1 fix, was 260,000). All are above the hard-level line (14 of 48).
 
 The converter gate (`convert base-16 ... base-20 --check`) passes 10 of 10. 2x max / p99.9, then 1x p99: 4-1 0.019 / 0.008,
-0.022; 4-2 0.023 / 0.008, 0.008; 4-3 0.009 / 0.007, 0.006; 4-4 0.021 / 0.008, 0.028; 4-5 0.015 / 0.007, 0.019.
+0.022; 4-2 0.023 / 0.008, 0.008; 4-3 0.009 / 0.007, 0.006; 4-4 0.021 / 0.008, 0.028; 4-5 0.010 / 0.007, 0.012 (round 1 fix).
 
 ## Integration changes
 
