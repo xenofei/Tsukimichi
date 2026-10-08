@@ -146,7 +146,9 @@ def main():
     t_start = time.time()
 
     agents = []
-    for p in sorted(glob.glob(f"{folder}/subagents/agent-*.jsonl")):
+    # Workflow agents log under subagents/workflows/<run>/, ordinary agents directly under subagents/.
+    paths = glob.glob(f"{folder}/subagents/agent-*.jsonl") + glob.glob(f"{folder}/subagents/workflows/*/agent-*.jsonl")
+    for p in sorted(paths):
         aid = os.path.basename(p)[6:-6]
         meta = {}
         mp = p[:-6] + ".meta.json"
