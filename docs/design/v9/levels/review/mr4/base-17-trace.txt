@@ -1,0 +1,5 @@
+  skipped ((153, 107), 'west flank', '8.5 from a brick')
+  skipped ((260, 102), 'east flank', '10.5 from a brick')
+  skipped ((710, 423), 'haze', 'wall pinch 5.9')
+  pieces 67 (pegs 63, bricks 4, movers 0); candidates 30; green-only 29; skipped while tracing 3
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_2529e0f6-97c-6\docs\design\v9\levels\build\trace\base-17.png

@@ -1,0 +1,11 @@
+  skipped ((253, 276), 'west wall', '7.7 from the peg at (266, 256)')
+  skipped ((271, 321), 'west wall', '7.7 from the peg at (254, 304)')
+  skipped ((245, 360), 'west wall', '5.1 from the peg at (261, 347)')
+  skipped ((246, 455), 'west wall', '2.9 from the peg at (241, 436)')
+  skipped ((531, 315), 'inner wall', '12.0 from the peg at (521, 341)')
+  skipped ((538, 162), 'north road', '8.8 from the peg at (545, 184)')
+  skipped ((715, 272), 'east road', 'wall pinch 3.0')
+  skipped ((628, 330), 'thal ring', '7.3 from the peg at (625, 308)')
+  skipped ((637, 493), 'thal ring', '6.4 from the peg at (616, 493)')
+  pieces 73 (pegs 70, bricks 3, movers 0); candidates 32; green-only 37; skipped while tracing 9
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_2529e0f6-97c-6\docs\design\v9\levels\build\trace\base-20.png

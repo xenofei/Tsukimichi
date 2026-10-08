@@ -24,7 +24,8 @@ lost games, and no holdout passes 25%. No candidate sits against a wall: the
 outer-face moon at (624, 231), as a candidate, decided 36-42% of lost games and is blue; two blue moons on the outer
 face above the flanks' columns (202 and 338 degrees, and 328) shield them instead.
 
-Tuning (seeds 1-864 and 20001-23456): 21.7 and 21.5 per 48 toward the charter's 22; held out 22.3. The stands' slot
+Tuning (seeds 1-864 and 20001-23456): 21.7 and 21.5 per 48 toward the charter's 22; held out 22.3 (23.3 after the
+integration's mark-grid fix: the north-west crown starts at 224.5 and the Promenade is trimmed 1 at its north end). The stands' slot
 is 46 units (its ends slope about 10 degrees): at 30 a slow ball rested on its near-flat ends, and the inner tier's
 unopened apex under the two slots held balls too (play's stuck fires fell from 138 to 58 per 1728 on the tuning seeds).
 """
@@ -59,7 +60,7 @@ def build(b):
     b.arc_bricks(cx, cy, R, a0, sw, n=2, gap_deg=math.degrees(30.0 / R), t=10, green=False, tag="inner tier")
     cx, cy, R, a0, sw = b.circle("outer tier")
     slot = math.degrees(30.0 / R)                   # opened at its keystone, under the stands' own slot
-    b.arc_bricks(cx, cy, R, 225, 45 - slot / 2, n=1, t=10, green=False, tag="outer tier")
+    b.arc_bricks(cx, cy, R, 224.5, 45.5 - slot / 2, n=1, t=10, green=False, tag="outer tier")
     b.arc_bricks(cx, cy, R, 270 + slot / 2, 75 - slot / 2, n=2, t=10, green=False, tag="outer tier")
     b.arc_bricks(ax, ay, 125, 249, 42, n=2, gap_deg=math.degrees(46.0 / 125), t=10, tag="stands")
     # the city ring: crowns of brick on its upper flanks, clear of the launcher
@@ -67,7 +68,7 @@ def build(b):
     b.arc_bricks(cx, cy, R, 186, 38, n=3, t=10, tag="city ring")
     b.arc_bricks(cx, cy, R, 316, 38, n=3, t=10, tag="city ring")
     # the spokes: the arena's wings and the Royal Promenade, and three spokes of the wheel
-    b.bricks_along("promenade", length=26, t=10, tag="promenade")
+    b.bricks_along("promenade", length=26, t=10, trim0=1.0, tag="promenade")
     b.bricks_along("west corridor", length=24, t=10, tag="west corridor")
     b.bricks_along("west hall", length=32, t=10, tag="west hall")
     b.bricks_along("south-west corridor", length=22, t=10, tag="south-west corridor")

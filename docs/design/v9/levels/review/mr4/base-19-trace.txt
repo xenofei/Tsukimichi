@@ -1,0 +1,9 @@
+  skipped ((467, 363), 'outer tier east', '11.3 from the peg at (478, 334)')
+  skipped ((514, 447), 'city ring', '-3.7 from a brick')
+  skipped ((271, 146), 'city ring inner face', '-1.1 from a brick')
+  skipped ((499, 146), 'city ring inner face', '-2.5 from a brick')
+  skipped ((627, 316), 'city ring outer face', '14.0 from the peg at (593, 311)')
+  skipped ((295, 422), 'stands', '9.2 from the peg at (319, 439)')
+  skipped ((295, 214), 'stands', '2.0 from a brick')
+  pieces 77 (pegs 46, bricks 31, movers 0); candidates 31; green-only 43; skipped while tracing 7
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_2529e0f6-97c-6\docs\design\v9\levels\build\trace\base-19.png

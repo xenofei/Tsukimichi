@@ -1,0 +1,244 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "thal-night-walk",
+ "source": {
+  "game": "ui/map/w1t2/01/w1t201_m.tex",
+  "crop": [660, 740, 920, 690],
+  "erase": [[1109, 732, 87, 59], [1071, 790, 80, 70], [701, 1000, 98, 49], [1094, 1344, 117, 76], [1162, 951, 43, 66], [878, 1046, 46, 66]]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.5,
+  "exposure": 0.6,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "land": [0.72, 10],
+     "blur": 12.0,
+     "invert": true
+    }
+   ],
+   "mul": 0.66
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "land": [0.72, 10],
+     "blur": 12.0,
+     "invert": true
+    },
+    {
+     "x": [340, 220]
+    },
+    {
+     "y": [300, 200]
+    }
+   ],
+   "mul": 1.4
+  },
+  {
+   "kind": "plate",
+   "picture": "thal-night-walk-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "thal-night-walk-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#2E60D4"], [600, "#2A5CC8"]],
+  "chroma": 1.25,
+  "floor": 0.05,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "regions": [
+   {
+    "hue": "#BA5868",
+    "chroma": 0.1,
+    "where": [
+     {
+      "land": [0.72, 10],
+      "blur": 12.0
+     },
+     {
+      "lum": [0.2, 0.3],
+      "blur": 3
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [64, 24],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.1
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [64, 24],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 640,
+   "y": 330,
+   "r": 240,
+   "colour": "#FFC27A",
+   "k": 0.03
+  },
+  {
+   "kind": "shafts",
+   "origin": [860, -160],
+   "angles": [130, 122, 113],
+   "widths": [46, 32, 52],
+   "k": 0.05,
+   "colour": "#FFD9A0",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "thal-night-walk-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "thal-night-walk-ticks",
+   "blend": "multiply"
+  }
+ ],
+ "lights": [
+  {
+   "x": 604.0,
+   "y": 128.0,
+   "size": 1.0,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 606.0,
+   "y": 160.0,
+   "size": 0.9,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 612.0,
+   "y": 196.0,
+   "size": 1.0,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 330.0,
+   "y": 470.0,
+   "size": 0.9,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 372.0,
+   "y": 486.0,
+   "size": 1.0,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 452.0,
+   "y": 468.0,
+   "size": 0.9,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2,
+   "flicker": true
+  },
+  {
+   "x": 300.0,
+   "y": 505.0,
+   "size": 0.8,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2,
+   "flicker": true
+  }
+ ],
+ "veil": 0.38,
+ "motion": {
+  "dust": 22,
+  "glints": [
+   {
+    "points": [[700, 356], [655, 336], [620, 320], [592, 318], [568, 300], [562, 270], [560, 232], [550, 202], [522, 192], [490, 189], [460, 184], [436, 180], [405, 195], [375, 212], [345, 230], [315, 247]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[315, 247], [300, 200], [293, 170], [284, 138], [276, 112]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 15,
+    "colour": "#FFE6B0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#18174E",
+  "deep": "#080820",
+  "jewel1": "#4A3CB8",
+  "jewel2": "#B05C7C"
+ }
+}

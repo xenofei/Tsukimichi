@@ -1,0 +1,284 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "uldah-coliseum",
+ "source": {
+  "game": "ui/map/w1t2/02/w1t202_m.tex",
+  "crop": [560, 640, 960, 720],
+  "erase": [[930, 935, 50, 55], [862, 1042, 66, 50], [1176, 1002, 38, 78]]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.6,
+  "exposure": 0.72,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45,
+  "detail": 1.7
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [385, 282, 250, 40],
+     "invert": true
+    }
+   ],
+   "mul": 0.78
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-coliseum-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-coliseum-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#3E6AE2"], [300, "#3460CE"], [600, "#2A52B0"]],
+  "chroma": 1.5,
+  "floor": 0.05,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#22389E"], [0.45, "#CCD4FF"]],
+  "regions": [
+   {
+    "hue": "#3AA064",
+    "chroma": 0.15,
+    "where": [
+     {
+      "disc": [385, 282, 270, 50]
+     },
+     {
+      "disc": [385, 282, 160, 60],
+      "invert": true
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [60, 25],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.4
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [60, 25],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 386,
+   "y": 318,
+   "r": 230,
+   "colour": "#BCD4FF",
+   "k": 0.05
+  },
+  {
+   "kind": "shafts",
+   "origin": [-120, -200],
+   "angles": [48, 55, 62, 70],
+   "widths": [34, 22, 40, 26],
+   "k": 0.08,
+   "colour": "#CFE0FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-coliseum-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-coliseum-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-coliseum-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-coliseum-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "lights": [
+  {
+   "x": 86.0,
+   "y": 542.0,
+   "size": 1.4,
+   "colour": "#FFC86E",
+   "core": 1.6,
+   "k": 0.8,
+   "halo": 6,
+   "haloK": 0.26
+  },
+  {
+   "x": 714.0,
+   "y": 542.0,
+   "size": 1.4,
+   "colour": "#FFC86E",
+   "core": 1.6,
+   "k": 0.8,
+   "halo": 6,
+   "haloK": 0.26
+  },
+  {
+   "x": 659.452,
+   "y": 426.78,
+   "size": 0.9743,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2
+  },
+  {
+   "x": 123.054,
+   "y": 386.791,
+   "size": 0.7679,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2
+  },
+  {
+   "x": 663.132,
+   "y": 468.312,
+   "size": 0.9235,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2
+  },
+  {
+   "x": 498.824,
+   "y": 499.147,
+   "size": 0.7603,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2
+  },
+  {
+   "x": 651.431,
+   "y": 381.365,
+   "size": 0.9296,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2
+  },
+  {
+   "x": 696.738,
+   "y": 509.559,
+   "size": 0.9284,
+   "colour": "#FFC86E",
+   "core": 1.2,
+   "k": 0.7,
+   "halo": 4.5,
+   "haloK": 0.2
+  },
+  {
+   "x": 360.988,
+   "y": 156.552,
+   "size": 0.8904,
+   "colour": "#FFD9A0",
+   "core": 1.1,
+   "k": 0.6,
+   "halo": 4.0,
+   "haloK": 0.18
+  },
+  {
+   "x": 598.348,
+   "y": 110.324,
+   "size": 0.9359,
+   "colour": "#FFD9A0",
+   "core": 1.1,
+   "k": 0.6,
+   "halo": 4.0,
+   "haloK": 0.18
+  },
+  {
+   "x": 103.095,
+   "y": 169.081,
+   "size": 0.8352,
+   "colour": "#FFD9A0",
+   "core": 1.1,
+   "k": 0.6,
+   "halo": 4.0,
+   "haloK": 0.18
+  },
+  {
+   "x": 630.57,
+   "y": 280.747,
+   "size": 0.8012,
+   "colour": "#FFD9A0",
+   "core": 1.1,
+   "k": 0.6,
+   "halo": 4.0,
+   "haloK": 0.18
+  },
+  {
+   "x": 676.315,
+   "y": 201.354,
+   "size": 0.821,
+   "colour": "#FFD9A0",
+   "core": 1.1,
+   "k": 0.6,
+   "halo": 4.0,
+   "haloK": 0.18
+  },
+  {
+   "x": 549.086,
+   "y": 289.77,
+   "size": 0.805,
+   "colour": "#FFD9A0",
+   "core": 1.1,
+   "k": 0.6,
+   "halo": 4.0,
+   "haloK": 0.18
+  }
+ ],
+ "veil": 0.4,
+ "motion": {
+  "dust": 30
+ },
+ "chrome": {
+  "sky": "#121C4C",
+  "deep": "#070A22",
+  "jewel1": "#3E6AE2",
+  "jewel2": "#3AA064"
+ }
+}

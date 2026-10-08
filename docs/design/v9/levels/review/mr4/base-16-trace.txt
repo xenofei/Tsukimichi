@@ -1,0 +1,17 @@
+  skipped ((407, 164), 'pearl plaza', "off the board (walls, launcher's swing or bucket)")
+  skipped ((436, 147), 'pearl plaza', "off the board (walls, launcher's swing or bucket)")
+  skipped ((565, 293), 'walk', '11.1 from the peg at (592, 285)')
+  skipped ((547, 199), 'walk', '-3.8 from the peg at (560, 199)')
+  skipped ((484, 188), 'walk', '4.4 from the peg at (465, 196)')
+  skipped ((407, 194), 'walk', '-14.4 from the peg at (407, 196)')
+  skipped ((300, 200), 'the steps', '-2.0 from the peg at (315, 201)')
+  skipped ((301, 120), 'steps of nald', '9.4 from the peg at (285, 142)')
+  skipped ((272, 137), 'steps of nald', '-3.0 from the peg at (285, 142)')
+  skipped ((258, 247), 'west spoke', '-6.0 from the peg at (269, 247)')
+  skipped ((190, 246), 'west spoke', '1.0 from the peg at (186, 228)')
+  skipped ((302, 292), 'south spoke', '-4.0 from the peg at (315, 293)')
+  skipped ((500, 365), 'weavers', '-7.3 from the peg at (494, 358)')
+  skipped ((300, 379), 'onyx lane', '8.8 from the peg at (286, 358)')
+  skipped ((176, 278), 'gladiators', '2.1 from the peg at (186, 262)')
+  pieces 62 (pegs 61, bricks 1, movers 0); candidates 29; green-only 15; skipped while tracing 15
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_2529e0f6-97c-6\docs\design\v9\levels\build\trace\base-16.png

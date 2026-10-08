@@ -1,0 +1,196 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "uldah-from-the-sands",
+ "source": {
+  "game": "ui/map/w1t1/01/w1t101_m.tex",
+  "crop": [330, 420, 1160, 870],
+  "erase": [[506, 960, 152, 72], [504, 958, 76, 76], [1086, 546, 82, 150], [1084, 544, 86, 84], [1210, 808, 63, 66], [1144, 850, 64, 73], [927, 928, 61, 77], [1002, 932, 48, 79], [768, 1001, 97, 51]]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.6,
+  "exposure": 0.66,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "land": [0.75, 5],
+     "blur": 6.0,
+     "invert": true
+    }
+   ],
+   "mul": 0.8
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [627, 430, 120, 60]
+    },
+    {
+     "land": [0.75, 5],
+     "blur": 6.0,
+     "invert": true
+    }
+   ],
+   "mul": 1.2
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-from-the-sands-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-from-the-sands-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#80146F"], [600, "#73176F"]],
+  "chroma": 1.8,
+  "floor": 0.07,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "regions": [
+   {
+    "hue": "#0091A4",
+    "chroma": 0.08,
+    "where": [
+     {
+      "land": [0.75, 5],
+      "blur": 20.0
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [90, 40],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.0
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [90, 40],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 110,
+   "y": 50,
+   "r": 260,
+   "colour": "#FFC27A",
+   "k": 0.03
+  },
+  {
+   "kind": "shafts",
+   "origin": [-60, -160],
+   "angles": [50, 58, 67],
+   "widths": [46, 32, 52],
+   "k": 0.05,
+   "colour": "#FFD9A0",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-from-the-sands-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-from-the-sands-ticks",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-from-the-sands-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-from-the-sands-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "uldah-from-the-sands-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "veil": 0.4,
+ "motion": {
+  "dust": 20,
+  "stars": 30,
+  "starWhere": [
+   {
+    "land": [0.75, 5],
+    "blur": 7.0,
+    "invert": true
+   },
+   {
+    "y": [300, 240]
+   }
+  ],
+  "mist": [
+   {
+    "y": [520, 594],
+    "speed": 5,
+    "alpha": 0.1,
+    "cell": 140,
+    "seed": 13,
+    "colour": "#D8B8E0"
+   }
+  ],
+  "glints": [
+   {
+    "points": [[214, 397], [180, 399], [146, 401], [112, 404], [80, 407]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[535, 182], [541, 152], [550, 118], [556, 92]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 15,
+    "colour": "#FFE6B0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#1A1040",
+  "deep": "#07000F",
+  "jewel1": "#80146F",
+  "jewel2": "#0091A4"
+ }
+}
