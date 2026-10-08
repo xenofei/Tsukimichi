@@ -1,6 +1,6 @@
 {
  "name": "uldah-spire-sands",
- "about": "Ul'dah's east edge from the game's own Thanalan loading-screen painting (the image the game shows for Ul'dah and every Thanalan zone), at its high-resolution size, unmirrored: the east strip beyond 1-4's crop, with the tall gilt spire, the skyway running into it, the blue dome and shell roofs of the far city, and the red hull of an airship crossing overhead; night graded. The spire is lifted a little (tone x 1.22) and its painted lights carry small lamps (lamp flicker); moonlight comes from the upper left in beams, a pale glow behind the airship at the upper right silhouettes its hull, and a sage-green haze rises over the far city below the pegs (the second jewel, kept off the candidates for F9).",
+ "about": "Ul'dah's east edge from the game's own Thanalan loading-screen painting (the image the game shows for Ul'dah and every Thanalan zone), at its high-resolution size, unmirrored: the east strip beyond 1-4's crop, with the tall gilt spire, the skyway running into it, the blue dome and shell roofs of the far city, and the red hull of an airship crossing overhead; night graded. The spire is lifted a little (tone x 1.22) and its painted lights carry small lamps (lamp flicker); moonlight comes from the upper left in beams, a pale glow behind the airship at the upper right silhouettes its hull, which keeps its painted red (a jewel region on its dark hull only), and the ground below the horizon is graded to desert sand (the second jewel, kept off the candidates for F9; MR 4 round 1 found the earlier sage green read as lawn).",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base02_hr1.tex",
@@ -36,11 +36,20 @@
   "craft keel": {
    "points": [[372, 210], [410, 194], [450, 174], [492, 154], [532, 134], [572, 116], [604, 98]]
   },
-  "cloud bank": {
-   "points": [[392, 312], [440, 300], [500, 294], [560, 292], [620, 292], [680, 296], [725, 300]]
+  "craft": {
+   "points": [[360, 206], [372, 210], [410, 194], [450, 174], [492, 154], [532, 134], [572, 116], [604, 98], [640, 86], [690, 80], [728, 90], [770, 76], [800, 52], [800, 0], [528, 0], [478, 52], [430, 118], [392, 160], [362, 190]]
   },
-  "haze": {
-   "points": [[470, 430], [540, 424], [610, 420], [680, 422], [725, 424]]
+  "cloud lens top": {
+   "points": [[386, 334], [412, 306], [452, 290], [500, 282], [552, 278], [606, 276], [660, 276], [714, 278]]
+  },
+  "cloud lens underside": {
+   "points": [[386, 334], [418, 354], [462, 364], [514, 368], [566, 370], [618, 370], [670, 368], [720, 366]]
+  },
+  "high streak": {
+   "points": [[540, 238], [600, 230], [660, 224], [720, 220]]
+  },
+  "horizon": {
+   "points": [[468, 448], [530, 446], [592, 446], [654, 448], [716, 450]]
   },
   "far dome": {
    "circle": [372, 522, 50],
@@ -56,24 +65,29 @@
  },
  "dress": {
   "palette": {
-   "name": "Azure night and sage haze (Ul'dah's east edge)",
+   "name": "Azure night and desert sand (Ul'dah's east edge)",
    "sky": "#0E2446",
    "deep": "#050C1E",
    "jewel1": "#10A0BA",
-   "jewel2": "#5CB07A",
+   "jewel2": "#B88E5C",
    "warm": "#FFC27A",
    "rim": "#BFE4FF"
   },
   "jewel": {
    "bands": [[0, "#12AAC6"], [300, "#10A0BA"], [600, "#0E8096"]],
    "valueHues": [[0.08, "#103C68"], [0.45, "#C8ECFF"]],
-   "chroma": 1.4,
+   "chroma": 1.5,
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#5CB07A",
-     "chroma": 0.2,
-     "mask": [["y", 435, 495], ["x", 75, 135], ["x", 725, 665]]
+     "hex": "#B88E5C",
+     "chroma": 0.17,
+     "mask": [["y", 430, 485], ["x", 75, 135], ["x", 725, 665]]
+    },
+    {
+     "hex": "#C8442E",
+     "chroma": 0.12,
+     "mask": [["poly", "craft", 6], ["luma", 0.34, 0.24, 3]]
     }
    ],
    "quiet": [40, 18],

@@ -10,11 +10,11 @@
  "checks": {
   "preflight": {
    "problems": [],
-   "pieces": 67,
-   "pegs": 63,
+   "pieces": 68,
+   "pegs": 64,
    "bricks": 4,
    "movers": 0,
-   "orange_candidates": 30,
+   "orange_candidates": 28,
    "never_green": 9,
    "skipped_while_tracing": [
     [
@@ -32,155 +32,132 @@
      ],
      "east flank",
      "10.5 from a brick"
-    ],
-    [
-     [
-      710,
-      423
-     ],
-     "haze",
-     "wall pinch 5.9"
     ]
    ]
   },
   "loader": {
    "ok": true,
    "output": [
-    "OK   base-17.json  id=base-17 \"The Spire of the Sands\"  pieces=67 (round 63, bricks 4, movers 0)  mayBeOrange=30",
-    "     still round pegs 63: closest surfaces 17.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "OK   base-17.json  id=base-17 \"The Spire of the Sands\"  pieces=68 (round 64, bricks 4, movers 0)  mayBeOrange=28",
+    "     still round pegs 64: closest surfaces 17.9 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
     "     rows used y 112..522"
    ]
   },
   "sweep": {
    "angles": 681,
    "pegs_median": 9,
-   "pegs_mean": 8.7,
-   "pegs_max": 19,
-   "oranges_mean": 3.54,
+   "pegs_mean": 9.0,
+   "pegs_max": 20,
+   "oranges_mean": 3.77,
    "no_hit": 0,
-   "stuck": 2,
-   "stuck_share": 0.003,
+   "stuck": 0,
+   "stuck_share": 0.0,
    "long_flights": 0,
-   "bucket": 111,
+   "bucket": 116,
    "unreached": [],
-   "pieces": 67
+   "pieces": 68
   },
   "reach": {
    "rounds": 1,
    "never": []
   },
   "play": {
-   "greedy_won": 20,
+   "greedy_won": 27,
    "games": 48,
    "oranges_left_when_lost": [
+    1,
+    1,
+    2,
     2,
     1,
     1,
+    3,
     1,
-    4,
     1,
     1,
     2,
     1,
     3,
-    3,
-    3,
-    4,
-    4,
-    1,
     2,
     1,
     1,
-    2,
-    4,
-    1,
-    3,
+    6,
     3,
     1,
-    1,
     2,
-    1,
-    2
+    1
    ],
    "ramp_games": 1728,
-   "ramp_won": 891,
-   "ramp_per_48": 24.8,
-   "shots_mean": 13.7,
-   "stuck_fires": 15,
+   "ramp_won": 939,
+   "ramp_per_48": 26.1,
+   "shots_mean": 13.6,
+   "stuck_fires": 16,
    "random_won": 0,
-   "random_oranges_mean": 18.8,
+   "random_oranges_mean": 19.4,
    "low_left_share": 0.0,
    "lost_with_low_orange": 0.0,
    "holdouts": [
     {
-     "piece": 43,
+     "piece": 39,
      "at": [
-      518,
-      426
+      579,
+      370
      ],
-     "share_of_lost_games": 0.24
+     "share_of_lost_games": 0.29
     },
     {
-     "piece": 45,
+     "piece": 41,
      "at": [
-      614,
-      420
+      679,
+      368
      ],
-     "share_of_lost_games": 0.23
+     "share_of_lost_games": 0.22
     },
     {
-     "piece": 15,
+     "piece": 52,
      "at": [
-      320,
-      419
+      522,
+      404
      ],
      "share_of_lost_games": 0.21
     },
     {
-     "piece": 39,
+     "piece": 48,
      "at": [
-      579,
-      350
+      356,
+      398
      ],
-     "share_of_lost_games": 0.15
+     "share_of_lost_games": 0.16
     },
     {
-     "piece": 62,
+     "piece": 63,
      "at": [
       104,
       334
      ],
-     "share_of_lost_games": 0.15
-    },
-    {
-     "piece": 17,
-     "at": [
-      108,
-      423
-     ],
      "share_of_lost_games": 0.14
     },
     {
-     "piece": 40,
+     "piece": 37,
      "at": [
-      629,
-      348
+      479,
+      365
      ],
-     "share_of_lost_games": 0.14
+     "share_of_lost_games": 0.13
     },
     {
-     "piece": 13,
+     "piece": 62,
      "at": [
-      314,
-      347
+      100,
+      242
      ],
      "share_of_lost_games": 0.12
     },
     {
-     "piece": 32,
+     "piece": 18,
      "at": [
-      566,
-      292
+      140,
+      404
      ],
      "share_of_lost_games": 0.12
     },
@@ -193,18 +170,18 @@
      "share_of_lost_games": 0.11
     },
     {
-     "piece": 34,
+     "piece": 33,
      "at": [
-      654,
-      294
+      610,
+      276
      ],
      "share_of_lost_games": 0.11
     },
     {
-     "piece": 18,
+     "piece": 36,
      "at": [
-      140,
-      404
+      430,
+      357
      ],
      "share_of_lost_games": 0.11
     },
@@ -214,29 +191,21 @@
       147,
       358
      ],
-     "share_of_lost_games": 0.1
+     "share_of_lost_games": 0.11
     },
     {
-     "piece": 37,
+     "piece": 34,
      "at": [
-      480,
-      343
+      658,
+      276
      ],
      "share_of_lost_games": 0.1
     },
     {
-     "piece": 50,
+     "piece": 46,
      "at": [
-      356,
-      398
-     ],
-     "share_of_lost_games": 0.1
-    },
-    {
-     "piece": 61,
-     "at": [
-      100,
-      242
+      629,
+      227
      ],
      "share_of_lost_games": 0.1
     },
@@ -246,39 +215,47 @@
       140,
       250
      ],
-     "share_of_lost_games": 0.09
-    },
-    {
-     "piece": 28,
-     "at": [
-      392,
-      312
-     ],
-     "share_of_lost_games": 0.07
+     "share_of_lost_games": 0.1
     },
     {
      "piece": 30,
      "at": [
-      478,
-      296
+      466,
+      288
      ],
-     "share_of_lost_games": 0.06
+     "share_of_lost_games": 0.07
     },
     {
-     "piece": 22,
+     "piece": 28,
      "at": [
-      482,
-      177
+      386,
+      334
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 31,
+     "piece": 1,
      "at": [
-      522,
-      293
+      143,
+      179
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 10,
+     "at": [
+      300,
+      240
      ],
      "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 31,
+     "at": [
+      514,
+      281
+     ],
+     "share_of_lost_games": 0.03
     },
     {
      "piece": 24,
@@ -289,34 +266,18 @@
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 21,
-     "at": [
-      447,
-      193
-     ],
-     "share_of_lost_games": 0.03
-    },
-    {
-     "piece": 1,
-     "at": [
-      143,
-      179
-     ],
-     "share_of_lost_games": 0.03
-    },
-    {
      "piece": 19,
      "at": [
       378,
       225
      ],
-     "share_of_lost_games": 0.03
+     "share_of_lost_games": 0.02
     },
     {
-     "piece": 10,
+     "piece": 21,
      "at": [
-      300,
-      240
+      447,
+      193
      ],
      "share_of_lost_games": 0.02
     },
@@ -326,29 +287,29 @@
       271,
       136
      ],
-     "share_of_lost_games": 0.02
+     "share_of_lost_games": 0.01
     },
     {
-     "piece": 23,
+     "piece": 22,
      "at": [
-      516,
-      160
+      482,
+      177
      ],
-     "share_of_lost_games": 0.02
-    },
-    {
-     "piece": 11,
-     "at": [
-      307,
-      275
-     ],
-     "share_of_lost_games": 0.02
+     "share_of_lost_games": 0.01
     },
     {
      "piece": 9,
      "at": [
       290,
       206
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 23,
+     "at": [
+      516,
+      160
      ],
      "share_of_lost_games": 0.01
     }
@@ -380,7 +341,7 @@
   "colours": {
    "seed": 1,
    "counts": {
-    "blue": 39,
+    "blue": 40,
     "green": 2,
     "orange": 25,
     "purple": 1
@@ -391,35 +352,35 @@
     "faces": {
      "1x": {
       "blue": 0.685,
-      "orange": 0.618,
+      "orange": 0.617,
       "green": 0.713,
-      "purple": 0.579
+      "purple": 0.585
      },
      "0.8x": {
-      "blue": 0.672,
-      "orange": 0.608,
-      "green": 0.698,
-      "purple": 0.58
+      "blue": 0.675,
+      "orange": 0.605,
+      "green": 0.701,
+      "purple": 0.579
      }
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.326,
+      "worst": 0.325,
       "at": [
        314,
        347
       ],
-      "undressed": 0.344,
+      "undressed": 0.343,
       "drop": 0.018
      },
      "orange 1x": {
-      "worst": 0.259,
+      "worst": 0.301,
       "at": [
-       314,
-       347
+       271,
+       136
       ],
-      "undressed": 0.276,
-      "drop": 0.017
+      "undressed": 0.316,
+      "drop": 0.015
      },
      "green 1x": {
       "worst": 0.354,
@@ -431,40 +392,40 @@
       "drop": 0.018
      },
      "purple 1x": {
-      "worst": 0.22,
+      "worst": 0.225,
       "at": [
        314,
        347
       ],
-      "undressed": 0.237,
-      "drop": 0.017
+      "undressed": 0.243,
+      "drop": 0.018
      },
      "blue 0.8x": {
-      "worst": 0.315,
+      "worst": 0.32,
       "at": [
        314,
        347
       ],
-      "undressed": 0.332,
-      "drop": 0.017
+      "undressed": 0.336,
+      "drop": 0.016
      },
      "orange 0.8x": {
-      "worst": 0.251,
+      "worst": 0.287,
       "at": [
-       314,
-       347
+       271,
+       136
       ],
-      "undressed": 0.268,
-      "drop": 0.017
+      "undressed": 0.303,
+      "drop": 0.016
      },
      "green 0.8x": {
-      "worst": 0.341,
+      "worst": 0.345,
       "at": [
        314,
        347
       ],
-      "undressed": 0.358,
-      "drop": 0.017
+      "undressed": 0.361,
+      "drop": 0.016
      },
      "purple 0.8x": {
       "worst": 0.223,
@@ -472,79 +433,79 @@
        314,
        347
       ],
-      "undressed": 0.24,
-      "drop": 0.017
+      "undressed": 0.239,
+      "drop": 0.016
      }
     },
-    "worst_margin": 0.22,
+    "worst_margin": 0.223,
     "largest_drop": 0.018,
     "bricks_min_margin": [
-     0.343,
+     0.38,
      "blue"
     ],
-    "protan_orange_p10": 0.12,
-    "protan_places": 30,
+    "protan_orange_p10": 0.121,
+    "protan_places": 28,
     "protan_worst_at": [
      143,
      322
     ],
-    "protan_min": 0.119,
+    "protan_min": 0.12,
     "jewels": {
-     "coloured_px_pct": 93.2,
-     "mean_chroma": 0.06,
-     "second_at_walls_x": 0.5,
+     "coloured_px_pct": 89.7,
+     "mean_chroma": 0.061,
+     "second_at_walls_x": 0.43,
      "second_at_walls_worst_window": [
-      0.59,
-      441
+      0.45,
+      541
      ],
-     "first_jewel_hue": 232,
-     "first_share": 0.833,
-     "second_jewel_hue": 159,
-     "second_share": 0.161,
-     "apart_deg": 73,
+     "first_jewel_hue": 233,
+     "first_share": 0.781,
+     "second_jewel_hue": 62,
+     "second_share": 0.21,
+     "apart_deg": 171,
      "bins_pct": [
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      16.1,
       4.2,
-      74.2,
-      4.9,
-      0.5,
+      0.2,
+      16.6,
+      0.2,
       0.0,
-      0.0
+      0.0,
+      0.1,
+      73.9,
+      4.1,
+      0.6,
+      0.0,
+      0.1
      ]
     },
-    "ghost_median": 0.044,
+    "ghost_median": 0.058,
     "ghost_worst": [
-     0.057413507252931595,
+     0.08869320899248123,
      [
-      600,
-      488
+      570,
+      446
      ]
     ],
     "ghost_isolated_pegs": 3,
     "print": {
-     "median": 0.0,
-     "p90": 0.0254,
+     "median": 0.0015,
+     "p90": 0.0288,
      "worst": [
-      0.0351,
+      0.0367,
       [
        147,
        358
       ]
      ],
-     "samples": 60,
+     "samples": 61,
      "mode": "pegs",
-     "hue_median": 0.007
+     "hue_median": 0.0112
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 42.5,
+ "seconds": 37.6,
  "verdict": "PASS"
 }
