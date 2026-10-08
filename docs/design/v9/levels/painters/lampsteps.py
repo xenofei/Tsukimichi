@@ -67,6 +67,12 @@ FEATURES = {
     "parapet L": {"points": [[140.0, TOP - 8], [300.0, TOP - 8]]},
     "parapet R": {"points": [[470.0, TOP - 8], [660.0, TOP - 8]]},
     "moon": list(MOON),
+    "gate opening": {"points": [[round(GATE[0] + (GATE[2] + 4) * math.cos(math.radians(t)), 1),
+                                 round(GATE[1] + (GATE[2] + 4) * math.sin(math.radians(t)), 1)] for t in range(180, 361, 15)]
+                     + [[GATE[0] + GATE[2] + 4, 600.0], [GATE[0] - GATE[2] - 4, 600.0]]},
+    **{f"banner {i + 1}": {"points": [[bx - bw / 2, TOP + 6], [bx + bw / 2, TOP + 6], [bx + bw / 2, TOP + 6 + bl],
+                                      [bx, TOP + bl - 6], [bx - bw / 2, TOP + 6 + bl]]}
+       for i, (bx, bw, bl) in enumerate(BANNERS)},
 }
 
 
@@ -207,7 +213,7 @@ def paint(S=1):
     light = np.zeros((H, W), np.float32)
     for (lx, ly, k) in lights:
         d2 = (X - lx) ** 2 + ((Y - ly) * 0.92) ** 2
-        light += k * (0.95 / (1 + d2 / 22.0 ** 2) ** 1.5 + 0.16 * np.exp(-d2 / 64.0 ** 2))
+        light += k * (1.05 / (1 + d2 / 26.0 ** 2) ** 1.6 + 0.09 * np.exp(-d2 / 60.0 ** 2))
     gx, gy, gr = GATE
     light += 0.40 * np.exp(-((X - gx) ** 2 + ((Y - 560) * 1.6) ** 2) / 80.0 ** 2)
     light = light / (1 + 0.35 * light)
@@ -370,6 +376,7 @@ def paint(S=1):
 
     # ---- the lanterns: newel piers with brass lanterns, the door's hanging lantern, the bracket lamp
     fire = np.zeros((H, W), np.float32)
+    halo = np.zeros((H, W), np.float32)
     brass, dr_br = C.new()
     piers, dr_pi = C.new()
     for (x, y) in lamps:
@@ -383,15 +390,24 @@ def paint(S=1):
     dr_br.line(C.P([(bx_, by_ - 10), (bx_, by_ - 16), (bx_ - 16, by_ - 16)]), fill=255, width=C.w(1.2))
     dr_br.arc([(bx_ - 26) * C.k, (by_ - 26) * C.k, (bx_ - 6) * C.k, (by_ - 6) * C.k], 270, 360, fill=255, width=C.w(1.0))
     piers, brass = C.done(piers), C.done(brass)
+    glass_im, dr_g = C.new()
+    for (x, y) in lamps + [DOOR_LAMP, BRACKET]:
+        s_ = 1.0 if (x, y) in lamps else 0.85
+        dr_g.rectangle([(x - 5.6 * s_) * C.k, (y - 8 * s_) * C.k, (x + 5.6 * s_) * C.k, (y + 7 * s_) * C.k], fill=255)
+    glass = C.done(glass_im)
     px = over(px, piers, smooth_stone * 1.2)
     pier_edge = np.clip(piers - np.roll(piers, -int(1.0 * S), 1), 0, 1)
     px = screen(px, hexc("#FFC880") * (pier_edge * lit * 0.4)[..., None])
+    # the lanterns' glass panes, lit gold from within, then the brass cage over them
+    px = screen(px, hexc("#FFC870") * (glass * 0.55)[..., None])
     px = over(px, brass, hexc("#3A2412") * 0.9 + hexc("#E0A050") * 0.12)
     for (lx, ly, k) in lights:
         d2 = (X - lx) ** 2 + (Y - ly) ** 2
-        fire += k * (np.exp(-d2 / (2 * 2.6 ** 2)) * 0.95 + np.exp(-d2 / (2 * 7.5 ** 2)) * 0.30
-                     + np.exp(-d2 / (2 * 22.0 ** 2)) * 0.10)
+        fire += k * (np.exp(-d2 / (2 * 2.6 ** 2)) * 0.95 + np.exp(-d2 / (2 * 7.5 ** 2)) * 0.30)
+        halo += k * (np.exp(-d2 / (2 * 11.0 ** 2)) * 0.16 + np.exp(-d2 / (2 * 30.0 ** 2)) * 0.05)
+    # the flame is gold; the glow it throws into the night air is a rose-lilac haze (the jewel's own light)
     px = screen(px, hexc("#FFD48A") * np.clip(fire, 0, 1.2)[..., None])
+    px = screen(px, hexc("#E6B4DC") * np.clip(halo, 0, 1.0)[..., None])
     # dust in the lamplight
     motes = smooth(0.80, 0.95, fbm(H, W, 1.6 * S, 2, 61)) * np.clip(light - 0.3, 0, 1)
     px = screen(px, hexc("#FFD8A0") * (motes * 0.10)[..., None])

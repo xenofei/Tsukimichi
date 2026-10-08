@@ -630,7 +630,7 @@
    "ramp_first_seed": 865
   },
   "ceiling": {
-   "p99_luma": 0.404,
+   "p99_luma": 0.413,
    "limit": 0.465
   },
   "framecheck": {
@@ -678,107 +678,106 @@
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.356,
+      "worst": 0.346,
       "at": [
        466,
        304
       ],
-      "undressed": 0.353,
-      "drop": -0.003
+      "undressed": 0.341,
+      "drop": -0.005
      },
      "orange 1x": {
-      "worst": 0.289,
+      "worst": 0.277,
       "at": [
        418,
        416
       ],
-      "undressed": 0.287,
+      "undressed": 0.275,
       "drop": -0.002
      },
      "green 1x": {
-      "worst": 0.395,
+      "worst": 0.39,
       "at": [
        466,
        338
       ],
-      "undressed": 0.395,
-      "drop": 0.0
+      "undressed": 0.389,
+      "drop": -0.001
      },
      "purple 1x": {
-      "worst": 0.265,
+      "worst": 0.255,
       "at": [
        466,
        304
       ],
-      "undressed": 0.262,
-      "drop": -0.003
+      "undressed": 0.25,
+      "drop": -0.005
      },
      "blue 0.8x": {
-      "worst": 0.345,
+      "worst": 0.335,
       "at": [
        520,
        240
       ],
-      "undressed": 0.34,
+      "undressed": 0.33,
       "drop": -0.005
      },
      "orange 0.8x": {
-      "worst": 0.283,
+      "worst": 0.272,
       "at": [
        418,
        416
       ],
-      "undressed": 0.281,
-      "drop": -0.002
+      "undressed": 0.271,
+      "drop": -0.001
      },
      "green 0.8x": {
-      "worst": 0.387,
+      "worst": 0.38,
       "at": [
        466,
        338
       ],
-      "undressed": 0.386,
-      "drop": -0.001
+      "undressed": 0.38,
+      "drop": 0.0
      },
      "purple 0.8x": {
-      "worst": 0.242,
+      "worst": 0.232,
       "at": [
        520,
        240
       ],
-      "undressed": 0.237,
+      "undressed": 0.227,
       "drop": -0.005
      }
     },
-    "worst_margin": 0.242,
+    "worst_margin": 0.232,
     "largest_drop": 0.0,
     "bricks_min_margin": [
-     0.433,
+     0.435,
      "blue"
     ],
-    "protan_orange_p10": 0.103,
+    "protan_orange_p10": 0.107,
     "protan_places": 29,
     "protan_worst_at": [
      418,
      416
     ],
-    "protan_min": 0.095,
+    "protan_min": 0.101,
     "jewels": {
-     "coloured_px_pct": 98.7,
+     "coloured_px_pct": 98.9,
      "mean_chroma": 0.075,
-     "second_at_walls_x": 0.01,
+     "second_at_walls_x": 0.13,
      "second_at_walls_worst_window": [
-      0.03,
-      416
+      0.52,
+      191
      ],
-     "first_jewel_hue": 283,
-     "first_share": 0.811,
-     "second_jewel_hue": 357,
-     "second_share": 0.189,
-     "apart_deg": 74,
+     "first_jewel_hue": 282,
+     "first_share": 0.788,
+     "second_jewel_hue": 360,
+     "second_share": 0.212,
+     "apart_deg": 77,
      "bins_pct": [
-      7.1,
-      0.1,
+      7.8,
       0.0,
       0.0,
       0.0,
@@ -786,33 +785,34 @@
       0.0,
       0.0,
       0.0,
-      71.8,
-      9.3,
-      11.7
+      0.0,
+      70.8,
+      8.1,
+      13.4
      ]
     },
     "ghost_median": null,
     "ghost_worst": null,
     "ghost_isolated_pegs": 0,
     "print": {
-     "median": 0.0015,
-     "p90": 0.0345,
+     "median": 0.0,
+     "p90": 0.0198,
      "worst": [
-      0.0587,
+      0.0436,
       [
-       196,
-       272
+       418,
+       416
       ]
      ],
      "samples": 78,
      "mode": "pegs",
-     "hue_median": 0.0186
+     "hue_median": 0.0144
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 48.0,
+ "seconds": 26.5,
  "verdict": "PASS"
 }

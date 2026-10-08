@@ -11,6 +11,11 @@ Technique (LS): the moons stand in the pools of light. Each newel lantern wears 
 the lanterns are dotted, so the zigzag of the stair is drawn whole; the doorway's arch is crowned by two bricks open at
 the keystone with its hanging lantern a moon; the bracket lamp has its own ring; the two parapets' copings are dotted
 along the top terrace. The oranges stand in the pools and on the upper handrails.
+
+Built (MR 4): 86 pieces, 29 candidates, held out 23.6 per 48 (charter 23.5); seeds 1-864 put the chosen set at 23.6
+and the second tuning block (seeds 20001-23456) at 23.5. The lantern 2a stands at x 348 rather than 318 so its ring's
+right-hand moons meet the near-vertical shots just left of the launcher's axis (14 dead first shots otherwise). The
+lower handrail's moons and the lowest rings' are the holdouts (at most 25% of lost games, all above y 430).
 """
 LEVEL = dict(id="base-18", name="Lamps on the Steps", stage=4, number=18, scene="lamp-steps",
              subject="a stair of lamp glows climbing a dark terrace, the pegs in the lamps' pools of light",
