@@ -25,7 +25,7 @@ and the verdict (PASS).
 
 | Code | Id | Name | Held out | Pooled | Jewels | F6 worst | Protan p10 / min | Source | Place (shield) |
 |---|---|---|---|---|---|---|---|---|---|
-| 5-1 | base-21 | The White Towers | 25.9 | 25.45 | 273 / 189 | 0.241 | 0.140 / 0.132 | La Noscea painting, base01_hr1 [1748, 60, 1440, 1080] | Limsa Lominsa Lower Decks |
+| 5-1 | base-21 | The White Towers | 25.9 | 25.45 | 275 / 210 | 0.224 | 0.132 / 0.123 | La Noscea painting, base01_hr1 [1748, 60, 1440, 1080] | Limsa Lominsa Lower Decks |
 | 5-2 | base-22 | The Strait of Merlthor | 23.5 | 24.02 | 289 / 354 | 0.326 | 0.101 / 0.099 | World painting, base05_hr1 [0, 1335, 1100, 825] | Nowhere (a chart) |
 | 5-3 | base-23 | Lights on the Water | 22.9 | 23.05 | 255 / 171 | 0.218 | 0.109 / 0.108 | ours (harbourlights) | Limsa Lominsa Lower Decks |
 | 5-4 | base-24 | The Arches of the Bridge | 21.3 | 21.68 | 284 / 357 | 0.240 | 0.122 / 0.112 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |

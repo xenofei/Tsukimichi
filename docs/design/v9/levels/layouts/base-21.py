@@ -26,10 +26,17 @@ the two upper billows; none low (y 430 or lower), so cheap difficulty cannot ari
 and (532, 376), are candidates (from 27.1 on the second block). The billow hearts and the window lamp are blue: as
 candidates under their crowns they were left in 29-39% of lost games.
 
-Dress: violet night (first jewel ~273) with sea-green mist (~188) on the clouds and the bay's haze round the castle's
-foot, never on the castle (`not-poly` of the castle's silhouette); the castle lifted 1.22 so the white towers read at
-640; four moonbeams from the upper left; harbour ropes in the top corners and two lantern posts at the foot. Motion:
-mist on the water (a band below the pegs), the beams, the posts' flicker.
+Dress: violet night (first jewel ~275) with sea-teal mist (~210) on the clouds and the bay's haze round the castle's
+foot, never on the castle (`not-poly` of the castle's silhouette); the castle lifted 1.26 and its lit faces kept from
+the jewel (a keep mask of the castle's silhouette by lightness) so the white towers read white, not lavender, at 640;
+the cloud bank east of the castle lifted 1.4 so the billow crowns sit on cloud; four moonbeams from the upper left at
+the format's strongest (k 0.08); harbour ropes in the top corners and two lantern posts at the foot. Motion: mist on
+the water (a band below the pegs), the beams, the posts' flicker.
+
+Supervisor round 1 (MR 5, game designer m1, critic n1): the foot was a saturated green that read as lawn, the towers
+slate-lavender, the right-hand billows over empty haze and the beams too faint to see. The region moved from green
+(#44B07A) to sea teal (#2AA69C) and the jewel bands a little toward violet so the two stay 60 degrees apart; the
+layout is unchanged.
 """
 import math
 

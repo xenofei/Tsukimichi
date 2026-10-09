@@ -38,11 +38,12 @@
   "billow mid": {"circle": [672, 404, 34], "from": 210, "sweep": 120},
   "billow low": {"circle": [654, 506, 40], "from": 215, "sweep": 110},
   "billow west": {"circle": [160, 540, 36], "from": 225, "sweep": 90},
+  "cloud bank": {"points": [[598, 240], [650, 215], [740, 225], [800, 240], [800, 600], [590, 600], [598, 450]]},
   "castle": {"points": [[176, 560], [176, 330], [200, 300], [236, 290], [243, 150], [252, 250], [262, 120], [300, 55], [340, 120], [350, 250], [380, 290], [420, 290], [432, 185], [445, 280], [462, 200], [484, 60], [505, 200], [530, 140], [560, 200], [585, 260], [592, 400], [590, 560]]}
  },
  "dress": {
   "palette": {
-   "name": "Violet night and sea-green mist (the Admiral's towers)",
+   "name": "Violet night and sea-teal mist (the Admiral's towers)",
    "sky": "#171850",
    "deep": "#060818",
    "jewel1": "#4A44C8",
@@ -51,27 +52,30 @@
    "rim": "#D0D6FF"
   },
   "jewel": {
-   "bands": [[0, "#4642CA"], [600, "#3A38A6"]],
-   "valueHues": [[0.08, "#22248A"], [0.45, "#D6D8FF"]],
+   "bands": [[0, "#5A3CC8"], [600, "#4A34A8"]],
+   "valueHues": [[0.08, "#22248A"], [0.45, "#DAD8FF"]],
    "chroma": 0.85,
    "floor": 0.1,
    "regions": [
     {
-     "hex": "#44B07A",
+     "hex": "#2AA69C",
      "chroma": 0.3,
-     "mask": [["not-poly", "castle", 30], ["y", 300, 420], ["x", 75, 135], ["x", 725, 665]]
+     "mask": [["not-poly", "castle", 30], ["y", 220, 380], ["x", 75, 135], ["x", 725, 665]]
     }
    ],
+   "keepMasks": [[["poly", "castle", 10], ["luma", 0.36, 0.52, 6]]],
    "quiet": [54, 20],
-   "regionQuiet": 0.7
+   "regionQuiet": 0.55
   },
   "shafts": [
    {
     "origin": [-120, -200],
     "angles": [50, 57, 64, 72],
     "widths": [34, 22, 40, 26],
-    "k": 0.06,
-    "col": "#D8E0FF"
+    "k": 0.08,
+    "col": "#D8E0FF",
+    "reach": 1200,
+    "near": 100
    }
   ],
   "framing": [
@@ -89,7 +93,7 @@
   },
   "lights": [{"posts": true, "col": "#FFB45E", "r": 2.4, "k": 0.95, "halo": 12, "hk": 0.17}]
  },
- "tone": [{"mask": [["poly", "castle", 6]], "mul": 1.22}],
+ "tone": [{"mask": [["poly", "castle", 6]], "mul": 1.26}, {"mask": [["poly", "cloud bank", 30]], "mul": 1.4}],
  "runtime": {
   "flicker": [0],
   "motion": {
