@@ -1,2 +1,3 @@
-  pieces 83 (pegs 74, bricks 9, movers 0); candidates 31; green-only 40; skipped while tracing 0
+  skipped ((149, 132), 'spiral stair', '9.6 from the peg at (158, 104)')
+  pieces 71 (pegs 62, bricks 9, movers 0); candidates 30; green-only 28; skipped while tracing 1
 wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-5\docs\design\v9\levels\build\trace\base-24.png

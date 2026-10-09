@@ -28,7 +28,7 @@ and the verdict (PASS).
 | 5-1 | base-21 | The White Towers | 25.9 | 25.45 | 275 / 210 | 0.224 | 0.132 / 0.123 | La Noscea painting, base01_hr1 [1748, 60, 1440, 1080] | Limsa Lominsa Lower Decks |
 | 5-2 | base-22 | The Strait of Merlthor | 23.5 | 24.02 | 290 / 357 | 0.326 | 0.115 / 0.103 | World painting, base05_hr1 [0, 1335, 1100, 825] | Nowhere (a chart) |
 | 5-3 | base-23 | Lights on the Water | 22.0 | to re-pool | 255 / 171 | 0.206 | 0.108 / 0.107 | ours (harbourlights) | Limsa Lominsa Lower Decks |
-| 5-4 | base-24 | The Arches of the Bridge | 21.3 | 21.68 | 284 / 357 | 0.240 | 0.122 / 0.112 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |
+| 5-4 | base-24 | The Arches of the Bridge | 21.3 | to re-pool | 284 / 356 | 0.223 | 0.118 / 0.110 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |
 | 5-5 | base-25 | The Lighthouses of Vylbrand | 17.8 | 18.25 | 250 / 181 | 0.268 | 0.102 / 0.099 | Western La Noscea map, s1f400 [740, 720, 1300, 975] | Western La Noscea |
 
 The pooled steps are 1.43, 0.97 and 1.37, and the finale gap is 3.43 (each about ± 0.41). The mean is 22.49, against
@@ -36,10 +36,10 @@ MR 4's 23.07 (a fall of 0.58) and the charter's 22.6 (band 26 → 18). The jewel
 stage uses 4 game paintings and 1 of ours. Every scene falls back to `moon-road-night` when the shield hides it.
 
 Aces, from `MoonfallAces.Suggest` over 576 games: 5-1 270,000 (305 wins), 5-2 250,000 (288), 5-3 240,000 (260),
-5-4 240,000 (252), 5-5 240,000 (221). All are above the hard-level line (14 of 48).
+5-4 230,000 (254), 5-5 240,000 (221). All are above the hard-level line (14 of 48).
 
 The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x max / p99.9, then 1x p99: 5-1 0.039 / 0.007,
-0.008; 5-2 0.022 / 0.015, 0.035; 5-3 0.008 / 0.005, 0.007; 5-4 0.039 / 0.008, 0.007; 5-5 0.020 / 0.014, 0.018. 5-1's and
+0.008; 5-2 0.022 / 0.015, 0.035; 5-3 0.008 / 0.005, 0.007; 5-4 0.038 / 0.008, 0.007; 5-5 0.020 / 0.014, 0.018. 5-1's and
 5-4's maxima and 5-2's p99.9 and 1x p99 sit just under their limits.
 
 ## Integration changes
@@ -83,3 +83,18 @@ The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x m
   ledge is gone (sweep stuck 3 → 2 of 681). The candidates were re-picked on the tuning seeds (1-864 and 20001-23456:
   22.54 against 22.71 for the round-1 layout). The held-out figure is 22.0 (it was 22.9), so the stage's pooled
   figures need a fresh `stage mr5`.
+- **5-4 after round 1** (game designer M2, critic m6): the bridge is lamplit now. Six warm lights flicker on the
+  painting's own lamps and lit windows: three deck lamps (F5's "never a row" allows three in a 40-unit band), the east
+  tower's dome drum, the middle tower's upper window and its lit windows under the deck. The other three deck lamps
+  carry a moon each, so lamps and moons alternate along the rail, and no moon covers a lamp that burns. Two broad warm
+  glows (radius 110-120) sit over the deck lamps. The upper scatter is gone: the 8 cloud moons, the dome's lantern and
+  flanks and the high tower-wall moon. In their place are the middle tower's two chimney tops and thin spire, its roof
+  turret, the left spire's body, the dome drum's east flank, the spiral stair at the left edge, and the castle wall
+  dotted to the top. The 16-moon deck row is now three spans over the arches (4, 5 and 1), broken where the towers stand
+  on the piers. The mist row and the two moons under the arches are gone, and the tower foot moves up off its lit
+  windows (now a light) to (345, 432). The rose under the arches now fades out by y 590 (chroma 0.085 -> 0.06), a tone darkens the painting below y 470 (x0.78), and the mist band is
+  a paler lilac at alpha 0.08, so the foot reads as dusk mist under a violet floor instead of a red smear. Pieces
+  83 -> 71, candidates 31 -> 30. Tuned on seeds 1-864 and 20001-23456 (pooled 21.1); held out 21.3 (768 of 1728),
+  stuck fires 33 per 1,728, sweep stuck 5 of 681, low oranges 4.6% of those left. The Ace moves 240,000 -> 230,000
+  (254 of 576), recorded in `aces.json`. The converter's 2x maximum is 0.038 (it was 0.039): the castle's top moons
+  quieten the stair's flipping pixels. The dome's crown is not a brick: no ball reaches it (the reach gate), so the drum's light and flank carry the dome. The stage's pooled figures need a fresh `stage mr5`.

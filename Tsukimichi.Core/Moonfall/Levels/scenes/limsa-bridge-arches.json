@@ -29,6 +29,15 @@
    "kCore": 0.11,
    "kWide": 0.05,
    "colour": "#C4C0EE"
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "y": [470, 560]
+    }
+   ],
+   "mul": 0.78
   }
  ],
  "palette": {
@@ -42,14 +51,17 @@
   "regions": [
    {
     "hue": "#B84A70",
-    "chroma": 0.085,
+    "chroma": 0.06,
     "where": [
      {
       "lum": [0.16, 0.26],
       "blur": 4
      },
      {
-      "y": [400, 470]
+      "y": [400, 460]
+     },
+     {
+      "y": [590, 505]
      },
      {
       "x": [75, 135]
@@ -110,6 +122,22 @@
    "k": 0.025
   },
   {
+   "kind": "glow",
+   "x": 480,
+   "y": 330,
+   "r": 120,
+   "colour": "#FFC27A",
+   "k": 0.035
+  },
+  {
+   "kind": "glow",
+   "x": 170,
+   "y": 335,
+   "r": 110,
+   "colour": "#FFC27A",
+   "k": 0.03
+  },
+  {
    "kind": "shafts",
    "origin": [-120, -200],
    "angles": [50, 57, 64, 72],
@@ -167,6 +195,72 @@
    "halo": 12,
    "haloK": 0.17,
    "flicker": true
+  },
+  {
+   "x": 168.0,
+   "y": 331.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 441.0,
+   "y": 323.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 518.0,
+   "y": 323.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 589.0,
+   "y": 142.0,
+   "size": 1.1,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 279.0,
+   "y": 269.0,
+   "size": 0.95,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 355.0,
+   "y": 476.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
   }
  ],
  "veil": 0.44,
@@ -176,10 +270,10 @@
    {
     "y": [518, 590],
     "speed": 4,
-    "alpha": 0.11,
+    "alpha": 0.08,
     "cell": 130,
     "seed": 11,
-    "colour": "#E0B4C4"
+    "colour": "#D4BCD4"
    }
   ]
  },
