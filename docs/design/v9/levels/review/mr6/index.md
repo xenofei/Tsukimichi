@@ -29,7 +29,7 @@ verdict (PASS).
 | 6-1 | base-26 | The Armillary | 24.7 | 24.7 | 296 / 55 | 0.205 | 0.131 / 0.124 | ours (armillary) | Nowhere |
 | 6-2 | base-27 | The Wheel of the Twelve | 23.0 | 23.72 | 261 / 329 | 0.270 | 0.134 / 0.131 | ours (twelve) | Nowhere |
 | 6-3 | base-28 | The Seer's Chart | 21.1 | 21.63 | 289 / 160 | 0.276 | 0.110 / 0.105 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
-| 6-4 | base-29 | Meteor Shower | 20.8 | 20.57 | 258 / 173 | 0.230 | 0.110 / 0.092 | ours (meteors) | Nowhere |
+| 6-4 | base-29 | Meteor Shower | 20.8 | 20.57 | 255 / 191 | 0.236 | 0.119 / 0.106 | ours (meteors) | Nowhere |
 | 6-5 | base-30 | The Moon Gate | 17.4 | 17.4 | 313 / 214 | 0.254 | 0.103 / 0.102 | ours (moongate) | Nowhere |
 
 - **Ramp:** the pooled steps are 1.18, 0.92 and 2.03, each about ± 0.41, and the finale gap is 3.17 ± 0.40. The mean is
@@ -76,6 +76,19 @@ verdict (PASS).
 
 ## For the reviewers
 
+- **6-4 (round 1 fix, game designer m1, UX m2 and n2, game designer n4, critic n5):** the layout is unchanged, so
+  the ramp stands (held out 20.8, pooled 20.57). The lake is a dark mirror now. The painter no longer shifts the
+  mirror row by row or draws hard glint lines across it, which made the scanlines. Broad swells move the reflection
+  smoothly, the water smears it down a little and cools half its colour to a night blue, and only short, broken
+  glints of starlight mark it. The lake's jewel region is the airglow's teal (`#52AA92`) at chroma 0.04, where it
+  was green (`#64AC6A`) at 0.11. The airglow keeps its region at 0.13, also in that teal, and now runs down to the
+  shore over the range's foot (`["y", 524, 470]`). A protanope sees the old green as grey, the same as the orange's
+  olive; the teal reads bluer. Protan min goes 0.092 → 0.106 at the same place (514,431), slider 16's far end on
+  streak 3's head, and p10 0.110 → 0.119. F6 worst goes 0.230 → 0.236. Jewels are 255 / 191, 64 apart, second
+  share 0.170. Against 6-3 (289 / 160) they are 34 and 31 apart, and against 6-5 (313 / 214) 58 and 23. UX's other
+  fixes were tried first. A shorter slide on streak 3 (26 or 30 units) left protan at 0.092-0.094, because the ring
+  round the place is the green band, not the head. Dimming streak 3 to k 0.6 left it at 0.092. Neither is kept.
+  Converter gate 2x 0.005 / 0.003, 1x p99 0.004.
 - **6-3 (round 1 fix, critic M2 and m1, game designer m2, UX m3):** the five cities' ring moons went from r 8 to
   r 7.5 and Mor Dhona's seven from r 8 to r 7, on the same places with the same 30 candidates. The ring gaps open to
   17.9 and 17.2 (from 16.9 and 15.2), so a ball that enters a ring falls through rather than rattling. Tuning seeds
@@ -104,5 +117,4 @@ verdict (PASS).
   authored build.
 - **6-3:** the cloud sea is less saturated than the authored build (chroma 0.42 → 0.3). At 1280 the chart reads as a
   muted violet and green, so check it at 640 too.
-- **6-4:** protan min is 0.092, under UX's 0.105 guard. The author's build was the same; nothing here changed it.
 - **6-2 to 6-3:** this step resolves by 0.01 (0.92 less 0.41 against 0.5).

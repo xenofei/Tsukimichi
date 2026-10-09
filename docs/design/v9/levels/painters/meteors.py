@@ -227,17 +227,32 @@ def paint(S=1):
         rim = np.exp(-below / 2.2) * (0.35 + 0.25 * np.clip(lit + 0.5, 0, 1))
         body = screen(body, hexc("#A8C4F0") * rim[..., None])
         px = px * (1 - m[..., None]) + body * m[..., None]
-    # ---- the lake: the range and the airglow held in still water, a little darker, broken by slow ripples
+    # ---- the lake: the range and the airglow held in still, dark water (MR 6 round 1, game designer m1 and UX n2: the
+    # mirror's rows were shifted one by one and hard glint lines drawn across it, so it read as scanlines). Now broad,
+    # slow swells move the mirror sideways smoothly from row to row, the reflection is sampled smoothly and drawn down a
+    # little as water draws it, it deepens to a cold navy away from the shore, and the only bright marks are short,
+    # scattered glints of starlight, broken along their length.
     lake = smooth(SHORE - 1, SHORE + 2, Y)
-    ripple = np.sin(Y * 1.7 + fbm(H, W, 30 * S, 3, 53) * 8) * (Y - SHORE) * 0.05
-    my = np.clip(2 * SHORE - Y, 0, 600) * S
-    mx = np.clip(X * S + ripple * S, 0, W - 1.001)
-    yi = np.clip(my.astype(np.int32), 0, H - 1)
-    xi = mx.astype(np.int32)
-    refl = px[yi, xi] * 0.55
-    refl = refl + (hexc("#1C5A4A") - refl) * (smooth(SHORE, 600, Y) * 0.10)[..., None]
-    streaks = (np.sin(Y * 2.6 + fbm(H, W, 12 * S, 2, 59) * 6) > 0.86) * smooth(SHORE + 2, 600, Y) * 0.08
-    refl = screen(refl, hexc("#7CA8D8") * streaks[..., None])
+    depth = smooth(SHORE, 600, Y)
+    swell = (fbm(H, W, 46 * S, 3, 53) - 0.5) * (0.6 + 2.4 * depth) * 2.0
+    my = np.clip((2 * SHORE - Y) * S - 0.5, 0, H - 1.001)
+    mx = np.clip(X * S - 0.5 + swell * S, 0, W - 1.001)
+    x0, y0 = mx.astype(np.int32), my.astype(np.int32)
+    fx, fy = (mx - x0)[..., None], (my - y0)[..., None]
+    x1, y1 = np.minimum(x0 + 1, W - 1), np.minimum(y0 + 1, H - 1)
+    refl = ((px[y0, x0] * (1 - fx) + px[y0, x1] * fx) * (1 - fy) + (px[y1, x0] * (1 - fx) + px[y1, x1] * fx) * fy)
+    rv = max(1, int(round(1.5 * S)))
+    refl = sum(np.roll(refl, k, axis=0) for k in range(-rv, rv + 1)) / (2 * rv + 1)
+    refl = blur(refl, 0.6 * S) * 0.56
+    # the water cools what it holds: half of the mirror's colour goes to a night blue of the same lightness
+    cool = hexc("#5A78C8")
+    refl = refl * 0.5 + ((refl @ RL.LUM) / float(cool @ RL.LUM))[..., None] * cool * 0.5
+    refl = refl + (hexc("#081232") - refl) * (0.10 + 0.30 * depth)[..., None]
+    dash = fbm(H, W, 2.5 * S, 2, 59)
+    rh = max(1, int(round(2 * S)))
+    dash = sum(np.roll(dash, k * rh, axis=1) for k in range(-3, 4)) / 7
+    glint = smooth(0.60, 0.70, dash) * smooth(SHORE + 4, SHORE + 30, Y) * (0.5 + 0.5 * fbm(H, W, 60 * S, 2, 61))
+    refl = screen(refl, hexc("#9CB8E8") * (glint * 0.10)[..., None])
     px = px * (1 - lake[..., None]) + refl * lake[..., None]
     shore = np.exp(-((Y - SHORE - 1) / 1.2) ** 2) * 0.18
     px = screen(px, hexc("#8CB4E0") * shore[..., None])
