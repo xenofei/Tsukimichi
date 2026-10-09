@@ -451,3 +451,9 @@ designer flagged in rounds 2-6 (G4) that stage 4 had no source list. These are i
 - Every *needs* source.
 - The shield's area names marked *[assumed]*.
 - The ramp, jewel and candidate figures are targets, not measurements. Every level proves its own in the pipeline.
+
+### Owner's answers on matching Peggle (9 October 2026)
+A reference study read the owner's Peggle reverse-engineering workspace for facts only; no Peggle content enters the repo. The owner took the recommendation on all three questions:
+1. **The rules match Peggle's real values.** Free balls come from peg score only. Long Shot and orange-sweep triggers, the stuck-ball rule, the coin flip after a total miss, ×100 Fever, ±97° aim, brick and peg bounce, green placement and the smaller items all follow Peggle. The 30 finished levels are then re-tuned and their Aces re-suggested.
+2. **Boards are dense like Peggle's:** about 95–115 pieces, larger pegs, 30–45% bricks, and most pieces able to be orange. This applies to the remaining 85 levels and, through a refit pass, to the 30 finished ones.
+3. **Difficulty follows Peggle's measured curve.** Each stage is judged by its average plus a hard finale; the strict "each level harder than the last" rule is dropped. The band numbers are re-derived after the rule changes.
