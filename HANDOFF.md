@@ -25,7 +25,7 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Gate wrapper and caches:** `pwsh tools/gate.ps1` (skips an unchanged tree) and the caches for `mfl.py build`/`stage` and MoonfallRender `--cache`.
 
 ## In flight (2026-10-09, evening)
-- **MR 6 round 2:** the game designer approves; UX and the critic are finishing. When approved, merge MR 6's branch into main and then main into `moonfall-peggle`.
+- **MR 6:** UX and the game designer approve in round 2; the level critic says REVISE (1 Major, in `docs/design/v9/levels/supervisor/level-critic-mr6-round-2.md` on branch `worktree-wf_40869448-0fa-20`). It is not merged to main. Merge that branch into `moonfall-peggle` once the recalibration agent is done, and carry the critic's open Major into MR 6's refit brief. There is no round 3 under the old rules.
 - **The Peggle integration branch `moonfall-peggle`** (worktree `.claude/worktrees/moonfall-peggle`) has:
   - the engine's Peggle rules (69566a4c). On its own this fails the 5-of-48 gate on base-20/23/25 and the self-test's base-p2 pilot case; the refit fixes both;
   - the pipeline rules, from main (bcbf1531).
