@@ -324,7 +324,7 @@ and F9 measured here then stand for the game (once they are measured in the game
 rose is drawn: the rose multiplies its shaded halves and then screens its gilt, and the plates' `screen(X, A) * T`
 holds that exactly per channel (the self-test rebuilds 5-5 from its plates at max 0.0000). The runtime recipe takes a
 shaft's `near` down to -180 (5-5's lighthouse beams are full at the lamp) and a mask of up to 8 terms (the converter
-adds the quiet to 5-2's six-ramp coast region). A mist band must keep 2.5 units clear of every piece, or the runtime
+adds the quiet to 5-2's seven-term coast region, the most it takes). A mist band must keep 2.5 units clear of every piece, or the runtime
 leaves it out (5-4's band now starts at y 518, below its lowest moons). Where a strong grade multiplies the painting's
 compressed blocks, the gate's maximum catches a pixel that flips between two of them: 5-1 trades chroma gain for a
 floor (chroma 0.85, floor 0.1), 5-2 lifts its black foot with a glow, and 5-4 eases its chroma to 1.6.

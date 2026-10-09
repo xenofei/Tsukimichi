@@ -26,7 +26,7 @@ and the verdict (PASS).
 | Code | Id | Name | Held out | Pooled | Jewels | F6 worst | Protan p10 / min | Source | Place (shield) |
 |---|---|---|---|---|---|---|---|---|---|
 | 5-1 | base-21 | The White Towers | 25.9 | 25.45 | 275 / 210 | 0.224 | 0.132 / 0.123 | La Noscea painting, base01_hr1 [1748, 60, 1440, 1080] | Limsa Lominsa Lower Decks |
-| 5-2 | base-22 | The Strait of Merlthor | 23.5 | 24.02 | 289 / 354 | 0.326 | 0.101 / 0.099 | World painting, base05_hr1 [0, 1335, 1100, 825] | Nowhere (a chart) |
+| 5-2 | base-22 | The Strait of Merlthor | 23.5 | 24.02 | 290 / 357 | 0.326 | 0.115 / 0.103 | World painting, base05_hr1 [0, 1335, 1100, 825] | Nowhere (a chart) |
 | 5-3 | base-23 | Lights on the Water | 22.9 | 23.05 | 255 / 171 | 0.218 | 0.109 / 0.108 | ours (harbourlights) | Limsa Lominsa Lower Decks |
 | 5-4 | base-24 | The Arches of the Bridge | 21.3 | 21.68 | 284 / 357 | 0.240 | 0.122 / 0.112 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |
 | 5-5 | base-25 | The Lighthouses of Vylbrand | 17.8 | 18.25 | 250 / 181 | 0.268 | 0.102 / 0.099 | Western La Noscea map, s1f400 [740, 720, 1300, 975] | Western La Noscea |
@@ -39,7 +39,7 @@ Aces, from `MoonfallAces.Suggest` over 576 games: 5-1 270,000 (305 wins), 5-2 25
 5-4 240,000 (252), 5-5 240,000 (221). All are above the hard-level line (14 of 48).
 
 The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x max / p99.9, then 1x p99: 5-1 0.039 / 0.007,
-0.008; 5-2 0.018 / 0.015, 0.035; 5-3 0.008 / 0.005, 0.006; 5-4 0.039 / 0.008, 0.007; 5-5 0.020 / 0.014, 0.018. 5-1's and
+0.008; 5-2 0.022 / 0.015, 0.035; 5-3 0.008 / 0.005, 0.006; 5-4 0.039 / 0.008, 0.007; 5-5 0.020 / 0.014, 0.018. 5-1's and
 5-4's maxima and 5-2's p99.9 and 1x p99 sit just under their limits.
 
 ## Integration changes

@@ -19,6 +19,21 @@
  "grain": 0.008,
  "paint": [
   {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [240, 454, 60, 75]
+    },
+    {
+     "y": [375, 410]
+    },
+    {
+     "y": [545, 505]
+    }
+   ],
+   "mul": 2.0
+  },
+  {
    "kind": "plate",
    "picture": "merlthor-strait-route-cut",
    "blend": "multiply"
@@ -40,7 +55,7 @@
   "regions": [
    {
     "hue": "#AF6130",
-    "chroma": 0.14,
+    "chroma": 0.22,
     "where": [
      {
       "lum": [0.28, 0.22],
@@ -64,10 +79,14 @@
       "invert": true
      },
      {
+      "disc": [420, 330, 55, 100],
+      "invert": true
+     },
+     {
       "near": [60, 24],
       "blur": 40.0,
       "invert": true,
-      "scale": 0.25
+      "scale": 0.35
      }
     ]
    }
@@ -135,7 +154,7 @@
     "colour": "#FFE6B0"
    },
    {
-    "points": [[394, 300], [370, 288], [342, 276], [316, 268]],
+    "points": [[370, 288], [342, 276], [316, 268]],
     "smooth": 8,
     "speed": 30,
     "every": 30,

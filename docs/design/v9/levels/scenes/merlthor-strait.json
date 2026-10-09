@@ -1,6 +1,6 @@
 {
  "name": "merlthor-strait",
- "about": "The south-west of the game's own world painting The Three Great Continents at its high-resolution size (Vylbrand and Limsa Lominsa, the Strait of Merlthor, Thanalan with Vesper Bay's cape and Ul'dah, the eastern lobe, the Rhotano Sea and its compass roses, the galleon in the east), read as a chart under the moon: violet sea, the land's dark ground warmed toward rose-copper, the ferry's crossing from Vesper Bay to Limsa and the roads out of Ul'dah engraved over it in gilt, where the runtime's glints run. Crop [0, 1335, 1100, 825] (the charter's): 21.8% of its own area over 3-1's crop [0, 555, 1280, 960], 1.5% over 2-3's, none over 3-5's. The painting fades to black at its foot, so a faint violet lift over the whole board (a glow of radius 2000) keeps the dark ground off sRGB 0-1 for the converter's gate (MR 3 round 1, critic B1). The rose-copper region follows the painting's dark land (a luma ramp), fades within 75 units of the walls, below y 400-460 (the fade) and round the launcher, and leaves the Sagolii's interior (a disc 160 units across, under its two ridge crowns) to the violet so the orange crowns keep F9's separation.",
+ "about": "The south-west of the game's own world painting The Three Great Continents at its high-resolution size (Vylbrand and Limsa Lominsa, the Strait of Merlthor, Thanalan with Vesper Bay's cape and Ul'dah, the eastern lobe, the Rhotano Sea and its compass roses, the galleon in the east), read as a chart under the moon: violet sea, the land's dark ground warmed toward rose-copper, the ferry's crossing from Vesper Bay to Limsa and the roads out of Ul'dah engraved over it in gilt, where the runtime's glints run. Crop [0, 1335, 1100, 825] (the charter's): 21.8% of its own area over 3-1's crop [0, 555, 1280, 960], 1.5% over 2-3's, none over 3-5's. The painting fades to black at its foot, so a faint violet lift over the whole board (a glow of radius 2000) keeps the dark ground off sRGB 0-1 for the converter's gate (MR 3 round 1, critic B1). The rose-copper region follows the painting's dark land (a luma ramp), fades within 75 units of the walls, below y 400-460 (the fade) and round the launcher, and leaves the Sagolii's interior (a disc 160 units across, under its two ridge crowns) to the violet so the orange crowns keep F9's separation. MR 5 round 1 (UX m1, critic m5): the copper gives way round Ul'dah's ring and the road south (a soft inverted disc 110 units across at (420, 330), feathered 100) and takes more of the quiet (regionQuiet 0.25 -> 0.35), and its chroma rises 0.14 -> 0.22 so the second jewel keeps F7's share where the layout is not (F9 p10 0.101 -> 0.115); a soft tone (2.0, a disc 120 units across feathered 75, between ramps at y 375-410, so the Rhotano isle's lone moon keeps its ghost check, and y 545-505, so it never multiplies the black foot's compressed blocks for the converter's gate) lifts the south compass rose out of the foot's darkness under its ring (game designer m4); the road's gilt route stops at (370, 288), clear of the guide's column (UX m2).",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
@@ -26,6 +26,30 @@
    "grow": 3
   }
  },
+ "tone": [
+  {
+   "mask": [
+    [
+     "disc",
+     240,
+     454,
+     60,
+     75
+    ],
+    [
+     "y",
+     375,
+     410
+    ],
+    [
+     "y",
+     545,
+     505
+    ]
+   ],
+   "mul": 2.0
+  }
+ ],
  "veil": 0.34,
  "features": {
   "limsa lominsa": [
@@ -427,7 +451,7 @@
    "regions": [
     {
      "hex": "#AF6130",
-     "chroma": 0.14,
+     "chroma": 0.22,
      "mask": [
       [
        "luma",
@@ -463,6 +487,13 @@
        232,
        80,
        -40
+      ],
+      [
+       "disc",
+       420,
+       330,
+       55,
+       -100
       ]
      ]
     }
@@ -471,7 +502,7 @@
     60,
     24
    ],
-   "regionQuiet": 0.25
+   "regionQuiet": 0.35
   },
   "shafts": [
    {
@@ -558,10 +589,6 @@
   {
    "kind": "route",
    "points": [
-    [
-     394,
-     300
-    ],
     [
      370,
      288
