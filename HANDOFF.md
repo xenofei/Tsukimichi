@@ -36,13 +36,10 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 1. **Refit MR 1–6 on `moonfall-peggle`,** a workflow per stage: densify to 95–115 pieces at r 10 and t 20, the candidate share, re-tune to the new bands, re-suggest Aces, convert, reviews.
 2. **Merge `moonfall-peggle` into main** when the gates pass, and run the full check.
 3. **Continue MR 7–11 and FS 1–12** under the new rules.
-
-## Next
-## Next
    - Far Shore stage 1 ships the two Fan Kit wallpapers with a "© SQUARE ENIX" notice in `THIRD-PARTY-NOTICES.txt` (owner's answer).
-   - Point `challenges.json` ch-03 and ch-04 at `base-27` and `base-37` when those levels ship.
-2. **The full release,** after all 115 levels: version 1.24.0 or later, What's new, changelog. Ask the owner before pushing.
-   - The owner decided on 7 October: at the full release, Moonfall gets its own button on the main window, not just the status-bar pill.
+   - Point `challenges.json` ch-04 at `base-37` when it ships (ch-03 already points at `base-27`, from MR 6).
+4. **The full release,** after all 115 levels: version 1.24.0 or later, What's new, changelog. Ask the owner before pushing.
+   - At the full release, Moonfall gets its own button on the main window (owner, 7 October).
 
 ## Open
 - **Owner items:** none open. The unused user-level agents and skills stay as they are (owner, 7 October).
