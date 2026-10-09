@@ -27,7 +27,7 @@ verdict (PASS).
 | Code | Id | Name | Held out | Pooled | Jewels | F6 worst | Protan p10 / min | Source | Place (shield) |
 |---|---|---|---|---|---|---|---|---|---|
 | 6-1 | base-26 | The Armillary | 24.7 | 24.7 | 296 / 55 | 0.205 | 0.131 / 0.124 | ours (armillary) | Nowhere |
-| 6-2 | base-27 | The Wheel of the Twelve | 24.2 | 23.52 | 261 / 329 | 0.272 | 0.135 / 0.131 | ours (twelve) | Nowhere |
+| 6-2 | base-27 | The Wheel of the Twelve | 23.0 | 23.72 | 261 / 329 | 0.270 | 0.134 / 0.131 | ours (twelve) | Nowhere |
 | 6-3 | base-28 | The Seer's Chart | 22.3 | 22.6 | 290 / 168 | 0.285 | 0.130 / 0.128 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
 | 6-4 | base-29 | Meteor Shower | 20.8 | 20.57 | 258 / 173 | 0.230 | 0.110 / 0.092 | ours (meteors) | Nowhere |
 | 6-5 | base-30 | The Moon Gate | 17.4 | 17.4 | 313 / 214 | 0.254 | 0.103 / 0.102 | ours (moongate) | Nowhere |
@@ -36,11 +36,11 @@ verdict (PASS).
   21.76, against the charter's 21.6 (band 25 → 17). The jewel check against 5-5 (246 / 168) passes.
 - **Sources and shield:** the stage uses 1 game painting of 5 (the charter's 1 for MR 6). Every scene is set nowhere
   (charter 1.4) and falls back to `moon-road-night`.
-- **Aces:** from `MoonfallAces.Suggest` over 576 games: 6-1 250,000 (306 wins), 6-2 250,000 (294), 6-3 230,000 (255),
+- **Aces:** from `MoonfallAces.Suggest` over 576 games: 6-1 250,000 (306 wins), 6-2 250,000 (270), 6-3 230,000 (255),
   6-4 220,000 (229), 6-5 230,000 (197). All are above the hard-level line (14 of 48), and 6-5 is now the lowest of
   stages 1-6.
 - **ch-03 (Thirty-Five Moons):** now points at base-27. `mfl.py challenge ch-03` passes: 35 oranges on 35 candidates,
-  and the greedy player wins 29 of 48.
+  and the greedy player wins 20 of 48 (29 before 6-2's round 1 fix).
 - **Converter gate:** `convert base-26 ... base-30 --check` passes 10 of 10. The figures are 2x max / p99.9, then 1x
   p99: 6-1 0.008 / 0.006, 0.006; 6-2 0.007 / 0.004, 0.005; 6-3 0.012 / 0.007, 0.028; 6-4 0.005 / 0.003, 0.004;
   6-5 0.009 / 0.006, 0.006. 6-3's 1x p99 is the closest to its 0.035 limit.
@@ -76,6 +76,14 @@ verdict (PASS).
 
 ## For the reviewers
 
+- **6-2 (round 1 fix, game designer M2, critic n1):** the wheel's inner ticked rim now carries six bricks at its four
+  diagonals: two-brick arcs on the upper rim either side of the top (they stop where the rim flattens to a deck) and one
+  brick on each lower diagonal, each 28 units clear of the divider moons. The sweep is mean 7.7, median 7 (was 6.4 and
+  6); pieces 62 → 68; candidates still 35. The hub's ray moons went from r 9 to r 8.5 to hold the ramp: tuning seeds
+  22.7 (1-864) and 23.5 (20001-23456), held out 23.0, pooled 23.72 over the stage's 6,912 games (was 23.52). The top
+  ray's moon is at x 401, so the 0° shot no longer bounces on the hub's line (long flights 1 → 0). Stuck fires 54 per
+  1,728 (was 23), under the 88 maximum; the sweep sticks on 2 of 681. The low orange (526,440) is left in 22% of lost
+  games (was 14%), under the 25% gate. ch-03 wins 20 of 48 at 35 oranges. Ace unchanged (250,000, 270 of 576 win).
 - **6-1 (round 1 fix, game designer M1, m3, n3):** the cage is no longer teal. The brass frame and the heart are gold, the rings
   pale silver, and the dusk glows amber behind the far hills. Jewels 296 / 55 (6-5 is 313 / 214). Protan p10 0.131 (was
   0.119). F6 worst 0.205 (was 0.234): the teal region had lifted the margin by 0.03, and the gold cannot sit near the
