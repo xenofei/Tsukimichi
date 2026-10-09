@@ -19,7 +19,35 @@ pixels, judged from the cached painting at reduced scale. The stage's author fix
 
 ## 1. Rules that bind every stage
 
+> **Owner's decision, 9 October 2026.** Moonfall boards become as dense as Peggle's; most pieces can be orange, so every
+> retry deals a new board; difficulty is judged by each stage's average plus a hard finale, following Peggle's measured
+> curve, without the strict "each level harder than the last" rule. Sections 1.0, 1.1 and 1.6 below carry the change; the
+> pipeline (`tools/moonfall-levels/`) enforces it. The shipped levels were built to the earlier rules and are refitted
+> separately. Where the rest of this charter (the per-level tables in section 2 included) still speaks of 28-35
+> candidates, 60-160 pieces or a level-by-level ramp, section 1 wins.
+
+### 1.0 Density and candidates (owner's decision, 9 October 2026)
+
+| Rule | Was | Now | Kind |
+|---|---|---|---|
+| Pieces | 60-160 | at least 85, at most 160; the target is 95-115 | floor and ceiling are faults; the target is a warning |
+| Peg radius, brick thickness | pegs 7-9, bricks 10-12 in the shipped ten | pegs 10, bricks 20 by default (`author.PEG_R`, `BRICK_T`) | defaults; the readability, framing and dress measurements read each piece's own size, so no threshold changed |
+| Brick share | not measured | 30-45% where the subject allows | reported (`brick_share`) and a soft warning |
+| Orange candidates | 28-35 pieces (45 on `base-37`) | 60-90% of the pieces, and at least the oranges a challenge asks (35 on `base-27`, 45 on `base-37`) | fault |
+| Candidates in the lower third (y 400 and lower) | the per-orange gate at y 430 | at most 30% of the candidates | fault (pre-flight), with the ratio gate kept in `engine.cheap` |
+| Spread | 10 candidates per 200 x 200 square | at most a third of the candidates in a square (never fewer than 10 allowed), and one candidate below y 400 on each side | fault |
+| Authoring | candidates placed one by one | every piece a candidate except a list of exclusions (`b.candidates(exclude=...)`) | helper |
+
+The deal is still 25 oranges; with 60 or more candidates, a retry deals a different board. Greens still need 8 or more
+pieces that may be green and are never orange, so the exclusions include them.
+
 ### 1.1 Difficulty bands
+
+> **Owner's decision, 9 October 2026: a stage is judged by its mean within a band plus a finale that is its hardest level
+> by a margin.** The per-level step of 0.5 per 48 is dropped, so the levels of a stage may come in any order. The band
+> numbers in `stagecheck.MEAN_BANDS` (this table's old midpoints plus or minus 2) and the finale gap (2.5 below the next
+> hardest level) are **placeholders**: they will be re-derived from Peggle's curve once the engine's rules change. The
+> table and the pattern below are the previous ramp, kept as the source of those placeholders.
 
 The ramp is the greedy player's wins per 48 on the held-out games at the level's own number. Each step and finale gap is
 judged on the pooled 6,912 games, as `mflkit/stagecheck.py` does now: a step of at least 0.5 per 48, and a finale at
@@ -27,7 +55,7 @@ least 2.5 below its 4th level, each after one standard error is taken off.
 
 The shipped ramp, from the reports (held out) and the game designer's runtime round 2 (pooled):
 
-| Stage | 1 | 2 | 3 | 4 | 5 (finale) | Mean | Band in `stagecheck.BANDS` |
+| Stage | 1 | 2 | 3 | 4 | 5 (finale) | Mean | Old band (the placeholder source for `stagecheck.MEAN_BANDS`) |
 |---|---|---|---|---|---|---|---|
 | 1 | 30.7 | 27.2 | 25.1 | 23.7 | 20.4 | 25.4 | 30 → 21 |
 | 2 (pooled) | 28.12 | 26.75 | 25.55 | 24.12 | 20.65 | 25.0 | 27 → 20 |
@@ -52,8 +80,8 @@ The shipped ramp, from the reports (held out) and the game designer's runtime ro
 | | | | | FS 11 | 20.0 → 12.0 | 16.6 |
 | | | | | FS 12 | 19.5 → 11.0 (gap 4.0) | 16.0 |
 
-- **Each stage is harder overall.** Both ends and the mean fall from stage to stage, and the mean falls by 0.5 to 1.0.
-- **Each stage opens easier than the last finale.** The ease-back is 6.35 into MR 3 and 7.0 to 7.5 after that, as the shipped
+- **Each stage is harder overall.** The mean falls from stage to stage, by 0.5 to 1.0 (the old pattern; to be re-derived).
+- **Each stage opens easier than the last finale.** (Old pattern; no longer checked.) The ease-back is 6.35 into MR 3 and 7.0 to 7.5 after that, as the shipped
   game does (20.4, then 28.1).
 - **The floor.** The hardest level in the game is FS 12-5 at 11 per 48 (23%). That keeps two margins:
   - The 5-of-48 rule holds with room: at 11 per 48, seeds 1-48 fall below 5 wins under 1% of the time.
@@ -61,7 +89,7 @@ The shipped ramp, from the reports (held out) and the game designer's runtime ro
 - **The Far Shore starts over (question 1).** Its stages are numbered from 1, and greens only come at level 3
   (`MoonfallLevelPlace.Number`), so its first two levels have none. FS 1 therefore opens near MR 6's level. Twelve more
   stages could not keep falling from MR 11's 13 without going below the floor.
-- **Tooling (done, 7 October 2026).** `stagecheck.BANDS` holds every stage of the tables above, keyed by campaign and stage
+- **Tooling (done, 7 October 2026).** `stagecheck.MEAN_BANDS` (placeholders from 9 October 2026) holds every stage of the tables above, keyed by campaign and stage
   (`mr3`, `fs1`); `mfl.py stage mr3` / `stage fs1` read the level ids' prefix (`base-`, `expansion-`) to pick the campaign, a
   bare number still means the Moon Road, and a stage's first level is compared with the previous stage's last level in the same
   campaign (Far Shore stage 1: nothing).
@@ -186,15 +214,17 @@ Silent Stars) is a sky stage of our own paintings. The per-stage targets:
 
 ### 1.6 Candidates and challenges
 
-- **Candidates.** The pre-flight allows 28-35 orange candidates, and all ten shipped levels have 28. The default here rises
-  through a stage: 28-29, 30, 30, 31, 32 (33 on a campaign finale). The deal of 25 then varies more as the game goes on.
-  Difficulty still comes from where the candidates sit, never from low oranges (the cheap-difficulty gate).
-- **ch-03 "Thirty-Five Moons"** (win with 35 oranges) moves to **6-2 `base-27` The Wheel of the Twelve**, built with exactly
-  35 candidates (the pre-flight's maximum). A constellation's 35 stars are the subject itself.
-- **ch-04 "Forty-Five Moons"** moves to **8-2 `base-37` A Thousand Lanterns**, built with 45 candidates as the explicit
-  exception `moonfall-modes.md` asks for (question 5).
-  - It needs a recorded pre-flight exception for this one level. Every other rule still holds: 10 per 200 × 200, 60-160
-    pieces, the reach of every candidate.
+- **Candidates.** Since 9 October 2026 (section 1.0) 60-90% of a level's pieces are orange candidates, at most 30% of them in
+  the lower third; the deal is still 25. (The earlier rule was 28-35 candidates, rising 28-29, 30, 30, 31, 32 through a
+  stage.) Difficulty still comes from where the candidates sit and from the board, never from low oranges (the
+  lower-third band and the ratio gate).
+- **ch-03 "Thirty-Five Moons"** (win with 35 oranges) moves to **6-2 `base-27` The Wheel of the Twelve**, built with at least
+  35 candidates (any level has about 50 or more now; the pre-flight still requires 35 here). A constellation's 35 stars
+  are the subject itself.
+- **ch-04 "Forty-Five Moons"** moves to **8-2 `base-37` A Thousand Lanterns**, built with at least 45 candidates
+  (the explicit exception `moonfall-modes.md` asks for, question 5).
+  - It keeps its recorded exception: only this level may be asked for more than 35 oranges (`challenge.EXCEPTIONS`).
+    Every other rule still holds: the candidate share and spread, 85-160 pieces, the reach of every candidate.
   - Both carriers are the second level of a mid-campaign stage, so the challenge starts from an easier board.
   - **Acceptance:** the greedy player wins at least 5 of 48 at 35 or 45 oranges. Done: `mfcheck play` takes the orange count and
     `mfl.py challenge ch-03` / `ch-04` (or `challenge <level-id> <oranges>`) runs it on the carriers recorded in

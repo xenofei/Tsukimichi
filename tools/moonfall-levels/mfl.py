@@ -163,8 +163,9 @@ def cmd_build(args):
 
 def cmd_stage(args):
     """The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp (1728 games, about +-0.55 per 48), the
-    random player, the jewels; then every level pooled over 6912 games; it faults neighbours with the same jewels, a step
-    or a finale gap not resolved by one standard error, and a stage outside its band."""
+    random player, the jewels; then every level pooled over 6912 games; it faults neighbours with the same jewels, a
+    finale that is not the stage's hardest by the gap (resolved by one standard error), and a stage whose mean is
+    outside its band (placeholder bands: see stagecheck.py)."""
     if "--force" in args:
         os.environ["MFL_NO_CACHE"] = "1"
         args = [a for a in args if a != "--force"]
@@ -211,8 +212,12 @@ def cmd_stage(args):
             print(f"  {lid}: held-out {held}, {stagecheck.CONFIRM_GAMES} fresh {fresh}, pooled {pooled[lid]} per 48 "
                   f"(+-{stagecheck.se48(pooled[lid], total):.2f}) over {total} games")
     rows = [(lid, pooled.get(lid, ramp), pair) for (lid, ramp, pair) in rows]
-    steps = [f"{ra - rb:.2f} +- {stagecheck.step_se(ra, rb, total, total):.2f}" for (_a, ra, _), (_b, rb, _) in zip(rows, rows[1:])]
-    print(f"  pooled steps: {', '.join(steps)}")
+    ramps_ = [r for (_l, r, _p) in rows if r is not None]
+    if len(ramps_) == len(rows) and len(rows) >= 2:
+        lo, hi = stagecheck.MEAN_BANDS[key]
+        nxt = min(ramps_[:-1])
+        print(f"  pooled mean {sum(ramps_) / len(ramps_):.2f} (band {lo:.2f} to {hi:.2f}, placeholder); finale gap "
+              f"{nxt - ramps_[-1]:.2f} +- {stagecheck.step_se(nxt, ramps_[-1], total, total):.2f} below the next hardest")
     # the level the player meets just before this stage's first: the previous stage's last, in the same campaign (the Far
     # Shore's stage 1 has nothing before it)
     prev = stagecheck.previous_stage(key)
@@ -335,10 +340,12 @@ def cmd_ease(args):
     """ease <level-id> [tag,tag,...] [--pick N] [--skip tag,tag]: how hard each place is to clear. A scratch copy of the
     level makes every peg with one of the tags (default: every peg) an orange candidate, the greedy player plays 864
     games, and each place is ranked by the share of lost games it is left orange in. With --pick, it also proposes the
-    N places most readily cleared that keep the method's spread rule (10 per 200 x 200, a candidate in y 400-430 on
-    each half) and stay out of the bucket's approach (home above y 430), skipping the tags given: a starting set for a
-    layout's candidates, among the places that carry the subject."""
+    N places most readily cleared that keep the spread rule (a third of the candidates per 200 x 200, a candidate in
+    y 400-430 on each half) and stay out of the bucket's approach (home above y 430), skipping the tags given: a
+    starting set for the places that carry the subject. (Since the owner's decision of 9 October 2026 a layout marks
+    most pieces as candidates with `b.candidates(exclude=...)`; this is for finding which places to exclude.)"""
     from mflkit.build import make_board
+    from mflkit import author
     pick, skip = None, set()
     if "--pick" in args:
         i = args.index("--pick")
@@ -364,10 +371,11 @@ def cmd_ease(args):
     for s_, x, y, t in rows:
         print(f"  {s_:5.2f}  ({x}, {y})  {t}")
     if pick:
-        pool = sorted(r for r in rows if r[2] < engine.LOW_Y and r[3] not in skip)
+        pool = sorted(r for r in rows if r[2] < 430 and r[3] not in skip)
 
         def spread_ok(sel):
-            return all(sum(1 for (_s, x, y, _t) in sel if sx <= x < sx + 200 and sy <= y < sy + 200) <= 10
+            limit = author.spread_limit(pick)
+            return all(sum(1 for (_s, x, y, _t) in sel if sx <= x < sx + 200 and sy <= y < sy + 200) <= limit
                        for sx in range(75, 530, 5) for sy in range(40, 400, 5))
         sel = []
         for half in (lambda x: x < 400, lambda x: x >= 400):

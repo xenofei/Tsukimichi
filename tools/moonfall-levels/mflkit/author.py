@@ -9,7 +9,8 @@ they are ("dome crown", "road", "cactuar outline"). `py -3 mfl.py trace <scene>`
     b.outline("cactuar", offset=18, spacing=36)            # an even ring just outside a closed silhouette
     b.bricks_along("ridge", length=26, gap=2.5)             # a continuous line of bricks (a crest, a deck)
     b.arc_bricks(400, 300, 120, 200, 140, n=5)              # bricks along an arc (a dome's crown)
-    b.key("eye", orange=True, green=False)                  # the subject's features: orange candidates, never green
+    b.key("eye", green=False)                               # the subject's features: never green
+    b.candidates(exclude=[(120, 300)])                      # last: every piece an orange candidate except the listed ones
 
 Every placement is checked as it is made (`fits`): bounds, the launcher's swing, the bucket, overlaps, saddles,
 cradles at a brick's end and wall pinches. A point that does not fit is skipped and reported, so a traced line parts
@@ -21,7 +22,7 @@ import math
 
 import numpy as np
 
-from . import challenge, paths  # noqa: F401  (the design kit on the path)
+from . import challenge, engine, paths  # noqa: F401  (the design kit on the path)
 from layout import (LEFT, RIGHT, Layout, brick_samples, direct_reach, in_bounds, point_at, resample,  # noqa: F401
                     smooth_path)
 
@@ -47,7 +48,20 @@ BALL = 12.0
 NOTCH_MAX = 17.0              # a gap between bricks narrower than this holds a ball (critic round 3 L11/B2; round 4 N11: 14-16 still trap)
 DECK_DEG = 10.0               # a line brick flatter than this is a deck (round 2, critic G5)
 LANE_WIDTH = 120              # units of the bucket lane's width the pieces in it may cover (critic L14)
+# Density (owner's decision, 9 October 2026: Moonfall boards as dense as Peggle's, most pieces orange candidates)
+PEG_R = 10.0                  # the default peg radius
+BRICK_T = 20.0                # the default brick thickness (it was 12)
+PIECES_MIN, PIECES_MAX = 85, 160       # the pieces of a full board (a hard gate); it was 60-160
+PIECES_TARGET = (95, 115)              # the aim; outside it is a warning, not a fault
+BRICK_SHARE = (0.30, 0.45)             # brick share of the pieces, where the subject allows: reported, a soft warning
+SPREAD_SHARE, SPREAD_MIN = 0.35, 10    # candidates in any 200 x 200 square: at most 35% of all of them, never fewer than 10 allowed
+                                       # (it was a flat 10 for 28-35 candidates, which is about the same third)
 DOTTED_GAP = 14.0             # pegs on a dotted line: 14 or more between surfaces (34 centre to centre at r 10)
+
+
+def spread_limit(n_candidates):
+    """The most orange candidates one 200 x 200 square may hold: a third of them (it was 10 of 28-35)."""
+    return max(SPREAD_MIN, math.ceil(SPREAD_SHARE * n_candidates - 1e-9))
 
 
 def _r1(v):
@@ -83,6 +97,7 @@ class Board(Layout):
         self.level_id = None        # set by the build; only the recorded candidate exception (challenge.EXCEPTIONS) reads it
         self.features = (self.recipe.get("features") or {})
         self.skipped = []           # (where, why) for points a trace could not place
+        self.warnings = []          # soft findings of the last check(): density target, brick share (never a fault)
         self.runs = []              # brick runs (kept for the authors' notes; the cup check is geometric)
         self.subjects = []          # (name, polygon): silhouettes whose interior stays free of pegs
 
@@ -104,17 +119,17 @@ class Board(Layout):
         return self.f(src) if isinstance(src, str) else [tuple(p) for p in src]
 
     # ---- pieces (the rich pass's Layout with canBeGreen added)
-    def peg(self, x, y, orange=False, r=10.0, move=None, tag="", green=True):
+    def peg(self, x, y, orange=False, r=PEG_R, move=None, tag="", green=True):
         p = super().peg(x, y, orange=orange, r=r, move=move, tag=tag)
         p["canBeGreen"] = bool(green)
         return p
 
-    def line(self, x1, y1, x2, y2, t=12.0, orange=False, tag="", green=True):
+    def line(self, x1, y1, x2, y2, t=BRICK_T, orange=False, tag="", green=True):
         b = super().line(x1, y1, x2, y2, t=t, orange=orange, tag=tag)
         b["canBeGreen"] = bool(green)
         return b
 
-    def arc(self, cx, cy, R, start, sweep, t=12.0, orange=False, tag="", green=True):
+    def arc(self, cx, cy, R, start, sweep, t=BRICK_T, orange=False, tag="", green=True):
         b = super().arc(cx, cy, R, start, sweep, t=t, orange=orange, tag=tag)
         b["canBeGreen"] = bool(green)
         return b
@@ -225,7 +240,7 @@ class Board(Layout):
                 placed.append(p)
         return placed
 
-    def stop(self, x, y, R=28.0, n=5, r=9.0, oranges=(0, 1, 4), green=False, start_deg=-90.0, tag="stop"):
+    def stop(self, x, y, R=28.0, n=5, r=PEG_R, oranges=(0, 1, 4), green=False, start_deg=-90.0, tag="stop"):
         """A stop on a route or a star: a ring of n moons round (x, y). `oranges` are the ring's indices (clockwise from
         `start_deg`) that are orange candidates. A ring member that does not fit is skipped and reported."""
         out = []
@@ -244,7 +259,7 @@ class Board(Layout):
         d = -offset if signed_area(pts) > 0 else offset
         return self.trace(pts, spacing=spacing, r=r, offset=d, closed=True, **kw)
 
-    def bricks_along(self, src, length=26.0, gap=2.5, t=12.0, trim0=0.0, trim1=0.0, tag="", orange=False, green=True):
+    def bricks_along(self, src, length=26.0, gap=2.5, t=BRICK_T, trim0=0.0, trim1=0.0, tag="", orange=False, green=True):
         out = super().bricks_along(self._pts(src), length=length, gap=gap, t=t, trim0=trim0, trim1=trim1, tag=tag,
                                    orange=orange)
         for b in out:
@@ -252,7 +267,7 @@ class Board(Layout):
         self.runs.append(out)
         return out
 
-    def arc_bricks(self, cx, cy, R, start, sweep, n=1, gap_deg=None, t=12.0, tag="", orange=False, green=True):
+    def arc_bricks(self, cx, cy, R, start, sweep, n=1, gap_deg=None, t=BRICK_T, tag="", orange=False, green=True):
         """n arc bricks along one circle from `start` through `sweep` degrees (0 along +x, turning toward +y), with
         gaps of about 2.5 units between them (bricks either touch or leave a ball's width: no notches)."""
         g = gap_deg if gap_deg is not None else math.degrees(2.5 / R)
@@ -264,7 +279,7 @@ class Board(Layout):
         self.runs.append(out)
         return out
 
-    def slide(self, x, y, dx, dy, period, r=9.0, gap=DOTTED_GAP, **kw):
+    def slide(self, x, y, dx, dy, period, r=PEG_R, gap=DOTTED_GAP, **kw):
         """A slide mover from (x, y) to (x + dx, y + dy) and back over `period` seconds, placed only if it keeps
         `gap` from every still piece along its whole path (sampled at nine points). Movers that slide together (same
         offset and period) keep their spacing, so a reflection drawn with them ripples as one."""
@@ -307,6 +322,43 @@ class Board(Layout):
         if green is not None:
             best["canBeGreen"] = bool(green)
         return best
+
+    def candidates(self, exclude=(), exclude_tags=(), within=24.0, low_cap=True):
+        """Marks every piece an orange candidate except the ones listed (the owner's decision, 9 October 2026: most
+        pieces can be orange, so a retry deals a new board; authors list exclusions instead of placing candidates).
+        `exclude`: points (x, y) whose nearest piece within `within` is left out (a piece that must not be orange);
+        `exclude_tags`: tags of pieces left out. Pieces that no first free flight touches are left out too (a
+        candidate must be in reach). With `low_cap`, the lowest candidates are dropped until the lower third holds at
+        most `engine.LOW_SHARE_MAX` of them. Returns the pieces left out as (x, y, why). Call it after the geometry is laid.
+        It only sets canBeOrange; leave 8 or more green-able pieces out of the 90% (the pre-flight counts them)."""
+        tags = [t for (k, t) in self.tags if k == "peg"] + [t for (k, t) in self.tags if k == "brick"]
+        pieces = list(zip(self.pegs + self.bricks, tags))       # self.tags is in laying order, pieces are pegs then bricks
+        left = []
+
+        def home(p):
+            return (p["x"], p["y"]) if "kind" not in p else brick_samples(p)[len(brick_samples(p)) // 2]
+        out = set()
+        for (x, y) in exclude:
+            best, bd = None, within
+            for p, _t in pieces:
+                d = math.hypot(home(p)[0] - x, home(p)[1] - y)
+                if d < bd:
+                    best, bd = p, d
+            if best is None:
+                raise ValueError(f"no piece within {within} of ({x}, {y}) to exclude")
+            out.add(id(best))
+        for p, tag in pieces:
+            why = "excluded" if id(p) in out else "tag" if tag in exclude_tags else                 "out of every first free flight" if not self.piece_in_reach(p) else None
+            p["canBeOrange"] = why is None
+            if why:
+                left.append((*home(p), why))
+        if low_cap:
+            cands = sorted((p for p, _t in pieces if p["canBeOrange"]), key=lambda p: -home(p)[1])
+            while cands and sum(1 for p in cands if home(p)[1] >= engine.LOW_Y) > engine.LOW_SHARE_MAX * len(cands):
+                p = cands.pop(0)
+                p["canBeOrange"] = False
+                left.append((*home(p), "lower third over its share"))
+        return left
 
     # ---- the pre-flight
     def mover_points(self, p, n=72):
@@ -370,8 +422,14 @@ class Board(Layout):
         still = [p for p in pegs if "move" not in p]
         movers = [p for p in pegs if "move" in p]
         n = len(pegs) + len(bricks)
-        if not 60 <= n <= 160:
-            P.append(f"{n} pieces (a full board is 60 to 160)")
+        self.warnings = []
+        if not PIECES_MIN <= n <= PIECES_MAX:
+            P.append(f"{n} pieces (a full board is {PIECES_MIN} to {PIECES_MAX})")
+        elif not PIECES_TARGET[0] <= n <= PIECES_TARGET[1]:
+            self.warnings.append(f"{n} pieces (the target is {PIECES_TARGET[0]} to {PIECES_TARGET[1]})")
+        if n and not BRICK_SHARE[0] <= len(bricks) / n <= BRICK_SHARE[1]:
+            self.warnings.append(f"brick share {len(bricks) / n:.0%} (guidance {BRICK_SHARE[0]:.0%} to {BRICK_SHARE[1]:.0%} "
+                                 f"where the subject allows)")
         # bounds and wall pinches (pegs along their whole path, bricks along their length)
         for p in pegs:
             r = p.get("r", 10.0)
@@ -504,26 +562,32 @@ class Board(Layout):
             for p in pegs:
                 if not p.get("_inside") and point_in_poly(p["x"], p["y"], poly):
                     P.append(f"peg ({p['x']}, {p['y']}) stands inside the subject '{name}' (keep its face open)")
-        # orange candidates: 28-35 (25 and 3-7 more that carry the subject), every one in some first free flight
+        # orange candidates: 60-90% of the pieces (and the oranges a challenge asks for), every one in some first free
+        # flight; at most 30% in the lower third
         cands = [p for p in pegs if p["canBeOrange"]] + [b for b in bricks if b["canBeOrange"]]
-        lo, hi = challenge.candidate_range(self.level_id)
+        lo, hi = challenge.candidate_range(self.level_id, n)
         if not lo <= len(cands) <= hi:
-            P.append(f"{len(cands)} orange candidates (28 to 35: the 25 and 3-7 more, so the deal varies"
-                     + (f"; {self.level_id} is the recorded exception and takes exactly {lo}" if (lo, hi) != challenge.STANDARD_CANDIDATES else "")
-                     + ")")
+            P.append(f"{len(cands)} orange candidates ({challenge.CANDIDATE_SHARE[0]:.0%} to {challenge.CANDIDATE_SHARE[1]:.0%} "
+                     f"of {n} pieces is {lo} to {hi}"
+                     + (f"; {self.level_id} carries a challenge of {challenge.required_oranges(self.level_id)} oranges"
+                        if challenge.required_oranges(self.level_id) > challenge.STANDARD_ORANGES else "") + ")")
         for c in cands:
             if not self.piece_in_reach(c):
                 P.append(f"orange candidate at ({c.get('x', c.get('x1'))}, {c.get('y', c.get('y1'))}) is out of every first free flight")
         # the spread rule, on still positions (a mover at its start) and brick midpoints
         allc = [(c["x"], c["y"]) if "kind" not in c else brick_samples(c)[len(brick_samples(c)) // 2] for c in cands]
-        worst, where = 0, None
+        worst, where, limit = 0, None, spread_limit(len(cands))
         for sx in range(75, 530, 5):
             for sy in range(40, 400, 5):
                 k = sum(1 for (x, y) in allc if sx <= x < sx + 200 and sy <= y < sy + 200)
                 if k > worst:
                     worst, where = k, (sx, sy)
-        if worst > 10:
-            P.append(f"spread: {worst} candidates in the 200 x 200 square at {where} (limit 10)")
+        if worst > limit:
+            P.append(f"spread: {worst} candidates in the 200 x 200 square at {where} (limit {limit}: a third of {len(cands)})")
+        low = sum(1 for (_x, y) in allc if y >= engine.LOW_Y) / max(len(allc), 1)
+        if low > engine.LOW_SHARE_MAX + 1e-9:
+            P.append(f"lower third: {low:.0%} of the candidates are at y {engine.LOW_Y:.0f} or lower (at most "
+                     f"{engine.LOW_SHARE_MAX:.0%}: difficulty must not come from low, hard-to-reach oranges)")
         lo_l = sum(1 for (x, y) in allc if y >= 400 and x < 400)
         lo_r = sum(1 for (x, y) in allc if y >= 400 and x >= 400)
         if lo_l == 0 or lo_r == 0:
@@ -555,10 +619,13 @@ class Board(Layout):
         if len(cover) > LANE_WIDTH:
             P.append(f"the pieces in the bucket's lane cover {len(cover)} units of its width ({LANE_WIDTH} at most)")
         if verbose:
-            print(f"  pieces {n} (pegs {len(pegs)}, bricks {len(bricks)}, movers {len(movers)}); candidates {len(cands)}; "
-                  f"green-only {len(sure)}; skipped while tracing {len(self.skipped)}")
+            print(f"  pieces {n} (pegs {len(pegs)}, bricks {len(bricks)}, movers {len(movers)}); candidates {len(cands)} "
+                  f"({len(cands) / max(n, 1):.0%}, lower third {low:.0%}); green-only {len(sure)}; skipped while tracing "
+                  f"{len(self.skipped)}")
             for s_ in P:
                 print("  !", s_)
+            for s_ in self.warnings:
+                print("  ~", s_)
         return P
 
     # ---- export (format v2)
@@ -587,19 +654,25 @@ def selftest(verbose=True):
     """Known-bad layouts must be faulted for the right reason and a known-good one must pass (the reviewers' rule for
     every checker; round 1 added the critic's cases P1-P8 and C1)."""
     def grid_board():
+        """A dense, even board: about 100 pegs in staggered rows, three in four orange candidates (the lowest dropped to
+        hold the lower third at 30%), every fourth green-able and never orange."""
         b = Board()
         k = 0
-        for row, y in enumerate(range(200, 500, 50)):
-            for x in range(110 + (row % 2) * 25, 700, 60):
+        keep = []
+        for row, y in enumerate(range(150, 500, 36)):
+            for x in range(110 + (row % 2) * 24, 700, 48):
                 if b.fits(x, y):
-                    b.peg(x, y, orange=(k % 2 == 0), green=(k % 2 == 1))
+                    b.peg(x, y, green=(k % 4 == 3))
+                    if k % 4 == 3:
+                        keep.append((x, y))
                     k += 1
+        b.candidates(exclude=keep)
         return b
 
     def faults(b):
         return b.check(verbose=False)
     cases = []                  # (name, problems, the fault expected: a substring of one problem, or None)
-    cases.append(("a spread grid of 60-odd pegs", faults(grid_board()), None))
+    cases.append(("a dense, even grid of 120-odd pegs", faults(grid_board()), None))
     b = grid_board(); b.peg(110, 205)
     cases.append(("two pegs overlapping", faults(b), "overlap"))
     b = grid_board(); b.peg(300, 512); b.peg(324, 513)
@@ -620,7 +693,7 @@ def selftest(verbose=True):
     for k in range(7):
         b.line(150 + 30 * k, 150, 177 + 30 * k, 150)
     cases.append(("a level deck of seven bricks (P4)", faults(b), "level deck"))
-    b = grid_board(); b.line(150, 156, 210, 136); b.peg(180, 115.5, r=9)
+    b = grid_board(); b.line(150, 156, 210, 136); b.peg(180, 111.3, r=9)       # 14 above a 20-thick brick's surface
     cases.append(("a peg 14 above an 18-degree brick (P4, the wedge band)", faults(b), "wedge band"))
     b = grid_board()
     for x in (130, 200, 270, 340, 410, 480):
@@ -633,23 +706,61 @@ def selftest(verbose=True):
     b = grid_board(); b.peg(84.5, 300, r=6)
     cases.append(("a wall pinch", faults(b), "wall pinch"))
     b = grid_board()
-    for p in b.pegs[:12]:
-        p["canBeOrange"] = False
-    for p in b.pegs[12:]:
-        p["canBeOrange"] = p["y"] < 330
-    cases.append(("candidates only in the upper half", faults(b), "spread"))
+    for p in b.pegs:
+        p["canBeOrange"] = p["y"] < 330 and p["x"] < 400
+    cases.append(("candidates only in the upper left (a window over its share, none below y 400)", faults(b), "spread"))
+    b = grid_board()
+    for p in b.pegs:
+        p["canBeOrange"] = p["y"] < 330 or (p["y"] >= 400 and p["x"] < 400)
+    cases.append(("no candidate below y 400 on the right half", faults(b), "right 0"))
 
-    def cand_faults(n, level_id):
+    def low_faults(share):
+        b = grid_board()
+        up = [p for p in b.pegs if p["y"] < 400 and p["canBeOrange"]]
+        lo = [p for p in b.pegs if p["y"] >= 400]
+        for p in b.pegs:
+            p["canBeOrange"] = False
+        k = round(share * len(up) / (1 - share))
+        for p in up + lo[:k]:
+            p["canBeOrange"] = True
+        return [q for q in faults(b) if "lower third" in q]
+    cases.append(("over 30% of the candidates in the lower third", low_faults(0.40), "lower third"))
+    cases.append(("29% of the candidates in the lower third", low_faults(0.29), None))
+
+    def cand_faults(share, level_id, pieces=None):
         b = grid_board()
         b.level_id = level_id
-        for i, p in enumerate(b.pegs):
+        n = int(round(share * len(b.pegs)))
+        for i, p in enumerate(sorted(b.pegs, key=lambda p: p["y"])):       # the upper pieces first: the lower third stays low
             p["canBeOrange"] = i < n
         return [q for q in faults(b) if "orange candidates" in q]
-    cases.append(("45 candidates on an ordinary level (28 to 35)", cand_faults(45, "base-36"), "orange candidates"))
-    cases.append(("45 candidates on the recorded exception, 8-2 (ch-04)", cand_faults(45, "base-37"), None))
-    cases.append(("40 candidates on the recorded exception (it takes exactly 45)", cand_faults(40, "base-37"), "exactly 45"))
-    cases.append(("30 candidates on the recorded exception", cand_faults(30, "base-37"), "exactly 45"))
-    cases.append(("30 candidates on an ordinary level", cand_faults(30, "base-36"), None))
+    cases.append(("a board of 100-odd pieces for the candidate share", [] if 95 <= len(grid_board().pegs) <= 160 else [str(len(grid_board().pegs))], None))
+    cases.append(("candidates 50% of the pieces (60% at least)", cand_faults(0.50, "base-36"), "orange candidates"))
+    cases.append(("candidates 95% of the pieces (90% at most)", cand_faults(0.95, "base-36"), "orange candidates"))
+    cases.append(("candidates 62% of the pieces", cand_faults(0.62, "base-36"), None))
+    cases.append(("candidates 88% of the pieces", cand_faults(0.88, "base-36"), None))
+    cases.append(("62% candidates on 8-2 (ch-04's carrier, 45 at least)", cand_faults(0.62, "base-37"), None))
+    cases.append(("the pre-flight reads a carrier's orange count", [] if challenge.candidate_range("base-37", 100)[0] == 60
+                  and challenge.candidate_range("base-37", 60)[0] == 45 else ["bad"], None))
+    sparse = Board()
+    for k in range(60):
+        sparse.peg(110 + 48 * (k % 12), 150 + 36 * (k // 12), green=(k % 4 == 3))
+    sparse.candidates()
+    cases.append(("60 pieces (the floor is 85)", sparse.check(verbose=False), "pieces (a full board"))
+    thin = grid_board()
+    cases.append(("a dense board with no bricks: brick share is a warning, never a fault",
+                  [] if not [q for q in faults(thin) if "brick share" in q] and any("brick share" in w for w in thin.warnings)
+                  else ["bad"], None))
+    outside = grid_board()
+    del outside.pegs[::4]       # 122 pieces become 92, under the target of 95 (tags are not read by check())
+    cases.append(("a piece count under the 95 target is a warning, never a fault",
+                  [] if not any("pieces (a full" in q for q in outside.check(verbose=False))
+                  and any("target" in w for w in outside.warnings) else ["bad"], None))
+    b = grid_board()
+    left = b.candidates(exclude=[(b.pegs[0]["x"], b.pegs[0]["y"])], low_cap=True)
+    cases.append(("candidates(): everything is orange but the exclusions, the unreachable and the over-low",
+                  [] if not b.pegs[0]["canBeOrange"] and sum(p["canBeOrange"] for p in b.pegs) > 0.6 * len(b.pegs)
+                  and any(w[2] == "excluded" for w in left) else ["bad"], None))
     b = grid_board()
     for p in b.pegs:
         p["canBeGreen"] = False

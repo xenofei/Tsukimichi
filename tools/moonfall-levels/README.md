@@ -6,6 +6,13 @@ enforces are the approved method: `docs/design/v9/rich/level-method.md` (section
 `docs/design/v9/rich2/level-method.md` (section 8, the fuller-board F-rules), plus decision 21 (the greedy player
 wins at least 5 of 48 seeded games) and the round-1 supervision decisions (below).
 
+**Density rules (owner's decision, 9 October 2026).** Moonfall boards are as dense as Peggle's, and most pieces can be
+orange so every retry deals a new board: at least 85 pieces (95-115 is the target), pegs of radius 10 and bricks of
+thickness 20 by default, 60-90% of the pieces orange candidates (at most 30% of those in the lower third), and a brick
+share of 30-45% where the subject allows. Difficulty is judged by each stage's mean within a band plus a finale that is
+the stage's hardest, not by each level being harder than the last. The shipped levels were built to the earlier rules
+(about 74 pieces, 28-32 candidates) and fail the new ones until they are refitted.
+
 It renders with the approved design kit (`docs/design/v9/src`, `rich/src`, `rich2/src`), imported rather than copied,
 so a new board looks exactly like the approved pilots. The two .NET helpers live here: `dotnet/mfcheck` (the shipped
 loader and engine) and `dotnet/texdump` (reads textures from the game install).
@@ -20,11 +27,11 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py selftest` | Runs every checker against its known-bad and known-good cases |
 | `py -3 tools/moonfall-levels/mfl.py trace <scene or level-id>` | The tracing sheet (`docs/design/v9/levels/build/trace/`): the graded scene at 2x, a 50-unit grid, the opening, the launcher's swing, the bucket's lane, the recipe's features, and for a level its pieces (oranges ringed orange, never-green pegs barred, skipped points as red crosses) plus the pre-flight |
 | `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force` |
-| `py -3 tools/moonfall-levels/mfl.py stage <key>` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. Bands for every stage are the charter's (`stagecheck.BANDS`). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a level not at least 0.5 per 48 harder than the one before, a finale that is not the stage's hardest by 2.5 below its 4th level, and band ends more than 1.2 (two standard errors) harder than the stage's band, or far easier |
-| `py -3 tools/moonfall-levels/mfl.py challenge <ch-id>` or `challenge <level-id> <oranges>` | The challenge carrier check (`mflkit/challenge.py`): the greedy player on the carrier level(s) at the challenge's orange count (`mfcheck play ... <oranges>`); at least 5 of the rule's 48 games must win, and the level must have at least that many candidates. Recorded carriers (charter 1.6): ch-03 35 oranges on `base-27`, ch-04 45 on `base-37`, and ch-06, ch-08, ch-09, ch-11, ch-12 at the standard 25 on the levels the charter lists. More than 35 oranges, and a candidate count outside 28-35 in the pre-flight, are allowed only for the entries of `challenge.EXCEPTIONS` (today `base-37` at exactly 45, with the reason recorded there); no other level can take them. A recorded carrier not built yet is reported, not failed |
+| `py -3 tools/moonfall-levels/mfl.py stage <key>` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. The mean bands for every stage are `stagecheck.MEAN_BANDS`, **placeholders** until they are re-derived from Peggle's curve (owner's decision, 9 October 2026). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a stage whose mean per 48 is outside its band (by more than one standard error of a mean, 0.3), and a finale that is not the stage's hardest by 2.5 (a placeholder too) below the next hardest level, resolved by one standard error over the pooled games. There is no rule between the other levels' order (the old step of 0.5 per level is gone). |
+| `py -3 tools/moonfall-levels/mfl.py challenge <ch-id>` or `challenge <level-id> <oranges>` | The challenge carrier check (`mflkit/challenge.py`): the greedy player on the carrier level(s) at the challenge's orange count (`mfcheck play ... <oranges>`); at least 5 of the rule's 48 games must win, and the level must have at least that many candidates. Recorded carriers (charter 1.6): ch-03 35 oranges on `base-27`, ch-04 45 on `base-37`, and ch-06, ch-08, ch-09, ch-11, ch-12 at the standard 25 on the levels the charter lists. More than 35 oranges are allowed only for the entries of `challenge.EXCEPTIONS` (today `base-37` at 45, with the reason recorded there). The pre-flight needs a carrier to have at least as many candidates as its challenge's oranges (`challenge.candidate_range`: 60-90% of the pieces, never fewer than 35 on `base-27` or 45 on `base-37`). A recorded carrier not built yet is reported, not failed |
 | `py -3 tools/moonfall-levels/mfl.py stuck <id>` | Where balls come to rest on the first shots the stuck rule fires on |
 | `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane |
-| `py -3 tools/moonfall-levels/mfl.py ease <id> [tags] [--pick N] [--skip tags]` | A scratch copy with every (tagged) peg a candidate, 864 games: each place ranked by how often it is the orange left behind; `--pick` proposes the N most readily cleared places that keep the spread rule and stay above y 430 |
+| `py -3 tools/moonfall-levels/mfl.py ease <id> [tags] [--pick N] [--skip tags]` | A scratch copy with every (tagged) peg a candidate, 864 games: each place ranked by how often it is the orange left behind; `--pick` proposes the N most readily cleared places that keep the spread rule and stay above y 430 (a way to choose which places to exclude from `b.candidates`) |
 | `py -3 tools/moonfall-levels/mfl.py sources` | Writes `docs/design/v9/levels/sources.json`: every game file a scene reads, and which level uses it |
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all` | The converter (`mflkit/convert.py`): each level's runtime recipe (`Tsukimichi.Core/Moonfall/Levels/scenes/<scene>.json`), our painting undressed at 2x and the dress's plates (`Tsukimichi/assets/moonfall/scenes/`) |
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all --check` | The converter's gate: the game's bare scene (MoonfallRender `--scene-only`) against this pipeline's dressed scene; diffs in `build/convert/` |
@@ -64,40 +71,42 @@ above 14 of 48: 206-389 wins of 576, 5-5 the lowest) and holds each to its recor
    geometry (two touching bricks sloping into one joint, a three-brick V, the feet of two crowns), a level deck, a peg
    in the wedge band over a brick, bricks in the bucket's lane, a mover passing a brick or another drift's mover, an
    orbit over a still peg's place, an orange mover out of reach, no green-able pegs, a row in the lane, a wall pinch,
-   candidates crowded into one half. Framing: a peg under framing, a slab across the middle, a 60-unit rim run, a lamp
+   candidates crowded into one half (or a third of them in one 200 x 200 square), a lower third over 30% of the candidates, 60 pieces against the floor of 85, candidates at 50% and 95% of the pieces. Framing: a peg under framing, a slab across the middle, a 60-unit rim run, a lamp
    beside a peg, lamps in a row, the approved posts/discs/holes. Readability: a bright ground and a dark one, one hue,
    two jewels 32 degrees apart (one jewel), two jewels far apart, orange on orange and on lapis (protan), a ghost disc
    and a clean board, a hue disc printed round each peg on a flat sky (isolated pegs, and a cluster with none
    isolated), an even dress, a region's edge through the pegs. Pre-flight, round 2: slides of different periods that
    collide in real time, co-moving slides overlapping or in a saddle, a deck at 6.5 degrees, one level brick of 28,
-   long bricks across the lane. Stage: a good stage, neighbours with one palette, a level easier than the one before,
-   a weak finale, band ends. Engine: the loader on a pilot and on a peg in the launcher's swing; play on a pilot and on
+   long bricks across the lane. Stage (rewritten 9 October 2026): a good stage, neighbours with one palette, levels in any order (no step rule), a weak
+   finale, a finale only just the hardest, a stage mean much harder or easier than its band. Engine: the loader on a pilot and on a peg in the launcher's swing; play on a pilot and on
    oranges sealed in brick rings; the stuck gate on a pilot and on a board of flat decks; dead first shots on a pilot
-   and on a chute; reach on a pilot and on a ceiling peg no ball can touch; cheap difficulty on a pilot and on low
-   oranges that decide losses (one, and in share); the colours gate on a green dealt where it may not go. Round 3:
+   and on a chute; reach on a pilot and on a ceiling peg no ball can touch; cheap difficulty (low oranges over-represented among those left, and the lower-third share of the candidates); the colours gate on a green dealt where it may not go. Round 3:
    a 12.8-unit slot between bricks, a chain of short level bricks, movers whose common cycle outlasts a game; the
-   print check's ring and wide-disc shapes and the six approved pilots as known-good; a stage much easier than its
-   band, one palette swapped round, the previous stage's last level. Round 4: a 15-unit slot; crossing slides of
+   print check's ring and wide-disc shapes and the six approved pilots as known-good; one palette swapped round, the previous stage's last
+   level. Round 4: a 15-unit slot; crossing slides of
    periods 10 and 10.04 (whose common cycle is 2510 s, not 10); round 2's per-peg coin put back on the real 2-2, 2-1
    and 1-4 (known-bad for the print check; 2-1 and 1-4 run where their game textures are fetched); a recipe asking
    for less quiet blur than 40 (refused); a second jewel only along the walls (F7). Round 5: UX's syn05 hue coin on the
    real 2-2 and 1-4 (known-bad for the print check's hue clause); the dress's structural guard (`dress.lint`) on
    real recipes: a NaN quietBlur, a `dist` term in a region and in a keep mask, regionQuiet 1.5, 2-3 with round 5's
    disc on its lead bird, a keep disc and a tone disc on a peg (all refused), and the ten as shipped (all pass); a
-   16-unit slot between bricks of odd and even sample counts; a step of 0.8 on one block and of 0.6 over 6912 games
-   (not resolved) against one of 0.95 (resolved). Round 6: the guard's bypasses of a centre rule, all on the real 2-3
+   16-unit slot between bricks of odd and even sample counts. Round 6: the guard's bypasses of a centre rule, all on the real 2-3
    at its lead bird (round 5's disc nudged 20 units, a not-poly octagon, a keep box, a one-point `near` keep, a small
    glow, a tone box, a lens of four large discs: all refused); a second jewel only at the walls in one window (F7); a
-   held-out step of 1.2 that pools to 0.7, and a finale gap of 2.7 over 6912 games (not resolved).
+   finale gap of 2.7 over 6912 games (not resolved).
 1. **Pre-flight** (`mflkit/author.py`): bounds, launcher, bucket, overlaps, saddles (still pegs, and the movers of one
    drift group among themselves), cradles, notches (3.5-17 between bricks), wall pinches, the wedge band (a peg 13-16 above a brick), level
    decks (line bricks under 10 degrees: chained over 30 units, or one alone of 20 or more), cups by geometry, movers'
    clearance along their paths (against movers of another period over real time, the common cycle of their exact
    periods, or every pair of phases when that cycle is longer than 240 s),
-   every orange candidate (movers' paths and bricks too) in a direct flight's reach, the spread rule (10 per
-   200 x 200), 28-35 candidates (the deal's 25 and 3-7 more, so the deal varies; exactly 45 on `base-37`, ch-04's carrier, and nowhere else), 60-160 pieces, format v2's greens (8
+   every orange candidate (movers' paths and bricks too) in a direct flight's reach, the spread rule (a third of the
+   candidates in a 200 x 200 square, at least 10), 60-90% of the pieces as candidates (and never fewer than 35 on `base-27`, 45 on `base-37`, the challenge
+   carriers; the deal is still 25, so a retry deals a new board), at most 30% of the candidates in the lower third (y 400 or lower),
+   85-160 pieces (a hard floor of 85; 95-115 is the target), format v2's greens (8
    or more sure greens; every greenable peg, brick and mover in reach), the bucket's lane (pegs and bricks: at most 5,
-   covering at most 120 units of its width).
+   covering at most 120 units of its width). Soft warnings, reported and never a fault (`b.warnings`, and the report's
+   `preflight.warnings`, with `brick_share`, `candidate_share` and `lower_third_share`): fewer than 95 or more than 115 pieces,
+   a brick share outside 30-45%.
 2. **The shipped loader** (`mfcheck validate`, `MoonfallLevelLoader`).
 3. **The sweep**: one first shot at every aim a quarter of a degree apart (681 aims); refuses if the stuck rule fires
    on 5% or more, or if any aim touches nothing (a dead first shot).
@@ -114,9 +123,9 @@ above 14 of 48: 206-389 wins of 576, 5-5 the lowest) and holds each to its recor
    (critic round 5, N19). For a final pick between close variants, the 864 tuning games are too few (+-0.8): play a
    second tuning block of 3456 games, seeds 20001-23456 (`engine.play(path, number, 3456, first=20000)`), which no
    check and no reviewer block uses (round 6: 2-3 read 25.7 on seeds 1-864, 26.0 on that block and 27.6 held out). Holdouts are counted by piece (a mover by
-   its home). Refuses cheap difficulty (`engine.cheap`): an orange at home at y 430 or lower left in 25% or more of
-   lost games, or low oranges more than 1.5 times their share of the candidates among the oranges left. (A cap on the
-   low share of the deal itself was tried and dropped: the approved pilot base-p2 has 35% of its candidates that low.)
+   its home). Refuses cheap difficulty (`engine.cheap`): low oranges (home at y 400 or lower, the lower third) more than 1.5 times their share of the candidates among the oranges left. The
+   lower-third share of the candidates itself is held in the pre-flight (at most 30%; it replaced the per-orange
+   gate at y 430, owner's decision, 9 October 2026: with most pieces candidates a single piece seldom decides a loss).
 6. **The scene**: graded from its recipe (cached in `build/scenes`); refuses a 99th-percentile luma over 0.465 (a
    painted moon may be exempted with `ceilingExempt`).
 7. **The dress** (`mflkit/dress.py`), refused first if its structural guard (`dress.lint`) faults: the quiet's blur
@@ -176,7 +185,9 @@ above 14 of 48: 206-389 wins of 576, 5-5 the lowest) and holds each to its recor
 3. **Draw the features** over the sheet, in board units, into the recipe's `features` (or, for our own painting, in the
    painter's `FEATURES`, which the recipe merges, so the painting and the layout read one set of coordinates).
 4. **Write the layout** `docs/design/v9/levels/layouts/<id>.py`: a `LEVEL` dict (id, name, stage, number, scene,
-   subject, technique) and `build(b)`. The helper (`mflkit/author.py`, `Board`):
+   subject, technique) and `build(b)`. The helper (`mflkit/author.py`, `Board`). Pegs default to radius 10 and bricks to
+   thickness 20 (`PEG_R`, `BRICK_T`), and a board needs 85 or more pieces (95-115 is the aim, 30-45% bricks where the
+   subject allows): fill the subject's places first, then the field, with structures rather than scatter.
    - `b.trace(feature, spacing, r, orange=..., green=..., offset=..., start=..., end_trim=...)`: dotted pegs along a
      polyline at legal spacing (default 2r + 14), nudged or skipped where a point would break a rule;
    - `b.outline(feature, offset=18)`: an even ring just outside a closed silhouette;
@@ -184,9 +195,13 @@ above 14 of 48: 206-389 wins of 576, 5-5 the lowest) and holds each to its recor
    - `b.bricks_along(feature)`, `b.arc_bricks(cx, cy, R, start, sweep, n)`: brick runs and crowns (concave down only);
    - `b.slide(x, y, dx, dy, period)`: a slide mover checked along its whole path (movers drifting together are
      checked against each other as still pegs); orbit movers via `b.peg(..., move=...)`;
-   - `b.level_id` is set by the build; the pre-flight reads it only for the recorded 45-candidate exception (`base-37`).
-   - `b.key(x, y, orange=True, green=False)`: mark the subject's features; `b.greens_in_reach()`: pegs no direct flight
+   - `b.level_id` is set by the build; the pre-flight reads it only for a challenge carrier's orange count (`base-27` 35, `base-37` 45).
+   - `b.key(x, y, green=False)`: mark the subject's features never green; `b.greens_in_reach()`: pegs no direct flight
      touches may never be green.
+   - `b.candidates(exclude=[(x, y), ...], exclude_tags=[...])`: call it last. It marks **every** piece an orange candidate
+     except the ones listed, those no direct flight touches, and (to keep the lower third at 30%) the lowest ones, and
+     returns what it left out with the reason. Authors no longer place candidates one by one: list what must not be orange,
+     leaving 8 or more green-able pieces out (the pre-flight counts them) and 60-90% of the pieces in.
 5. **Dress it** (the recipe's `dress`: palette, jewel bands and regions, shafts, glows, framing, silhouette, lights;
    see the docstring of `mflkit/dress.py`), `build`, read the report and the composite, adjust, repeat.
 6. **Check the stage** with `stage <n>`.
@@ -194,11 +209,14 @@ above 14 of 48: 206-389 wins of 576, 5-5 the lowest) and holds each to its recor
 ## Decisions (round-1 supervision, the coordinator's calls)
 
 - **The ramp**, measured on held-out games at each level's own number (432 at least): stage 1 runs from about 30 down to 21, stage 2 from
-  about 27 down to 20, and each finale is its stage's hardest, at least 2.5 per 48 below its 4th level. Difficulty
-  comes from the subject's places, never from low oranges in the bucket's approach (the cheap-difficulty gate). A
-  step of 0.5 cannot be resolved on one held-out block, so `stage` plays every level of the stage on 5184 more fresh
-  seeds (the shipped files in `json/`) and judges every step and the finale gap on the pooled 6912 games by one
-  standard error: the step less it at least 0.5, the gap less it at least 2.5 (game designer rounds 4-6, G19, G20 and
+  about 27 down to 20, and each finale is its stage's hardest, at least 2.5 per 48 below its 4th level. *Superseded
+  on 9 October 2026 (owner's decision): a stage is judged by its mean within a band plus a finale that is its hardest
+  level by a margin, following Peggle's measured curve; the 0.5 step per level is dropped. The bands in
+  `stagecheck.MEAN_BANDS` and the finale gap are placeholders until re-derived from Peggle's curve.* Difficulty
+  comes from the subject's places, never from low oranges in the bucket's approach (the lower-third band). A
+  gap of 2.5 cannot be resolved on one held-out block, so `stage` plays every level of the stage on 5184 more fresh
+  seeds (the shipped files in `json/`) and judges the finale gap on the pooled 6912 games by one
+  standard error: the gap less it at least 2.5 (game designer rounds 4-6, G19, G20 and
   G22; critic N22). It prints the pooled figures. Open steps by design rather than by re-measuring.
 - **A finale takes its difficulty from the whole board, not its bottom** (game designer G11; the owner's answer,
   6 October 2026: recommendation taken). 2-5's reflected heads are candidates at their two upper moons only and the

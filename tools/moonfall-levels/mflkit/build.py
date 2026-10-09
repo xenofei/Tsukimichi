@@ -109,8 +109,13 @@ def build(level_id, keep2x=False, log=print):
                                   "orange_candidates": sum(p["canBeOrange"] for p in level["pegs"] + level["bricks"]),
                                   "never_green": sum(not p.get("canBeGreen", True) for p in level["pegs"] + level["bricks"]),
                                   "skipped_while_tracing": [list(s) for s in b.skipped]}
+    pf = rep["checks"]["preflight"]
+    pf["brick_share"] = round(pf["bricks"] / max(n, 1), 3)
+    pf["candidate_share"] = round(pf["orange_candidates"] / max(n, 1), 3)
+    pf["lower_third_share"] = round(engine.low_share(engine.piece_homes_of(level)), 3)
+    pf["warnings"] = list(b.warnings)
     fails += [f"preflight: {p}" for p in probs]
-    log(f"[{level_id}] preflight: {n} pieces, {len(probs)} problems")
+    log(f"[{level_id}] preflight: {n} pieces, {len(probs)} problems" + "".join(f"; warning: {w}" for w in b.warnings))
 
     # 2. the shipped loader; the sweep (stuck balls, dead first shots); the pocket rule; the greedy player
     cand = BUILD / "json" / f"{level_id}.json"
