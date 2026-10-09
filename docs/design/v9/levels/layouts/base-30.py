@@ -13,10 +13,12 @@ brick runs. Between each pair of phases a star stands out as the crown's point, 
 The finale's difficulty comes from the whole board, not its bottom: the crown of brick closes over the gate from 186 to
 354 degrees and the rim's moons stand at 10, 30, ... 170 degrees, so the gate's inside (the far moon's ring, the inner
 orbit, the rim's upper moons) is reached through narrow side openings past the turning outer ring; the crown's star
-points carry the sky's hard places. 33 candidates (charter: 32; the pre-flight's 28-35): only the lower left stone sits
-below y 430 (the spread rule's candidate below y 400 on the left half), and low oranges are 3% of those left. Tuned on
-seeds 1-864 and the second tuning block (seeds 20001-23456: 16.8); held out 16.7 against the target 17. Two wall-tucked
-ridge candidates (84, 404) and (716, 401) were tried and dropped: they carried a third of the lost games each.
+points carry the sky's hard places. 32 candidates (the charter's): only the lower left stone sits below y 430 (the
+spread rule's candidate below y 400 on the left half), and low oranges are 3% of those left. Tuned on seeds 1-864 (16.0)
+and the second tuning block (seeds 20001-23456: 16.5); held out 17.4 against the target 17. The left gibbous phase was
+the easiest orange and the right crown point (646, 289) the hardest (27-32% of lost games); both are blue, and no
+holdout now passes 22%. Two wall-tucked ridge candidates (84, 404) and (716, 401) were tried and dropped: they carried
+a third of the lost games each.
 """
 import math
 
@@ -32,9 +34,13 @@ R_MARKS = 98.0                  # the rim's moons stand just inside its bright c
 MARKS = dict(first=10, last=170, step=20, oranges=(0, 1, 7, 8))   # every 20 degrees round the foot, east to west
 CROWN = dict(start=186, sweep=168, n=7, oranges=())   # the gate crown's arc bricks (an odd count: a brick at the apex)
 FAR_ORANGE = (1, 2, 4)          # the far moon's ring, clockwise from the top
-PHASE_ORANGE = tuple(range(12))      # the crown of phases, by index from the left
+# the crown of phases, by index from the left: the left gibbous (294, 146) stays blue, since it was the board's easiest
+# orange (left in no lost game: the launcher's first shots take it) and its place goes to the crown point beside it
+PHASE_ORANGE = tuple(k for k in range(12) if k != 5)
 STONE_ORANGE = (0, 1, 2)        # the standing stones' moons (the lower left one: a candidate below y 400 on that half)
-POINT_ORANGE = (1, 8)     # the crown's star points
+# the crown's star points: (255, 140) beside the blue gibbous; the right point (646, 289) is blue, since as an orange it
+# was left in 27-32% of lost games, the board's lone skill shot (32 candidates, the charter's)
+POINT_ORANGE = (1, 4)
 RIDGE_BRICKS = True
 RIDGE_ORANGE = {"ridge left": (), "ridge right": ()}
 
