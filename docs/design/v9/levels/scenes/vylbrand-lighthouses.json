@@ -1,0 +1,378 @@
+{
+ "name": "vylbrand-lighthouses",
+ "about": "Western La Noscea's own area map, read as a harbourmaster's chart by night: the Vylbrand coast from Swiftperch's jetty past Skull Valley and Aleport's piers to the Crawler's rock and the east cape, with the Isles of Umbra at the lower left. Each headland's lighthouse burns, its beams thrown out over the sea; the ferry lane from Aleport to the Isles is engraved in gilt. The map's red exit arrows are erased.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/map/s1f4/00/s1f400_m.tex",
+  "mirror": false,
+  "crop": [740, 720, 1300, 975],
+  "erase": [
+   [1395, 850, 70, 160],
+   [1262, 1372, 80, 145],
+   [1832, 1402, 80, 145]
+  ],
+  "grade": {
+   "gamma": 1.6,
+   "exposure": 0.66,
+   "warm_keep": 0.25,
+   "chroma_mid": 0.45
+  }
+ },
+ "masks": {
+  "land": {
+   "kind": "rim-fill",
+   "threshold": 0.75,
+   "grow": 5
+  }
+ },
+ "veil": 0.4,
+ "overlays": [
+  {
+   "kind": "route",
+   "points": [
+    [300, 446],
+    [250, 466],
+    [200, 486],
+    [150, 504]
+   ],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.5
+  }
+ ],
+ "features": {
+  "swiftperch light": [
+   [128, 250]
+  ],
+  "aleport light": [
+   [334, 404]
+  ],
+  "crawler's rock light": [
+   [442, 467]
+  ],
+  "east cape light": [
+   [642, 425]
+  ],
+  "valley rim": {
+   "points": [
+    [235, 212],
+    [290, 222],
+    [345, 230],
+    [400, 226],
+    [445, 240]
+   ],
+   "smooth": 6
+  },
+  "west shore": {
+   "points": [
+    [242, 288],
+    [272, 300],
+    [300, 312],
+    [340, 308],
+    [382, 314]
+   ],
+   "smooth": 4
+  },
+  "bay shore": {
+   "points": [
+    [392, 330],
+    [428, 342],
+    [452, 372],
+    [466, 410]
+   ],
+   "smooth": 6
+  },
+  "east cliff": {
+   "points": [
+    [478, 300],
+    [520, 330],
+    [558, 348],
+    [580, 356]
+   ],
+   "smooth": 0
+  },
+  "cliff road": {
+   "points": [
+    [470, 200],
+    [528, 248],
+    [586, 296],
+    [636, 340]
+   ],
+   "smooth": 0
+  },
+  "high contour": {
+   "points": [
+    [548, 168],
+    [598, 204],
+    [642, 246],
+    [666, 290],
+    [672, 336]
+   ],
+   "smooth": 4
+  },
+  "swiftperch sector": {
+   "circle": [128, 250, 100],
+   "from": 22,
+   "sweep": 80
+  },
+  "aleport sector": {
+   "circle": [334, 404, 98],
+   "from": 100,
+   "sweep": 104
+  },
+  "west sea": [
+   [40, 268],
+   [130, 262],
+   [200, 268],
+   [245, 285],
+   [285, 308],
+   [300, 335],
+   [292, 350],
+   [300, 402],
+   [380, 402],
+   [372, 330],
+   [400, 326],
+   [432, 342],
+   [456, 376],
+   [470, 414],
+   [452, 448],
+   [470, 472],
+   [530, 484],
+   [566, 476],
+   [580, 502],
+   [590, 540],
+   [600, 640],
+   [40, 640]
+  ],
+  "east sea": [
+   [606, 640],
+   [606, 486],
+   [640, 474],
+   [680, 462],
+   [700, 440],
+   [760, 430],
+   [760, 640]
+  ],
+  "east cape sector": {
+   "circle": [642, 425, 92],
+   "from": 96,
+   "sweep": 52
+  },
+  "ferry lane": [
+   [205, 482],
+   [155, 500]
+  ],
+  "isles light": [
+   [128, 440]
+  ]
+ },
+ "dress": {
+  "palette": {
+   "name": "Lapis night and sea-glass (the harbourmaster's chart)",
+   "sky": "#0F1C4E",
+   "deep": "#060A20",
+   "jewel1": "#1E70C4",
+   "jewel2": "#3FAE74",
+   "warm": "#FFB45E",
+   "rim": "#A9D8E6"
+  },
+  "jewel": {
+   "bands": [
+    [0, "#1E78C8"],
+    [600, "#1C6AB8"]
+   ],
+   "chroma": 1.8,
+   "floor": 0.06,
+   "regions": [
+    {
+     "hex": "#3FAE74",
+     "chroma": 0.13,
+     "mask": [
+      ["poly", "west sea", 14],
+      ["x", 75, 135],
+      ["x", 725, 665]
+     ]
+    },
+    {
+     "hex": "#3FAE74",
+     "chroma": 0.13,
+     "mask": [
+      ["poly", "east sea", 14],
+      ["x", 75, 135],
+      ["x", 725, 665]
+     ]
+    }
+   ],
+   "quiet": [44, 12],
+   "regionQuiet": 0.4
+  },
+  "glows": [
+   {
+    "x": 334,
+    "y": 404,
+    "r": 150,
+    "col": "#FFD9A0",
+    "k": 0.05
+   },
+   {
+    "x": 642,
+    "y": 425,
+    "r": 140,
+    "col": "#FFD9A0",
+    "k": 0.05
+   },
+   {
+    "x": 128,
+    "y": 250,
+    "r": 130,
+    "col": "#FFD9A0",
+    "k": 0.04
+   },
+   {
+    "x": 442,
+    "y": 467,
+    "r": 110,
+    "col": "#FFD9A0",
+    "k": 0.035
+   },
+   {
+    "x": 128,
+    "y": 440,
+    "r": 110,
+    "col": "#FFD9A0",
+    "k": 0.035
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [334, 404],
+    "angles": [120, 180],
+    "widths": [78, 67],
+    "k": 0.08,
+    "col": "#E6EEFF",
+    "reach": 360,
+    "near": -170
+   },
+   {
+    "origin": [642, 425],
+    "angles": [60, 120],
+    "widths": [72, 61],
+    "k": 0.08,
+    "col": "#E6EEFF",
+    "reach": 320,
+    "near": -170
+   },
+   {
+    "origin": [128, 250],
+    "angles": [62, 104],
+    "widths": [67, 58],
+    "k": 0.08,
+    "col": "#E6EEFF",
+    "reach": 260,
+    "near": -170
+   },
+   {
+    "origin": [442, 467],
+    "angles": [162],
+    "widths": [56],
+    "k": 0.08,
+    "col": "#E6EEFF",
+    "reach": 260,
+    "near": -170
+   },
+   {
+    "origin": [128, 440],
+    "angles": [-54],
+    "widths": [56],
+    "k": 0.08,
+    "col": "#E6EEFF",
+    "reach": 260,
+    "near": -170
+   }
+  ],
+  "extras": [
+   {
+    "kind": "chart_border"
+   },
+   {
+    "kind": "compass_rose",
+    "x": 650,
+    "y": 108,
+    "R": 46
+   }
+  ],
+  "framing": [
+   {
+    "kind": "rope",
+    "a": [75, 40],
+    "b": [220, 30],
+    "sag": 14,
+    "width": 1.6
+   },
+   {
+    "kind": "rope",
+    "a": [580, 30],
+    "b": [725, 40],
+    "sag": 14,
+    "width": 1.6
+   },
+   {
+    "kind": "lantern_post",
+    "x": 86,
+    "base": 600,
+    "height": 50
+   },
+   {
+    "kind": "lantern_post",
+    "x": 714,
+    "base": 600,
+    "height": 50
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16204E",
+   "rim": "#A9D8E6",
+   "rimK": 0.0,
+   "seed": 25
+  },
+  "lights": [
+   {
+    "points": [
+     [334, 404, 1.3],
+     [642, 425, 1.3],
+     [128, 250, 1.0],
+     [442, 467, 1.0],
+     [128, 440, 1.0]
+    ],
+    "col": "#FFE6B0",
+    "r": 1.8,
+    "k": 0.95,
+    "halo": 9,
+    "hk": 0.2
+   },
+   {
+    "posts": true,
+    "col": "#FFB45E",
+    "r": 2.4,
+    "k": 0.95,
+    "halo": 12,
+    "hk": 0.17
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16
+  },
+  "glints": [
+   {
+    "overlay": 0,
+    "speed": 30,
+    "every": 24,
+    "offset": 0
+   }
+  ],
+  "flicker": [0, 1]
+ }
+}
