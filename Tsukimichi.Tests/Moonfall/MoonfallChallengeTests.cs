@@ -71,7 +71,7 @@ public sealed class MoonfallChallengeTests
     {
         var campaigns = MoonfallCampaigns.LoadBuiltIn();
         var shipped = Make(MoonfallChallengeKind.Win, ["base-01"]);
-        var unshipped = Make(MoonfallChallengeKind.Win, ["base-30"]);
+        var unshipped = Make(MoonfallChallengeKind.Win, ["base-55"]);
         var tooMany = Make(MoonfallChallengeKind.Win, ["base-01"], oranges: 45) with { Id = "u" };
         Assert.Equal(MoonfallChallengeState.Sealed, MoonfallChallenges.State(shipped, campaigns, new MoonfallProgress { BaseCleared = 54 }));
         var done = new MoonfallProgress { BaseCleared = 55 };

@@ -1,4 +1,7 @@
 {
+ "(our own painting) armillary": [
+  "base-26 \"The Armillary\": scene armillary"
+ ],
  "(our own painting) cactuar": [
   "base-03 \"The Cactuar\": scene sagolii-cactuar"
  ],
@@ -23,8 +26,17 @@
  "(our own painting) lampsteps": [
   "base-18 \"Lamps on the Steps\": scene lamp-steps"
  ],
+ "(our own painting) meteors": [
+  "base-29 \"Meteor Shower\": scene meteor-shower"
+ ],
+ "(our own painting) moongate": [
+  "base-30 \"The Moon Gate\": scene moongate"
+ ],
  "(our own painting) moonpath": [
   "base-07 \"Moonpath on the Bay\": scene vesper-moonpath"
+ ],
+ "(our own painting) twelve": [
+  "base-27 \"The Wheel of the Twelve\": scene wheel-of-the-twelve"
  ],
  "(our own painting) twin_lanterns": [
   "base-10 \"Twin Lanterns\": scene vesper-twin-lanterns"
@@ -61,5 +73,8 @@
  ],
  "ui/map/w1t2/02/w1t202_m.tex": [
   "base-19 \"The Coliseum\": scene uldah-coliseum, crop [560, 640, 960, 720] (read from the install at load, graded, never shipped)"
+ ],
+ "ui/map/world/01/world01_m.tex": [
+  "base-28 \"The Seer's Chart\": scene seers-chart, crop [140, 905, 720, 540] (read from the install at load, graded, never shipped)"
  ]
 }

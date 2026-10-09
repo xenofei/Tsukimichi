@@ -6,8 +6,8 @@ to Althyk's hourglass, each four stars over the atlas's engraving of its emblem 
 
 Technique: a moon sits on every star of every sign (48, four to a sign; the brightest of each larger), so the ring of
 twelve small figures is the wheel, and the painting's dotted gilt line joins each sign to the next. The pole star at the
-hub is a large moon (r 12: a straight-down first shot no longer slips past it) with a moon (r 10) at the tip of each of
-its rosette's four long rays: a cross, not a ring, so the hub does not echo 6-1's ring of moons round its sun (r 8 read
+hub is a large moon (r 12: a straight-down first shot no longer slips past it) with a moon (r 9 since the stage
+retune, below) at the tip of each of its rosette's four long rays: a cross, not a ring, so the hub does not echo 6-1's ring of moons round its sun (r 8 read
 22.0 per 48 on the tuning seeds, r 10 23.8). The dividers of the wheel's lower half and its two flanks, where the band's
 dividing lines meet its inner rule, carry a small moon each; the top's three are left to the signs (all twelve as pegs
 cost about 4 per 48 on the tuning seeds: they wall the hub's sky off from the upper signs).
@@ -20,6 +20,11 @@ candidates in the bucket's approach; lost games leaving an orange at y 430 or lo
 
 Ramp (target 23.5): 23.8 on the tuning seeds (1-864), 23.9 on the second tuning block (seeds 20001-23456), 23.5 held
 out; ch-03 at 35 oranges wins 28 of 48. Top holdouts: (175, 409) 21% and (582, 429) 20% of lost games.
+
+Stage retune (MR 6 integration): with the hub's rays at r 10 the stage's pooled games read 24.62 per 48 against 6-1's
+24.7, a step of 0.08 (the stage needs 0.5 after one standard error). The rays went to r 9 (the halfway point of the r 8
+and r 10 tuning figures above): held out 24.2, pooled 23.52 over 6912 games, steps 1.18 to 6-1 and 0.92 to 6-3;
+ch-03 at 35 oranges wins 29 of 48.
 """
 LEVEL = dict(id="base-27", name="The Wheel of the Twelve", stage=6, number=27, scene="wheel-of-the-twelve",
              subject="the Twelve's signs as one great constellation: the star atlas's zodiac wheel of Eorzea",
@@ -50,7 +55,7 @@ def build(b):
     hx, hy = b.features["hub"]
     b.place(hx, hy, r=12, green=False, tag="pole star")
     for (dx, dy) in ((0, -HUB_RAY), (HUB_RAY, 0), (0, HUB_RAY), (-HUB_RAY, 0)):      # the rosette's four long rays
-        b.place(hx + dx, hy + dy, r=10, tag="hub ray")
+        b.place(hx + dx, hy + dy, r=9, tag="hub ray")
     for (x, y) in b.features["dividers"]:
         if y > DIVIDER_Y:                # the rim's lower half and its two flanks: the top is left to the signs
             b.place(x, y, r=7, tag="divider")

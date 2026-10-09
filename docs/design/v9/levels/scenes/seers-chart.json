@@ -68,7 +68,7 @@
    "regions": [
     {
      "hex": "#3EAA70",
-     "chroma": 0.42,
+     "chroma": 0.3,
      "mask": [["poly", "cloud sea", 60], ["luma", 0.2, 0.32, 3], ["x", 725, 665]]
     },
     {
@@ -158,9 +158,6 @@
   }
  ],
  "runtime": {
-  "motion": {
-   "dust": 18
-  },
   "glints": [
    {
     "overlay": 0,
@@ -181,22 +178,10 @@
     "offset": 14
    },
    {
-    "overlay": 3,
-    "speed": 30,
-    "every": 30,
-    "offset": 21
-   },
-   {
     "overlay": 4,
     "speed": 30,
     "every": 30,
     "offset": 28
-   },
-   {
-    "overlay": 5,
-    "speed": 30,
-    "every": 30,
-    "offset": 5
    }
   ]
  },

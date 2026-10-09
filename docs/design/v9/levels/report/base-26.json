@@ -443,31 +443,31 @@
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.347,
+      "worst": 0.346,
       "at": [
        294,
        274
       ],
       "undressed": 0.318,
-      "drop": -0.029
+      "drop": -0.028
      },
      "orange 1x": {
-      "worst": 0.283,
+      "worst": 0.282,
       "at": [
        362,
        330
       ],
       "undressed": 0.253,
-      "drop": -0.03
+      "drop": -0.029
      },
      "green 1x": {
-      "worst": 0.374,
+      "worst": 0.373,
       "at": [
        294,
        274
       ],
       "undressed": 0.347,
-      "drop": -0.027
+      "drop": -0.026
      },
      "purple 1x": {
       "worst": 0.244,
@@ -488,13 +488,13 @@
       "drop": -0.029
      },
      "orange 0.8x": {
-      "worst": 0.273,
+      "worst": 0.274,
       "at": [
        362,
        330
       ],
       "undressed": 0.244,
-      "drop": -0.029
+      "drop": -0.03
      },
      "green 0.8x": {
       "worst": 0.375,
@@ -518,16 +518,16 @@
     "worst_margin": 0.234,
     "largest_drop": -0.026,
     "bricks_min_margin": [
-     0.347,
+     0.346,
      "blue"
     ],
-    "protan_orange_p10": 0.118,
+    "protan_orange_p10": 0.119,
     "protan_places": 29,
     "protan_worst_at": [
      419,
      363
     ],
-    "protan_min": 0.114,
+    "protan_min": 0.116,
     "jewels": {
      "coloured_px_pct": 99.0,
      "mean_chroma": 0.111,
@@ -537,9 +537,9 @@
       null
      ],
      "first_jewel_hue": 284,
-     "first_share": 0.818,
-     "second_jewel_hue": 213,
-     "second_share": 0.182,
+     "first_share": 0.823,
+     "second_jewel_hue": 214,
+     "second_share": 0.177,
      "apart_deg": 71,
      "bins_pct": [
       0.0,
@@ -548,17 +548,17 @@
       0.0,
       0.0,
       0.0,
-      7.2,
-      11.0,
-      6.4,
-      75.3,
+      5.9,
+      11.9,
+      6.5,
+      75.6,
       0.1,
       0.0
      ]
     },
     "ghost_median": 0.034,
     "ghost_worst": [
-     0.04119040071964264,
+     0.041205182671546936,
      [
       456,
       212
@@ -567,9 +567,9 @@
     "ghost_isolated_pegs": 3,
     "print": {
      "median": 0.0,
-     "p90": 0.0168,
+     "p90": 0.0161,
      "worst": [
-      0.0454,
+      0.0435,
       [
        228,
        342
@@ -584,6 +584,6 @@
   }
  },
  "fails": [],
- "seconds": 67.9,
+ "seconds": 50.7,
  "verdict": "PASS"
 }

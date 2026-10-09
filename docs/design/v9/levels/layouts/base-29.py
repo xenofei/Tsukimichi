@@ -98,7 +98,11 @@ def build(b):
     left = [(x, y - 8) for (x, y) in P.CREST_L if 255 <= x <= 360]
     right = [(x, y - 8) for (x, y) in P.CREST_R if 450 <= x <= 522]
     b.bricks_along(left, length=26, gap=2.5, trim0=6, trim1=4, tag="slope left")
-    b.bricks_along(right, length=26, gap=2.5, trim0=4, trim1=6, tag="slope right")
+    # trim0 3.5 rather than 4 (MR 6 integration): at 4 the first brick's middle fell on a whole unit, where the runtime's
+    # clearance field reads it 0.66 off its middle line (Peg_marks_sit_on_every_brick_inside_its_face); 4.5 also cleared
+    # it but read 0.5 per 48 harder, closing the finale's gap
+    # (held out 20.8, pooled 20.57 at 3.5)
+    b.bricks_along(right, length=26, gap=2.5, trim0=3.5, trim1=6, tag="slope right")
     for (x, y) in CANDIDATES:
         b.key(x, y, orange=True)
     b.greens_in_reach()
