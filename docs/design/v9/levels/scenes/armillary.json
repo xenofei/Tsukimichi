@@ -1,0 +1,65 @@
+{
+ "name": "armillary",
+ "about": "Our own painting: a great armillary sphere on a dark terrace under a violet night, its brass frame (the fixed meridian seen face on, the broad horizon ring at its waist) holding a cage of rings of pale light about the tilted polar axis (the equator, tropics, polar circles, colures and the ticked ecliptic band), a small globe of cold light at its heart throwing ten soft spokes out through the rings; the Milky Way, a violet nebula, low banks of cloud, the full moon at the upper left and two planets at the right (painters/armillary.py; shipped as a JPEG). The first jewel is the night's violet; the second the cage's cold teal light: a region over the sphere (a disc of 200 at 1x) taken only where the painting is light (a luma ramp, so it follows the rings and the heart's glow at the painting's own scale, not the pegs'), so the rings read teal on the violet night. The teal is set at hex hue 192 and measures about 213: a greener teal (hue 185, measured 210) left the cage's candidates at protan p10 0.109, and this one holds 0.118 with the jewels 71 degrees apart (the charter's planned 200; neighbours 6-2 at 261/327 and 5-5's planned 240/160 stay well clear).",
+ "source": {
+  "kind": "painting",
+  "painter": "armillary",
+  "params": {}
+ },
+ "veil": 0.22,
+ "ceilingExempt": [[138, 104, 64]],
+ "features": {},
+ "dress": {
+  "palette": {
+   "name": "Violet night and the armillary's teal light",
+   "sky": "#140C3C",
+   "deep": "#070418",
+   "jewel1": "#5A40C8",
+   "jewel2": "#21AEA8",
+   "warm": "#FFB45E",
+   "rim": "#D4C8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#5A40C8"], [300, "#5C42CA"], [600, "#4C38B0"]],
+   "valueHues": [[0.08, "#24166A"], [0.45, "#D8CCFF"]],
+   "keep": 0.2,
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#21AEA8",
+     "chroma": 0.32,
+     "mask": [["disc", 400, 330, 200, 60], ["luma", 0.30, 0.42, 3], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [60, 25],
+   "regionQuiet": 0.2
+  },
+  "shafts": [
+   {
+    "origin": [130, -60],
+    "angles": [58, 66, 74],
+    "widths": [26, 34, 22],
+    "k": 0.035,
+    "col": "#D8D0FF",
+    "reach": 900,
+    "near": 60
+   }
+  ],
+  "framing": [],
+  "silhouette": {
+   "body": "#08061A",
+   "inner": "#161040",
+   "rim": "#C8C0FF",
+   "rimK": 0.3,
+   "seed": 26
+  }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 12,
+   "stars": 30,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "sphere", 12], ["not-poly", "moon disc", 8]]
+  }
+ }
+}
