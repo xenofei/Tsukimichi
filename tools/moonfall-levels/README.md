@@ -54,7 +54,7 @@ The raw commands stay as they were: without a cache hit (or with `--force`) ever
 the greedy player wins at 14 of 48 or more (a rate, so 28 of 96 is the same) keeps the rule: the score a fifth of all games
 reach. Below that, the Ace is the score 40% of the *winning* games reach (the owner's answer, 7 October 2026), since a
 fifth of all games is then close to any win. Each Ace is recorded in `Moonfall/Modes/aces.json` when the level ships. The
-Perf-category test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` re-suggests every shipped level (stages 1-4, all
+Perf-category test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` re-suggests every shipped level (stages 1-5, all
 above 14 of 48: 213-389 wins of 576, 3-5 the lowest) and holds each to its recorded Ace.
 
 ## What `build` does, in order
@@ -319,6 +319,15 @@ scale, since dropping round 5's disc on 2-3 moved it by only 0.018, and the form
 and F9 measured here then stand for the game (once they are measured in the game's gamut: see "The jewel's gamut").
 `mfl.py convert --all --check` runs it at 2x (max 0.04 and 99.9th percentile 0.015, both) and at 1x (99th percentile
 0.035), and fails a level whose build dropped a moon, a mist band, a part or more than half its stars.
+
+**Stage 5's runtime additions** (MR 5 integration). 5-5's compass rose ships in the ticks plate, which turns RGB when a
+rose is drawn: the rose multiplies its shaded halves and then screens its gilt, and the plates' `screen(X, A) * T`
+holds that exactly per channel (the self-test rebuilds 5-5 from its plates at max 0.0000). The runtime recipe takes a
+shaft's `near` down to -180 (5-5's lighthouse beams are full at the lamp) and a mask of up to 8 terms (the converter
+adds the quiet to 5-2's six-ramp coast region). A mist band must keep 2.5 units clear of every piece, or the runtime
+leaves it out (5-4's band now starts at y 518, below its lowest moons). Where a strong grade multiplies the painting's
+compressed blocks, the gate's maximum catches a pixel that flips between two of them: 5-1 trades chroma gain for a
+floor (chroma 0.85, floor 0.1), 5-2 lifts its black foot with a glow, and 5-4 eases its chroma to 1.6.
 
 **Grade parity at the cut** (MR 3 round 1, critic B1). The pipeline crops a game painting with PIL's `LANCZOS` on an
 8-bit picture, whose horizontal pass writes an 8-bit image the vertical pass reads (an overshoot past white at a sharp

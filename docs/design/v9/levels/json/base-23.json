@@ -349,7 +349,7 @@
       "x": 461.4,
       "y": 371.0,
       "r": 9,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -538,7 +538,7 @@
       "x2": 208.0,
       "y2": 251.0,
       "thickness": 10,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {

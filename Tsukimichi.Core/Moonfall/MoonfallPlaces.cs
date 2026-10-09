@@ -130,6 +130,17 @@ public static class MoonfallPlaces
         ["lamp-steps"] = new(ARealmReborn, "Ul'dah - Steps of Nald"),
         ["uldah-coliseum"] = new(ARealmReborn, "Ul'dah - Steps of Thal"),
         ["uldah-from-the-sands"] = new(ARealmReborn, "Ul'dah - Steps of Nald"),
+
+        // The Moon Road's stage 5, Harbour Lights (charter section 2; sources-plan.md wins where they differ). 5-1 and 5-4
+        // read the La Noscea loading painting's east (as limsa-across-water) and 5-3 is our painting of the Lower Decks'
+        // harbour lamps: Limsa Lominsa Lower Decks. 5-2 reads the world painting "The Three Great Continents" as a chart:
+        // no place in the story, as rhotano-wonders. 5-5 is the Western La Noscea area map. All five fall back to
+        // moon-road-night.
+        ["limsa-white-towers"] = new(ARealmReborn, "Limsa Lominsa Lower Decks"),
+        ["merlthor-strait"] = MoonfallPlace.Nowhere,
+        ["harbour-lights"] = new(ARealmReborn, "Limsa Lominsa Lower Decks"),
+        ["limsa-bridge-arches"] = new(ARealmReborn, "Limsa Lominsa Lower Decks"),
+        ["vylbrand-lighthouses"] = new(ARealmReborn, "Western La Noscea"),
     };
 
     /// <summary>

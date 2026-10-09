@@ -410,22 +410,22 @@
       "drop": -0.001
      },
      "green 1x": {
-      "worst": 0.391,
+      "worst": 0.39,
       "at": [
        318,
        290
       ],
       "undressed": 0.398,
-      "drop": 0.007
+      "drop": 0.008
      },
      "purple 1x": {
-      "worst": 0.247,
+      "worst": 0.246,
       "at": [
        318,
        290
       ],
       "undressed": 0.254,
-      "drop": 0.007
+      "drop": 0.008
      },
      "blue 0.8x": {
       "worst": 0.343,
@@ -455,43 +455,43 @@
       "drop": 0.007
      },
      "purple 0.8x": {
-      "worst": 0.239,
+      "worst": 0.24,
       "at": [
        318,
        290
       ],
       "undressed": 0.247,
-      "drop": 0.008
+      "drop": 0.007
      }
     },
-    "worst_margin": 0.239,
+    "worst_margin": 0.24,
     "largest_drop": 0.008,
     "bricks_min_margin": [
      0.3,
      "blue"
     ],
-    "protan_orange_p10": 0.124,
+    "protan_orange_p10": 0.122,
     "protan_places": 31,
     "protan_worst_at": [
      314,
      152
     ],
-    "protan_min": 0.113,
+    "protan_min": 0.112,
     "jewels": {
      "coloured_px_pct": 100.0,
-     "mean_chroma": 0.073,
-     "second_at_walls_x": 0.16,
+     "mean_chroma": 0.069,
+     "second_at_walls_x": 0.17,
      "second_at_walls_worst_window": [
-      0.21,
+      0.23,
       516
      ],
      "first_jewel_hue": 284,
-     "first_share": 0.727,
+     "first_share": 0.722,
      "second_jewel_hue": 357,
-     "second_share": 0.273,
+     "second_share": 0.278,
      "apart_deg": 72,
      "bins_pct": [
-      18.5,
+      18.6,
       0.0,
       0.0,
       0.0,
@@ -500,14 +500,14 @@
       0.0,
       0.0,
       0.0,
-      58.7,
-      14.0,
-      8.8
+      58.0,
+      14.2,
+      9.2
      ]
     },
-    "ghost_median": 0.059,
+    "ghost_median": 0.058,
     "ghost_worst": [
-     0.0769745483994484,
+     0.0769164189696312,
      [
       600,
       505
@@ -516,9 +516,9 @@
     "ghost_isolated_pegs": 9,
     "print": {
      "median": 0.0,
-     "p90": 0.0037,
+     "p90": 0.0027,
      "worst": [
-      0.0319,
+      0.0294,
       [
        683,
        102
@@ -526,13 +526,13 @@
      ],
      "samples": 74,
      "mode": "pegs",
-     "hue_median": 0.002
+     "hue_median": 0.0016
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 42.9,
+ "seconds": 28.3,
  "verdict": "PASS"
 }

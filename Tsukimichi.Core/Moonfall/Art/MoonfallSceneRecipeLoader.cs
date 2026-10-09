@@ -48,6 +48,12 @@ public static partial class MoonfallSceneRecipeLoader
     /// </summary>
     public const float MaxRegionChroma = 0.3f;
 
+    /// <summary>
+    /// The most terms a mask multiplies. The converter adds the jewel's quiet round the pieces to a region's own terms, so a
+    /// region the pipeline draws with six ramps (5-2's rose-copper coast: luma, two walls, the fade, two discs) ships seven.
+    /// </summary>
+    public const int MaxMaskTerms = 8;
+
     /// <summary>How far a squeezed crop's shape may be from the board's 4:3 (a share of it, either way).</summary>
     public const float MaxSqueeze = 0.25f;
 
@@ -586,9 +592,9 @@ public static partial class MoonfallSceneRecipeLoader
         private List<MoonfallMaskTerm> MaskList(JsonElement list, string at)
         {
             var terms = new List<MoonfallMaskTerm>();
-            if (list.ValueKind != JsonValueKind.Array || list.GetArrayLength() > 6)
+            if (list.ValueKind != JsonValueKind.Array || list.GetArrayLength() > MaxMaskTerms)
             {
-                errors.Add($"{at} must be a list of at most 6 terms");
+                errors.Add($"{at} must be a list of at most {MaxMaskTerms} terms");
                 return terms;
             }
 
@@ -693,7 +699,7 @@ public static partial class MoonfallSceneRecipeLoader
                         }
 
                         list.Add(new MoonfallShafts(Vec2(l, "origin", at, new(-140, -220)), angles, widths, Num(l, "k", 0.07f, 0f, MaxShaftK), ColourV(l, "colour", at, "#BFD2FF"),
-                            Int(l, "seed", 3, 0, 100_000), Num(l, "reach", 900f, 100f, 2000f), Num(l, "near", 150f, 0f, 1000f), Bool(l, "moving"))
+                            Int(l, "seed", 3, 0, 100_000), Num(l, "reach", 900f, 100f, 2000f), Num(l, "near", 150f, -180f, 1000f), Bool(l, "moving"))
                         {
                             BeamsOnly = Bool(l, "beamsOnly"),
                         });

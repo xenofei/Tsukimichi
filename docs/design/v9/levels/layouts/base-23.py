@@ -9,7 +9,8 @@ waver from just under the quay's water line down to above the bucket's lane; eac
 green: they are the lights themselves). The quay's sloping west coping and the jetty's deck carry brick runs (both
 steeper than a deck); the channel buoy in the harbour mouth wears what fits of a ring of moons (three, between the
 centre columns), and a moon sits on each window of the two lit loggias high on the terraces. The oranges ride the
-columns' upper reaches, the lamps, two loggia windows, the buoy, a coping brick and two of the jetty's planks.
+columns' upper reaches, the lamps, two loggia windows, the buoy, a middle moon of the centre column and two of
+the jetty's planks (stage MR 5 retune: the coping brick's candidacy moved to (461, 371), held out 23.3 to 22.9).
 """
 LEVEL = dict(id="base-23", name="Lights on the Water", stage=5, number=23, scene="harbour-lights",
              subject="the harbour lamps' long reflections on the basin by night",
@@ -42,7 +43,8 @@ def build(b):
         pts = b.f(f"refl {name}")
         pts = [p for p in pts if p[1] <= LAST_Y + 1]
         b.trace(pts, spacing=sp, r=9, start=start, orange=oranges, tag="reflection")
-    # a brick of the coping and two of the jetty's deck are candidates too (the lamps' stone and timber)
-    for (x, y) in ((190, 255), (600, 328), (660, 353)):
+    # two of the jetty's deck are candidates too (the lamps' timber); the coping's brick gave its candidacy to a middle
+    # moon of the centre column (stage MR 5: 5-3 sat only 0.42 per 48 below 5-2, and a step needs 0.5 resolved)
+    for (x, y) in ((600, 328), (660, 353), (461, 371)):
         b.key(x, y, orange=True, within=20)
     b.greens_in_reach()

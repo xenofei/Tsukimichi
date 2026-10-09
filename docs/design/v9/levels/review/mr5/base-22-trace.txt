@@ -1,0 +1,6 @@
+  skipped ((283, 276), 'lane', '6.0 from the peg at (301, 289)')
+  skipped ((150, 166), 'vylbrand west', '0.9 from the peg at (134, 174)')
+  skipped ((569, 341), 'east lobe', '5.6 from the peg at (548, 346)')
+  skipped ((672, 120), 'east isles', '9.0 from the peg at (646, 120)')
+  pieces 77 (pegs 73, bricks 4, movers 0); candidates 30; green-only 24; skipped while tracing 4
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-5\docs\design\v9\levels\build\trace\base-22.png

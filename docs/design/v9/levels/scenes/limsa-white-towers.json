@@ -53,12 +53,12 @@
   "jewel": {
    "bands": [[0, "#4642CA"], [600, "#3A38A6"]],
    "valueHues": [[0.08, "#22248A"], [0.45, "#D6D8FF"]],
-   "chroma": 1.3,
-   "floor": 0.04,
+   "chroma": 0.85,
+   "floor": 0.1,
    "regions": [
     {
      "hex": "#44B07A",
-     "chroma": 0.38,
+     "chroma": 0.3,
      "mask": [["not-poly", "castle", 30], ["y", 300, 420], ["x", 75, 135], ["x", 725, 665]]
     }
    ],

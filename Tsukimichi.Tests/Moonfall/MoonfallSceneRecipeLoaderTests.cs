@@ -35,9 +35,10 @@ public sealed class MoonfallSceneRecipeLoaderTests
         var recipes = MoonfallSceneRecipeLoader.LoadBuiltIn(errors);
         Assert.Empty(errors);
         Assert.Equal(
-            ["airship-road", "aldenard-airship-lane", "cloudlane", "cloudsea-beacons", "crystal-call", "ferry-under-sail", "holy-see", "horizon-by-night", "lamp-steps",
-                "lantern-night", "limsa-across-water", "moon-road-night", "rhotano-wonders", "sagolii-cactuar", "sky-whale", "thal-night-walk", "thanalan-road-chart",
-                "uldah-coliseum", "uldah-from-the-sands", "uldah-gilded-dome", "uldah-spire-sands", "vesper-moonpath", "vesper-twin-lanterns"],
+            ["airship-road", "aldenard-airship-lane", "cloudlane", "cloudsea-beacons", "crystal-call", "ferry-under-sail", "harbour-lights", "holy-see",
+                "horizon-by-night", "lamp-steps", "lantern-night", "limsa-across-water", "limsa-bridge-arches", "limsa-white-towers", "merlthor-strait",
+                "moon-road-night", "rhotano-wonders", "sagolii-cactuar", "sky-whale", "thal-night-walk", "thanalan-road-chart", "uldah-coliseum",
+                "uldah-from-the-sands", "uldah-gilded-dome", "uldah-spire-sands", "vesper-moonpath", "vesper-twin-lanterns", "vylbrand-lighthouses"],
             recipes.Keys.Order(StringComparer.Ordinal));
         Assert.Empty(MoonfallSceneRecipeLoader.CheckSet(recipes));
         foreach (var recipe in recipes.Values)
