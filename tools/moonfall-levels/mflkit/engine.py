@@ -13,16 +13,25 @@ HELD_GAMES = 1728            # the reported ramp: seeds 865-2592, never used for
 RAMP_GAMES = 864             # the difficulty ramp (432 or more: coordinator, round 1; 864 so neighbours separate, GD round 2 G2): the first 48 are the rule's games
 STUCK_MAX_SHARE = 0.05       # level-method.md section 4: the stuck rule fires on fewer than 5% of first shots
 SWEEP_STEP = 0.25            # the first-shot sweep's step (round 2, critic G4: whole degrees missed narrow dead aims)
-LOW_Y = 430.0                # an orange whose home is this low sits in the bucket's approach (cheap difficulty)
-CHEAP_ONE = 0.25             # ...and may be left in at most this share of lost games (game designer G3)
+LOW_Y = 400.0                # the lower third of the 600-unit board: oranges here sit in the bucket's approach (cheap difficulty)
+LOW_SHARE_MAX = 0.30         # at most this share of a level's orange candidates may sit in the lower third (owner's decision,
+                             # 9 October 2026; it replaced the per-orange gate at y 430). The pre-flight holds it.
 CHEAP_RATIO = 1.5            # the low candidates' share of the oranges left, at most this times their share of the deal
-# (A cap on the low share of the deal itself, game designer round 3 G11, was tried and dropped: the approved pilot
-# base-p2 has 35% of its candidates at y 430 or lower. A finale's low reflection is a design call, kept within the ratio.)
+
+
+def low_share(homes):
+    """The share of the candidates (`homes` as `piece_homes` gives them) whose home is in the lower third."""
+    cands = [xy for (xy, c) in homes if c]
+    return sum(1 for (_x, y) in cands if y >= LOW_Y) / max(len(cands), 1)
 
 
 def piece_homes(path):
     """Each piece's home (x, y) in file order (pegs, then bricks: a brick's midpoint), and whether it is a candidate."""
-    lv = json.loads(open(path, encoding="utf-8").read())
+    return piece_homes_of(json.loads(open(path, encoding="utf-8").read()))
+
+
+def piece_homes_of(lv):
+    """`piece_homes` for a level already loaded (the dict of the level file)."""
     out = [((p["x"], p["y"]), p.get("canBeOrange", False)) for p in lv["pegs"]]
     for b in lv["bricks"]:
         if b["kind"] == "line":
@@ -36,20 +45,17 @@ def piece_homes(path):
 
 
 def cheap(play_result, homes):
-    """The cheap-difficulty verdict from a play result (game designer G3, critic G3): the problems, empty if none.
-    Holdouts are keyed by piece (a mover's home, not where it stopped)."""
+    """The cheap-difficulty verdict from a play result (game designer G3, critic G3): the problems, empty if none. With
+    most pieces orange candidates (owner's decision, 9 October 2026) a single piece is seldom the cause of a loss, so
+    the old per-orange gate (one low orange left in 25% of lost games) went, and the lower-third share of the
+    candidates is held in the pre-flight (`LOW_SHARE_MAX`). What stays is the ratio: low oranges must not be
+    over-represented among the oranges left."""
     probs = []
-    for h in play_result["holdouts"]:
-        if h["at"][1] >= LOW_Y and h["share_of_lost_games"] >= CHEAP_ONE:
-            probs.append(f"the orange at {h['at']} (piece {h['piece']}) is left in {h['share_of_lost_games']:.0%} of lost "
-                         f"games ({CHEAP_ONE:.0%} at most below y {LOW_Y:.0f})")
-    cands = [xy for (xy, c) in homes if c]
-    deal = sum(1 for (_x, y) in cands if y >= LOW_Y) / max(len(cands), 1)
-
+    deal = low_share(homes)
     left = play_result["low_left_share"]
     if deal > 0 and left > CHEAP_RATIO * deal and left >= 0.15:
-        probs.append(f"low oranges are {left:.0%} of the oranges left in lost games against {deal:.0%} of the candidates "
-                     f"({CHEAP_RATIO} times at most)")
+        probs.append(f"low oranges (y {LOW_Y:.0f} or lower) are {left:.0%} of the oranges left in lost games against "
+                     f"{deal:.0%} of the candidates ({CHEAP_RATIO} times at most)")
     return probs
 
 

@@ -70,12 +70,16 @@ def engine_cases(verbose=True):
     pl_good = engine.play(good, 5, games=48)
     play_good = pl_good["greedy_won"]
     cheap_good = engine.cheap(pl_good, engine.piece_homes(good))
-    # cheap difficulty on synthetic results: one low orange left in 40% of lost games; low candidates a fifth of the
-    # deal but half of what is left; and an even spread
+    # cheap difficulty on synthetic results (the ratio of low oranges among those left to their share of the deal; the
+    # lower-third share of the candidates is the pre-flight's, tested in author.py): low candidates a fifth of the
+    # deal but half of what is left, and an even spread
     homes = [((100 + 20 * k, 480.0 if k < 6 else 250.0), True) for k in range(30)]
     one = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.40}], "low_left_share": 0.2}
-    ratio = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.10}], "low_left_share": 0.5}
-    even = {"holdouts": [{"piece": 0, "at": [100, 480], "share_of_lost_games": 0.10}], "low_left_share": 0.22}
+    ratio = {"holdouts": [], "low_left_share": 0.5}
+    even = {"holdouts": [], "low_left_share": 0.22}
+    share_30 = [((100 + 20 * k, 450.0 if k < 9 else 250.0), True) for k in range(30)]
+    share_40 = [((100 + 20 * k, 450.0 if k < 12 else 250.0), True) for k in range(30)]
+    edge = [((100.0, 399.9), True), ((120.0, 400.0), True)]
 
     # the colours gate: a green dealt to a never-green piece
     lv = {"pegs": [{"x": 1, "y": 1, "canBeGreen": False}, {"x": 2, "y": 2}], "bricks": []}
@@ -101,9 +105,13 @@ def engine_cases(verbose=True):
              (f"reach: a pilot leaves {len(rc_good['never'])} unreached", not rc_good["never"], True),
              (f"reach: a peg tucked in the top corner is never reached ({rc_corner['never']})", n_corner in rc_corner["never"], True),
              (f"cheap difficulty: an approved pilot ({cheap_good})", not cheap_good, True),
-             ("cheap difficulty: one low orange left in 40% of lost games", not engine.cheap(one, homes), False),
              ("cheap difficulty: low candidates 20% of the deal, 50% of what is left", not engine.cheap(ratio, homes), False),
              ("cheap difficulty: low oranges left in their share", not engine.cheap(even, homes), True),
+             ("cheap difficulty: one low orange left in 40% of lost games is no longer a gate (most pieces are candidates)",
+              not engine.cheap(one, homes), True),
+             ("lower-third share: 30% of the candidates (9 of 30) is the most", engine.low_share(share_30) <= engine.LOW_SHARE_MAX + 1e-9, True),
+             ("lower-third share: 40% is over", engine.low_share(share_40) <= engine.LOW_SHARE_MAX + 1e-9, False),
+             ("lower-third share: the third starts at y 400", engine.low_share(edge) == 0.5, True),
 
              ("colours: a green dealt to a never-green piece", not green_faults(lv, ["green", "blue"]), False),
              ("colours: a green where greens may go", not green_faults(lv, ["blue", "green"]), True)]

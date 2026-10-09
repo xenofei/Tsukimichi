@@ -5,7 +5,10 @@ level at any count (a check, not a record). Pure rules first, so they prove them
 
 MIN_WINS = 5                # of 48, the rule's games (seeds 1-48), as for every level (decision 21)
 GAMES = 48
-STANDARD_CANDIDATES = (28, 35)   # the pre-flight's range for a level's orange candidates
+STANDARD_ORANGES = 25            # the standard deal
+# Orange candidates are a share of a level's pieces (owner's decision, 9 October 2026): most pieces may be orange, so a
+# retry deals a new board. (It replaced the fixed 28-35 count; the deal is still 25.)
+CANDIDATE_SHARE = (0.60, 0.90)
 MAX_ORANGES = 35                 # the most oranges a challenge may ask of a level, unless EXCEPTIONS allows more
 
 # The recorded challenges that put a level under a changed rule. `levels` are the charter's carriers (section 1.6): the
@@ -21,19 +24,27 @@ CARRIERS = {
     "ch-12": {"levels": ["base-46", "base-48", "base-50"], "oranges": 25, "note": "duel with Louisoix: 10-1, 10-3, 10-5"},
 }
 
-# The only levels allowed an orange count above MAX_ORANGES, and the only levels allowed the candidates it needs (the
-# pre-flight otherwise holds 28-35). Charter 1.6 and the owner's answer 5 (7 October 2026): ch-04's carrier, nothing else.
-# Every other rule still holds on such a level (10 per 200 x 200, 60-160 pieces, the reach of every candidate).
+# The only levels allowed an orange count above MAX_ORANGES. Charter 1.6 and the owner's answer 5 (7 October 2026): ch-04's carrier,
+# nothing else. Every other rule still holds on such a level (the candidate share and spread, 85-160 pieces, reach).
 EXCEPTIONS = {
     "base-37": {"oranges": 45, "reason": "ch-04 Forty-Five Moons: 8-2 A Thousand Lanterns carries 45 candidates "
                                          "(charter 1.6; the owner's answer to question 5, 7 October 2026)"},
 }
 
 
-def candidate_range(level_id):
-    """The orange-candidate count the pre-flight accepts for a level: 28-35, or exactly the exception's count."""
-    ex = EXCEPTIONS.get(level_id)
-    return (ex["oranges"], ex["oranges"]) if ex else STANDARD_CANDIDATES
+def required_oranges(level_id):
+    """The most oranges a recorded challenge asks of this level (35 on base-27, 45 on base-37), else the standard 25:
+    the level needs at least that many candidates."""
+    return max([STANDARD_ORANGES] + [c["oranges"] for c in CARRIERS.values() if level_id in c["levels"]])
+
+
+def candidate_range(level_id, pieces):
+    """The orange-candidate count the pre-flight accepts for a level of `pieces` pieces: 60-90% of them, and never
+    fewer than the oranges a challenge it carries asks for (so base-27 keeps 35 and base-37 45, whatever the share)."""
+    import math
+    lo = max(math.ceil(CANDIDATE_SHARE[0] * pieces - 1e-9), required_oranges(level_id))
+    hi = int(CANDIDATE_SHARE[1] * pieces + 1e-9)
+    return lo, hi
 
 
 def faults(level_id, oranges, candidates, wins, games=GAMES):
@@ -79,9 +90,11 @@ def selftest(verbose=True):
              ("45 oranges on any other level", faults("base-27", 45, 45, 7), "not an allowed exception"),
              ("46 oranges even on the exception", faults("base-37", 46, 46, 7), "not an allowed exception"),
              ("45 oranges on the exception, 5 wins short", faults("base-37", 45, 45, 3), "needs 5"),
-             ("the standard candidates are 28-35", [] if candidate_range("base-27") == (28, 35) else ["bad"], None),
-             ("the exception is 45 candidates, nobody else", [] if candidate_range("base-37") == (45, 45)
-              and candidate_range("base-36") == (28, 35) and list(EXCEPTIONS) == ["base-37"] else ["bad"], None),
+             ("candidates are 60-90% of 100 pieces, 35 on base-27 and 45 on base-37 at least",
+              [] if candidate_range("base-36", 100) == (60, 90) and candidate_range("base-27", 100) == (60, 90)
+              and candidate_range("base-37", 60) == (45, 54) and candidate_range("base-27", 50) == (35, 45)
+              and required_oranges("base-37") == 45 and required_oranges("base-01") == 25 else ["bad"], None),
+             ("the exception is 45 oranges, nobody else", [] if list(EXCEPTIONS) == ["base-37"] else ["bad"], None),
              ("ch-03 and ch-04 are recorded on the charter's carriers",
               [] if CARRIERS["ch-03"]["levels"] == ["base-27"] and CARRIERS["ch-03"]["oranges"] == 35
               and CARRIERS["ch-04"]["levels"] == ["base-37"] and CARRIERS["ch-04"]["oranges"] == 45 else ["bad"], None)]
