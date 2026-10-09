@@ -417,13 +417,13 @@
       "drop": 0.012
      },
      "orange 1x": {
-      "worst": 0.318,
+      "worst": 0.32,
       "at": [
-       360,
-       389
+       459,
+       390
       ],
       "undressed": 0.336,
-      "drop": 0.018
+      "drop": 0.016
      },
      "green 1x": {
       "worst": 0.422,
@@ -453,69 +453,69 @@
       "drop": 0.013
      },
      "orange 0.8x": {
-      "worst": 0.315,
+      "worst": 0.316,
       "at": [
-       360,
-       389
+       459,
+       390
       ],
       "undressed": 0.332,
-      "drop": 0.017
+      "drop": 0.016
      },
      "green 0.8x": {
-      "worst": 0.396,
+      "worst": 0.395,
       "at": [
        445,
        361
       ],
       "undressed": 0.409,
-      "drop": 0.013
+      "drop": 0.014
      },
      "purple 0.8x": {
-      "worst": 0.268,
+      "worst": 0.267,
       "at": [
        445,
        361
       ],
       "undressed": 0.281,
-      "drop": 0.013
+      "drop": 0.014
      }
     },
-    "worst_margin": 0.268,
-    "largest_drop": 0.018,
+    "worst_margin": 0.267,
+    "largest_drop": 0.016,
     "bricks_min_margin": [
      0.357,
      "orange"
     ],
-    "protan_orange_p10": 0.102,
+    "protan_orange_p10": 0.108,
     "protan_places": 128,
     "protan_worst_at": [
      350,
      463
     ],
-    "protan_min": 0.099,
+    "protan_min": 0.104,
     "jewels": {
      "coloured_px_pct": 99.2,
-     "mean_chroma": 0.083,
-     "second_at_walls_x": 0.43,
+     "mean_chroma": 0.08,
+     "second_at_walls_x": 0.48,
      "second_at_walls_worst_window": [
-      0.45,
-      516
+      0.57,
+      466
      ],
-     "first_jewel_hue": 250,
-     "first_share": 0.705,
-     "second_jewel_hue": 181,
-     "second_share": 0.295,
-     "apart_deg": 69,
+     "first_jewel_hue": 246,
+     "first_share": 0.829,
+     "second_jewel_hue": 168,
+     "second_share": 0.171,
+     "apart_deg": 78,
      "bins_pct": [
       0.0,
       0.0,
       0.0,
       0.0,
       0.2,
-      14.0,
-      15.4,
-      6.9,
-      63.2,
+      12.9,
+      4.0,
+      17.5,
+      65.1,
       0.3,
       0.0,
       0.0
@@ -525,24 +525,24 @@
     "ghost_worst": null,
     "ghost_isolated_pegs": 0,
     "print": {
-     "median": 0.0037,
-     "p90": 0.0275,
+     "median": 0.0021,
+     "p90": 0.0236,
      "worst": [
-      0.049,
+      0.0414,
       [
-       202,
-       317
+       155,
+       500
       ]
      ],
      "samples": 59,
      "mode": "pegs",
-     "hue_median": 0.0113
+     "hue_median": 0.011
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 55.7,
+ "seconds": 35.7,
  "verdict": "PASS"
 }

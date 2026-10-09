@@ -29,7 +29,7 @@ and the verdict (PASS).
 | 5-2 | base-22 | The Strait of Merlthor | 23.5 | 24.02 | 290 / 357 | 0.326 | 0.115 / 0.103 | World painting, base05_hr1 [0, 1335, 1100, 825] | Nowhere (a chart) |
 | 5-3 | base-23 | Lights on the Water | 22.0 | to re-pool | 255 / 171 | 0.206 | 0.108 / 0.107 | ours (harbourlights) | Limsa Lominsa Lower Decks |
 | 5-4 | base-24 | The Arches of the Bridge | 21.3 | to re-pool | 284 / 356 | 0.223 | 0.118 / 0.110 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |
-| 5-5 | base-25 | The Lighthouses of Vylbrand | 17.8 | 18.25 | 250 / 181 | 0.268 | 0.102 / 0.099 | Western La Noscea map, s1f400 [740, 720, 1300, 975] | Western La Noscea |
+| 5-5 | base-25 | The Lighthouses of Vylbrand | 17.8 | 18.25 | 246 / 168 | 0.267 | 0.108 / 0.104 | Western La Noscea map, s1f400 [740, 720, 1300, 975] | Western La Noscea |
 
 The pooled steps are 1.43, 0.97 and 1.37, and the finale gap is 3.43 (each about ± 0.41). The mean is 22.49, against
 MR 4's 23.07 (a fall of 0.58) and the charter's 22.6 (band 26 → 18). The jewel check against 4-5 (321 / 233) passes. The
@@ -98,3 +98,17 @@ The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x m
   stuck fires 33 per 1,728, sweep stuck 5 of 681, low oranges 4.6% of those left. The Ace moves 240,000 -> 230,000
   (254 of 576), recorded in `aces.json`. The converter's 2x maximum is 0.038 (it was 0.039): the castle's top moons
   quieten the stair's flipping pixels. The dome's crown is not a brick: no ball reaches it (the reach gate), so the drum's light and flank carry the dome. The stage's pooled figures need a fresh `stage mr5`.
+- **5-5 after round 1** (game designer m2, critic m2 and m5, UX m1 and m3): the hard edge across the west sea at
+  y 404 is gone. It was not a feather problem: a shaft's angle wraps at 180°, so Aleport's due-west beam drew only its
+  lower half and cut off flat along the lamp's row (the engine's `MoonfallDress` does the same). That beam now points at
+  162°, west-south-west into the Aleport sector, and no beam lies within 18° of the wrap. The five lighthouse lamps are a
+  wider, softer warm disc (core 1.8 -> 2.6 units, halo 9 -> 8 units at k 0.25), with their cores at k 0.38 instead of
+  0.95. In the cleared board at 1280 the cores peak at L 0.75-0.78, under the guide's dots (0.84-0.90) and the ball
+  (0.97), and they cover about a third more pixels above L 0.6 (20-48% by lamp). The halo can't grow further: the Aleport ring's moon at
+  (360, 389) sits 21 units from the lamp, and a 13-unit halo broke F6's drop rule there (0.034 against 0.02). The beams
+  stay at k 0.08, F4's limit. The west sea's sea-glass region is eased (chroma 0.13 -> 0.08), and the Swiftperch and
+  Isles glows are eased (0.04 -> 0.025 and 0.035 -> 0.022). The west oranges stood on greenish ground that a protanope
+  sees close to their olive, so protan p10/min rises from 0.102 / 0.099 to 0.108 / 0.104. The jewels are now 246 / 168
+  (78 apart, second share 0.171), and the stage's green foot is quieter. The layout is unchanged, so the ramp (17.8
+  held out), the Ace and the pooled figures stand. The converter gate passes (2x max 0.020, p99.9 0.0143; 1x p99
+  0.018).
