@@ -27,7 +27,7 @@ and the verdict (PASS).
 |---|---|---|---|---|---|---|---|---|---|
 | 5-1 | base-21 | The White Towers | 25.9 | 25.45 | 275 / 210 | 0.224 | 0.132 / 0.123 | La Noscea painting, base01_hr1 [1748, 60, 1440, 1080] | Limsa Lominsa Lower Decks |
 | 5-2 | base-22 | The Strait of Merlthor | 23.5 | 24.02 | 290 / 357 | 0.326 | 0.115 / 0.103 | World painting, base05_hr1 [0, 1335, 1100, 825] | Nowhere (a chart) |
-| 5-3 | base-23 | Lights on the Water | 22.9 | 23.05 | 255 / 171 | 0.218 | 0.109 / 0.108 | ours (harbourlights) | Limsa Lominsa Lower Decks |
+| 5-3 | base-23 | Lights on the Water | 22.0 | to re-pool | 255 / 171 | 0.206 | 0.108 / 0.107 | ours (harbourlights) | Limsa Lominsa Lower Decks |
 | 5-4 | base-24 | The Arches of the Bridge | 21.3 | 21.68 | 284 / 357 | 0.240 | 0.122 / 0.112 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |
 | 5-5 | base-25 | The Lighthouses of Vylbrand | 17.8 | 18.25 | 250 / 181 | 0.268 | 0.102 / 0.099 | Western La Noscea map, s1f400 [740, 720, 1300, 975] | Western La Noscea |
 
@@ -35,11 +35,11 @@ The pooled steps are 1.43, 0.97 and 1.37, and the finale gap is 3.43 (each about
 MR 4's 23.07 (a fall of 0.58) and the charter's 22.6 (band 26 → 18). The jewel check against 4-5 (321 / 233) passes. The
 stage uses 4 game paintings and 1 of ours. Every scene falls back to `moon-road-night` when the shield hides it.
 
-Aces, from `MoonfallAces.Suggest` over 576 games: 5-1 270,000 (305 wins), 5-2 250,000 (288), 5-3 240,000 (262),
+Aces, from `MoonfallAces.Suggest` over 576 games: 5-1 270,000 (305 wins), 5-2 250,000 (288), 5-3 240,000 (260),
 5-4 240,000 (252), 5-5 240,000 (221). All are above the hard-level line (14 of 48).
 
 The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x max / p99.9, then 1x p99: 5-1 0.039 / 0.007,
-0.008; 5-2 0.022 / 0.015, 0.035; 5-3 0.008 / 0.005, 0.006; 5-4 0.039 / 0.008, 0.007; 5-5 0.020 / 0.014, 0.018. 5-1's and
+0.008; 5-2 0.022 / 0.015, 0.035; 5-3 0.008 / 0.005, 0.007; 5-4 0.039 / 0.008, 0.007; 5-5 0.020 / 0.014, 0.018. 5-1's and
 5-4's maxima and 5-2's p99.9 and 1x p99 sit just under their limits.
 
 ## Integration changes
@@ -72,3 +72,14 @@ The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x m
   the author moved it so the arches sit above the bucket's approach, 12% over 5-1) and 5-5 uses [740, 720, 1300, 975]
   (planned [560, 360, 1360, 1020]). `mfl.py sources` passes on both.
 - **The 5-2 to 5-3 step** is resolved by 0.06 (0.97 less 0.41 against 0.5).
+- **5-3 after round 1** (game designer M1, critic m1 and m3): no moon stands on a lamp now. Twelve moons flank the
+  lamps' fires at their own height (one shared between Q3 and Q4, and one between Q5 and Q6), so every fire shows. Six
+  of the fires ship as small lights that flicker: Q1, Q3, Q5, both jetty lamps and the buoy. F5's "never a row" allows
+  at most three in any 40-unit band, so Q2, Q4 and Q6 stay painted fires only. A warm cream region over the highlights
+  below y 104 keeps the fires, the loggias and the lit windows warm, where the grade used to turn them cold. The
+  painting lays the reflections over the water instead of screening them through its blue, so the columns read cream-gold
+  (hue about 45° → 70°), not pink-taupe. They can't get brighter: the moons sit on the columns, and F6 (purple at 0.8x,
+  (286, 379)) is at 0.206 against its 0.20 floor. The jetty's brick run now ends 24 units from the wall, so the 1.5-unit
+  ledge is gone (sweep stuck 3 → 2 of 681). The candidates were re-picked on the tuning seeds (1-864 and 20001-23456:
+  22.54 against 22.71 for the round-1 layout). The held-out figure is 22.0 (it was 22.9), so the stage's pooled
+  figures need a fresh `stage mr5`.

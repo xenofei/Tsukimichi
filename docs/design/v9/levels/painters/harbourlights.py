@@ -26,7 +26,7 @@ from rich_lib import blur, fbm, hexc, ramp, screen, smooth
 MOON = (150.0, 70.0, 19.0)
 REFL_END = 548.0              # where the painted columns fade (the pegs stop above the bucket's lane)
 LAMP_COL = "#FFC777"
-REFL_COL = "#F6CE8E"
+REFL_COL = "#E6CC9C"
 JETTY = ((548.0, 300.0), (812.0, 412.0))
 
 
@@ -294,8 +294,11 @@ def paint(S=1):
         dash = np.maximum(dash, np.exp(-dx ** 4) * crest * on * fade)
         halo += np.exp(-((X - cx) / (w * 4.0)) ** 2) * on * fade * 0.5
     sea = screen(sea, hexc("#B07A48") * (np.clip(halo, 0, 1) * 0.20)[..., None])
-    sea = screen(sea, hexc(REFL_COL) * (cols * 0.66)[..., None])
-    sea = screen(sea, hexc("#FFE2AE") * (dash * 0.62)[..., None])
+    # the light is laid over the water (not screened through its blue), so the columns stay a cream gold, not taupe
+    lay = (cols * 0.66)[..., None]
+    sea = sea * (1 - lay) + hexc(REFL_COL) * lay
+    lay = (dash * 0.58)[..., None]
+    sea = sea * (1 - lay) + hexc("#FFE4A8") * lay
     sea = strokes(sea, (Y >= 236).astype(np.float32), S, lambda x, y: 0.0, int(5000 * S * S), length=(5, 14),
                   width=(0.8, 1.6), jitter=0.06, hue_jitter=0.004, seed=9)
     # a thin mist lying on the near water

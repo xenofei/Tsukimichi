@@ -41,6 +41,25 @@
       "scale": 0.6
      }
     ]
+   },
+   {
+    "hue": "#FFE6A0",
+    "chroma": 0.16,
+    "where": [
+     {
+      "lum": [0.34, 0.46],
+      "blur": 2
+     },
+     {
+      "y": [96, 112]
+     },
+     {
+      "near": [54, 20],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.6
+     }
+    ]
    }
   ],
   "where": [
@@ -102,6 +121,61 @@
   }
  ],
  "lights": [
+  {
+   "x": 112.0,
+   "y": 224.0,
+   "size": 1.15,
+   "colour": "#FFC777",
+   "core": 1.6,
+   "k": 0.6,
+   "halo": 8,
+   "haloK": 0.14,
+   "flicker": true
+  },
+  {
+   "x": 286.0,
+   "y": 191.7,
+   "size": 0.97,
+   "colour": "#FFC777",
+   "core": 1.6,
+   "k": 0.6,
+   "halo": 8,
+   "haloK": 0.14,
+   "flicker": true
+  },
+  {
+   "x": 466.0,
+   "y": 188.0,
+   "size": 0.91,
+   "colour": "#FFC777",
+   "core": 1.6,
+   "k": 0.6,
+   "halo": 8,
+   "haloK": 0.14,
+   "flicker": true
+  },
+  {
+   "x": 612.0,
+   "y": 272.9,
+   "size": 1.18,
+   "colour": "#FFC777",
+   "core": 1.6,
+   "k": 0.6,
+   "halo": 8,
+   "haloK": 0.14,
+   "flicker": true
+  },
+  {
+   "x": 690.0,
+   "y": 299.5,
+   "size": 1.32,
+   "colour": "#FFC777",
+   "core": 1.6,
+   "k": 0.6,
+   "halo": 8,
+   "haloK": 0.14,
+   "flicker": true
+  },
   {
    "x": 410.0,
    "y": 331.3,

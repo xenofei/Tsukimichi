@@ -2,5 +2,5 @@
   skipped ((410, 359), 'buoy lantern', '10.0 from the peg at (434, 345)')
   skipped ((386, 317), 'buoy lantern', '10.0 from the peg at (410, 303)')
   skipped ((462, 337), 'reflection', '11.4 from the peg at (434, 345)')
-  pieces 79 (pegs 70, bricks 9, movers 0); candidates 28; green-only 46; skipped while tracing 4
+  pieces 82 (pegs 74, bricks 8, movers 0); candidates 29; green-only 46; skipped while tracing 4
 wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-5\docs\design\v9\levels\build\trace\base-23.png
