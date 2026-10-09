@@ -1,6 +1,6 @@
 {
  "name": "wheel-of-the-twelve",
- "about": "Our own painting: the old star atlas's zodiac wheel of Eorzea turning round the night sky, the Twelve's twelve signs set in its gilt band in the calendar's order, each four stars over the atlas's faint engraving of its emblem, the pole star at the hub, a rose nebula in the wheel's heart and the Milky Way behind (painters/twelve.py; shipped as a JPEG). The first jewel is the night's blue (the painting's sky is painted blue and the jewel keeps 0.2 of its colour, so it measures about 261 rather than the violet 285 a violet sky gave); the second is the nebula's rose, a broad disc over the wheel's heart (r 195), whose feather is kept to 55 so its edge does not mix down into the 300-330 hues (at 90 the pair was 46 degrees apart; F7 needs 60). The wheel's own ellipse as the region's shape failed the print check, since its edge runs through the signs.",
+ "about": "Our own painting: the old star atlas's zodiac wheel of Eorzea turning round the night sky, the Twelve's twelve signs set in its gilt band in the calendar's order, each four stars over the atlas's faint engraving of its emblem and joined to the next by a dotted gilt line (one great constellation), the pole star at the hub, the Milky Way behind with a river of rose nebula along it (painters/twelve.py; shipped as a JPEG). The first jewel is the night's blue (the painting's sky is painted blue and the jewel keeps 0.2 of its colour, so it measures about 261); the second is the nebula's rose, a region along the Milky Way (a band 30-140 units either side of its spine, faded beyond 290 units of the hub so its ends do not burn in the corners, and at the walls and the hills), so it crosses the wheel diagonally rather than glowing as a disc behind it (a centred disc echoed 6-1's sphere of light). Its hue is kept red of magenta (#C83E62) since the band's mix with the blue pulls the measured mean toward violet (#BC4A74 measured 322, 60 apart).",
  "source": {
   "kind": "painting",
   "painter": "twelve",
@@ -14,7 +14,7 @@
    "sky": "#0E1446",
    "deep": "#050818",
    "jewel1": "#1E78D0",
-   "jewel2": "#BC4A74",
+   "jewel2": "#C83E62",
    "warm": "#FFB45E",
    "rim": "#C8D4FF"
   },
@@ -26,9 +26,9 @@
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#BC4A74",
-     "chroma": 0.24,
-     "mask": [["disc", 400, 338, 195, 55], ["x", 75, 135], ["x", 725, 665]]
+     "hex": "#C83E62",
+     "chroma": 0.22,
+     "mask": [["near", "milky way", 30, 140], ["disc", 400, 338, 290, 110], ["y", 560, 470], ["x", 75, 135], ["x", 725, 665]]
     }
    ],
    "quiet": [60, 25],

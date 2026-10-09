@@ -6,9 +6,11 @@ the Twelve, one for each moon of the year, in the calendar's order (the first As
 clockwise): Halone's spear and shield, Menphina's crescent, Thaliak's ewer, Nymeia's spindle, Llymlaen's wave, Oschon's
 arrow, Byregot's spire, Rhalgr's falling bolt, Azeyma's balance, Nald'thal's twin coins, Nophica's bole and Althyk's
 hourglass. Each sign is four stars joined by faint gilt lines, as the atlas draws a constellation, and behind them the
-atlas's own engraving of the emblem, faint and pale in its element's tint. At the wheel's hub burns the pole star in a
-twelve-rayed rosette. Behind it all the Milky Way crosses the sky from the lower left, and a rose nebula glows in the
-wheel's heart; below, a dark line of hills and a seer's small domed observatory with one lit window.
+atlas's own engraving of the emblem, faint and pale in its element's tint; a dotted gilt line runs from each sign to the
+next round the wheel, so the twelve read as one great constellation. At the wheel's hub burns the pole star in a
+twelve-rayed rosette. Behind it all the Milky Way crosses the sky from the lower left to the upper right, and a river of
+rose nebula runs along it through the wheel's heart, in billows and filaments cut by its dust lanes; below, a dark line
+of hills and a seer's small domed observatory with one lit window.
 
 FEATURES (board units): the wheel (its rim, inner and outer rules), the hub, each sign's centre, stars and lines, a
 box round each sign (for the runtime's twinkle mask), the star sky, the Milky Way and the horizon.
@@ -243,14 +245,18 @@ def paint(S=1):
     dust = smooth(0.47, 0.62, fbm(H, W, 15 * S, 4, 9)) * np.exp(-(dist / 26) ** 2)
     glow = band * (0.4 + 0.6 * mott) * (1 - blur(dust, 2.5 * S) * 0.8) * smooth(560, 500, Y)
     sky = screen(sky, hexc("#8AA8DC") * (glow * 0.22)[..., None])
-    # the rose nebula in the wheel's heart, and a wisp of it along the Milky Way
+    # the rose nebula: a river of it along the Milky Way, from the lower left through the wheel's heart to the upper
+    # right, in billows and filaments, its knots brightest where it crosses the hub, cut by the dust lanes
     neb_n = fbm(H, W, 40 * S, 5, 21)
-    heart = np.exp(-(((X - C[0]) / 150) ** 2 + ((Y - C[1]) / 92) ** 2))
-    wisp = np.exp(-(dist / 46) ** 2) * (np.exp(-(((X - 190) / 120) ** 2 + ((Y - 470) / 60) ** 2))
-                                         + np.exp(-(((X - 610) / 120) ** 2 + ((Y - 196) / 60) ** 2)))
-    neb = np.clip((heart * 0.9 + wisp * 0.7) * smooth(0.35, 0.75, neb_n), 0, 1)
-    sky = screen(sky, hexc("#C8508A") * (neb * 0.20)[..., None])
-    sky = screen(sky, hexc("#F0A0D8") * (neb ** 2 * smooth(0.6, 0.85, fbm(H, W, 10 * S, 3, 23)) * 0.10)[..., None])
+    wob = (fbm(H, W, 60 * S, 3, 31) - 0.5) * 70
+    river = np.exp(-(np.maximum(dist + wob, 0) / 95) ** 2)
+    knots = np.exp(-(((X - C[0]) / 190) ** 2 + ((Y - C[1]) / 120) ** 2)) * 0.5 + 0.5
+    neb = np.clip(river * knots * smooth(0.30, 0.72, neb_n), 0, 1) * (1 - blur(dust, 3.0 * S) * 0.6)
+    sky = screen(sky, hexc("#B8407E") * (neb * 0.24)[..., None])
+    fil = smooth(0.55, 0.80, fbm(H, W, 9 * S, 4, 23)) * smooth(0.45, 0.70, neb_n)
+    sky = screen(sky, hexc("#F2A6D6") * (neb * fil * 0.14)[..., None])
+    darkl = smooth(0.58, 0.74, fbm(H, W, 22 * S, 4, 37)) * river
+    sky = sky * (1 - (blur(darkl, 2.0 * S) * 0.28)[..., None])
     sky = strokes(sky, (Y < 540).astype(np.float32), S, lambda x, y: -0.62 + 0.2 * math.sin(x / 80), int(6500 * S * S),
                   length=(8, 18), width=(1.6, 3.0), jitter=0.02, hue_jitter=0.004, seed=27)
     # the field of stars, thicker along the Milky Way, thinner in the band where the signs stand
@@ -283,12 +289,25 @@ def paint(S=1):
         x, y = rim(a, -IN[0], -IN[1])
         orn = np.exp(-((X - x) / 0.8) ** 2 - ((Y - y) / 5) ** 2) + np.exp(-((Y - y) / 0.8) ** 2 - ((X - x) / 5) ** 2)
         px = screen(px, hexc("#E8D6A0") * (orn * 0.22 * near_launch)[..., None])
+    # ---- the one great constellation: each sign joined to the next round the wheel by the atlas's dotted gilt line,
+    # star to nearest star, so the twelve read as one figure
+    chain = []
+    for i, s in enumerate(SIGNS):
+        a_st, b_st = sign_stars(s), sign_stars(SIGNS[(i + 1) % len(SIGNS)])
+        p, q = min(((p, q) for p in a_st for q in b_st), key=lambda pq: math.hypot(pq[0][0] - pq[1][0], pq[0][1] - pq[1][1]))
+        (x0, y0), (x1, y1) = p[:2], q[:2]
+        L_ = math.hypot(x1 - x0, y1 - y0)
+        n = max(2, int((L_ - 16) / 9))
+        for k in range(n):
+            t0, t1 = (8 + (L_ - 16) * k / n) / L_, (8 + (L_ - 16) * (k + 0.45) / n) / L_
+            chain.append(((x0 + (x1 - x0) * t0, y0 + (y1 - y0) * t0), (x0 + (x1 - x0) * t1, y0 + (y1 - y0) * t1)))
+    px = screen(px, hexc("#D9BE82") * (segments(W, H, S, chain, 0.9, shorten=0.0) * 0.30)[..., None])
     # ---- the signs: the atlas's engraving in its element's tint, the gilt lines, the stars
     for s in SIGNS:
         cx, cy = sign_centre(s)
         eng = engraving(W, H, S, s[7], (cx, cy), width=1.0)
         halo = blur(eng, 3.0 * S)
-        px = screen(px, hexc(s[3]) * (eng * 0.30 + halo * 0.07)[..., None])
+        px = screen(px, hexc(s[3]) * (eng * 0.36 + halo * 0.08)[..., None])
         st = sign_stars(s)
         segs = [((st[i][0], st[i][1]), (st[j][0], st[j][1])) for (i, j) in s[6]]
         px = screen(px, hexc("#D9BE82") * (segments(W, H, S, segs, 1.1) * 0.42)[..., None])
