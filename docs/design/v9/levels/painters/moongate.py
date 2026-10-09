@@ -136,6 +136,64 @@ def _phase(px, S, X, Y, mx, my, r, k, wax, seed):
     return px * (1 - disc[..., None]) + col * disc[..., None]
 
 
+# the far moon's seas, as the near side shows them (centre u, v in moon radii; semi-axes; tilt in degrees): Imbrium,
+# Serenitatis, Tranquillitatis, Crisium, Fecunditatis, Nubium, Procellarum and Frigoris
+SEAS = ((-0.30, -0.38, 0.30, 0.26, 0), (0.18, -0.42, 0.18, 0.16, 0), (0.32, -0.10, 0.24, 0.18, 20),
+        (0.70, -0.28, 0.12, 0.10, 0), (0.58, 0.20, 0.13, 0.18, 10), (-0.12, 0.36, 0.20, 0.15, 0),
+        (-0.58, 0.02, 0.24, 0.44, 10), (-0.05, -0.74, 0.40, 0.08, 0))
+# craters: (u, v, radius in moon radii, rays): Tycho (rayed), Copernicus (rayed), Kepler, Plato, Langrenus and a few more
+CRATERS = ((-0.10, 0.74, 0.07, True), (-0.26, -0.04, 0.07, True), (-0.56, -0.08, 0.04, False),
+           (-0.08, -0.66, 0.06, False), (0.80, 0.08, 0.06, False), (0.34, 0.52, 0.05, False),
+           (0.10, 0.18, 0.04, False), (-0.40, 0.62, 0.05, False), (0.52, -0.58, 0.04, False))
+
+
+def _far_moon(px, S, u, v):
+    """The full moon at the gate's heart, in moon radii (u, v): highlands pale and mottled, the seas darker and cooler,
+    craters with a lit rim and a shadowed floor (the light from the upper left), Tycho's and Copernicus's rays, the limb
+    darkened and a fine bright edge."""
+    H, W = u.shape
+    d = np.sqrt(u * u + v * v)
+    disc = np.clip((1 - d) * R_MOON * S + 0.5, 0, 1)
+    mott = fbm(H, W, R_MOON * S * 0.22, 4, 89)
+    rough = fbm(H, W, R_MOON * S * 0.5, 4, 91)
+    fine = fbm(H, W, R_MOON * S * 0.12, 3, 93)
+    edge = (mott - 0.5) * 0.22 + (rough - 0.5) * 0.30 + (fine - 0.5) * 0.22
+    sea = np.zeros_like(d)
+    for (su, sv, a, b, tilt) in SEAS:
+        t = math.radians(tilt)
+        du, dv = u - su, v - sv
+        ru, rv = du * math.cos(t) + dv * math.sin(t), -du * math.sin(t) + dv * math.cos(t)
+        e = np.sqrt((ru / a) ** 2 + (rv / b) ** 2)
+        sea = np.maximum(sea, smooth(1.15, 0.70, e + edge))
+    sea = sea * (0.80 + 0.35 * rough)
+    # the face is laid in under the ceiling (0.43), so the limb, the seas and the craters' light survive it
+    face = hexc("#ECF6F2") * (0.86 + 0.20 * mott)[..., None] * 0.47
+    face = face + (hexc("#7C989C") * (0.90 + 0.25 * mott)[..., None] * 0.44 - face) * (sea * 0.72)[..., None]
+    limb = (0.54 + 0.46 * np.clip(1 - d * d, 0, 1) ** 0.6)[..., None]
+    face = face * limb
+    rays = np.zeros_like(d)
+    for (cu, cv, cr, rayed) in CRATERS:
+        du, dv = u - cu, v - cv
+        cd = np.sqrt(du * du + dv * dv) / cr
+        bowl = smooth(1.0, 0.75, cd)
+        # the light from the upper left: the far (lower right) inner wall lit, the near one in shadow
+        side = (du + dv) / (np.sqrt(du * du + dv * dv) + 1e-4)
+        lit_rim = np.exp(-((cd - 0.85) / 0.18) ** 2) * np.clip(side, 0, 1)
+        shade = bowl * np.clip(-side, 0, 1) * 0.40
+        face = face * (1 - shade[..., None])
+        face = screen(face, hexc("#F4FCFA") * (lit_rim * 0.30 + bowl * 0.06)[..., None])
+        if rayed:
+            ang = np.arctan2(dv, du)
+            rr = np.random.default_rng(int(abs(cu) * 1000) + 7)
+            streak = sum(np.exp(-((((ang - a0 + math.pi) % (2 * math.pi)) - math.pi) / rr.uniform(0.06, 0.12)) ** 2)
+                         * np.exp(-np.clip(cd - 1, 0, None) / rr.uniform(2.0, 5.0))
+                         for a0 in rr.uniform(0, 2 * math.pi, 14))
+            rays = np.maximum(rays, streak * smooth(0.9, 1.3, cd))
+    face = screen(face, hexc("#E6F8F4") * (np.clip(rays, 0, 1) * 0.12)[..., None])
+    face = screen(face, hexc("#D8FFF6") * (np.exp(-((d - 0.97) / 0.03) ** 2) * 0.18)[..., None])
+    return px * (1 - disc[..., None]) + face * disc[..., None]
+
+
 def _ridge_mask(S, X, Y, ridge):
     xs, ys = zip(*ridge)
     order = np.argsort(xs)
@@ -217,14 +275,13 @@ def paint(S=1):
     far = far * (1 - 0.35 * smooth(0.60, 0.80, _sample(fbm(H, W, 18 * S, 3, 77), ix, iy))[..., None] * (1 - arms[..., None]))
     far = RL.stars(far, S, 900, 83, ((cx - R_GATE) * S, (cy - R_GATE) * S, (cx + R_GATE) * S, (cy + R_GATE) * S),
                    bright=0.45)
-    # the far moon at the heart, soft and cool, its light spilling into the nebula
-    far = screen(far, hexc("#A0E4DA") * (np.exp(-(d / 46) ** 2) * 0.22)[..., None])
-    mu, mv = DX / R_MOON, DY / R_MOON
-    md = np.sqrt(mu * mu + mv * mv)
-    mdisc = np.clip((1 - md) * R_MOON * S + 0.5, 0, 1)
-    mmott = fbm(H, W, R_MOON * S * 0.4, 3, 89)
-    mface = hexc("#D6F0EC") * (1 - 0.22 * smooth(0.5, 0.7, mmott))[..., None] * (0.80 + 0.20 * np.sqrt(np.clip(1 - md * md, 0, 1)))[..., None]
-    far = far * (1 - mdisc[..., None]) + mface * mdisc[..., None]
+    # the far moon at the heart, the full moon the crown's phases climb toward: its light held close round it in a
+    # tight corona (a wide spill paled the nebula under the moons that ring it, the protan weak place: UX MR 6 round 1,
+    # m1), its face a real moon's (game designer MR 6 round 1, m3): dark seas where the near side's lie, rayed and
+    # rimmed craters, a darkened limb and a bright edge
+    far = screen(far, hexc("#A0E4DA") * (np.exp(-(d / 30) ** 2) * 0.10
+                                        + np.exp(-(np.clip(d - R_MOON, 0, None) / 5.0) ** 2) * (d > R_MOON - 1) * 0.34)[..., None])
+    far = _far_moon(far, S, DX / R_MOON, DY / R_MOON)
     px = px * (1 - inner[..., None]) + far * inner[..., None]
     # ---- the orbit tracks: fine rings of light the moons ride, with small marks along the outer one
     for (R, k, w) in ((R_IN, 0.30, 1.0), (R_OUT, 0.34, 1.1)):

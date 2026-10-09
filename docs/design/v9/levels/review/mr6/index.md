@@ -30,7 +30,7 @@ verdict (PASS).
 | 6-2 | base-27 | The Wheel of the Twelve | 23.0 | 23.72 | 261 / 329 | 0.270 | 0.134 / 0.131 | ours (twelve) | Nowhere |
 | 6-3 | base-28 | The Seer's Chart | 21.1 | 21.63 | 289 / 160 | 0.276 | 0.110 / 0.105 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
 | 6-4 | base-29 | Meteor Shower | 20.8 | 20.57 | 255 / 191 | 0.236 | 0.119 / 0.106 | ours (meteors) | Nowhere |
-| 6-5 | base-30 | The Moon Gate | 17.4 | 17.4 | 313 / 214 | 0.254 | 0.103 / 0.102 | ours (moongate) | Nowhere |
+| 6-5 | base-30 | The Moon Gate | 17.4 | 17.4 | 312 / 228 | 0.257 | 0.114 / 0.113 | ours (moongate) | Nowhere |
 
 - **Ramp:** the pooled steps are 1.18, 0.92 and 2.03, each about ± 0.41, and the finale gap is 3.17 ± 0.40. The mean is
   21.76, against the charter's 21.6 (band 25 → 17). The jewel check against 5-5 (246 / 168) passes.
@@ -43,7 +43,7 @@ verdict (PASS).
   and the greedy player wins 20 of 48 (29 before 6-2's round 1 fix).
 - **Converter gate:** `convert base-26 ... base-30 --check` passes 10 of 10. The figures are 2x max / p99.9, then 1x
   p99: 6-1 0.008 / 0.006, 0.006; 6-2 0.007 / 0.004, 0.005; 6-3 0.011 / 0.008, 0.029; 6-4 0.005 / 0.003, 0.004;
-  6-5 0.009 / 0.006, 0.006. 6-3's 1x p99 is the closest to its 0.035 limit.
+  6-5 0.013 / 0.008, 0.006. 6-3's 1x p99 is the closest to its 0.035 limit.
 
 ## Integration changes
 
@@ -76,6 +76,20 @@ verdict (PASS).
 
 ## For the reviewers
 
+- **6-5 (round 1 fix, UX m1, game designer m3 and n1, critic n3, UX n4):** the layout is unchanged, so the ramp
+  stands (held out 17.4, greedy 12/48). The gate's far sky is a little bluer: its jewel region is `#36A8B0` (hue 202,
+  was `#38B0A0`, 182) at the same chroma 0.14. A protanope sees the old teal ground as grey (OKLab b about -0.01),
+  close to the orange's olive; the bluer teal pulls the ground's b negative, away from the orange's +0.09. Lowering
+  the region's chroma, as UX suggested, moves the ground toward grey and would lower the separation. Protan p10
+  0.103 → 0.114 and min 0.102 → 0.113, at (421,375) on the far moon's ring; F6 worst 0.254 → 0.257. Jewels 312 / 228,
+  85 apart, second share 0.166. The far moon is a real full moon now: dark
+  seas where the near side's lie, Tycho's and Copernicus's rays, small craters lit from the upper left, a darkened
+  limb and a bright edge, all laid in under the ceiling so the 0.43 clamp keeps them; a tight corona hugs it, and
+  the wide spill that paled the nebula under its ring of moons is gone. The beams over the gate are k 0.06 and
+  widths 22-30 (were 0.03 and 18-24); at 1280 they are still faint in a still frame, so they need watching in
+  motion. The star mask has a 15th term, a disc of 20 at the peg (209.8,180.7) that a twinkling star sat beside (16
+  is the limit). Converter gate 2x 0.013 / 0.008, 1x p99 0.006.
+
 - **6-4 (round 1 fix, game designer m1, UX m2 and n2, game designer n4, critic n5):** the layout is unchanged, so
   the ramp stands (held out 20.8, pooled 20.57). The lake is a dark mirror now. The painter no longer shifts the
   mirror row by row or draws hard glint lines across it, which made the scanlines. Broad swells move the reflection
@@ -85,7 +99,7 @@ verdict (PASS).
   shore over the range's foot (`["y", 524, 470]`). A protanope sees the old green as grey, the same as the orange's
   olive; the teal reads bluer. Protan min goes 0.092 → 0.106 at the same place (514,431), slider 16's far end on
   streak 3's head, and p10 0.110 → 0.119. F6 worst goes 0.230 → 0.236. Jewels are 255 / 191, 64 apart, second
-  share 0.170. Against 6-3 (289 / 160) they are 34 and 31 apart, and against 6-5 (313 / 214) 58 and 23. UX's other
+  share 0.170. Against 6-3 (289 / 160) they are 34 and 31 apart, and against 6-5 (312 / 228, after its round 1 fix) 57 and 37. UX's other
   fixes were tried first. A shorter slide on streak 3 (26 or 30 units) left protan at 0.092-0.094, because the ring
   round the place is the green band, not the head. Dimming streak 3 to k 0.6 left it at 0.092. Neither is kept.
   Converter gate 2x 0.005 / 0.003, 1x p99 0.004.
@@ -110,7 +124,7 @@ verdict (PASS).
   1,728 (was 23), under the 88 maximum; the sweep sticks on 2 of 681. The low orange (526,440) is left in 22% of lost
   games (was 14%), under the 25% gate. ch-03 wins 20 of 48 at 35 oranges. Ace unchanged (250,000, 270 of 576 win).
 - **6-1 (round 1 fix, game designer M1, m3, n3):** the cage is no longer teal. The brass frame and the heart are gold, the rings
-  pale silver, and the dusk glows amber behind the far hills. Jewels 296 / 55 (6-5 is 313 / 214). Protan p10 0.131 (was
+  pale silver, and the dusk glows amber behind the far hills. Jewels 296 / 55 (6-5 is 312 / 228). Protan p10 0.131 (was
   0.119). F6 worst 0.205 (was 0.234): the teal region had lifted the margin by 0.03, and the gold cannot sit near the
   pegs. The moon has its seas, and the spokes run on to the moons at their tips. Layout unchanged (24.7 held out).
 - **6-5:** check the new beams over the gate and the slightly darker rim band at the crown's ends. Neither was in the
