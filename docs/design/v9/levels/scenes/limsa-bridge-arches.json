@@ -1,0 +1,137 @@
+{
+ "name": "limsa-bridge-arches",
+ "about": "Limsa Lominsa's lamplit bridge seen from the water: its arches over the harbour mist, the lamps along its deck, the cables swagged between its two towers and the domed east tower, from the east of the game's own La Noscea loading-screen painting at its high-resolution size (read from the install, never shipped), night graded with the windows' and lamps' gold kept. Violet night over the towers, the harbour's rose in the mist under the arches and faintly in the high cloud; mooring ropes in the top corners, pier stones and two lantern posts at the foot, moonbeams from the upper left. The crop [2560, 920, 1280, 960] replaces the planned [2400, 700, 1440, 1080] (sources-plan) so the arches sit above the bucket's approach: 12% over 5-1's crop, none over 2-1's.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/loadingimage/-nowloading_base01_hr1.tex",
+  "mirror": false,
+  "crop": [2560, 920, 1280, 960],
+  "grade": {"gamma": 1.5, "exposure": 0.78, "ceiling": 0.37, "warm_keep": 0.7},
+  "skyDrop": 0.35,
+  "glow": [-50, -60]
+ },
+ "tone": [{"mask": [["y", 470, 560]], "mul": 0.78}],
+ "veil": 0.44,
+ "features": {
+  "deck top": {"points": [[75, 350], [725, 346]]},
+  "deck span west": {"points": [[112, 372], [240, 371]]},
+  "deck span middle": {"points": [[402, 370], [562, 369]]},
+  "deck span east": {"points": [[676, 368], [708, 368]]},
+  "lamps": [[127, 333], [168, 331], [212, 333], [441, 323], [481, 323], [518, 323]],
+  "lamp fires": [[168, 331], [441, 323], [518, 323]],
+  "tower lights": [[589, 142], [279, 269], [355, 476]],
+  "left arch": {"circle": [170, 497, 86], "from": 200, "sweep": 140},
+  "middle arch": {"circle": [472, 507, 86], "from": 200, "sweep": 140},
+  "right arch": {"circle": [748, 505, 86], "from": 200, "sweep": 60},
+  "dome": {"circle": [589, 112, 26], "from": 180, "sweep": 180},
+  "spire tips": [[545, 103], [621, 96], [683, 98]],
+  "spire bodies": [[545, 145], [545, 183], [686, 138]],
+  "drum flank": [[621, 146]],
+  "chimneys": [[306, 158], [340, 168]],
+  "thin spire": [[256, 166]],
+  "cable east": {"points": [[392, 238], [420, 260], [450, 274], [480, 274], [510, 260], [540, 238]], "smooth": 6},
+  "cable west": {"points": [[244, 214], [200, 250], [160, 282], [120, 310], [80, 332]], "smooth": 6},
+  "balcony": [[652, 176], [692, 180]],
+  "lit windows": [[357, 262], [352, 302], [252, 334], [290, 334]],
+  "spiral stair": {"points": [[118, 52], [146, 66], [158, 94], [154, 124], [136, 148]], "smooth": 6},
+  "tower legs": {"points": [[584, 200], [584, 330]]},
+  "tower legs east": {"points": [[652, 212], [652, 300]]},
+  "castle wall": {"points": [[100, 50], [100, 315]]}
+ },
+ "dress": {
+  "palette": {
+   "name": "Violet night and harbour rose (the bridge's arches)",
+   "sky": "#18164E",
+   "deep": "#08061A",
+   "jewel1": "#4C56DC",
+   "jewel2": "#B84A70",
+   "warm": "#FFC27A",
+   "rim": "#D8D0FF"
+  },
+  "jewel": {
+   "bands": [[0, "#4C56DC"], [300, "#4854D6"], [600, "#3E4AB0"]],
+   "valueHues": [[0.08, "#22268E"], [0.45, "#D4D8FF"]],
+   "chroma": 1.6,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#B84A70",
+     "chroma": 0.06,
+     "mask": [["luma", 0.16, 0.26, 4], ["y", 400, 460], ["y", 590, 505], ["x", 75, 135], ["x", 725, 665]]
+    },
+    {
+     "hex": "#B84A70",
+     "chroma": 0.065,
+     "mask": [["luma", 0.22, 0.32, 4], ["y", 240, 150], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [40, 18],
+   "regionQuiet": 0.3
+  },
+  "shafts": [
+   {
+    "origin": [-120, -200],
+    "angles": [50, 57, 64, 72],
+    "widths": [34, 22, 40, 26],
+    "k": 0.06,
+    "col": "#D8D0FF"
+   }
+  ],
+  "glows": [
+   {"x": 330, "y": 300, "r": 170, "col": "#FFC27A", "k": 0.025},
+   {"x": 480, "y": 330, "r": 120, "col": "#FFC27A", "k": 0.035},
+   {"x": 170, "y": 335, "r": 110, "col": "#FFC27A", "k": 0.03}
+  ],
+  "framing": [
+   {"kind": "rope", "a": [75, 44], "b": [230, 30], "sag": 16, "width": 1.8},
+   {"kind": "rope", "a": [570, 30], "b": [725, 44], "sag": 16, "width": 1.8},
+   {"kind": "rope", "a": [75, 130], "b": [170, 34], "sag": 10, "width": 1.4},
+   {"kind": "rope", "a": [630, 34], "b": [725, 130], "sag": 10, "width": 1.4},
+   {"kind": "rocks", "items": [[92, 566, 22], [134, 580, 18], [100, 528, 14]], "seed": 41},
+   {"kind": "rocks", "items": [[708, 568, 20], [668, 582, 16]], "seed": 43},
+   {"kind": "lantern_post", "x": 88, "base": 600, "height": 50},
+   {"kind": "lantern_post", "x": 712, "base": 600, "height": 50}
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#1A1848",
+   "rim": "#D8D0FF",
+   "rimK": 0.0,
+   "seed": 24
+  },
+  "lights": [
+   {
+    "posts": true,
+    "col": "#FFB45E",
+    "r": 2.4,
+    "k": 0.95,
+    "halo": 12,
+    "hk": 0.17
+   },
+   {
+    "points": [[168, 331, 1.0], [441, 323, 1.0], [518, 323, 1.0], [589, 142, 1.1], [279, 269, 0.95], [355, 476, 1.0]],
+    "col": "#FFC777",
+    "r": 2.8,
+    "k": 1.0,
+    "halo": 14,
+    "hk": 0.32
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 16,
+   "mist": [
+    {
+     "y": [518, 590],
+     "speed": 4,
+     "alpha": 0.08,
+     "cell": 130,
+     "seed": 11,
+     "colour": "#D4BCD4"
+    }
+   ]
+  },
+  "flicker": [0, 1]
+ }
+}

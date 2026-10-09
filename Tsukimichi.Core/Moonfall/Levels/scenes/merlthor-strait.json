@@ -1,0 +1,180 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "merlthor-strait",
+ "source": {
+  "game": "ui/loadingimage/-nowloading_base05_hr1.tex",
+  "crop": [0, 1335, 1100, 825]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.2,
+  "exposure": 0.72,
+  "ceiling": 0.35,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [240, 454, 60, 75]
+    },
+    {
+     "y": [375, 410]
+    },
+    {
+     "y": [545, 505]
+    }
+   ],
+   "mul": 2.0
+  },
+  {
+   "kind": "plate",
+   "picture": "merlthor-strait-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "merlthor-strait-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#533BC9"], [600, "#442DA1"]],
+  "chroma": 1.25,
+  "floor": 0.05,
+  "keep": 0.12,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#2E1D7D"], [0.45, "#D5CAFF"]],
+  "regions": [
+   {
+    "hue": "#AF6130",
+    "chroma": 0.22,
+    "where": [
+     {
+      "lum": [0.28, 0.22],
+      "blur": 3
+     },
+     {
+      "x": [75, 150]
+     },
+     {
+      "x": [725, 650]
+     },
+     {
+      "y": [460, 400]
+     },
+     {
+      "disc": [400, 50, 130, 40],
+      "invert": true
+     },
+     {
+      "disc": [572, 232, 80, 40],
+      "invert": true
+     },
+     {
+      "disc": [420, 330, 55, 100],
+      "invert": true
+     },
+     {
+      "near": [60, 24],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.35
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [60, 24],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 400,
+   "y": 300,
+   "r": 2000,
+   "colour": "#B4A0C8",
+   "k": 0.024
+  },
+  {
+   "kind": "glow",
+   "x": 400,
+   "y": 640,
+   "r": 130,
+   "colour": "#B4A0C8",
+   "k": 0.2
+  },
+  {
+   "kind": "shafts",
+   "origin": [-60, -160],
+   "angles": [48, 57, 66],
+   "widths": [44, 30, 50],
+   "k": 0.04,
+   "colour": "#E0E6FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "merlthor-strait-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "merlthor-strait-ticks",
+   "blend": "multiply"
+  }
+ ],
+ "veil": 0.34,
+ "motion": {
+  "dust": 18,
+  "glints": [
+   {
+    "points": [[316, 268], [282, 276], [246, 272], [212, 262], [184, 246], [160, 228]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[370, 288], [342, 276], [316, 268]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 15,
+    "colour": "#FFE6B0"
+   },
+   {
+    "points": [[446, 368], [432, 392], [418, 408], [400, 410], [384, 404], [358, 410], [338, 420]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 30,
+    "offset": 8,
+    "colour": "#FFE6B0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#1C1650",
+  "deep": "#08061C",
+  "jewel1": "#6034C0",
+  "jewel2": "#B05A6E"
+ }
+}

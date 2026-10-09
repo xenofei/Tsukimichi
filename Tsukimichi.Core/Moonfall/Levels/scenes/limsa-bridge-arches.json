@@ -1,0 +1,286 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "limsa-bridge-arches",
+ "source": {
+  "game": "ui/loadingimage/-nowloading_base01_hr1.tex",
+  "crop": [2560, 920, 1280, 960]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.5,
+  "exposure": 0.78,
+  "ceiling": 0.37,
+  "warmKeep": 0.7,
+  "skyDrop": 0.35,
+  "skyTop": 0.3,
+  "skyBottom": 0.75
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "moonGlow",
+   "x": -50,
+   "y": -60,
+   "rCore": 330,
+   "rWide": 900,
+   "kCore": 0.11,
+   "kWide": 0.05,
+   "colour": "#C4C0EE"
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "y": [470, 560]
+    }
+   ],
+   "mul": 0.78
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#4C56DC"], [300, "#4854D6"], [600, "#3E4AB0"]],
+  "chroma": 1.6,
+  "floor": 0.05,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "valueHues": [[0.08, "#22268E"], [0.45, "#D4D8FF"]],
+  "regions": [
+   {
+    "hue": "#B84A70",
+    "chroma": 0.06,
+    "where": [
+     {
+      "lum": [0.16, 0.26],
+      "blur": 4
+     },
+     {
+      "y": [400, 460]
+     },
+     {
+      "y": [590, 505]
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [40, 18],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.3
+     }
+    ]
+   },
+   {
+    "hue": "#B84A70",
+    "chroma": 0.065,
+    "where": [
+     {
+      "lum": [0.22, 0.32],
+      "blur": 4
+     },
+     {
+      "y": [240, 150]
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [40, 18],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.3
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [40, 18],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 330,
+   "y": 300,
+   "r": 170,
+   "colour": "#FFC27A",
+   "k": 0.025
+  },
+  {
+   "kind": "glow",
+   "x": 480,
+   "y": 330,
+   "r": 120,
+   "colour": "#FFC27A",
+   "k": 0.035
+  },
+  {
+   "kind": "glow",
+   "x": 170,
+   "y": 335,
+   "r": 110,
+   "colour": "#FFC27A",
+   "k": 0.03
+  },
+  {
+   "kind": "shafts",
+   "origin": [-120, -200],
+   "angles": [50, 57, 64, 72],
+   "widths": [34, 22, 40, 26],
+   "k": 0.06,
+   "colour": "#D8D0FF",
+   "seed": 3,
+   "reach": 900.0,
+   "near": 150.0,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-bridge-arches-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-bridge-arches-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-bridge-arches-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "limsa-bridge-arches-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "lights": [
+  {
+   "x": 88.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  },
+  {
+   "x": 712.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  },
+  {
+   "x": 168.0,
+   "y": 331.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 441.0,
+   "y": 323.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 518.0,
+   "y": 323.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 589.0,
+   "y": 142.0,
+   "size": 1.1,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 279.0,
+   "y": 269.0,
+   "size": 0.95,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  },
+  {
+   "x": 355.0,
+   "y": 476.0,
+   "size": 1.0,
+   "colour": "#FFC777",
+   "core": 2.8,
+   "k": 1.0,
+   "halo": 14,
+   "haloK": 0.32,
+   "flicker": true
+  }
+ ],
+ "veil": 0.44,
+ "motion": {
+  "dust": 16,
+  "mist": [
+   {
+    "y": [518, 590],
+    "speed": 4,
+    "alpha": 0.08,
+    "cell": 130,
+    "seed": 11,
+    "colour": "#D4BCD4"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#18164E",
+  "deep": "#08061A",
+  "jewel1": "#4C56DC",
+  "jewel2": "#B84A70"
+ }
+}

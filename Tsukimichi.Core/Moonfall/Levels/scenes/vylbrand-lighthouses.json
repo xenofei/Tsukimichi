@@ -1,0 +1,327 @@
+{
+ "format": "moonfall-scene",
+ "version": 1,
+ "name": "vylbrand-lighthouses",
+ "source": {
+  "game": "ui/map/s1f4/00/s1f400_m.tex",
+  "crop": [740, 720, 1300, 975],
+  "erase": [[1395, 850, 70, 160], [1262, 1372, 80, 145], [1832, 1402, 80, 145]]
+ },
+ "grade": {
+  "kind": "night",
+  "gamma": 1.6,
+  "exposure": 0.66,
+  "warmKeep": 0.25,
+  "chromaMid": 0.45
+ },
+ "vignette": 0.28,
+ "fallback": "moon-road-night",
+ "grain": 0.008,
+ "paint": [
+  {
+   "kind": "plate",
+   "picture": "vylbrand-lighthouses-route-cut",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "vylbrand-lighthouses-route",
+   "blend": "screen"
+  }
+ ],
+ "palette": {
+  "bands": [[0, "#1E78C8"], [600, "#1C6AB8"]],
+  "chroma": 1.8,
+  "floor": 0.06,
+  "keep": 0.3,
+  "keepHigh": 0.75,
+  "mix": 0.5,
+  "regions": [
+   {
+    "hue": "#3FAE74",
+    "chroma": 0.08,
+    "where": [
+     {
+      "poly": [[40.0, 268.0], [130.0, 262.0], [200.0, 268.0], [245.0, 285.0], [285.0, 308.0], [300.0, 335.0], [292.0, 350.0], [300.0, 402.0], [380.0, 402.0], [372.0, 330.0], [400.0, 326.0], [432.0, 342.0], [456.0, 376.0], [470.0, 414.0], [452.0, 448.0], [470.0, 472.0], [530.0, 484.0], [566.0, 476.0], [580.0, 502.0], [590.0, 540.0], [600.0, 640.0], [40.0, 640.0]],
+      "blur": 7.0
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [44, 12],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.4
+     }
+    ]
+   },
+   {
+    "hue": "#3FAE74",
+    "chroma": 0.13,
+    "where": [
+     {
+      "poly": [[606.0, 640.0], [606.0, 486.0], [640.0, 474.0], [680.0, 462.0], [700.0, 440.0], [760.0, 430.0], [760.0, 640.0]],
+      "blur": 7.0
+     },
+     {
+      "x": [75, 135]
+     },
+     {
+      "x": [725, 665]
+     },
+     {
+      "near": [44, 12],
+      "blur": 40.0,
+      "invert": true,
+      "scale": 0.4
+     }
+    ]
+   }
+  ],
+  "where": [
+   {
+    "near": [44, 12],
+    "blur": 40.0,
+    "invert": true,
+    "scale": 0.5
+   }
+  ]
+ },
+ "light": [
+  {
+   "kind": "glow",
+   "x": 334,
+   "y": 404,
+   "r": 150,
+   "colour": "#FFD9A0",
+   "k": 0.05
+  },
+  {
+   "kind": "glow",
+   "x": 642,
+   "y": 425,
+   "r": 140,
+   "colour": "#FFD9A0",
+   "k": 0.05
+  },
+  {
+   "kind": "glow",
+   "x": 128,
+   "y": 250,
+   "r": 130,
+   "colour": "#FFD9A0",
+   "k": 0.025
+  },
+  {
+   "kind": "glow",
+   "x": 442,
+   "y": 467,
+   "r": 110,
+   "colour": "#FFD9A0",
+   "k": 0.035
+  },
+  {
+   "kind": "glow",
+   "x": 128,
+   "y": 440,
+   "r": 110,
+   "colour": "#FFD9A0",
+   "k": 0.022
+  },
+  {
+   "kind": "shafts",
+   "origin": [334, 404],
+   "angles": [120, 162],
+   "widths": [78, 67],
+   "k": 0.08,
+   "colour": "#E6EEFF",
+   "seed": 3,
+   "reach": 360,
+   "near": -170,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "shafts",
+   "origin": [642, 425],
+   "angles": [60, 120],
+   "widths": [72, 61],
+   "k": 0.08,
+   "colour": "#E6EEFF",
+   "seed": 3,
+   "reach": 320,
+   "near": -170,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "shafts",
+   "origin": [128, 250],
+   "angles": [62, 104],
+   "widths": [67, 58],
+   "k": 0.08,
+   "colour": "#E6EEFF",
+   "seed": 3,
+   "reach": 260,
+   "near": -170,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "shafts",
+   "origin": [442, 467],
+   "angles": [162],
+   "widths": [56],
+   "k": 0.08,
+   "colour": "#E6EEFF",
+   "seed": 3,
+   "reach": 260,
+   "near": -170,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "shafts",
+   "origin": [128, 440],
+   "angles": [-54],
+   "widths": [56],
+   "k": 0.08,
+   "colour": "#E6EEFF",
+   "seed": 3,
+   "reach": 260,
+   "near": -170,
+   "moving": true,
+   "beamsOnly": true
+  },
+  {
+   "kind": "plate",
+   "picture": "vylbrand-lighthouses-light",
+   "blend": "screen"
+  },
+  {
+   "kind": "plate",
+   "picture": "vylbrand-lighthouses-ticks",
+   "blend": "multiply"
+  },
+  {
+   "kind": "plate",
+   "picture": "vylbrand-lighthouses-cover",
+   "blend": "multiply",
+   "cover": true
+  },
+  {
+   "kind": "plate",
+   "picture": "vylbrand-lighthouses-cloth",
+   "blend": "add"
+  },
+  {
+   "kind": "plate",
+   "picture": "vylbrand-lighthouses-rim",
+   "blend": "screen",
+   "rim": true
+  }
+ ],
+ "lights": [
+  {
+   "x": 334.0,
+   "y": 404.0,
+   "size": 1.3,
+   "colour": "#FFE6B0",
+   "core": 2.6,
+   "k": 0.38,
+   "halo": 8,
+   "haloK": 0.25,
+   "flicker": true
+  },
+  {
+   "x": 642.0,
+   "y": 425.0,
+   "size": 1.3,
+   "colour": "#FFE6B0",
+   "core": 2.6,
+   "k": 0.38,
+   "halo": 8,
+   "haloK": 0.25,
+   "flicker": true
+  },
+  {
+   "x": 128.0,
+   "y": 250.0,
+   "size": 1.0,
+   "colour": "#FFE6B0",
+   "core": 2.6,
+   "k": 0.38,
+   "halo": 8,
+   "haloK": 0.25,
+   "flicker": true
+  },
+  {
+   "x": 442.0,
+   "y": 467.0,
+   "size": 1.0,
+   "colour": "#FFE6B0",
+   "core": 2.6,
+   "k": 0.38,
+   "halo": 8,
+   "haloK": 0.25,
+   "flicker": true
+  },
+  {
+   "x": 128.0,
+   "y": 440.0,
+   "size": 1.0,
+   "colour": "#FFE6B0",
+   "core": 2.6,
+   "k": 0.38,
+   "halo": 8,
+   "haloK": 0.25,
+   "flicker": true
+  },
+  {
+   "x": 86.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  },
+  {
+   "x": 714.0,
+   "y": 546.0,
+   "size": 1.4,
+   "colour": "#FFB45E",
+   "core": 2.4,
+   "k": 0.95,
+   "halo": 12,
+   "haloK": 0.17,
+   "flicker": true
+  }
+ ],
+ "veil": 0.4,
+ "motion": {
+  "dust": 16,
+  "glints": [
+   {
+    "points": [[300, 446], [250, 466], [200, 486], [150, 504]],
+    "smooth": 8,
+    "speed": 30,
+    "every": 24,
+    "offset": 0,
+    "colour": "#FFE6B0"
+   }
+  ]
+ },
+ "chrome": {
+  "sky": "#0F1C4E",
+  "deep": "#060A20",
+  "jewel1": "#1E70C4",
+  "jewel2": "#3FAE74"
+ }
+}
