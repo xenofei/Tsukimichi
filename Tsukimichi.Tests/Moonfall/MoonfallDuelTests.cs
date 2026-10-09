@@ -138,7 +138,7 @@ public sealed class MoonfallDuelTests
         double? AimAt(int index)
         {
             var peg = game.Peg(index);
-            for (var angle = -84.0; angle <= 84.0; angle += 0.1)
+            for (var angle = -MoonfallAi.Reach; angle <= MoonfallAi.Reach; angle += 0.1)
             {
                 var n = game.Guide(angle, dots);
                 var (x, y) = dots[n - 1];
@@ -193,11 +193,20 @@ public sealed class MoonfallDuelTests
     [Fact]
     public void The_duel_pays_its_own_smaller_values()
     {
-        Assert.Equal(25_000, MoonfallGame.FeverBucketValue(2, perfect: false, duel: true));
+        // [O] The duel's Fever buckets are half the campaign's (they were a quarter): 5k / 25k / 50k / 25k / 5k.
+        Assert.Equal(50_000, MoonfallGame.FeverBucketValue(2, perfect: false, duel: true));
+        Assert.Equal(5_000, MoonfallGame.FeverBucketValue(0, perfect: false, duel: true));
+        Assert.Equal(25_000, MoonfallGame.FeverBucketValue(3, perfect: false, duel: true));
         Assert.Equal(100_000, MoonfallGame.FeverBucketValue(2, perfect: false, duel: false));
-        Assert.Equal(MoonfallRules.DuelPerfectFeverBucketValue, MoonfallGame.FeverBucketValue(0, perfect: true, duel: true));
+        Assert.Equal(50_000, MoonfallGame.FeverBucketValue(0, perfect: true, duel: true));
         Assert.Equal(5_000, MoonfallGame.DuelStyleShotBonus(MoonfallStyleShot.LongShot));
         Assert.Equal(2_500, MoonfallGame.DuelStyleShotBonus(MoonfallStyleShot.OnePegCatch));
+
+        // [O] The original's duel values (Double Long Shot was 10,000, Lucky Bounce 5,000, Clear Night 10,000).
+        Assert.Equal(5_000, MoonfallGame.DuelStyleShotBonus(MoonfallStyleShot.DoubleLongShot));
+        Assert.Equal(2_500, MoonfallGame.DuelStyleShotBonus(MoonfallStyleShot.LuckyBounce));
+        Assert.Equal(5_000, MoonfallGame.DuelStyleShotBonus(MoonfallStyleShot.ClearNight));
+        Assert.Equal(6, MoonfallRules.DuelBallsPerSide);
         foreach (var kind in Enum.GetValues<MoonfallStyleShot>())
         {
             Assert.InRange(MoonfallGame.DuelStyleShotBonus(kind), 1, MoonfallGame.StyleShotBonus(kind) / 2);
