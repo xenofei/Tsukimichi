@@ -22,21 +22,21 @@
    "ok": true,
    "output": [
     "OK   base-27.json  id=base-27 \"The Wheel of the Twelve\"  pieces=68 (round 62, bricks 6, movers 0)  mayBeOrange=35",
-    "     still round pegs 62: closest surfaces 14.3 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     still round pegs 62: closest surfaces 14.5 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
     "     rows used y 169..505"
    ]
   },
   "sweep": {
    "angles": 681,
    "pegs_median": 7,
-   "pegs_mean": 7.7,
+   "pegs_mean": 7.6,
    "pegs_max": 20,
-   "oranges_mean": 2.83,
+   "oranges_mean": 2.85,
    "no_hit": 0,
-   "stuck": 2,
-   "stuck_share": 0.003,
+   "stuck": 3,
+   "stuck_share": 0.004,
    "long_flights": 0,
-   "bucket": 122,
+   "bucket": 118,
    "unreached": [],
    "pieces": 68
   },
@@ -45,43 +45,42 @@
    "never": []
   },
   "play": {
-   "greedy_won": 24,
+   "greedy_won": 25,
    "games": 48,
    "oranges_left_when_lost": [
-    1,
-    1,
-    1,
-    1,
-    5,
-    5,
+    2,
+    2,
+    3,
     1,
     2,
-    1,
-    1,
-    3,
-    4,
-    8,
-    1,
-    4,
     7,
     1,
-    1,
-    1,
-    1,
     2,
     2,
+    7,
+    4,
+    4,
+    4,
+    5,
+    1,
+    2,
+    1,
+    4,
+    1,
+    1,
+    1,
     6,
-    5
+    2
    ],
    "ramp_games": 1728,
-   "ramp_won": 829,
-   "ramp_per_48": 23.0,
-   "shots_mean": 14.1,
-   "stuck_fires": 54,
+   "ramp_won": 830,
+   "ramp_per_48": 23.1,
+   "shots_mean": 14.2,
+   "stuck_fires": 41,
    "random_won": 0,
-   "random_oranges_mean": 18.6,
-   "low_left_share": 0.082,
-   "lost_with_low_orange": 0.224,
+   "random_oranges_mean": 18.8,
+   "low_left_share": 0.076,
+   "lost_with_low_orange": 0.207,
    "holdouts": [
     {
      "piece": 23,
@@ -89,7 +88,7 @@
       526,
       440
      ],
-     "share_of_lost_games": 0.22
+     "share_of_lost_games": 0.21
     },
     {
      "piece": 22,
@@ -97,15 +96,7 @@
       582,
       429
      ],
-     "share_of_lost_games": 0.18
-    },
-    {
-     "piece": 51,
-     "at": [
-      400,
-      386
-     ],
-     "share_of_lost_games": 0.17
+     "share_of_lost_games": 0.2
     },
     {
      "piece": 39,
@@ -113,15 +104,7 @@
       175,
       409
      ],
-     "share_of_lost_games": 0.17
-    },
-    {
-     "piece": 59,
-     "at": [
-      242,
-      395
-     ],
-     "share_of_lost_games": 0.17
+     "share_of_lost_games": 0.18
     },
     {
      "piece": 16,
@@ -129,7 +112,39 @@
       616,
       398
      ],
-     "share_of_lost_games": 0.15
+     "share_of_lost_games": 0.16
+    },
+    {
+     "piece": 59,
+     "at": [
+      242,
+      395
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 51,
+     "at": [
+      400,
+      386
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "piece": 13,
+     "at": [
+      625,
+      287
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 14,
+     "at": [
+      659,
+      287
+     ],
+     "share_of_lost_games": 0.12
     },
     {
      "piece": 38,
@@ -140,52 +155,12 @@
      "share_of_lost_games": 0.12
     },
     {
-     "piece": 19,
-     "at": [
-      670,
-      368
-     ],
-     "share_of_lost_games": 0.11
-    },
-    {
-     "piece": 41,
-     "at": [
-      158,
-      284
-     ],
-     "share_of_lost_games": 0.11
-    },
-    {
-     "piece": 13,
-     "at": [
-      625,
-      287
-     ],
-     "share_of_lost_games": 0.11
-    },
-    {
-     "piece": 14,
-     "at": [
-      659,
-      287
-     ],
-     "share_of_lost_games": 0.1
-    },
-    {
-     "piece": 52,
-     "at": [
-      352,
-      338
-     ],
-     "share_of_lost_games": 0.1
-    },
-    {
      "piece": 15,
      "at": [
       642,
       314
      ],
-     "share_of_lost_games": 0.1
+     "share_of_lost_games": 0.12
     },
     {
      "piece": 40,
@@ -196,12 +171,28 @@
      "share_of_lost_games": 0.1
     },
     {
-     "piece": 43,
+     "piece": 41,
      "at": [
-      182,
-      263
+      158,
+      284
      ],
      "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 19,
+     "at": [
+      670,
+      368
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 52,
+     "at": [
+      352,
+      338
+     ],
+     "share_of_lost_games": 0.09
     },
     {
      "piece": 53,
@@ -209,7 +200,7 @@
       558,
       281
      ],
-     "share_of_lost_games": 0.08
+     "share_of_lost_games": 0.09
     },
     {
      "piece": 50,
@@ -225,15 +216,15 @@
       141,
       368
      ],
-     "share_of_lost_games": 0.07
+     "share_of_lost_games": 0.08
     },
     {
-     "piece": 46,
+     "piece": 43,
      "at": [
-      229,
-      247
+      182,
+      263
      ],
-     "share_of_lost_games": 0.05
+     "share_of_lost_games": 0.07
     },
     {
      "piece": 8,
@@ -241,7 +232,7 @@
       584,
       204
      ],
-     "share_of_lost_games": 0.05
+     "share_of_lost_games": 0.07
     },
     {
      "piece": 17,
@@ -249,37 +240,21 @@
       636,
       374
      ],
-     "share_of_lost_games": 0.05
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 46,
+     "at": [
+      229,
+      247
+     ],
+     "share_of_lost_games": 0.06
     },
     {
      "piece": 9,
      "at": [
       552,
       200
-     ],
-     "share_of_lost_games": 0.05
-    },
-    {
-     "piece": 44,
-     "at": [
-      229,
-      198
-     ],
-     "share_of_lost_games": 0.04
-    },
-    {
-     "piece": 49,
-     "at": [
-      401,
-      290
-     ],
-     "share_of_lost_games": 0.04
-    },
-    {
-     "piece": 42,
-     "at": [
-      134,
-      263
      ],
      "share_of_lost_games": 0.04
     },
@@ -292,10 +267,26 @@
      "share_of_lost_games": 0.04
     },
     {
-     "piece": 1,
+     "piece": 42,
      "at": [
-      331,
-      199
+      134,
+      263
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 6,
+     "at": [
+      449,
+      220
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 44,
+     "at": [
+      229,
+      198
      ],
      "share_of_lost_games": 0.03
     },
@@ -313,21 +304,29 @@
       531,
       226
      ],
-     "share_of_lost_games": 0.02
+     "share_of_lost_games": 0.03
     },
     {
-     "piece": 6,
+     "piece": 1,
      "at": [
-      449,
-      220
+      331,
+      199
      ],
-     "share_of_lost_games": 0.02
+     "share_of_lost_games": 0.03
     },
     {
-     "piece": 45,
+     "piece": 49,
      "at": [
-      263,
-      198
+      401,
+      290
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 5,
+     "at": [
+      438,
+      190
      ],
      "share_of_lost_games": 0.01
     },
@@ -337,13 +336,13 @@
       462,
       169
      ],
-     "share_of_lost_games": 0.0
+     "share_of_lost_games": 0.01
     },
     {
-     "piece": 5,
+     "piece": 45,
      "at": [
-      438,
-      190
+      263,
+      198
      ],
      "share_of_lost_games": 0.0
     },
@@ -401,94 +400,94 @@
    "report": {
     "faces": {
      "1x": {
-      "blue": 0.683,
-      "orange": 0.613,
-      "green": 0.712,
+      "blue": 0.682,
+      "orange": 0.61,
+      "green": 0.711,
       "purple": 0.58
      },
      "0.8x": {
-      "blue": 0.669,
-      "orange": 0.602,
+      "blue": 0.667,
+      "orange": 0.603,
       "green": 0.705,
       "purple": 0.572
      }
     },
     "worst_case": {
      "blue 1x": {
+      "worst": 0.371,
+      "at": [
+       359,
+       216
+      ],
+      "undressed": 0.37,
+      "drop": -0.001
+     },
+     "orange 1x": {
+      "worst": 0.299,
+      "at": [
+       359,
+       216
+      ],
+      "undressed": 0.298,
+      "drop": -0.001
+     },
+     "green 1x": {
+      "worst": 0.401,
+      "at": [
+       359,
+       216
+      ],
+      "undressed": 0.4,
+      "drop": -0.001
+     },
+     "purple 1x": {
+      "worst": 0.269,
+      "at": [
+       359,
+       216
+      ],
+      "undressed": 0.268,
+      "drop": -0.001
+     },
+     "blue 0.8x": {
       "worst": 0.374,
       "at": [
        359,
        216
       ],
-      "undressed": 0.373,
-      "drop": -0.001
-     },
-     "orange 1x": {
-      "worst": 0.303,
-      "at": [
-       359,
-       216
-      ],
-      "undressed": 0.302,
-      "drop": -0.001
-     },
-     "green 1x": {
-      "worst": 0.403,
-      "at": [
-       359,
-       216
-      ],
-      "undressed": 0.402,
-      "drop": -0.001
-     },
-     "purple 1x": {
-      "worst": 0.27,
-      "at": [
-       359,
-       216
-      ],
-      "undressed": 0.269,
-      "drop": -0.001
-     },
-     "blue 0.8x": {
-      "worst": 0.379,
-      "at": [
-       359,
-       216
-      ],
-      "undressed": 0.371,
-      "drop": -0.008
+      "undressed": 0.369,
+      "drop": -0.005
      },
      "orange 0.8x": {
-      "worst": 0.312,
+      "worst": 0.309,
       "at": [
        359,
        216
       ],
-      "undressed": 0.311,
-      "drop": -0.001
+      "undressed": 0.31,
+      "drop": 0.001
      },
      "green 0.8x": {
-      "worst": 0.415,
+      "worst": 0.412,
       "at": [
        359,
        216
       ],
-      "undressed": 0.414,
-      "drop": -0.001
+      "undressed": 0.412,
+      "drop": 0.0
      },
      "purple 0.8x": {
-      "worst": 0.282,
+      "worst": 0.279,
       "at": [
        359,
        216
       ],
       "undressed": 0.274,
-      "drop": -0.008
+      "drop": -0.005
      }
     },
-    "worst_margin": 0.27,
-    "largest_drop": -0.001,
+    "worst_margin": 0.269,
+    "largest_drop": 0.001,
     "bricks_min_margin": [
      0.371,
      "blue"
@@ -499,7 +498,7 @@
      352,
      338
     ],
-    "protan_min": 0.131,
+    "protan_min": 0.132,
     "jewels": {
      "coloured_px_pct": 99.9,
      "mean_chroma": 0.085,
@@ -525,7 +524,7 @@
       63.5,
       10.3,
       11.0,
-      15.1
+      15.2
      ]
     },
     "ghost_median": null,
@@ -533,7 +532,7 @@
     "ghost_isolated_pegs": 0,
     "print": {
      "median": 0.0,
-     "p90": 0.015,
+     "p90": 0.0152,
      "worst": [
       0.0474,
       [
@@ -550,6 +549,6 @@
   }
  },
  "fails": [],
- "seconds": 20.8,
+ "seconds": 31.5,
  "verdict": "PASS"
 }

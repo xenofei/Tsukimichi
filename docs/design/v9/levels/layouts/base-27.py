@@ -35,6 +35,14 @@ the divider moons, so the lower diagonals take one brick each. Sweep mean 7.7, m
 out 23.0, pooled 23.72 over 6912 games (23.52 before). The top ray's moon moved to x 401 (n1: a shot at exactly 0
 degrees bounced on it and the hub for 17 s). Stuck fires 54 per 1728 held-out games (23 before; 88 is the shipped
 maximum); (526, 440) is left in 22% of lost games. ch-03 at 35 oranges wins 20 of 48. Ace unchanged (270 of 576).
+
+Round 1 stage pass (critic M1: the stage mean fell only 0.35 from MR 5's 22.11; the charter asks 0.5 to 1.0): 6-2 sat
+about 0.5 above its pattern slot (6-1 less 1.5, 23.2), so it takes the hardening. The signs' fainter stars go from r 8
+to r 7.875 (their brightest stay r 9) and the rays' moons from r 8.5 to r 8. Scanned on the stage's 6912 pooled games:
+r 8 rays alone 23.57; faint stars 7.75 with the brightest 8.5, 22.58; 7.5 / 8.5, 22.05; 8 / 8.5, 23.8; 7.75 / 9, 21.95
+(a radius change of a quarter unit moves single blocks by up to 1 per 48 either way, so only the pooled figure
+counts). Kept: held out 23.1, pooled 23.25; steps 1.45 from 6-1 and 1.63 to 6-3; stage mean 21.51, a fall of 0.60.
+Sweep mean 7.6 (GD M2 asked 7.5 or more), median 7; stuck 41 per 1728; (526, 440) 21% of lost games. Ace unchanged.
 """
 import math
 
@@ -43,7 +51,8 @@ LEVEL = dict(id="base-27", name="The Wheel of the Twelve", stage=6, number=27, s
              technique="a constellation")
 
 HUB_RAY = 48
-RAY_R = 8.5              # the rays' moons (round 1 fix: r 9 to 8.5 to hold the ramp once the rim's bricks went in)
+RAY_R = 8.0              # the rays' moons (round 1 fix: r 9 to 8.5 once the rim's bricks went in; stage pass: 8)
+STAR_R = 7.875           # the signs' fainter stars (stage pass, critic M1: r 8 to 7.875; the brightest stay r 9)
 TOP_RAY_DX = 1           # the top ray's moon a unit right of the hub's line (critic n1: a shot at exactly 0 degrees)
 DIVIDER_Y = 270
 # The wheel's inner ticked rim (round 1 fix, game designer M2): brick runs on the ticks inside the inner rule, on the
@@ -77,7 +86,7 @@ def build(b):
     stars = b.features["sign stars"]
     for name, pts in stars.items():
         for k, (x, y, m) in enumerate(pts):
-            b.place(x, y, r=9 if m == 1 else 8, tag="star")
+            b.place(x, y, r=9 if m == 1 else STAR_R, tag="star")
     hx, hy = b.features["hub"]
     b.place(hx, hy, r=12, green=False, tag="pole star")
     for (dx, dy) in ((TOP_RAY_DX, -HUB_RAY), (HUB_RAY, 0), (0, HUB_RAY), (-HUB_RAY, 0)):  # the rosette's four long rays

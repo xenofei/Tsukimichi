@@ -27,20 +27,26 @@ verdict (PASS).
 | Code | Id | Name | Held out | Pooled | Jewels | F6 worst | Protan p10 / min | Source | Place (shield) |
 |---|---|---|---|---|---|---|---|---|---|
 | 6-1 | base-26 | The Armillary | 24.7 | 24.7 | 296 / 55 | 0.205 | 0.131 / 0.124 | ours (armillary) | Nowhere |
-| 6-2 | base-27 | The Wheel of the Twelve | 23.0 | 23.72 | 261 / 329 | 0.270 | 0.134 / 0.131 | ours (twelve) | Nowhere |
-| 6-3 | base-28 | The Seer's Chart | 21.1 | 21.63 | 289 / 160 | 0.276 | 0.110 / 0.105 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
+| 6-2 | base-27 | The Wheel of the Twelve | 23.1 | 23.25 | 261 / 329 | 0.269 | 0.134 / 0.132 | ours (twelve) | Nowhere |
+| 6-3 | base-28 | The Seer's Chart | 21.1 | 21.62 | 289 / 160 | 0.276 | 0.110 / 0.105 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
 | 6-4 | base-29 | Meteor Shower | 20.8 | 20.57 | 255 / 191 | 0.236 | 0.119 / 0.106 | ours (meteors) | Nowhere |
 | 6-5 | base-30 | The Moon Gate | 17.4 | 17.4 | 312 / 228 | 0.257 | 0.114 / 0.113 | ours (moongate) | Nowhere |
 
-- **Ramp:** the pooled steps are 1.18, 0.92 and 2.03, each about ± 0.41, and the finale gap is 3.17 ± 0.40. The mean is
-  21.76, against the charter's 21.6 (band 25 → 17). The jewel check against 5-5 (246 / 168) passes.
+- **Ramp:** the pooled steps are 1.45, 1.63 and 1.05, each about ± 0.41, and the finale gap is 3.17 ± 0.40. The
+  ease-back from 5-5 (pooled 17.7) is 7.0.
+- **Mean against MR 5 (charter 1.1, "the mean falls by 0.5 to 1.0"):** the pooled mean is 21.51 (the charter's 21.6;
+  band 25 → 17). MR 5's pooled mean is 22.11, so the stage is 0.60 harder overall (it was 0.35 at integration, critic
+  M1). `stagecheck` does not judge this rule, so the pack reports it here (critic m2). Both ends fall too: the opener
+  from 25.45 (MR 5 pooled) to 24.7, the finale from 17.7 to 17.4.
+- **Jewels:** the check against 5-5 (246 / 168) passes, and no two neighbours are within 30 degrees in both hues.
 - **Sources and shield:** the stage uses 1 game painting of 5 (the charter's 1 for MR 6). Every scene is set nowhere
   (charter 1.4) and falls back to `moon-road-night`.
-- **Aces:** from `MoonfallAces.Suggest` over 576 games: 6-1 250,000 (306 wins), 6-2 250,000 (270), 6-3 250,000 (274),
+- **Aces:** from `MoonfallAces.Suggest` over 576 games: 6-1 250,000 (306 wins), 6-2 250,000 (270 before the stage pass), 6-3 250,000 (274),
   6-4 220,000 (229), 6-5 230,000 (197). All are above the hard-level line (14 of 48), and 6-5 is now the lowest of
-  stages 1-6.
+  stages 1-6. 6-2's stage-pass retune leaves its Ace unchanged (`Shipped_Aces_are_unchanged_by_the_hard_level_rule`
+  passes 30 of 30).
 - **ch-03 (Thirty-Five Moons):** now points at base-27. `mfl.py challenge ch-03` passes: 35 oranges on 35 candidates,
-  and the greedy player wins 20 of 48 (29 before 6-2's round 1 fix).
+  and the greedy player wins 27 of 48 (29 at integration, 20 after 6-2's round 1 fix, 27 after the stage pass).
 - **Converter gate:** `convert base-26 ... base-30 --check` passes 10 of 10. The figures are 2x max / p99.9, then 1x
   p99: 6-1 0.008 / 0.006, 0.006; 6-2 0.007 / 0.004, 0.005; 6-3 0.011 / 0.008, 0.029; 6-4 0.005 / 0.003, 0.004;
   6-5 0.013 / 0.008, 0.006. 6-3's 1x p99 is the closest to its 0.035 limit.
@@ -131,4 +137,10 @@ verdict (PASS).
   authored build.
 - **6-3:** the cloud sea is less saturated than the authored build (chroma 0.42 → 0.3). At 1280 the chart reads as a
   muted violet and green, so check it at 640 too.
-- **6-2 to 6-3:** this step resolves by 0.01 (0.92 less 0.41 against 0.5).
+- **6-2 to 6-3:** this step now resolves by 0.72 (1.63 less 0.41 against 0.5); it resolved by 0.01 at integration.
+- **6-2 (round 1 stage pass, critic M1):** after the per-level fixes the stage mean was 21.59, a fall of only 0.52 from
+  MR 5, and 6-2 sat about 0.5 above its pattern slot (6-1 less 1.5). The signs' fainter stars go from r 8 to r 7.875
+  (the brightest stay r 9) and the hub's ray moons from r 8.5 to r 8; places, candidates and bricks are unchanged.
+  Held out 23.1, pooled 23.25 (was 23.67). Sweep mean 7.6, median 7 (game designer M2 asked 7.5 or more); stuck 41 per
+  1,728; the low orange (526,440) is left in 21% of lost games. Variants tried on the pooled games are in the layout's
+  docstring: quarter-unit radius changes swing single blocks by up to 1 per 48, so only the pooled figure was used.

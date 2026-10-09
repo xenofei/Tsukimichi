@@ -1,14 +1,14 @@
 stage mr6: 5 levels
 level    name                         pieces  greedy  ramp/48  random     jewels source
-base-26  The Armillary                    68      29     24.7       0    284/214 our painting (armillary)
-base-27  The Wheel of the Twelve          62      24     24.2       1    261/329 our painting (twelve)
-base-28  The Seer's Chart                 73      21     22.3       0    290/168 ui/map/world/01/world01_m.tex
-base-29  Meteor Shower                    65      20     20.8       1    258/173 our painting (meteors)
-base-30  The Moon Gate                    72      12     17.4       0    313/214 our painting (moongate)
+base-26  The Armillary                    68      29     24.7       0     296/55 our painting (armillary)
+base-27  The Wheel of the Twelve          68      25     23.1       0    261/329 our painting (twelve)
+base-28  The Seer's Chart                 73      23     21.1       0    289/160 ui/map/world/01/world01_m.tex
+base-29  Meteor Shower                    65      20     20.8       1    255/191 our painting (meteors)
+base-30  The Moon Gate                    72      12     17.4       0    312/228 our painting (moongate)
   base-26: held-out 24.7, 5184 fresh 24.7, pooled 24.7 per 48 (+-0.29) over 6912 games
-  base-27: held-out 24.2, 5184 fresh 23.3, pooled 23.52 per 48 (+-0.29) over 6912 games
-  base-28: held-out 22.3, 5184 fresh 22.7, pooled 22.6 per 48 (+-0.29) over 6912 games
+  base-27: held-out 23.1, 5184 fresh 23.3, pooled 23.25 per 48 (+-0.29) over 6912 games
+  base-28: held-out 21.1, 5184 fresh 21.8, pooled 21.62 per 48 (+-0.29) over 6912 games
   base-29: held-out 20.8, 5184 fresh 20.5, pooled 20.57 per 48 (+-0.29) over 6912 games
   base-30: held-out 17.4, 5184 fresh 17.4, pooled 17.4 per 48 (+-0.28) over 6912 games
-  pooled steps: 1.18 +- 0.41, 0.92 +- 0.41, 2.03 +- 0.41, 3.17 +- 0.40
+  pooled steps: 1.45 +- 0.41, 1.63 +- 0.41, 1.05 +- 0.41, 3.17 +- 0.40
 game paintings 1 of 5; verdicts: base-26 PASS, base-27 PASS, base-28 PASS, base-29 PASS, base-30 PASS
