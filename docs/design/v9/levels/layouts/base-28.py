@@ -20,6 +20,16 @@ the eastern sea's rose, kraken and ship carry candidates; the isle (536, 400) is
 then one Mor Dhona moon (346, 310) gave its candidate to the west ley line's (214, 306) to bring the ramp to the
 target: tuning seeds 1-864 22.3 and the second block (20001-23456) 22.6 per 48, against the charter's 22. Held out
 22.3. No candidate is at y 430 or lower.
+
+MR 6 round 1 (critic M2 and m1): the board sat 0.85 above its slot on fresh seeds (22.85), so the 6-2 -> 6-3 step did
+not resolve, and balls rattled inside the city rings (gaps 14.3-17 for a 12-unit ball). The five cities' moons went
+from r 8 to r 7.5 and Mor Dhona's seven from r 8 to r 7: the gaps open to 17.9 and 17.2 (from 16.9 and 15.2), so a
+ball that enters a ring falls through it rather than rattling. Same places, same 30 candidates. Tuning seeds 21.9
+(1-864) and 21.44 (20001-23456); held out 21.1, pooled 21.63 over the stage's 6,912 games (was 22.6). Stuck-rule
+fires 54 per 1,728 held out (was 73), 56 per 1,728 on the 5,184 fresh games; the sweep sticks on 5 of 681 (was 8).
+Rings of radius 30-32 lost moons to the ley lines' clearance, and opening each ring's lower side (the five set 64
+degrees apart, a 104-degree gap below) did not lower the sticking. The ship and isle oranges are left no more often
+than before (18% each).
 """
 import math
 
@@ -37,11 +47,11 @@ LEYS = ("ley limsa", "ley ishgard", "ley ala mhigo", "ley west", "ley north", "l
 def build(b):
     # Mor Dhona, where the ley lines meet: a ring of seven moons round the lake
     (x, y), = b.f("mor dhona")
-    b.stop(x, y, R=36, n=7, r=8, oranges=(), start_deg=-90, tag="mor dhona")
+    b.stop(x, y, R=36, n=7, r=7, oranges=(), start_deg=-90, tag="mor dhona")
     # the cities: a ring of five moons round each city's star
     for (name, R, n, a0) in CITIES:
         (x, y), = b.f(name)
-        b.stop(x, y, R=R, n=n, r=8, oranges=(), start_deg=a0, tag=name)
+        b.stop(x, y, R=R, n=n, r=7.5, oranges=(), start_deg=a0, tag=name)
     # the ley lines between them, dotted where they are long enough
     for name in LEYS:
         b.trace(name, spacing=28, r=7, start=50, end_trim=50, tag=name)

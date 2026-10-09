@@ -1,6 +1,6 @@
 {
  "name": "seers-chart",
- "about": "The game's own world map (the Adventure map's painting, ui/map/world/01/world01_m.tex, read from the install at runtime and never shipped), cropped to Eorzea [140, 905, 720, 540] and read as a seer's star chart under the moon: the parchment seas in amethyst, the land a shade deeper (a tone on the land mask, x 0.9), the cloud sea's billows in the upper right in sea-green (the second jewel, shaped by the clouds' own lightness and faded at the right wall) and a faint sea-green on the southern sea below the pieces. Each city's banner carries a small star (the lights), and the ley lines Urianger reads are engraved in pale lilac between them: one loop round the five cities and spokes from Mor Dhona (the overlays, where the runtime's glints run). A faint lilac lift over the whole board (a glow of radius 2000) keeps the chart's dark land off sRGB 0-1 (MR 3 round 1, B1). The crop is the first on this texture; the map is the same art as the world painting (-nowloading_base05_hr1) that 3-1 crops, and overlaps 3-1's Aldenard by about two thirds of its area (Ishgard, Gridania and Ala Mhigo are in both).",
+ "about": "The game's own world map (the Adventure map's painting, ui/map/world/01/world01_m.tex, read from the install at runtime and never shipped), cropped to Eorzea [140, 905, 720, 540] and read as a seer's star chart under the moon: the parchment seas in amethyst and the land a shade deeper and sea-green, as the source paints it green (the second jewel on the land mask, x 0.9 tone, taking the layout's quiet so it shows at the coasts and the far shores; MR 6 round 1, game designer m2: the green had been on the cloud sea and the southern sea, which then read as land). The cloud sea's billows in the upper right keep a fainter sea-green (0.25, was 0.3), so the clouds read as cloud over green land. Gridania's star is dimmer than the others (k 0.55; UX m3: it sits 14 units from the guide column). Each city's banner carries a small star (the lights), and the ley lines Urianger reads are engraved in pale lilac between them: one loop round the five cities and spokes from Mor Dhona (the overlays, where the runtime's glints run). A faint lilac lift over the whole board (a glow of radius 2000) keeps the chart's dark land off sRGB 0-1 (MR 3 round 1, B1). The crop is the first on this texture; the map is the same art as the world painting (-nowloading_base05_hr1) that 3-1 crops, and overlaps 3-1's Aldenard by about two thirds of its area (Ishgard, Gridania and Ala Mhigo are in both).",
  "source": {
   "kind": "game",
   "texture": "ui/map/world/01/world01_m.tex",
@@ -55,26 +55,26 @@
    "name": "Amethyst and sea-green (the seer's chart)",
    "sky": "#1A1048",
    "deep": "#08061C",
-   "jewel1": "#9A40C8",
+   "jewel1": "#A440C4",
    "jewel2": "#3EAA70",
    "warm": "#FFB45E",
    "rim": "#D8C8FF"
   },
   "jewel": {
-   "bands": [[0, "#9A40C8"], [600, "#8E3CC0"]],
+   "bands": [[0, "#A440C4"], [600, "#983CBC"]],
    "valueHues": [[0.08, "#2A1270"], [0.45, "#E8D8FF"]],
-   "chroma": 0.95,
+   "chroma": 1.0,
    "floor": 0.05,
    "regions": [
     {
-     "hex": "#3EAA70",
+     "hex": "#4CAA5A",
      "chroma": 0.3,
-     "mask": [["poly", "cloud sea", 60], ["luma", 0.2, 0.32, 3], ["x", 725, 665]]
+     "mask": [["mask", "land", 10], ["x", 75, 135], ["x", 725, 665]]
     },
     {
-     "hex": "#3EAA70",
-     "chroma": 0.16,
-     "mask": [["y", 440, 540], ["luma", 0.16, 0.28, 3], ["x", 75, 135], ["x", 725, 665]]
+     "hex": "#4CAA5A",
+     "chroma": 0.25,
+     "mask": [["poly", "cloud sea", 60], ["luma", 0.2, 0.32, 3], ["x", 725, 665]]
     }
    ],
    "quiet": [54, 20],
@@ -104,10 +104,18 @@
   ],
   "lights": [
    {
-    "points": [[130, 416, 1.0], [302, 192, 1.0], [414, 262, 1.0], [540, 276, 1.0], [338, 456, 1.0], [346, 346, 1.0]],
+    "points": [[130, 416, 1.0], [302, 192, 1.0], [540, 276, 1.0], [338, 456, 1.0], [346, 346, 1.0]],
     "col": "#F4ECFF",
     "r": 2.2,
     "k": 0.95,
+    "halo": 11,
+    "hk": 0.22
+   },
+   {
+    "points": [[414, 262, 1.0]],
+    "col": "#F4ECFF",
+    "r": 2.2,
+    "k": 0.55,
     "halo": 11,
     "hk": 0.22
    }

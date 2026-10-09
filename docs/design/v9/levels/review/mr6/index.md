@@ -28,7 +28,7 @@ verdict (PASS).
 |---|---|---|---|---|---|---|---|---|---|
 | 6-1 | base-26 | The Armillary | 24.7 | 24.7 | 296 / 55 | 0.205 | 0.131 / 0.124 | ours (armillary) | Nowhere |
 | 6-2 | base-27 | The Wheel of the Twelve | 23.0 | 23.72 | 261 / 329 | 0.270 | 0.134 / 0.131 | ours (twelve) | Nowhere |
-| 6-3 | base-28 | The Seer's Chart | 22.3 | 22.6 | 290 / 168 | 0.285 | 0.130 / 0.128 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
+| 6-3 | base-28 | The Seer's Chart | 21.1 | 21.63 | 289 / 160 | 0.276 | 0.110 / 0.105 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
 | 6-4 | base-29 | Meteor Shower | 20.8 | 20.57 | 258 / 173 | 0.230 | 0.110 / 0.092 | ours (meteors) | Nowhere |
 | 6-5 | base-30 | The Moon Gate | 17.4 | 17.4 | 313 / 214 | 0.254 | 0.103 / 0.102 | ours (moongate) | Nowhere |
 
@@ -36,13 +36,13 @@ verdict (PASS).
   21.76, against the charter's 21.6 (band 25 → 17). The jewel check against 5-5 (246 / 168) passes.
 - **Sources and shield:** the stage uses 1 game painting of 5 (the charter's 1 for MR 6). Every scene is set nowhere
   (charter 1.4) and falls back to `moon-road-night`.
-- **Aces:** from `MoonfallAces.Suggest` over 576 games: 6-1 250,000 (306 wins), 6-2 250,000 (270), 6-3 230,000 (255),
+- **Aces:** from `MoonfallAces.Suggest` over 576 games: 6-1 250,000 (306 wins), 6-2 250,000 (270), 6-3 250,000 (274),
   6-4 220,000 (229), 6-5 230,000 (197). All are above the hard-level line (14 of 48), and 6-5 is now the lowest of
   stages 1-6.
 - **ch-03 (Thirty-Five Moons):** now points at base-27. `mfl.py challenge ch-03` passes: 35 oranges on 35 candidates,
   and the greedy player wins 20 of 48 (29 before 6-2's round 1 fix).
 - **Converter gate:** `convert base-26 ... base-30 --check` passes 10 of 10. The figures are 2x max / p99.9, then 1x
-  p99: 6-1 0.008 / 0.006, 0.006; 6-2 0.007 / 0.004, 0.005; 6-3 0.012 / 0.007, 0.028; 6-4 0.005 / 0.003, 0.004;
+  p99: 6-1 0.008 / 0.006, 0.006; 6-2 0.007 / 0.004, 0.005; 6-3 0.011 / 0.008, 0.029; 6-4 0.005 / 0.003, 0.004;
   6-5 0.009 / 0.006, 0.006. 6-3's 1x p99 is the closest to its 0.035 limit.
 
 ## Integration changes
@@ -76,6 +76,18 @@ verdict (PASS).
 
 ## For the reviewers
 
+- **6-3 (round 1 fix, critic M2 and m1, game designer m2, UX m3):** the five cities' ring moons went from r 8 to
+  r 7.5 and Mor Dhona's seven from r 8 to r 7, on the same places with the same 30 candidates. The ring gaps open to
+  17.9 and 17.2 (from 16.9 and 15.2), so a ball that enters a ring falls through rather than rattling. Tuning seeds
+  21.9 (1-864) and 21.44 (20001-23456); held out 21.1, pooled 21.63 over 6,912 games (was 22.6). With 6-2 at 23.72
+  and 6-4 at 20.57 the steps either side are 2.09 and 1.06. Stuck-rule fires 54 per 1,728 held out (was 73) and 56
+  per 1,728 on the 5,184 fresh games; the sweep sticks on 5 of 681 (was 8). The ship and isle oranges are left in 18%
+  of lost games each (were 21% and 18%). The green now lies on the land, as the source paints it, and the seas are the
+  amethyst parchment: the southern sea's green is gone and the cloud sea's is 0.25 (was 0.3), so the clouds read as
+  cloud over green land. Jewels 289 / 160, second share 0.162 (gate 0.15). Protan p10 0.110 and min 0.105 (was 0.130
+  and 0.128), at Ishgard's top moon on the green land; F6 worst 0.276. On the cleared board the land keeps the
+  layout's quiet, so the continent's middle is darker than its coasts. Gridania's star is k 0.55 (the other cities
+  0.95); its core at 640 is about 0.71 (was 0.91). Ace 230,000 → 250,000 (274 of 576 win); `aces.json` follows.
 - **6-2 (round 1 fix, game designer M2, critic n1):** the wheel's inner ticked rim now carries six bricks at its four
   diagonals: two-brick arcs on the upper rim either side of the top (they stop where the rim flattens to a deck) and one
   brick on each lower diagonal, each 28 units clear of the divider moons. The sweep is mean 7.7, median 7 (was 6.4 and
