@@ -26,7 +26,7 @@ verdict (PASS).
 
 | Code | Id | Name | Held out | Pooled | Jewels | F6 worst | Protan p10 / min | Source | Place (shield) |
 |---|---|---|---|---|---|---|---|---|---|
-| 6-1 | base-26 | The Armillary | 24.7 | 24.7 | 284 / 214 | 0.234 | 0.119 / 0.116 | ours (armillary) | Nowhere |
+| 6-1 | base-26 | The Armillary | 24.7 | 24.7 | 296 / 55 | 0.205 | 0.131 / 0.124 | ours (armillary) | Nowhere |
 | 6-2 | base-27 | The Wheel of the Twelve | 24.2 | 23.52 | 261 / 329 | 0.272 | 0.135 / 0.131 | ours (twelve) | Nowhere |
 | 6-3 | base-28 | The Seer's Chart | 22.3 | 22.6 | 290 / 168 | 0.285 | 0.130 / 0.128 | World map, `ui/map/world/01/world01_m.tex` | Nowhere (a chart) |
 | 6-4 | base-29 | Meteor Shower | 20.8 | 20.57 | 258 / 173 | 0.230 | 0.110 / 0.092 | ours (meteors) | Nowhere |
@@ -42,7 +42,7 @@ verdict (PASS).
 - **ch-03 (Thirty-Five Moons):** now points at base-27. `mfl.py challenge ch-03` passes: 35 oranges on 35 candidates,
   and the greedy player wins 29 of 48.
 - **Converter gate:** `convert base-26 ... base-30 --check` passes 10 of 10. The figures are 2x max / p99.9, then 1x
-  p99: 6-1 0.007 / 0.006, 0.007; 6-2 0.007 / 0.004, 0.005; 6-3 0.012 / 0.007, 0.028; 6-4 0.005 / 0.003, 0.004;
+  p99: 6-1 0.008 / 0.006, 0.006; 6-2 0.007 / 0.004, 0.005; 6-3 0.012 / 0.007, 0.028; 6-4 0.005 / 0.003, 0.004;
   6-5 0.009 / 0.006, 0.006. 6-3's 1x p99 is the closest to its 0.035 limit.
 
 ## Integration changes
@@ -76,6 +76,10 @@ verdict (PASS).
 
 ## For the reviewers
 
+- **6-1 (round 1 fix, game designer M1, m3, n3):** the cage is no longer teal. The brass frame and the heart are gold, the rings
+  pale silver, and the dusk glows amber behind the far hills. Jewels 296 / 55 (6-5 is 313 / 214). Protan p10 0.131 (was
+  0.119). F6 worst 0.205 (was 0.234): the teal region had lifted the margin by 0.03, and the gold cannot sit near the
+  pegs. The moon has its seas, and the spokes run on to the moons at their tips. Layout unchanged (24.7 held out).
 - **6-5:** check the new beams over the gate and the slightly darker rim band at the crown's ends. Neither was in the
   authored build.
 - **6-3:** the cloud sea is less saturated than the authored build (chroma 0.42 → 0.3). At 1280 the chart reads as a

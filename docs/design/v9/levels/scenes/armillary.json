@@ -1,6 +1,6 @@
 {
  "name": "armillary",
- "about": "Our own painting: a great armillary sphere on a dark terrace under a violet night, its brass frame (the fixed meridian seen face on, the broad horizon ring at its waist) holding a cage of rings of pale light about the tilted polar axis (the equator, tropics, polar circles, colures and the ticked ecliptic band), a small globe of cold light at its heart throwing ten soft spokes out through the rings; the Milky Way, a violet nebula, low banks of cloud, the full moon at the upper left and two planets at the right (painters/armillary.py; shipped as a JPEG). The first jewel is the night's violet; the second the cage's cold teal light: a region over the sphere (a disc of 200 at 1x) taken only where the painting is light (a luma ramp, so it follows the rings and the heart's glow at the painting's own scale, not the pegs'), so the rings read teal on the violet night. The teal is set at hex hue 192 and measures about 213: a greener teal (hue 185, measured 210) left the cage's candidates at protan p10 0.109, and this one holds 0.118 with the jewels 71 degrees apart (the charter's planned 200; neighbours 6-2 at 261/327 and 5-5's planned 240/160 stay well clear).",
+ "about": "Our own painting: a great armillary sphere on a dark terrace under a violet night, its brass frame (the fixed meridian seen face on, the broad horizon ring at its waist) holding a cage of rings of pale silver light about the tilted polar axis (the equator, tropics, polar circles, colures and the ticked ecliptic band), a small golden globe at its heart throwing ten soft spokes out through the rings to the moons at their tips; the Milky Way, a violet nebula, the last amber of the dusk behind low banks of cloud, the full moon (with its seas) at the upper left and two planets at the right (painters/armillary.py; shipped as a JPEG). The first jewel is the night's violet; the second the brass and the dusk's gold (MR 6 round 1, game designer M1: the round-1 teal cage, 284/214, was 6-5's Moon Gate twice). Two regions carry it: one over the sphere (a disc of 205 at 1x) taken only where the painting is light (a luma ramp, so it follows the brass frame and the rings at the painting's own scale, not the pegs'), and one on the dusk band over the far hills, faded at the walls. Gold sits on the yellow side of a protanope's axis with the oranges, so the cage's light is painted silver, not gold, and the regions take most of the quiet (regionQuiet 0.75) so their gold stays off the ground round the pieces: protan p10 0.131, against 0.017 with the cage painted gold and 0.102 with silver light under a lightly quietened region. Neighbours: 5-5 246/168 and 6-2 261/327 stay clear in the second jewel.",
  "source": {
   "kind": "painting",
   "painter": "armillary",
@@ -11,11 +11,11 @@
  "features": {},
  "dress": {
   "palette": {
-   "name": "Violet night and the armillary's teal light",
+   "name": "Violet night, the armillary's brass and the dusk's gold",
    "sky": "#140C3C",
    "deep": "#070418",
    "jewel1": "#5A40C8",
-   "jewel2": "#21AEA8",
+   "jewel2": "#C89A3C",
    "warm": "#FFB45E",
    "rim": "#D4C8FF"
   },
@@ -27,13 +27,18 @@
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#21AEA8",
+     "hex": "#C89A3C",
      "chroma": 0.3,
-     "mask": [["disc", 400, 330, 200, 60], ["luma", 0.30, 0.42, 3], ["x", 75, 135], ["x", 725, 665]]
+     "mask": [["disc", 400, 330, 205, 50], ["luma", 0.22, 0.34, 3], ["x", 75, 135], ["x", 725, 665]]
+    },
+    {
+     "hex": "#D09A48",
+     "chroma": 0.3,
+     "mask": [["y", 420, 480], ["y", 600, 540], ["x", 75, 175], ["x", 725, 625]]
     }
    ],
    "quiet": [60, 25],
-   "regionQuiet": 0.2
+   "regionQuiet": 0.75
   },
   "shafts": [
    {

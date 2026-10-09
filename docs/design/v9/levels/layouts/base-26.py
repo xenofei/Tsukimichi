@@ -2,7 +2,7 @@
 
 Subject: a celestial globe of light: a great armillary sphere on a terrace under the violet night, its brass frame
 (the fixed meridian seen face on, the broad horizon ring at its waist) holding a cage of rings of light about the
-tilted polar axis, a small globe of cold light at its heart throwing ten spokes of light out through the rings (our
+tilted polar axis, a small golden globe at its heart throwing ten spokes of light out through the rings (our
 own painting, painters/armillary.py, whose FEATURES this layout reads: the rings are true circles in 3D, projected, so
 the pegs sit on the painted rings). Unlike 6-2's flat zodiac wheel next door, it is a sphere seen in depth: crossing
 tilted rings, a pole axis, a stand.

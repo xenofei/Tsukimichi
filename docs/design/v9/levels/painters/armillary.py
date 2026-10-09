@@ -2,14 +2,20 @@
 
 The heavens Urianger reads. On a dark terrace under a violet night stands a great armillary sphere: its brass frame
 (the fixed meridian, a full ring seen face on, and the broad horizon ring, ruled and ticked like a calendar, crossing
-it at the sphere's waist) holds a cage of rings of pale light turning about the tilted polar axis: the equator, the two
-tropics, the two polar circles, the two colures through the poles, and the ecliptic, a wider band ticked for the days.
-At its heart a small globe burns with cold light and throws ten soft spokes of it out through the rings (two of them
-level, along the horizon ring's plane). The axis
+it at the sphere's waist) holds a cage of rings of pale silver light turning about the tilted polar axis: the equator,
+the two tropics, the two polar circles, the two colures through the poles, and the ecliptic, a wider band ticked for
+the days. At its heart a small golden globe burns and throws ten soft spokes of light out through the rings to the
+moons at their tips (two of them level, along the horizon ring's plane). The axis
 runs out past the poles as a brass rod, its north end tipped with a star finial. Below, the sphere stands on a fluted
 column and a three-footed base on the terrace's parapet; behind, the Milky Way crosses the sky from the lower left, a
-violet nebula drifts, banks of cloud lie low over the far hills either side, their tops lit, the full moon hangs at the
-upper left (well clear of the launcher) and two bright planets at the right.
+violet nebula drifts, the last amber of the dusk glows low behind banks of cloud over the far hills either side, their
+tops lit, the full moon (with its seas) hangs at the upper left (well clear of the launcher) and two bright planets at
+the right.
+
+MR 6 round 1 (game designer M1, m3, n3): the cage was teal on violet, 6-5's Moon Gate picture; it is now the brass
+instrument the painting always drew, its rings silver (not gold: gold under the oranges is on their side of a
+protanope's axis) and its heart gold, with the dusk's amber as the second jewel's other home. The moon had been
+clipped flat by the cap; its face now sits under it with the kit's maria. The spokes reach their moons.
 
 Geometry: the rings are true circles in 3D, seen from a little above (VIEW_EL) and projected orthographically, so the
 painting and the layout (which reads FEATURES) share one set of curves. The parts of a ring behind the sphere's centre
@@ -26,6 +32,7 @@ from PIL import Image, ImageDraw
 
 import rich_lib as RL
 from brush import strokes
+from paint_moon import maria
 from rich_lib import blur, fbm, hexc, ramp, screen, smooth
 
 C = (400.0, 330.0)            # the sphere's centre on the board
@@ -97,10 +104,11 @@ AXIS_DIR = _d / np.linalg.norm(_d)                       # the axis's direction 
 ROD_N = [(NORTH[0], NORTH[1]), (C[0] + AXIS_DIR[0] * (RM + 26), C[1] + AXIS_DIR[1] * (RM + 26))]
 ROD_S = [(SOUTH[0], SOUTH[1]), (C[0] - AXIS_DIR[0] * RM, C[1] - AXIS_DIR[1] * RM)]
 HEART = (C[0], C[1], 20.0)
-# ten spokes of light from the heart, through the rings and out past the meridian (degrees, 0 along +x, +y down)
+# ten spokes of light from the heart, through the rings and out past the meridian to the moons at their tips (the
+# layout's spoke tips and level-spoke moons sit on them: game designer MR 6 round 1, n3) (degrees, 0 along +x, +y down)
 SPOKE_ANGLES = [180.0, -157.5, -112.5, -67.5, -22.5, 0.0, 22.5, 67.5, 112.5, 157.5]
 SPOKES = [[(C[0] + 30 * math.cos(math.radians(a)), C[1] + 30 * math.sin(math.radians(a))),
-           (C[0] + (RM + 70) * math.cos(math.radians(a)), C[1] + (RM + 70) * math.sin(math.radians(a)))]
+           (C[0] + (RM + 160) * math.cos(math.radians(a)), C[1] + (RM + 160) * math.sin(math.radians(a)))]
           for a in SPOKE_ANGLES]
 STAND_TOP = C[1] + RM
 STAND = {"column": [(C[0], STAND_TOP), (C[0], PARAPET - 14)],
@@ -209,6 +217,23 @@ def _glow_line(px, mask, col, k_core, k_halo, S, halo=3.0):
     return screen(px, hexc(col) * (mask * k_core + blur(mask, halo * S) * k_halo)[..., None])
 
 
+def _moon(px, S, X, Y):
+    """The full moon with a surface (game designer MR 6 round 1, m3): its halo from the kit's emissive moon, then a
+    face held under the painting's cap (so the cap does not flatten it to one grey) with the kit's lobed maria
+    (paint_moon.maria, the What's new moon's seas), a soft limb and a faint fine mottle; no craters, no terminator."""
+    mx, my, mr = MOON
+    px, disc = RL.moon_emissive(px, S, mx, my, mr, seed=26, face_col="#D4D0E2")
+    u, v = (X - mx) / mr, (Y - my) / mr
+    d = np.sqrt(u * u + v * v)
+    nz = np.sqrt(np.clip(1 - d * d, 0, 1))
+    H, W = X.shape
+    seas = np.clip(blur(maria(u, v), 1.2 * S) * (0.80 + 0.40 * fbm(H, W, mr * S * 0.25, 3, 27)), 0, 1)
+    fine = fbm(H, W, mr * S * 0.06, 3, 28) - 0.5
+    face = hexc("#D6D2E4") * (1 - 0.36 * seas)[..., None] + hexc("#8A88A2") * (0.36 * seas)[..., None]
+    face = face * ((0.80 + 0.20 * nz ** 0.6) * (1 + 0.06 * fine))[..., None]
+    return px * (1 - disc[..., None]) + face * disc[..., None]
+
+
 # ------------------------------------------------------------------------------------------------ the painting
 def paint(S=1):
     W, H = int(800 * S), int(600 * S)
@@ -226,6 +251,9 @@ def paint(S=1):
     dust = smooth(0.47, 0.62, fbm(H, W, 15 * S, 4, 33)) * np.exp(-(dist / 28) ** 2)
     glow = band * (0.4 + 0.6 * mott) * (1 - blur(dust, 2.5 * S) * 0.8) * smooth(540, 480, Y)
     sky = screen(sky, hexc("#A69CE0") * (glow * 0.20)[..., None])
+    # the last of the dusk: an amber afterglow low along the far hills, under the night's violet
+    dusk = np.exp(-((Y - 512) / 52) ** 2) * (0.75 + 0.25 * fbm(H, W, 70 * S, 3, 29))
+    sky = screen(sky, hexc("#E8A04C") * (dusk * 0.30)[..., None])
     # a violet nebula drifting over the sphere's upper left and a wisp at the lower right
     neb_n = fbm(H, W, 46 * S, 5, 35)
     neb_a = np.exp(-(((X - 250) / 190) ** 2 + ((Y - 220) / 120) ** 2))
@@ -246,21 +274,23 @@ def paint(S=1):
     # the moon (upper left) and two planets (upper right)
     px = RL.moon_glow(px, MOON[0] * S, MOON[1] * S, MOON[2] * 1.6 * S, MOON[2] * 5 * S, k_core=0.12, k_wide=0.05,
                       col="#C8C0F0")
-    px = RL.moon_emissive(px, S, MOON[0], MOON[1], MOON[2], seed=26, face_col="#EEEAF6")[0]
+    px = _moon(px, S, X, Y)
     for (x, y, m) in PLANETS:
         d2 = (X - x) ** 2 + (Y - y) ** 2
         g = np.exp(-d2 / (2 * 1.8 ** 2)) * m + np.exp(-d2 / (2 * 9 ** 2)) * 0.18 * m
         px = screen(px, hexc("#FFE6C8") * g[..., None])
     near_launch = smooth(96, 132, np.sqrt((X - PIVOT[0]) ** 2 + (Y - PIVOT[1]) ** 2))
-    # ---- the heart's light: a cold bloom filling the cage, and eight soft spokes of light from the heart
-    bloom = np.exp(-(r_s / 120) ** 2) * 0.11 + np.exp(-(r_s / 34) ** 2) * 0.12
-    px = screen(px, hexc("#4CC8C0") * bloom[..., None])
+    # ---- the heart's light: a soft bloom filling the cage, and ten soft spokes of light from the heart
+    bloom = np.exp(-(r_s / 120) ** 2) * 0.11 + np.exp(-(r_s / 34) ** 2) * 0.07
+    px = screen(px, hexc("#A498C8") * bloom[..., None])
     im, dr = _canvas(W, H, 2)
     for s in SPOKES:
         _line(dr, s, S, 2, 9.0)
     spokes = blur(_done(im, W, H), 6 * S)
-    fade = np.exp(-(np.maximum(r_s - 40, 0) / 230) ** 2)
-    px = screen(px, hexc("#8EE8E0") * (spokes * fade * 0.40 * near_launch)[..., None])
+    # full past the ring of six round the heart, softer inside it (the heart's pegs keep their F6 margin), and a
+    # little stronger out past the meridian, where the spokes run on to their moons in the open sky
+    fade = np.exp(-(np.maximum(r_s - 40, 0) / 300) ** 2) * (0.5 + 0.5 * smooth(40, 90, r_s))
+    px = screen(px, hexc("#E4DCD0") * (spokes * fade * (0.38 + 0.18 * smooth(150, 210, r_s)) * near_launch)[..., None])
     # ---- the rings of light (the celestial circles): front bright, back dim; each a double rule
     light = np.zeros((H, W), np.float32)
     back = np.zeros((H, W), np.float32)
@@ -268,15 +298,15 @@ def paint(S=1):
                      (COLURES[0], 2.0), (COLURES[1], 2.0)):
         f, b_ = ring_masks(W, H, S, curve, w)
         light, back = np.maximum(light, f), np.maximum(back, b_)
-    px = _glow_line(px, back, "#58C8C0", 0.40, 0.14, S, 3.0)
-    px = _glow_line(px, light, "#A0F4EC", 0.85, 0.30, S, 3.5)
+    px = _glow_line(px, back, "#9C98B8", 0.40, 0.14, S, 3.0)
+    px = _glow_line(px, light, "#DCD8E8", 0.85, 0.30, S, 3.5)
     # the ecliptic: a wider band, two rules and the days' ticks, warmer (a faint gold in the light)
     ecl_in = circle3d((0, 0, 0), ECL_N, R - 6)
     f1, b1 = ring_masks(W, H, S, ECLIPTIC, 2.0)
     f2, b2 = ring_masks(W, H, S, ecl_in, 1.4)
     tk = ticks_mask(W, H, S, ECLIPTIC, 6, 6, 0.5, (C[0], C[1]), width=0.6, major=5)
-    px = _glow_line(px, np.maximum(b1, b2) + tk * 0.4, "#9AD0C8", 0.30, 0.08, S)
-    px = _glow_line(px, np.maximum(f1, f2) + tk * 0.6, "#E4F4D8", 0.60, 0.16, S)
+    px = _glow_line(px, np.maximum(b1, b2) + tk * 0.4, "#A8A8C0", 0.30, 0.08, S)
+    px = _glow_line(px, np.maximum(f1, f2) + tk * 0.6, "#ECEEF8", 0.60, 0.16, S)
     # ---- the brass frame: the fixed meridian (face on) with its graduations, and the broad horizon ring
     brass, brass_hi = "#B8925A", "#F0D8A0"
     im, dr = _canvas(W, H, 3)
@@ -315,11 +345,11 @@ def paint(S=1):
     d_h = np.sqrt((X - hx) ** 2 + (Y - hy) ** 2)
     globe = smooth(hr + 1, hr - 1, d_h)
     shade = np.clip(1 - np.sqrt(((X - hx + 6) ** 2 + (Y - hy + 7) ** 2)) / (hr * 1.6), 0, 1)
-    gcol = ramp(shade, [(0, "#2A7CA8"), (0.5, "#8ED8F0"), (1.0, "#F2FCFF")])
+    gcol = ramp(shade, [(0, "#9A5E22"), (0.5, "#F0C070"), (1.0, "#FFF8E6")])
     gn = fbm(H, W, 6 * S, 3, 39)
     gcol = gcol * (0.85 + 0.3 * gn[..., None])
     px = px * (1 - globe[..., None]) + gcol * globe[..., None]
-    px = screen(px, hexc("#BFF0FF") * (np.exp(-(d_h / 32) ** 2) * 0.18)[..., None])
+    px = screen(px, hexc("#FFE6B0") * (np.exp(-(d_h / 32) ** 2) * 0.18)[..., None])
     # ---- the terrace: hills far off, the parapet, the stand (fluted column, three-footed base)
     xs = np.array([p[0] for p in HORIZON], np.float32)
     top = np.interp(X[0], xs, np.array([p[1] for p in HORIZON], np.float32)) + (fbm(1, W, 20 * S, 3, 41)[0] - 0.5) * 8
@@ -335,7 +365,7 @@ def paint(S=1):
     cloud = smooth(0.0, 10.0, Y - cl_top - 8 * (cl_n - 0.5)) * side * smooth(512, 500, Y)
     lit = np.exp(-((Y - cl_top - 4) / 6) ** 2) * side * (0.5 + 0.5 * cl_n)
     px = px * (1 - cloud[..., None] * 0.55) + ramp(np.clip((Y - 440) / 70, 0, 1), [(0, "#3A2C72"), (1, "#1A1240")])         * (cloud * 0.55)[..., None]
-    px = screen(px, hexc("#B8A8E8") * (lit * 0.32)[..., None])
+    px = screen(px, hexc("#F0C488") * (lit * 0.36)[..., None])
     # the mist along the far hills
     mist = np.exp(-((Y - 500) / 18) ** 2) * (0.6 + 0.4 * fbm(H, W, 40 * S, 3, 43))
     px = screen(px, hexc("#6A5AA8") * (mist * 0.10)[..., None])

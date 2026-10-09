@@ -395,7 +395,7 @@
    "ramp_first_seed": 865
   },
   "ceiling": {
-   "p99_luma": 0.426,
+   "p99_luma": 0.425,
    "limit": 0.465
   },
   "framecheck": {
@@ -435,155 +435,155 @@
       "purple": 0.579
      },
      "0.8x": {
-      "blue": 0.673,
+      "blue": 0.672,
       "orange": 0.606,
       "green": 0.708,
-      "purple": 0.567
+      "purple": 0.568
      }
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.346,
+      "worst": 0.317,
       "at": [
-       294,
-       274
+       344,
+       448
       ],
-      "undressed": 0.318,
-      "drop": -0.028
+      "undressed": 0.319,
+      "drop": 0.002
      },
      "orange 1x": {
-      "worst": 0.282,
+      "worst": 0.254,
       "at": [
-       362,
-       330
+       314,
+       307
       ],
-      "undressed": 0.253,
-      "drop": -0.029
+      "undressed": 0.254,
+      "drop": 0.0
      },
      "green 1x": {
-      "worst": 0.373,
+      "worst": 0.345,
       "at": [
        294,
        274
-      ],
-      "undressed": 0.347,
-      "drop": -0.026
-     },
-     "purple 1x": {
-      "worst": 0.244,
-      "at": [
-       294,
-       274
-      ],
-      "undressed": 0.215,
-      "drop": -0.029
-     },
-     "blue 0.8x": {
-      "worst": 0.339,
-      "at": [
-       344,
-       448
-      ],
-      "undressed": 0.31,
-      "drop": -0.029
-     },
-     "orange 0.8x": {
-      "worst": 0.274,
-      "at": [
-       362,
-       330
-      ],
-      "undressed": 0.244,
-      "drop": -0.03
-     },
-     "green 0.8x": {
-      "worst": 0.375,
-      "at": [
-       362,
-       330
       ],
       "undressed": 0.349,
-      "drop": -0.026
+      "drop": 0.004
      },
-     "purple 0.8x": {
-      "worst": 0.234,
+     "purple 1x": {
+      "worst": 0.215,
       "at": [
        344,
        448
       ],
-      "undressed": 0.204,
-      "drop": -0.03
+      "undressed": 0.217,
+      "drop": 0.002
+     },
+     "blue 0.8x": {
+      "worst": 0.309,
+      "at": [
+       344,
+       448
+      ],
+      "undressed": 0.312,
+      "drop": 0.003
+     },
+     "orange 0.8x": {
+      "worst": 0.247,
+      "at": [
+       456,
+       212
+      ],
+      "undressed": 0.246,
+      "drop": -0.001
+     },
+     "green 0.8x": {
+      "worst": 0.348,
+      "at": [
+       294,
+       274
+      ],
+      "undressed": 0.35,
+      "drop": 0.002
+     },
+     "purple 0.8x": {
+      "worst": 0.205,
+      "at": [
+       344,
+       448
+      ],
+      "undressed": 0.207,
+      "drop": 0.002
      }
     },
-    "worst_margin": 0.234,
-    "largest_drop": -0.026,
+    "worst_margin": 0.205,
+    "largest_drop": 0.004,
     "bricks_min_margin": [
-     0.346,
+     0.328,
      "blue"
     ],
-    "protan_orange_p10": 0.119,
+    "protan_orange_p10": 0.131,
     "protan_places": 29,
     "protan_worst_at": [
      419,
      363
     ],
-    "protan_min": 0.116,
+    "protan_min": 0.124,
     "jewels": {
-     "coloured_px_pct": 99.0,
-     "mean_chroma": 0.111,
-     "second_at_walls_x": 0.0,
+     "coloured_px_pct": 95.9,
+     "mean_chroma": 0.089,
+     "second_at_walls_x": 0.25,
      "second_at_walls_worst_window": [
-      0.0,
-      null
+      0.32,
+      541
      ],
-     "first_jewel_hue": 284,
-     "first_share": 0.823,
-     "second_jewel_hue": 214,
-     "second_share": 0.177,
-     "apart_deg": 71,
+     "first_jewel_hue": 296,
+     "first_share": 0.799,
+     "second_jewel_hue": 55,
+     "second_share": 0.16,
+     "apart_deg": 119,
      "bins_pct": [
+      2.4,
+      4.9,
+      8.7,
       0.0,
       0.0,
       0.0,
       0.0,
       0.0,
       0.0,
-      5.9,
-      11.9,
-      6.5,
-      75.6,
-      0.1,
-      0.0
+      53.7,
+      26.2,
+      4.1
      ]
     },
-    "ghost_median": 0.034,
+    "ghost_median": 0.036,
     "ghost_worst": [
-     0.041205182671546936,
+     0.03624898940324783,
      [
-      456,
-      212
+      489,
+      144
      ]
     ],
     "ghost_isolated_pegs": 3,
     "print": {
      "median": 0.0,
-     "p90": 0.0161,
+     "p90": 0.0087,
      "worst": [
-      0.0435,
+      0.0503,
       [
-       228,
-       342
+       512,
+       460
       ]
      ],
      "samples": 48,
      "mode": "pegs",
-     "hue_median": 0.0145
+     "hue_median": 0.0
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 50.7,
+ "seconds": 31.2,
  "verdict": "PASS"
 }
