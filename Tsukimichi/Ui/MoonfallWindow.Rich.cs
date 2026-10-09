@@ -694,8 +694,10 @@ public sealed partial class MoonfallWindow
         }
 
         GiltRing(c, Cx, Cy, R + 0.6f, great: true);
-        var digitsPx = NumberPx(v, 18, MoonfallFace.Trump);
-        var timesPx = NumberPx(v, 15, MoonfallFace.Axis);
+        // The Full Moon's ×100 [O] is a digit wider than the meter's steps: it is set smaller so it stays inside the arc.
+        var wide = multiplierDigits.Length > 2;
+        var digitsPx = NumberPx(v, wide ? 14 : 18, MoonfallFace.Trump);
+        var timesPx = NumberPx(v, wide ? 12 : 15, MoonfallFace.Axis);
         var wd = MeasureText(MoonfallFace.Trump, digitsPx, multiplierDigits);
         var wx = MeasureText(MoonfallFace.Axis, timesPx, "×");
         var x0 = centre.X - ((wd + wx) * 0.5f);

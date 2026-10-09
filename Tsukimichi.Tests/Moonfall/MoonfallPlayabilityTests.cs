@@ -63,8 +63,9 @@ public sealed class MoonfallPlayabilityTests
 
     /// <summary>
     /// The port plays the designer's tool's games move for move: these are <c>mfcheck play base-01.json 48 5</c>'s first
-    /// two games, its tenth (the first it wins) and its total (run on 6 October 2026 against this engine, on the level
-    /// pipeline's Road to Horizon), so a change that moves the greedy player's verdicts shows here before it moves a level's.
+    /// two games, its fifth (the first it wins) and its total, run on 9 October 2026 against this engine on the original's
+    /// rules (the owner's Peggle decision: style bonuses no longer give free balls, the ±97° aim and the rest; on 6 October
+    /// the totals were 30 of 48), so a change that moves the greedy player's verdicts shows here before it moves a level's.
     /// </summary>
     [Fact]
     [Trait("Category", "Playability")]
@@ -74,19 +75,19 @@ public sealed class MoonfallPlayabilityTests
         Assert.Equal("base-01", level.Id);
         var first = MoonfallPlayability.PlayOne(level, 0);
         Assert.False(first.Won);
-        Assert.Equal(13, first.Shots);
-        Assert.Equal(1, first.OrangesLeft);
-        Assert.Equal(89_760, first.Score);
+        Assert.Equal(11, first.Shots);
+        Assert.Equal(6, first.OrangesLeft);
+        Assert.Equal(85_290, first.Score);
         var second = MoonfallPlayability.PlayOne(level, 1);
         Assert.False(second.Won);
-        Assert.Equal(17, second.Shots);
-        Assert.Equal(1, second.OrangesLeft);
-        Assert.Equal(172_800, second.Score);
-        var tenth = MoonfallPlayability.PlayOne(level, 9);
-        Assert.True(tenth.Won);
-        Assert.Equal(11, tenth.Shots);
-        Assert.Equal(328_750, tenth.Score);
-        Assert.Equal(30, MoonfallPlayability.Check(level).Wins);
+        Assert.Equal(13, second.Shots);
+        Assert.Equal(3, second.OrangesLeft);
+        Assert.Equal(129_550, second.Score);
+        var fifth = MoonfallPlayability.PlayOne(level, 4);
+        Assert.True(fifth.Won);
+        Assert.Equal(12, fifth.Shots);
+        Assert.Equal(295_160, fifth.Score);
+        Assert.Equal(9, MoonfallPlayability.Check(level).Wins);
     }
 
     [Fact]

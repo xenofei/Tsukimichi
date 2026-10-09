@@ -93,7 +93,8 @@ public sealed class MoonfallChallengeTests
         Assert.Equal(7, game.BallsLeft);
         Assert.Equal(27, game.OrangesLeft);
         Assert.Equal(MoonfallPower.Fireball, game.Power);
-        Assert.Equal(3, game.LevelNumber);
+        // At least the fourth, so the purple peg is on the board [O] (it was at least the third, for the greens).
+        Assert.Equal(MoonfallRules.FirstPurpleLevel, game.LevelNumber);
         PlayOut(game, Angles);
         Assert.Equal(MoonfallChallengeStatus.Met, run.Finish(game));
         Assert.Equal(game.Score, run.Total);

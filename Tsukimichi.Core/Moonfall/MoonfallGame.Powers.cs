@@ -782,6 +782,7 @@ public sealed partial class MoonfallGame
             {
                 var bucketX = MoonfallBucket.CentreAt(launchTick + t);
                 var bucketV = MoonfallBucket.VelocityAt(launchTick + t);
+                CapSpeed(ref b);
                 var speed = MoonfallGeometry.Hypot(b.Vx, b.Vy) + (MoonfallRules.Gravity * MoonfallRules.TickSeconds);
                 var steps = Math.Clamp((int)Math.Ceiling(speed * MoonfallRules.TickSeconds / MoonfallRules.MaxSubStep), 1, MaxSubSteps);
                 var h = MoonfallRules.TickSeconds / steps;
