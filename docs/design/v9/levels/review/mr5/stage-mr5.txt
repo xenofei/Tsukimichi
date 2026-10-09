@@ -1,14 +1,14 @@
 stage mr5: 5 levels
 level    name                         pieces  greedy  ramp/48  random     jewels source
-base-21  The White Towers                 69      16     25.9       0    273/189 ui/loadingimage/-nowloading_base01_hr1.tex
-base-22  The Strait of Merlthor           77      26     23.5       0    289/354 ui/loadingimage/-nowloading_base05_hr1.tex
-base-23  Lights on the Water              79      24     22.9       0    255/171 our painting (harbourlights)
-base-24  The Arches of the Bridge         83      15     21.3       0    284/357 ui/loadingimage/-nowloading_base01_hr1.tex
-base-25  The Lighthouses of Vylbrand      79      24     17.8       0    250/181 ui/map/s1f4/00/s1f400_m.tex
+base-21  The White Towers                 69      16     25.9       0    275/210 ui/loadingimage/-nowloading_base01_hr1.tex
+base-22  The Strait of Merlthor           77      26     23.5       0    290/357 ui/loadingimage/-nowloading_base05_hr1.tex
+base-23  Lights on the Water              82      26     22.0       0    255/171 our painting (harbourlights)
+base-24  The Arches of the Bridge         71      17     21.3       1    284/356 ui/loadingimage/-nowloading_base01_hr1.tex
+base-25  The Lighthouses of Vylbrand      79      18     17.1       0    246/168 ui/map/s1f4/00/s1f400_m.tex
   base-21: held-out 25.9, 5184 fresh 25.3, pooled 25.45 per 48 (+-0.29) over 6912 games
   base-22: held-out 23.5, 5184 fresh 24.2, pooled 24.02 per 48 (+-0.29) over 6912 games
-  base-23: held-out 22.9, 5184 fresh 23.1, pooled 23.05 per 48 (+-0.29) over 6912 games
-  base-24: held-out 21.3, 5184 fresh 21.8, pooled 21.68 per 48 (+-0.29) over 6912 games
-  base-25: held-out 17.8, 5184 fresh 18.4, pooled 18.25 per 48 (+-0.28) over 6912 games
-  pooled steps: 1.43 +- 0.41, 0.97 +- 0.41, 1.37 +- 0.41, 3.43 +- 0.40
+  base-23: held-out 22.0, 5184 fresh 22.4, pooled 22.3 per 48 (+-0.29) over 6912 games
+  base-24: held-out 21.3, 5184 fresh 21.0, pooled 21.07 per 48 (+-0.29) over 6912 games
+  base-25: held-out 17.1, 5184 fresh 17.9, pooled 17.7 per 48 (+-0.28) over 6912 games
+  pooled steps: 1.43 +- 0.41, 1.72 +- 0.41, 1.23 +- 0.41, 3.37 +- 0.40
 game paintings 4 of 5; verdicts: base-21 PASS, base-22 PASS, base-23 PASS, base-24 PASS, base-25 PASS

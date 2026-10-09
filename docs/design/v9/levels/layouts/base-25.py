@@ -18,7 +18,9 @@ FS 5-1's planned crop [40, 1100, 960, 720] by 22% of that crop's area (the rule'
 Difficulty comes from the whole board: the lights' rings and the turning beam ends carry most of it; one candidate sits
 low, the Isles light's ring at (156, 431), and low oranges are 2.5% of those left in lost games. 32 candidates (the charter's count), spread to the rule's 10 per 200 x 200. Tuning: seeds 1-864
 read 18.8, the second tuning block (3456 games from seed 20001) 17.8, against 17.3 for the variant with the contour's
-orange at (632, 235); held out 17.8 (target 18).
+orange at (632, 235); held out 17.8 (target 18). Stage round 1: 5-3 and 5-4 came out harder after their fixes, which left
+the finale gap at 2.82 +- 0.40 (unresolved), so the contour's orange moved from (606, 211) to (632, 235): seeds 1-864
+read 17.2 and the second tuning block 17.3 (the baseline 18.8 and 17.7 on the same blocks).
 """
 import math
 
@@ -83,5 +85,5 @@ CANDIDATES = (
     (235, 212), (302, 224),                                     # Skull Valley's rim
     (274, 301), (339, 308), (423, 339), (459, 390),             # the shore into the harbour, the bay
     (470, 200), (496, 222), (549, 265), (601, 309),             # the cliff path
-    (548, 168), (578, 189), (606, 211), (668, 297),             # the contour round the summit
+    (548, 168), (578, 189), (632, 235), (668, 297),             # the contour round the summit
 )

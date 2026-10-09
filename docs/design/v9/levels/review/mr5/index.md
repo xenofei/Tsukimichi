@@ -27,16 +27,17 @@ and the verdict (PASS).
 |---|---|---|---|---|---|---|---|---|---|
 | 5-1 | base-21 | The White Towers | 25.9 | 25.45 | 275 / 210 | 0.224 | 0.132 / 0.123 | La Noscea painting, base01_hr1 [1748, 60, 1440, 1080] | Limsa Lominsa Lower Decks |
 | 5-2 | base-22 | The Strait of Merlthor | 23.5 | 24.02 | 290 / 357 | 0.326 | 0.115 / 0.103 | World painting, base05_hr1 [0, 1335, 1100, 825] | Nowhere (a chart) |
-| 5-3 | base-23 | Lights on the Water | 22.0 | to re-pool | 255 / 171 | 0.206 | 0.108 / 0.107 | ours (harbourlights) | Limsa Lominsa Lower Decks |
-| 5-4 | base-24 | The Arches of the Bridge | 21.3 | to re-pool | 284 / 356 | 0.223 | 0.118 / 0.110 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |
-| 5-5 | base-25 | The Lighthouses of Vylbrand | 17.8 | 18.25 | 246 / 168 | 0.267 | 0.108 / 0.104 | Western La Noscea map, s1f400 [740, 720, 1300, 975] | Western La Noscea |
+| 5-3 | base-23 | Lights on the Water | 22.0 | 22.3 | 255 / 171 | 0.206 | 0.108 / 0.107 | ours (harbourlights) | Limsa Lominsa Lower Decks |
+| 5-4 | base-24 | The Arches of the Bridge | 21.3 | 21.07 | 284 / 356 | 0.223 | 0.118 / 0.110 | La Noscea painting, base01_hr1 [2560, 920, 1280, 960] | Limsa Lominsa Lower Decks |
+| 5-5 | base-25 | The Lighthouses of Vylbrand | 17.1 | 17.7 | 246 / 168 | 0.267 | 0.108 / 0.104 | Western La Noscea map, s1f400 [740, 720, 1300, 975] | Western La Noscea |
 
-The pooled steps are 1.43, 0.97 and 1.37, and the finale gap is 3.43 (each about ± 0.41). The mean is 22.49, against
-MR 4's 23.07 (a fall of 0.58) and the charter's 22.6 (band 26 → 18). The jewel check against 4-5 (321 / 233) passes. The
+The pooled steps (after round 1) are 1.43, 1.72 and 1.23, and the finale gap is 3.37 (each about ± 0.41). The mean is
+22.11, against MR 4's 23.07 pooled (a fall of 0.96) and 22.81 on the critic's fresh seeds (a fall of 0.70), and the
+charter's 22.6 (band 26 → 18). The jewel check against 4-5 (321 / 233) passes. The
 stage uses 4 game paintings and 1 of ours. Every scene falls back to `moon-road-night` when the shield hides it.
 
 Aces, from `MoonfallAces.Suggest` over 576 games: 5-1 270,000 (305 wins), 5-2 250,000 (288), 5-3 240,000 (260),
-5-4 230,000 (254), 5-5 240,000 (221). All are above the hard-level line (14 of 48).
+5-4 230,000 (254), 5-5 230,000 (206, after the stage round-1 retune). All are above the hard-level line (14 of 48).
 
 The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x max / p99.9, then 1x p99: 5-1 0.039 / 0.007,
 0.008; 5-2 0.022 / 0.015, 0.035; 5-3 0.008 / 0.005, 0.007; 5-4 0.038 / 0.008, 0.007; 5-5 0.020 / 0.014, 0.018. 5-1's and
@@ -112,3 +113,13 @@ The converter gate (`convert base-21 ... base-25 --check`) passes 10 of 10. 2x m
   (78 apart, second share 0.171), and the stage's green foot is quieter. The layout is unchanged, so the ramp (17.8
   held out), the Ace and the pooled figures stand. The converter gate passes (2x max 0.020, p99.9 0.0143; 1x p99
   0.018).
+- **The stage after round 1** (game designer m3, critic m4, n4, n5, UX m1): the fixes to 5-3 and 5-4 made both harder
+  (pooled 23.05 → 22.3 and 21.68 → 21.07), which left the finale gap at 2.82 ± 0.40, not resolvably 2.5 (`stage mr5`
+  failed). 5-5's contour orange moved from (606, 211) to (632, 235), the variant its author had measured 0.5 harder:
+  seeds 1-864 read 17.2 and seeds 20001-23456 read 17.3 (the round-1 layout read 18.8 and 17.7 on the same blocks).
+  Held out 17.8 → 17.1, pooled 18.25 → 17.7, so the finale gap is 3.37 ± 0.40; the band's bottom is 18 (16.8 allowed).
+  Greedy 18 of 48, stuck fires 61 per 1,728, low oranges 2.5% of those left; the top holdout (459, 390) falls from 25%
+  to 24%. The Ace moves 240,000 → 230,000 (206 of 576, still above the hard-level line). Protan p10 is now at least
+  0.108 on every level after the per-level fixes (5-1 0.132, 5-2 0.115, 5-3 0.108, 5-4 0.118, 5-5 0.108), so the
+  stage sits above UX's 0.105 guard. Jewels after round 1: 275/210, 290/357, 255/171, 284/356, 246/168; 5-1 now has a
+  violet and sea-teal pair of its own, and two green feet are left (5-3 and 5-5, not neighbours).

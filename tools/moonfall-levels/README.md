@@ -55,7 +55,7 @@ the greedy player wins at 14 of 48 or more (a rate, so 28 of 96 is the same) kee
 reach. Below that, the Ace is the score 40% of the *winning* games reach (the owner's answer, 7 October 2026), since a
 fifth of all games is then close to any win. Each Ace is recorded in `Moonfall/Modes/aces.json` when the level ships. The
 Perf-category test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` re-suggests every shipped level (stages 1-5, all
-above 14 of 48: 213-389 wins of 576, 3-5 the lowest) and holds each to its recorded Ace.
+above 14 of 48: 206-389 wins of 576, 5-5 the lowest) and holds each to its recorded Ace.
 
 ## What `build` does, in order
 
