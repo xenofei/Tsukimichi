@@ -1,103 +1,104 @@
-"""6-4 "Meteor Shower" (The Silent Stars, Urianger; set nowhere): drift.
+"""6-4 "Meteor Shower" (The Silent Stars, Urianger): drift.
 
-Subject: a meteor shower over the mountains on a still night (painters/meteors.py). Nine bright meteors streak away
-from the radiant high in the upper left (above the reach of any flight, so it holds no pieces: the eye finds it by the
-spray), a fan of faint ones between them; the Milky Way rises up the right side and the airglow lights the mountains.
+Subject: a meteor shower over a mountain lake on a moonless night. The streaks pour out of the radiant, a knot of bright
+stars high on the left, every one on a ray from it; behind them the sky is still, the Plough standing in the upper
+right, the Milky Way climbing from the lower left with its dark rift and a green airglow low over the range
+(painters/meteors.py).
 
-Technique (DR): each bright meteor is a row of slide movers dotted along its own streak, the row sliding together down
-the streak toward the meteor's head and back on the engine's clock, so the meteors fall across a still sky; the longer
-and brighter a meteor, the further and faster it falls (the fireball fastest). The still sky round them is still pegs:
-moons on its bright stars. The far range's three snow peaks wear a moon on each summit and bricks along their flanks,
-opened at the summit, so the board closes on the mountains the shower falls toward.
+Technique (DR): each painted streak is dotted from its tail, and the falling stars at its head are slide movers that
+run out along the streak's own ray toward its head and back, so a moving star never leaves its painted line (MR 3
+round 1, critic m4: 3-4's movers left the still crests they rode). The streaks fall at different speeds, each its own
+drift group. The radiant is ringed by moons; the faint streaks carry a moon at their heads where they stand in open
+sky; the Plough's seven stars are still moons; the range's high peaks wear moons and the slopes into its saddle are
+brick runs. Streak 7 runs on to (126, 400), where a moon stops the seven first shots that bounced off the left wall
+and fell past the range's left peaks touching nothing.
 
-Candidates: every meteor carries at least one (four on the fireball), about a third stand on the still stars, and the
-summits stay blue, since the second jewel (the airglow's aqua) lies on the mountains and orange on it fails F9 for a
-protanope. The meteors near the left wall (7 and 9) and the low stars are the hardest places; the ramp was tuned on
-seeds 1-864 and the second tuning block (20001-23456: 20.5 per 48), the last step one blue star at (540, 380).
+Candidates (31, charter 31): started from `ease --pick` (the places a player clears most readily, under the spread
+rule), then tuned toward the ramp target 20.5 by single swaps on seeds 1-864 and the second tuning block (seeds
+20001-23456): the chosen set read 18.9 and 21.0 there (20.6 over both); held out 20.3. No candidate below y 430; the
+top holdouts are spread (the left peak (232, 415), the faint head (560, 399), streak 9's tail (635, 295), each about a
+fifth of lost games). The Plough's bowl corners (672, 168) and (684, 210) were tried and dropped: each alone carried
+a third or more of the lost games. A faint streak head at (560, 190) as a blue peg cost 3 per 48 and was dropped.
 """
 import math
 
-from layout import direct_reach
-
 LEVEL = dict(id="base-29", name="Meteor Shower", stage=6, number=29, scene="meteor-shower",
-             subject="a meteor shower over the mountains: nine bright meteors streaking from the radiant across a "
-                     "still sky, the Milky Way and the airglow over three ranges of snow peaks",
-             technique="drift (each meteor a row of slide movers falling along its own streak) over a still sky of "
-                       "moons on the bright stars, with the snow peaks in brick")
+             subject="a meteor shower over a mountain lake: the streaks pouring out of the radiant across a still sky, "
+                     "the Plough and the range under them",
+             technique="drift (the falling stars carried by slide movers along their own painted streaks) with the "
+                       "streaks dotted from their tails")
 
-# the meteors' rows: (feature, spacing, slide length along the streak, period); the fireball first, longest and fastest
-ROWS = (
-    ("meteor 1", 34, 34.0, 6.0),
-    ("meteor 2", 34, 30.0, 7.0),
-    ("meteor 3", 34, 28.0, 7.5),
-    ("meteor 4", 34, 26.0, 8.0),
-    ("meteor 5", 34, 28.0, 7.25),
-    ("meteor 6", 34, 24.0, 8.5),
-    ("meteor 7", 34, 24.0, 9.0),
-    ("meteor 8", 34, 26.0, 8.25),
-    ("meteor 9", 34, 24.0, 9.5),
-)
+R0 = (190.0, 150.0)             # the radiant (painters/meteors.py)
+SLIDE = 36.0                    # how far a falling star runs along its streak
+# per streak (as numbered in the painter): (the falling stars' home distances from the radiant, their period, the
+# tail's dotted distances)
+STREAKS = {
+    1: ((404, 444, 484), 7.0, (336, 368)),
+    2: ((316, 356), 6.0, (206, 238, 270)),
+    3: ((354, 394), 8.0, (256, 288, 320)),
+    4: ((240, 278), 6.5, (154, 182, 210)),
+    5: ((192, 228), 7.5, (116, 146)),
+    6: ((212,), 9.0, (178,)),
+    7: ((), 0, (124, 156, 188, 220, 258)),
+    8: ((), 0, (116, 148, 182)),
+    9: ((), 0, (404, 436, 468, 500)),
+}
 
 # the orange candidates (31), by place (a mover by its home)
-CANDIDATES = (
-    (439, 204), (501, 232), (563, 260), (625, 287),                                                    # meteor 1
-    (353, 229), (408, 269), (463, 309),                                                                # meteor 2
-    (268, 225), (314, 276), (359, 327),                                                                # meteor 3
-    (275, 332), (308, 391), (185, 266), (204, 331),                                                    # meteors 4, 5
-    (608, 190), (148, 359), (146, 325), (476, 402), (114, 270),                                        # meteors 6-9
-    (470, 178), (600, 398), (560, 150), (250, 152), (640, 160), (474, 262), (556, 336), (640, 350),    # stars
-    (240, 300), (380, 420), (180, 160), (684, 414),
-)
-LOW = 502.0                     # a flank brick ends above this, clear of the bucket's lane (y 520) with its thickness
+CANDIDATES = ((232, 415), (487, 408), (472, 190), (500, 150), (694, 423), (208, 174), (218, 141), (286, 215),
+              (182, 429), (431, 273), (517, 226), (313, 233), (402, 258), (472, 294), (584, 241), (623, 250),
+              (228, 260), (238, 288), (341, 252), (507, 312), (549, 233), (160, 270), (278, 276), (328, 347),
+              (152, 301), (635, 295), (110, 260), (144, 332), (610, 387), (560, 399), (126, 400))
 
 
-def _above(pts, xmin=112.0, xmax=688.0):
-    """A flank from its summit down, cut where it falls below LOW or comes within a wall pinch of a wall."""
-    out = [pts[0]]
-    for (a, c) in zip(pts, pts[1:]):
-        if c[1] <= LOW and xmin <= c[0] <= xmax:
-            out.append(c)
-            continue
-        t = 1.0
-        if c[1] > LOW:
-            t = min(t, (LOW - a[1]) / (c[1] - a[1]))
-        if c[0] < xmin:
-            t = min(t, (xmin - a[0]) / (c[0] - a[0]))
-        if c[0] > xmax:
-            t = min(t, (xmax - a[0]) / (c[0] - a[0]))
-        out.append((a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t))
-        break
-    return out
+def _at(a, d):
+    t = math.radians(a)
+    return R0[0] + d * math.cos(t), R0[1] + d * math.sin(t)
+
+
+def _painter():
+    import importlib.util
+    from pathlib import Path
+    spec = importlib.util.spec_from_file_location("painter_meteors", Path(__file__).parents[1] / "painters" / "meteors.py")
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+P = _painter()
 
 
 def build(b):
-    # the snow peaks: bricks down each flank (opened at the summit), a moon on each summit
-    crest = b.f("far crest")
-    for (px_, py_) in b.features["peaks"]:
-        i = crest.index((px_, py_))
-        left = _above([(x, y - 9) for (x, y) in crest[max(0, i - 2):i + 1]][::-1])[::-1]
-        right = _above([(x, y - 9) for (x, y) in crest[i:i + 3]])
-        b.bricks_along(left, length=26, gap=2.5, t=11, trim0=0, trim1=20, tag="flank")
-        b.bricks_along(right, length=26, gap=2.5, t=11, trim0=20, trim1=0, tag="flank")
-        b.place(px_, py_ - 29, r=9, green=False, tag="summit")
-    # the meteors: each a row of movers along its streak, sliding toward its head; a row's points run from the tail
-    # to where a mover's run ends on the head
-    for (name, sp, L, period) in ROWS:
-        (ax, ay), (hx, hy) = b.f(name)
-        n = math.hypot(hx - ax, hy - ay)
-        ux, uy = (hx - ax) / n, (hy - ay) / n
-        # the row's one drift, at the level file's precision, so its movers are one group
-        dx, dy = round(ux * L, 1), round(uy * L, 1)
-        s = n - L
-        while s > 8:
-            x, y = round(ax + ux * s, 1), round(ay + uy * s, 1)
-            if direct_reach(x, y, 8.0) or direct_reach(x + dx, y + dy, 8.0):
-                b.slide(x, y, dx, dy, period, r=8, tag=name)
-            s -= sp
-    # the still sky
-    for (x, y) in b.features["bright stars"]:
-        if direct_reach(x, y, 8.0):
-            b.place(x, y, r=8, tag="star")
+    # the radiant, ringed
+    b.stop(R0[0], R0[1], R=30, n=5, r=9, oranges=(), green=False, tag="radiant")
+    # the streaks: the falling stars at their heads first (slide movers along the ray), then the tails dotted
+    for k, (homes, period, tails) in STREAKS.items():
+        a = P.STREAKS[k - 1][0]
+        ux, uy = math.cos(math.radians(a)), math.sin(math.radians(a))
+        dx, dy = round(SLIDE * ux, 1), round(SLIDE * uy, 1)
+        for d in homes:
+            # homes and runs at a tenth of a unit, as the level file keeps them, so a streak's movers are one group
+            x, y = (round(v, 1) for v in _at(a, d))
+            b.slide(x, y, dx, dy, period, r=9, tag=f"meteor {k}")
+        for d in tails:
+            x, y = _at(a, d)
+            b.place(x, y, r=7, tag=f"meteor {k} tail")
+    # the still sky: the Plough's seven stars
+    for (x, y) in P.PLOUGH:
+        b.place(x, y, r=8, green=False, tag="plough")
+    # the range: a moon on each high peak
+    for (x, y) in P.PEAKS:
+        b.place(x, y - 13, r=9, green=False, tag="peak")
+    # the faint streaks: a moon at each head that stands in the open sky
+    for (a, _d0, d1, _k) in P.FAINT:
+        x, y = _at(a, d1)
+        if y < 440:
+            b.place(x, y, r=7, tag="faint meteor")
+    # the slopes into the range's saddle as brick runs
+    left = [(x, y - 8) for (x, y) in P.CREST_L if 255 <= x <= 360]
+    right = [(x, y - 8) for (x, y) in P.CREST_R if 450 <= x <= 522]
+    b.bricks_along(left, length=26, gap=2.5, trim0=6, trim1=4, tag="slope left")
+    b.bricks_along(right, length=26, gap=2.5, trim0=4, trim1=6, tag="slope right")
     for (x, y) in CANDIDATES:
         b.key(x, y, orange=True)
     b.greens_in_reach()

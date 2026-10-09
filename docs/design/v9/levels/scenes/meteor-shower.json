@@ -1,6 +1,6 @@
 {
  "name": "meteor-shower",
- "about": "Our own painting: a meteor shower over the mountains on a still night. Seven bright meteors and a spray of faint ones streak away from the radiant in the upper left, the fireball across the upper right leaving a faint train; the Milky Way rises up the right side; the airglow lights the horizon aqua over three ranges of mountains, the far one snow-capped (painters/meteors.py; shipped as a JPEG). The second jewel is the airglow's aqua on the mountains and the mist in their valleys, below the pieces (a band among the meteors would sit under the orange candidates, and protan orange on aqua fails F9), faded at the walls.",
+ "about": "Our own painting: a moonless night over a mountain lake at the height of a meteor shower. The streaks pour out of the radiant, a knot of bright stars high on the left, every one on a ray from it: a long fireball crossing to the right with its twisted train, a fan of shorter streaks below it and faint ones between, each brightening to a white-green head with a violet tail. Behind them the sky is still: a deep indigo night thick with stars, the Milky Way climbing from the lower left with its dark rift, a faint green airglow low over the range; the range's snow caps and crests catch the starlight and a still lake holds them (painters/meteors.py; shipped as a JPEG). The first jewel is the indigo night, the second the airglow and the lake under it.",
  "source": {
   "kind": "painting",
   "painter": "meteors",
@@ -9,42 +9,46 @@
  "veil": 0.22,
  "dress": {
   "palette": {
-   "name": "Azure night, the airglow aqua over the mountains",
-   "sky": "#0C2050",
+   "name": "Sapphire night, the airglow green",
+   "sky": "#0C1440",
    "deep": "#040818",
-   "jewel1": "#2890D0",
-   "jewel2": "#3EAA70",
+   "jewel1": "#1462B4",
+   "jewel2": "#64AC6A",
    "warm": "#FFB45E",
-   "rim": "#C8E0FF"
+   "rim": "#C8D8FF"
   },
   "jewel": {
-   "bands": [[0, "#2A8ACC"], [300, "#2890D0"], [600, "#2888C4"]],
-   "valueHues": [[0.08, "#0B4682"], [0.45, "#CCE8FF"]],
-   "chroma": 1.4,
-   "floor": 0.05,
+   "bands": [[0, "#1462B4"], [300, "#1660B0"], [600, "#10509A"]],
+   "valueHues": [[0.08, "#0A2A6A"], [0.45, "#D4E4FF"]],
+   "chroma": 1.2,
+   "floor": 0.04,
    "regions": [
     {
-     "hex": "#3EAA70",
-     "chroma": 0.40,
-     "mask": [["y", 430, 480], ["x", 75, 135], ["x", 725, 665]]
+     "hex": "#64AC6A",
+     "chroma": 0.13,
+     "mask": [["y", 330, 420], ["y", 505, 455], ["x", 75, 135], ["x", 725, 665]]
+    },
+    {
+     "hex": "#64AC6A",
+     "chroma": 0.11,
+     "mask": [["y", 522, 540], ["x", 75, 135], ["x", 725, 665]]
     }
    ],
-   "quiet": [70, 28],
-   "regionQuiet": 0.6
+   "quiet": [60, 25],
+   "regionQuiet": 0.3
   },
-  "shafts": [],
   "silhouette": {
    "body": "#06061A",
    "inner": "#16144A",
    "rim": "#C0C8FF",
    "rimK": 0.0,
-   "seed": 29
+   "seed": 37
   }
  },
  "runtime": {
   "motion": {
-   "stars": 36,
-   "starWhere": [["poly", "star sky", 8]]
+   "stars": 40,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "radiant knot", 16]]
   }
  }
 }

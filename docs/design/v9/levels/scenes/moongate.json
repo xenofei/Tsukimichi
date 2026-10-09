@@ -1,0 +1,64 @@
+{
+ "name": "moongate",
+ "about": "Our own painting: Urianger's Moon Gate, a great ring of pale light standing in the night sky over a dark upland, its rim a carved dial of light, and through it another sky, a teal nebula turning toward the far moon at its heart; two orbits of light circle it for the gate's moons, and the moon's phases stand over it in a crown, waxing up the left and waning down the right; rose-violet nebula drifts in a plum night, two dark ridges with standing stones caught by the gate's light, far hills under a low mist (painters/moongate.py; shipped as a JPEG). The second jewel is the gate's own other sky, the first the plum night round it.",
+ "source": {
+  "kind": "painting",
+  "painter": "moongate",
+  "params": {}
+ },
+ "veil": 0.22,
+ "dress": {
+  "palette": {
+   "name": "Plum night, the gate's far sky teal",
+   "sky": "#1A0C36",
+   "deep": "#07041A",
+   "jewel1": "#AC42B8",
+   "jewel2": "#38B0A0",
+   "warm": "#FFB45E",
+   "rim": "#D8E4FF"
+  },
+  "jewel": {
+   "bands": [[0, "#A83CB4"], [300, "#AC42B8"], [600, "#94389C"]],
+   "valueHues": [[0.08, "#44124C"], [0.45, "#F4D8F4"]],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#38B0A0",
+     "chroma": 0.14,
+     "mask": [["poly", "gate halo", 30], ["luma", 0.04, 0.30, 3]]
+    }
+   ],
+   "quiet": [60, 25],
+   "regionQuiet": 0.3
+  },
+  "shafts": [
+   {
+    "origin": [400, 346],
+    "angles": [208, 236, 304, 332],
+    "widths": [18, 24, 24, 18],
+    "k": 0.03,
+    "col": "#D0F0EC",
+    "reach": 700,
+    "near": 140
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16144A",
+   "rim": "#C0C8FF",
+   "rimK": 0.0,
+   "seed": 29
+  }
+ },
+ "runtime": {
+  "motion": {
+   "stars": 40,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "gate halo", 24],
+                 ["disc", 176.2, 377.5, 26, -6], ["disc", 175.2, 322.4, 26, -6], ["disc", 187.6, 268.7, 26, -6],
+                 ["disc", 212.6, 219.6, 26, -6], ["disc", 248.8, 178.0, 26, -6], ["disc", 293.9, 146.5, 26, -6],
+                 ["disc", 506.1, 146.5, 26, -6], ["disc", 551.2, 178.0, 26, -6], ["disc", 587.4, 219.6, 26, -6],
+                 ["disc", 612.4, 268.7, 26, -6], ["disc", 624.8, 322.4, 26, -6], ["disc", 623.8, 377.5, 26, -6]]
+  }
+ }
+}
