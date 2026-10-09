@@ -29,7 +29,7 @@ recipe. `CheckSet` (a test runs it) refuses two default recipes and a level list
 
 The build runs in this order. Each step reads the result of the one before.
 
-1. **Cut**: the painting's `erase` boxes are filled from their surroundings, then it is padded (`pad`, `padMode`),
+1. **Cut**: the painting's `erase` boxes are filled from their surroundings and its `clone` boxes from their offsets, then it is padded (`pad`, `padMode`),
    mirrored if asked, cropped (`crop`, 4:3) and resampled (Lanczos) to the board at the tier's scale: 1 px a unit
    (800 × 600) or 2 px a unit at the 2× tier. A `land` mask term reads the painting cut at 1 px a unit, ungraded.
 2. **Grade** (`grade`): day for night in OKLab. Skipped for a picture already painted in the night's values, and for a
@@ -103,6 +103,7 @@ Exactly one of:
 | `crop` | `[x, y, w, h]` | the whole | In the padded painting's pixels; at least 16 × 12 and 4:3 within 0.02 |
 | `squeeze` | bool | false | The crop may be up to a quarter from 4:3 either way, and the painting is squeezed to the board (the level pipeline resamples any crop: 2-1 takes Limsa's whole height) |
 | `erase` | `[[x, y, w, h], …]` (≤ 16, w and h 1–1024) | none | Boxes in the source's own pixels (before mirror and pad) filled from a 12-pixel ring round them, diffused in and feathered 3 px: a map's exit arrows leave plain parchment |
+| `clone` | `[[x, y, w, h, dx, dy], …]` (≤ 16, x and y ≥ 0, w and h 1–1024) | none | Boxes in the source's own pixels filled, after `erase`, with the source's own pixels (dx, dy) away, feathered 3 px over the same 12-pixel window: a hatched field keeps its hatching where a map's arrow was (an erase's diffused fill shows there as a smooth patch). A box whose source window falls outside the picture is skipped |
 
 ## `grade` (the night grade)
 

@@ -299,6 +299,8 @@ def runtime_recipe(recipe, level):
             raise ValueError(f"{recipe['name']}: the crop is not 4:3 and the recipe does not declare squeeze")
         if src.get("erase"):
             s["erase"] = [list(b) for b in src["erase"]]
+        if src.get("clone"):
+            s["clone"] = [list(b) for b in src["clone"]]
         out["source"] = s
         g = {"kind": "violet" if src.get("hour") == "far" else "night"}
         for k, v in src.get("grade", {}).items():

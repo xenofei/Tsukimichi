@@ -178,6 +178,7 @@ public static partial class MoonfallSceneBuilder
         var ctx = new MoonfallDressContext(s, clearance) { Plates = plates };
         Lap("clearance");
         var source = !fallback && recipe.Source.Erase.Count > 0 ? Erase(painting, recipe.Source.Erase) : painting;
+        source = !fallback && recipe.Source.CloneBoxes.Count > 0 ? Clone(source, recipe.Source.CloneBoxes) : source;
         var px = Cut(recipe.Source, source, s, fallback);
         if (UsesLand(recipe))
         {
