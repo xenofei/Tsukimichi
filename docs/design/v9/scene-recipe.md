@@ -132,7 +132,7 @@ the light), `bandK` 0–2 (the restored mid band).
 
 ### Masks (`where`)
 
-A list of at most 6 terms, multiplied together. Each term names one of:
+A list of at most 8 terms, multiplied together (the converter adds the quiet round the pieces to a region's own). Each term names one of:
 
 | Term | Arguments | 1 where |
 |---|---|---|
@@ -154,7 +154,7 @@ Each is an object with a `kind`:
 
 | Kind | Fields (defaults) |
 |---|---|
-| `shafts` | `origin` [x, y] (−140, −220), `angles` (1–8, degrees), `widths` (one per angle, 1–200), `k` (0.07, at most **0.08**: F4), `colour` (#BFD2FF), `seed`, `reach` (900), `near` (150), `moving` (false). A moving shaft belongs in `light` only |
+| `shafts` | `origin` [x, y] (−140, −220), `angles` (1–8, degrees), `widths` (one per angle, 1–200), `k` (0.07, at most **0.08**: F4), `colour` (#BFD2FF), `seed`, `reach` (900), `near` (150; −180 to 1000: the shaft fades in from `near` to `near` + 180 units from its origin, so at −180 it is full at the origin, as 5-5's lighthouse beams), `moving` (false). A moving shaft belongs in `light` only |
 | `glow` | `x`, `y`, `r`, `colour` (required), `k` (0.05, ≤ 0.2) |
 | `moonGlow` | `x` (−50), `y` (−60), `rCore` (330), `rWide` (900), `kCore` (0.12), `kWide` (0.05), `colour` (#B9C8F0) |
 | `moon` | `x` (150), `y` (100), `r` (28, 4–120), `seed`. One moon at most across paint and light; Fever swells it. It is left out when any piece comes within its radius and 18 units (the brightest face never sits behind a peg) |

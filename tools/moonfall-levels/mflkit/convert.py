@@ -12,7 +12,8 @@ What the game builds at load and what we ship:
 - Over the palette (`light`): the glows as runtime glows; a moving shaft for the beams (`beamsOnly`: only its 15% moving
   share is made); then the plates, all our own art:
     X = screen(P, A) * T,  X = X * K + Cp,  X = screen(X, R)
-  where A is the shafts' still share (85%) and the chart's neat-line light, T the chart's ticks (a multiplier), K one less
+  where A is the shafts' still share (85%) and the chart's neat-line and compass-rose light, T the chart's ticks and the
+  rose's shaded halves (a multiplier, in colour when a rose is drawn), K one less
   the framing's coverage (cloth and silhouettes; the runtime's framing cover is one less it), Cp their colour premultiplied,
   and R the silhouettes' rim and snow. `split_dress` computes them from the same primitives the dress draws with.
 - The small lights as runtime lights (lanterns flicker in play), and the recipe's `runtime` block: the motion (stars,
@@ -130,7 +131,8 @@ def small_lights(recipe, level, S=1):
 
 def split_dress(recipe, sc, level, S, still=BEAMS_STILL):
     """(P, parts): the palette's output and the plates (see the module's docstring), at S. A: the shafts' still share and
-    the chart's neat-line light (screened); T: the chart's ticks (multiplied); K: one less the framing's coverage
+    the chart's neat-line and compass-rose light (screened); T: the chart's ticks and the rose's shaded halves
+    (multiplied; RGB once a rose is drawn); K: one less the framing's coverage
     (multiplied); C: the framing's colour premultiplied (added); W: the silhouette's snow, when it has any (screened);
     R: the rim (screened). Glows and small lights are left to the runtime (`runtime_recipe`)."""
     from .dress import Ctx, dress, draw_framing
@@ -149,7 +151,20 @@ def split_dress(recipe, sc, level, S, still=BEAMS_STILL):
         if e["kind"] == "chart_border":
             t = D.chart_border(np.ones((h, w, 3), np.float32), S)[..., 0]
             A = screen(A, D.chart_border(np.zeros((h, w, 3), np.float32), S) / np.maximum(t, 1e-6)[..., None])
-            T = T * t
+            T = T * (t if T.ndim == 2 else t[..., None])
+        elif e["kind"] == "compass_rose":
+            # the rose darkens its shaded halves (a grey multiplier m) and then screens its gilt g: screen(Y m, g) over
+            # what the plates have made so far, Y = screen(X, A) T. That is screen(X, A') T' exactly, per channel, with
+            # T' = T m (1 - g) + g and A' T' = A T m (1 - g) + g, so the ticks plate turns colour (the runtime's multiply
+            # is per channel). m is read from the blue channel, where the gilt is weakest: 1 - rose(1) = (1 - m)(1 - g).
+            g = D.compass_rose(ctx, np.zeros((h, w, 3), np.float32), e["x"], e["y"], e["R"])
+            one = D.compass_rose(ctx, np.ones((h, w, 3), np.float32), e["x"], e["y"], e["R"])
+            m = np.clip(1 - (1 - one[..., 2]) / np.maximum(1 - g[..., 2], 1e-6), 0, 1)
+            T3 = T[..., None] if T.ndim == 2 else T
+            mg = m[..., None] * (1 - g)
+            Tn = T3 * mg + g
+            A = (A * T3 * mg + g) / np.maximum(Tn, 1e-6)
+            T = Tn
         else:
             raise ValueError(f"no plate form for extra {e['kind']}")
     m0 = np.zeros((h, w), np.float32)
@@ -178,7 +193,7 @@ def recompose(P, parts, glows=(), S=2):
     X = P
     for g in glows:
         X = D.glow(X, S, g["x"], g["y"], g["r"], g["col"], g["k"])
-    X = screen(X, parts["A"]) * parts["T"][..., None]
+    X = screen(X, parts["A"]) * (parts["T"] if parts["T"].ndim == 3 else parts["T"][..., None])
     X = X * parts["K"][..., None] + parts["C"]
     if "W" in parts:
         X = screen(X, parts["W"])
@@ -524,11 +539,12 @@ def recomposed(recipe, level, S=1):
     return sc, rebuild(recipe, level, P, parts, glows, small_lights(recipe, level), S), (P, parts, glows)
 
 
-def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09")):
+def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09", "base-25")):
     """The converter proves itself (every checker does): the dress rebuilt from the parts the converter ships equals the
     dress (OKLab max 0.002 at 2x, on a chart with routes and ticks, a game painting with cloth and lantern posts, and our
-    own painting), and the same rebuild with the framing's cover left out (the cloth laid over the scene, not in place of
-    it) is caught (over the gate's 0.02); the mask terms convert as the runtime reads them."""
+    own painting, and 5-5's map with a compass rose, whose ticks plate is then in colour), and the same rebuild with the
+    framing's cover left out (the cloth laid over the scene, not in place of it) is caught (over the gate's 0.02); the
+    mask terms convert as the runtime reads them."""
     from .dress import dress
     from .scene import load_recipe
     cases = []

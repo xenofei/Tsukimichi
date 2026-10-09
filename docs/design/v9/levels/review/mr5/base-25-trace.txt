@@ -1,0 +1,4 @@
+  skipped ((242, 288), 'west shore', '6.3 from the peg at (221, 288)')
+  skipped ((392, 330), 'bay shore', '10.3 from the peg at (372, 312)')
+  pieces 79 (pegs 76, bricks 3, movers 4); candidates 32; green-only 28; skipped while tracing 2
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-5\docs\design\v9\levels\build\trace\base-25.png

@@ -1,0 +1,131 @@
+{
+ "name": "harbour-lights",
+ "about": "Our own painting: Limsa Lominsa's Lower Decks harbour by night, seen from the water near the basin's mouth. The back quay curves round the basin with a row of iron lamp posts on its coping, a timber jetty runs out toward us on the right with two more, and every lamp lays a long broken column of light down the water toward us; the city climbs in stone terraces behind, and a young crescent hangs in the upper left, clear of the launcher (painters/harbourlights.py; shipped as a JPEG). No figure is painted.",
+ "source": {
+  "kind": "painting",
+  "painter": "harbourlights",
+  "params": {}
+ },
+ "ceilingExempt": [
+  [150, 70, 30]
+ ],
+ "veil": 0.22,
+ "features": {},
+ "dress": {
+  "palette": {
+   "name": "Harbour blue and sea teal (the Lower Decks' lamps)",
+   "sky": "#141C48",
+   "deep": "#060A1C",
+   "jewel1": "#2A60C8",
+   "jewel2": "#48B07E",
+   "warm": "#FFB45E",
+   "rim": "#BFD6FF"
+  },
+  "jewel": {
+   "bands": [
+    [0, "#2A64C8"],
+    [600, "#2260B8"]
+   ],
+   "valueHues": [
+    [0.08, "#1A2A8A"],
+    [0.45, "#C9DCFF"]
+   ],
+   "chroma": 1.6,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#48B07E",
+     "chroma": 0.26,
+     "mask": [
+      ["poly", "water", 16],
+      ["luma", 0.38, 0.24, 3],
+      ["x", 75, 135],
+      ["x", 725, 665]
+     ]
+    },
+    {
+     "hex": "#FFE6A0",
+     "chroma": 0.16,
+     "mask": [
+      ["luma", 0.34, 0.46, 2],
+      ["y", 96, 112]
+     ]
+    }
+   ],
+   "keepMasks": [[["poly", "water", 16], ["luma", 0.28, 0.40, 2]]],
+   "quiet": [54, 20],
+   "regionQuiet": 0.6
+  },
+  "shafts": [
+   {
+    "origin": [150, 70],
+    "angles": [30, 44, 58],
+    "widths": [22, 30, 22],
+    "k": 0.035,
+    "col": "#D8DCFF",
+    "reach": 520,
+    "near": 50
+   }
+  ],
+  "framing": [
+   {
+    "kind": "rope",
+    "a": [75, 40],
+    "b": [210, 30],
+    "sag": 14,
+    "width": 1.6
+   },
+   {
+    "kind": "rope",
+    "a": [590, 30],
+    "b": [725, 40],
+    "sag": 14,
+    "width": 1.6
+   }
+  ],
+  "silhouette": {
+   "body": "#06071A",
+   "inner": "#141E4E",
+   "rim": "#BFD6FF",
+   "rimK": 0.4,
+   "seed": 23
+  },
+  "lights": [
+   {
+    "points": [
+     [112.0, 224.0, 1.15],
+     [286.0, 191.7, 0.97],
+     [466.0, 188.0, 0.91],
+     [612.0, 272.9, 1.18],
+     [690.0, 299.5, 1.32],
+     [410.0, 331.3, 0.95]
+    ],
+    "col": "#FFC777",
+    "r": 1.6,
+    "k": 0.6,
+    "halo": 8,
+    "hk": 0.14
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 10,
+   "stars": 30,
+   "mist": [
+    {
+     "y": [530, 594],
+     "speed": 3,
+     "alpha": 0.11,
+     "cell": 150,
+     "seed": 23,
+     "colour": "#B8CCF0"
+    }
+   ],
+   "starWhere": [
+    ["y", 200, 186]
+   ]
+  },
+  "flicker": [0]
+ }
+}
