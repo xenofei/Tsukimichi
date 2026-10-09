@@ -157,6 +157,49 @@ public sealed class MoonfallScenePipelinePartsTests
     }
 
     [Fact]
+    public void Clone_fills_a_box_with_the_pictures_own_pixels_from_its_offset()
+    {
+        // Vertical stripes of period 4 (a map's hatching), with a mark in (80, 80)-(120, 120).
+        var image = Grey(200, 200, 0.3f);
+        for (var y = 0; y < 200; y++)
+        {
+            for (var x = 0; x < 200; x++)
+            {
+                image.R.Data[(y * 200) + x] = x % 4 < 2 ? 0.2f : 0.6f;
+            }
+        }
+
+        for (var y = 80; y < 120; y++)
+        {
+            for (var x = 80; x < 120; x++)
+            {
+                image.R.Data[(y * 200) + x] = 0.9f;
+            }
+        }
+
+        var cloned = MoonfallSceneBuilder.Clone(image, [(new Vector4(80, 80, 40, 40), new Vector2(60, 0))]);
+
+        // The mark's middle takes the stripes from 60 px away, in phase, so the hatching runs on through it.
+        Assert.Equal(0.2f, cloned.R.Data[(100 * 200) + 100], 3);
+        Assert.Equal(0.6f, cloned.R.Data[(100 * 200) + 102], 3);
+        Assert.Equal(0.6f, cloned.R.Data[(10 * 200) + 10], 6);
+
+        // A box whose source window falls outside the picture is left as it was, and so is the source.
+        var skipped = MoonfallSceneBuilder.Clone(image, [(new Vector4(80, 80, 40, 40), new Vector2(150, 0))]);
+        Assert.Equal(0.9f, skipped.R.Data[(100 * 200) + 100], 6);
+        Assert.Equal(0.9f, image.R.Data[(100 * 200) + 100], 6);
+    }
+
+    [Fact]
+    public void A_converted_map_reads_its_clone_boxes()
+    {
+        var r = Read(Shipped("thal-night-walk"));
+        Assert.Equal(3, r.Source.Erase.Count);
+        Assert.Equal(3, r.Source.CloneBoxes.Count);
+        Assert.Equal((new Vector4(701, 1000, 98, 49), new Vector2(40, 71)), r.Source.CloneBoxes[0]);
+    }
+
+    [Fact]
     public void The_land_is_what_a_flood_from_the_corners_cannot_reach()
     {
         // A light sheet with a dark ring round (300, 200)-(500, 400): inside it is land, outside sea.

@@ -120,6 +120,16 @@ public static class MoonfallPlaces
         ["cloudsea-beacons"] = MoonfallPlace.Nowhere,
         ["cloudlane"] = MoonfallPlace.Nowhere,
         ["sky-whale"] = MoonfallPlace.Nowhere,
+
+        // The Moon Road's stage 4, The Sunlit Steps (charter section 2; sources-plan.md wins where they differ). 4-1 and
+        // 4-4 read the Steps of Thal city map (the Coliseum is on the Thal map, not Nald: sources-plan.md). 4-2 is the
+        // Thanalan loading painting's east strip (as uldah-gilded-dome), 4-3 our painting of the lamplit steps, and 4-5
+        // the Steps of Nald city map: Ul'dah - Steps of Nald. All five fall back to moon-road-night.
+        ["thal-night-walk"] = new(ARealmReborn, "Ul'dah - Steps of Thal"),
+        ["uldah-spire-sands"] = new(ARealmReborn, "Ul'dah - Steps of Nald"),
+        ["lamp-steps"] = new(ARealmReborn, "Ul'dah - Steps of Nald"),
+        ["uldah-coliseum"] = new(ARealmReborn, "Ul'dah - Steps of Thal"),
+        ["uldah-from-the-sands"] = new(ARealmReborn, "Ul'dah - Steps of Nald"),
     };
 
     /// <summary>

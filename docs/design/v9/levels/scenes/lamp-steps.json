@@ -1,0 +1,242 @@
+{
+ "name": "lamp-steps",
+ "about": "Our own painting: a stair of lamp glows climbing a dark sandstone terrace below the Steps of Nald, Ul'dah by night; three balustraded flights zigzag up the terrace's face, brass lanterns on their newel posts each throwing a pool of light on the stone, a lit doorway and a great gateway in the wall, crimson banners under the parapet and the city's domes and minaret against a violet sky with the moon over the great dome, well off the launcher's axis (painters/lampsteps.py; shipped as a JPEG). Light only, no figure. The flames are gold, but the stone they light and the glow they throw into the air are rose and rose-lilac: an amber pool round every ring read as orange's own family under protan (F9 p10 0.094), the rose pool reads 0.107. The second jewel (crimson) is the lamplit stone by its lightness, the two banners and the gateway's opening; the luma region fades out below y 452 so the gateway does not glow as a blob. No moon stands on a flame: the lamps' small lights are a warm gold core with a short halo that ends well inside each ring, and they flicker at runtime (MR 4 round 1, game designer m1).",
+ "source": {
+  "kind": "painting",
+  "painter": "lampsteps",
+  "params": {}
+ },
+ "ceilingExempt": [
+  [
+   128,
+   58,
+   44
+  ]
+ ],
+ "veil": 0.22,
+ "features": {},
+ "dress": {
+  "palette": {
+   "name": "Violet night and lamplit crimson (the Steps of Nald)",
+   "sky": "#140C38",
+   "deep": "#08061A",
+   "jewel1": "#4450D4",
+   "jewel2": "#C43838",
+   "warm": "#FFB45E",
+   "rim": "#E8D0FF"
+  },
+  "jewel": {
+   "bands": [
+    [
+     0,
+     "#4450D4"
+    ],
+    [
+     214,
+     "#464ECE"
+    ],
+    [
+     600,
+     "#4048C2"
+    ]
+   ],
+   "valueHues": [
+    [
+     0.08,
+     "#24287C"
+    ],
+    [
+     0.45,
+     "#D6DCFF"
+    ]
+   ],
+   "chroma": 1.1,
+   "floor": 0.04,
+   "keep": 0.15,
+   "regions": [
+    {
+     "hex": "#C43838",
+     "chroma": 0.12,
+     "mask": [
+      [
+       "luma",
+       0.2,
+       0.32,
+       3
+      ],
+      [
+       "y",
+       196,
+       222
+      ],
+      [
+       "y",
+       484,
+       452
+      ],
+      [
+       "x",
+       75,
+       135
+      ],
+      [
+       "x",
+       725,
+       665
+      ]
+     ]
+    },
+    {
+     "hex": "#C43838",
+     "chroma": 0.13,
+     "mask": [
+      [
+       "poly",
+       "banner 1",
+       3
+      ]
+     ]
+    },
+    {
+     "hex": "#C43838",
+     "chroma": 0.13,
+     "mask": [
+      [
+       "poly",
+       "banner 2",
+       3
+      ]
+     ]
+    },
+    {
+     "hex": "#C43838",
+     "chroma": 0.07,
+     "mask": [
+      [
+       "poly",
+       "gate opening",
+       6
+      ]
+     ]
+    }
+   ],
+   "quiet": [
+    40,
+    18
+   ],
+   "regionQuiet": 0.35
+  },
+  "shafts": [
+   {
+    "origin": [
+     128,
+     58
+    ],
+    "angles": [
+     38,
+     50,
+     62
+    ],
+    "widths": [
+     20,
+     26,
+     20
+    ],
+    "k": 0.035,
+    "col": "#D8DCFF",
+    "reach": 640,
+    "near": 60
+   }
+  ],
+  "framing": [],
+  "silhouette": {
+   "body": "#06071A",
+   "inner": "#141E4E",
+   "rim": "#E8D0FF",
+   "rimK": 0.4,
+   "seed": 18
+  },
+  "lights": [
+   {
+    "points": [
+     [
+      640.0,
+      456.0,
+      1.0
+     ],
+     [
+      418.0,
+      416.2,
+      1.0
+     ],
+     [
+      160.0,
+      370.0,
+      1.0
+     ],
+     [
+      348.0,
+      329.4,
+      1.0
+     ],
+     [
+      466.0,
+      304.0,
+      1.0
+     ],
+     [
+      632.0,
+      268.0,
+      1.0
+     ],
+     [
+      520.0,
+      239.8,
+      1.0
+     ],
+     [
+      330.0,
+      192.0,
+      1.0
+     ],
+     [
+      600.0,
+      398.0,
+      0.85
+     ],
+     [
+      196.0,
+      272.0,
+      0.85
+     ]
+    ],
+    "col": "#FFC264",
+    "r": 3.0,
+    "k": 1.0,
+    "halo": 10,
+    "hk": 0.5
+   }
+  ]
+ },
+ "runtime": {
+  "motion": {
+   "dust": 14,
+   "stars": 30,
+   "starWhere": [
+    [
+     "y",
+     180,
+     160
+    ]
+   ]
+  },
+  "flicker": [
+   0
+  ],
+  "feverMoon": [
+   128,
+   58,
+   20
+  ]
+ }
+}

@@ -1,0 +1,14 @@
+stage mr4: 5 levels
+level    name                         pieces  greedy  ramp/48  random     jewels source
+base-16  The Steps of Thal                62      23     26.0       0    270/338 ui/map/w1t2/01/w1t201_m.tex
+base-17  The Spire of the Sands           67      29     25.6       1     233/63 ui/loadingimage/-nowloading_base02_hr1.tex
+base-18  Lamps on the Steps               78      31     23.7       0      282/1 our painting (lampsteps)
+base-19  The Coliseum                     77      15     22.1       0    261/179 ui/map/w1t2/02/w1t202_m.tex
+base-20  Ul'dah from the Sands            69      13     18.1       0    321/233 ui/map/w1t1/01/w1t101_m.tex
+  base-16: held-out 26.0, 5184 fresh 26.9, pooled 26.68 per 48 (+-0.29) over 6912 games
+  base-17: held-out 25.6, 5184 fresh 25.2, pooled 25.3 per 48 (+-0.29) over 6912 games
+  base-18: held-out 23.7, 5184 fresh 23.5, pooled 23.55 per 48 (+-0.29) over 6912 games
+  base-19: held-out 22.1, 5184 fresh 21.9, pooled 21.95 per 48 (+-0.29) over 6912 games
+  base-20: held-out 18.1, 5184 fresh 17.8, pooled 17.88 per 48 (+-0.28) over 6912 games
+  pooled steps: 1.38 +- 0.41, 1.75 +- 0.41, 1.60 +- 0.41, 4.07 +- 0.40
+game paintings 4 of 5; verdicts: base-16 PASS, base-17 PASS, base-18 PASS, base-19 PASS, base-20 PASS

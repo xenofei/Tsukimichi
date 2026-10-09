@@ -27,6 +27,13 @@ public sealed record MoonfallSceneSource(MoonfallSourceKind Kind, string Path, b
     /// cut: a map's exit arrows and stray marks leave plain parchment behind (the level pipeline's <c>scene._erase</c>).
     /// </summary>
     public IReadOnlyList<Vector4> Erase { get; init; } = [];
+
+    /// <summary>
+    /// Boxes (x, y, w, h) in the source's own pixels filled, after the erase boxes, with the source's own pixels (dx, dy)
+    /// away, feathered as an erase is: a hatched field keeps its hatching where a map's arrow was (the level pipeline's
+    /// <c>scene._clone</c>). A box whose source window falls outside the picture is skipped.
+    /// </summary>
+    public IReadOnlyList<(Vector4 Box, Vector2 From)> CloneBoxes { get; init; } = [];
 }
 
 /// <summary>One factor of a mask: a band of a quantity, smoothstepped, optionally inverted and scaled.</summary>

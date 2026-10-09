@@ -1,0 +1,650 @@
+{
+ "name": "thal-night-walk",
+ "about": "Ul'dah's Steps of Thal on the game's own city map (w1t2/01), read as a plan by night: the Gate of Thal on the east, the market arcade of the Sapphire Avenue Exchange running north from it, the bridge west to the head of Pearl Lane's pillared hall, the Gold Court's ring and the stair up to the Steps of Nald; the Coliseum, the guilds and Onyx Lane round them. The city's footprint (a rim-fill of the plan's hatched shadow, grown until the exits close) is lit rose stone, its darkest hatching left in the night's blue so each block keeps its edge; the parchment round it falls to deep blue night (x 0.66), and the faint ghost of the lower floor in the north-west is lifted (x 1.4) so that corner is not bare. The walk is engraved in gilt, where the runtime's glints run: long, faint dashes (10 on, 6 off, alpha 0.45-0.5, width 2) so the trail never reads as the aim guide's dots at 640, and broken where it passes under the launcher (the route from the Gate stops at (468, 185), 68 from the guide's first 60 units under the ball; the Court's stair route starts at its fountain), so a straight or shallow aim never lies beside a second dotted line (UX MR 4 round 1, m2); a few lamps flicker on the market's east wall and in the lower guilds. The map's red exit arrows are erased (plain parchment fills them; the three inside the opening are cloned over from the map's own parchment and hatching nearby, so no smooth patch shows on the plan: game designer MR 4 rounds 1 and 2, m4/m3) except the two the walk uses: the Gate of Thal's, where it comes in, and the Gold Court's stair arrow, where it leaves for the Steps of Nald. Crop [660, 740, 920, 690]: the plan fills the opening (sources-plan's [560, 620, 960, 720] left its north-west quarter empty and cut the city's south off at the bucket); 920 px is a little under 2-3's 960, and the map's flat style holds at 2x.",
+ "source": {
+  "kind": "game",
+  "texture": "ui/map/w1t2/01/w1t201_m.tex",
+  "mirror": false,
+  "crop": [
+   660,
+   740,
+   920,
+   690
+  ],
+  "erase": [
+   [
+    1109,
+    732,
+    87,
+    59
+   ],
+   [
+    1071,
+    790,
+    80,
+    70
+   ],
+   [
+    1094,
+    1344,
+    117,
+    76
+   ]
+  ],
+  "clone": [
+   [
+    701,
+    1000,
+    98,
+    49,
+    40,
+    71
+   ],
+   [
+    878,
+    1046,
+    46,
+    66,
+    245,
+    76
+   ],
+   [
+    1162,
+    951,
+    43,
+    72,
+    70,
+    140
+   ]
+  ],
+  "grade": {
+   "gamma": 1.5,
+   "exposure": 0.6,
+   "warm_keep": 0.25,
+   "chroma_mid": 0.45
+  }
+ },
+ "masks": {
+  "land": {
+   "kind": "rim-fill",
+   "threshold": 0.72,
+   "grow": 10
+  }
+ },
+ "tone": [
+  {
+   "mask": [
+    [
+     "not-mask",
+     "land",
+     24
+    ]
+   ],
+   "mul": 0.66
+  },
+  {
+   "mask": [
+    [
+     "not-mask",
+     "land",
+     24
+    ],
+    [
+     "x",
+     340,
+     220
+    ],
+    [
+     "y",
+     300,
+     200
+    ]
+   ],
+   "mul": 1.4
+  }
+ ],
+ "veil": 0.38,
+ "features": {
+  "gate of thal": [
+   [
+    592,
+    318
+   ]
+  ],
+  "exchange": [
+   [
+    560,
+    232
+   ]
+  ],
+  "pearl plaza": [
+   [
+    436,
+    180
+   ]
+  ],
+  "gold court": {
+   "circle": [
+    315,
+    247,
+    46
+   ]
+  },
+  "coliseum": [
+   [
+    157,
+    245
+   ]
+  ],
+  "round plaza": [
+   [
+    465,
+    342
+   ]
+  ],
+  "walk market": {
+   "points": [
+    [
+     592,
+     318
+    ],
+    [
+     568,
+     300
+    ],
+    [
+     562,
+     270
+    ],
+    [
+     560,
+     232
+    ]
+   ],
+   "smooth": 6
+  },
+  "walk bridge": {
+   "points": [
+    [
+     560,
+     232
+    ],
+    [
+     550,
+     202
+    ],
+    [
+     522,
+     192
+    ],
+    [
+     490,
+     189
+    ],
+    [
+     460,
+     184
+    ],
+    [
+     436,
+     180
+    ]
+   ],
+   "smooth": 6
+  },
+  "walk court": {
+   "points": [
+    [
+     436,
+     180
+    ],
+    [
+     405,
+     195
+    ],
+    [
+     375,
+     212
+    ],
+    [
+     345,
+     230
+    ],
+    [
+     315,
+     247
+    ]
+   ],
+   "smooth": 6
+  },
+  "the steps": {
+   "points": [
+    [
+     300,
+     200
+    ],
+    [
+     293,
+     170
+    ],
+    [
+     284,
+     138
+    ]
+   ],
+   "smooth": 4
+  },
+  "steps of nald": [
+   [
+    272,
+    104
+   ]
+  ],
+  "walk in": {
+   "points": [
+    [
+     690,
+     352
+    ],
+    [
+     655,
+     336
+    ],
+    [
+     625,
+     322
+    ]
+   ],
+   "smooth": 0
+  },
+  "onyx lane": {
+   "points": [
+    [
+     290,
+     372
+    ],
+    [
+     322,
+     396
+    ],
+    [
+     356,
+     418
+    ],
+    [
+     398,
+     424
+    ],
+    [
+     440,
+     426
+    ]
+   ],
+   "smooth": 6
+  },
+  "gladiators": {
+   "points": [
+    [
+     176,
+     278
+    ],
+    [
+     200,
+     302
+    ],
+    [
+     222,
+     326
+    ]
+   ],
+   "smooth": 0
+  },
+  "arcade north": {
+   "points": [
+    [
+     548,
+     200
+    ],
+    [
+     538,
+     165
+    ],
+    [
+     524,
+     130
+    ],
+    [
+     508,
+     98
+    ],
+    [
+     492,
+     70
+    ]
+   ],
+   "smooth": 6
+  },
+  "west spoke": {
+   "points": [
+    [
+     268,
+     247
+    ],
+    [
+     230,
+     247
+    ],
+    [
+     190,
+     246
+    ]
+   ],
+   "smooth": 0
+  },
+  "south spoke": {
+   "points": [
+    [
+     302,
+     292
+    ],
+    [
+     294,
+     326
+    ],
+    [
+     286,
+     360
+    ]
+   ],
+   "smooth": 0
+  },
+  "weavers": {
+   "points": [
+    [
+     492,
+     360
+    ],
+    [
+     526,
+     382
+    ],
+    [
+     562,
+     402
+    ]
+   ],
+   "smooth": 0
+  },
+  "pearl hall": {
+   "points": [
+    [
+     431,
+     245
+    ],
+    [
+     434,
+     265
+    ],
+    [
+     437,
+     286
+    ]
+   ],
+   "smooth": 0
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Violet night and rose stone (the Steps of Thal)",
+   "sky": "#18174E",
+   "deep": "#080820",
+   "jewel1": "#4A3CB8",
+   "jewel2": "#B05C7C",
+   "warm": "#FFB45E",
+   "rim": "#B4A8FF"
+  },
+  "jewel": {
+   "bands": [
+    [
+     0,
+     "#2E60D4"
+    ],
+    [
+     600,
+     "#2A5CC8"
+    ]
+   ],
+   "chroma": 1.25,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#BA5868",
+     "chroma": 0.1,
+     "mask": [
+      [
+       "mask",
+       "land",
+       24
+      ],
+      [
+       "luma",
+       0.2,
+       0.3,
+       3
+      ],
+      [
+       "x",
+       75,
+       135
+      ],
+      [
+       "x",
+       725,
+       665
+      ]
+     ]
+    }
+   ],
+   "quiet": [
+    64,
+    24
+   ],
+   "regionQuiet": 0.1
+  },
+  "glows": [
+   {
+    "x": 640,
+    "y": 330,
+    "r": 240,
+    "col": "#FFC27A",
+    "k": 0.03
+   }
+  ],
+  "shafts": [
+   {
+    "origin": [
+     860,
+     -160
+    ],
+    "angles": [
+     130,
+     122,
+     113
+    ],
+    "widths": [
+     46,
+     32,
+     52
+    ],
+    "k": 0.05,
+    "col": "#FFD9A0"
+   }
+  ],
+  "extras": [
+   {
+    "kind": "chart_border"
+   }
+  ],
+  "silhouette": {
+   "body": "#060818",
+   "inner": "#1A1C50",
+   "rim": "#C0B4FF",
+   "rimK": 0.4,
+   "seed": 16
+  },
+  "lights": [
+   {
+    "points": [
+     [
+      604,
+      128,
+      1.0
+     ],
+     [
+      606,
+      160,
+      0.9
+     ],
+     [
+      612,
+      196,
+      1.0
+     ],
+     [
+      330,
+      470,
+      0.9
+     ],
+     [
+      372,
+      486,
+      1.0
+     ],
+     [
+      452,
+      468,
+      0.9
+     ],
+     [
+      300,
+      505,
+      0.8
+     ]
+    ],
+    "col": "#FFC86E",
+    "r": 1.2,
+    "k": 0.7,
+    "halo": 4.5,
+    "hk": 0.2
+   }
+  ]
+ },
+ "overlays": [
+  {
+   "kind": "route",
+   "points": [
+    [
+     700,
+     356
+    ],
+    [
+     655,
+     336
+    ],
+    [
+     620,
+     320
+    ],
+    [
+     592,
+     318
+    ],
+    [
+     568,
+     300
+    ],
+    [
+     562,
+     270
+    ],
+    [
+     560,
+     232
+    ],
+    [
+     550,
+     202
+    ],
+    [
+     522,
+     192
+    ],
+    [
+     490,
+     189
+    ],
+    [
+     468,
+     185
+    ]
+   ],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.45,
+   "dash": 10,
+   "gap": 6
+  },
+  {
+   "kind": "route",
+   "points": [
+    [
+     315,
+     247
+    ],
+    [
+     300,
+     200
+    ],
+    [
+     293,
+     170
+    ],
+    [
+     284,
+     138
+    ],
+    [
+     276,
+     112
+    ]
+   ],
+   "color": "#D9BE82",
+   "width": 2.0,
+   "alpha": 0.5,
+   "dash": 10,
+   "gap": 6
+  }
+ ],
+ "runtime": {
+  "motion": {
+   "dust": 22
+  },
+  "glints": [
+   {
+    "overlay": 0,
+    "speed": 30,
+    "every": 30,
+    "offset": 0
+   },
+   {
+    "overlay": 1,
+    "speed": 30,
+    "every": 30,
+    "offset": 15
+   }
+  ],
+  "flicker": [
+   0
+  ]
+ }
+}

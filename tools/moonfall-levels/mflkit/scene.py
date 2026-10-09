@@ -4,6 +4,7 @@ The recipe's `source` is either
 
   {"kind": "game", "texture": "ui/loadingimage/-nowloading_base02_hr1.tex", "mirror": false,
    "crop": [x, y, w, h], "pad": [top, left], "padMode": "edge", "erase": [[x, y, w, h], ...],
+   "clone": [[x, y, w, h, dx, dy], ...],
    "grade": {...night_lab parameters...}, "hour": "night" | "far", "skyDrop": 0.3, "glow": [x, y]}
 
 which is what the plugin runs at load (read the texture from the install, crop, grade, cache), or
@@ -59,6 +60,28 @@ def _erase(src, boxes, feather=6):
     return out
 
 
+def _clone(src, boxes, feather=6):
+    """Fills each box (source px, after the erase boxes) with the source's own pixels (dx, dy) away, laid in with the
+    erase's feather, so a hatched field keeps its hatching where a map's arrow was (an erase's diffused fill shows there
+    as a smooth patch: game designer MR 4 rounds 1 and 2, m4/m3). A box whose source window falls outside is skipped."""
+    out = src.copy()
+    H, W, _ = src.shape
+    for (x, y, w, h, dx, dy) in boxes:
+        x0, y0, x1, y1 = max(0, int(x)), max(0, int(y)), min(W, int(x + w)), min(H, int(y + h))
+        dx, dy = int(dx), int(dy)
+        pad = 12
+        X0, Y0, X1, Y1 = max(0, x0 - pad), max(0, y0 - pad), min(W, x1 + pad), min(H, y1 + pad)
+        if x1 <= x0 or y1 <= y0 or X0 + dx < 0 or Y0 + dy < 0 or X1 + dx > W or Y1 + dy > H:
+            continue
+        patch = out[Y0:Y1, X0:X1].copy()
+        fill = out[Y0 + dy:Y1 + dy, X0 + dx:X1 + dx].copy()
+        m = np.zeros(patch.shape[:2], np.float32)
+        m[y0 - Y0:y1 - Y0, x0 - X0:x1 - X0] = 1
+        mm = RL.blur(m, feather / 2)[..., None]
+        out[Y0:Y1, X0:X1] = patch * (1 - mm) + fill * mm
+    return out
+
+
 def graded(recipe, S=1):
     """The graded scene at S device px per unit, without the dress (float RGB)."""
     src = recipe["source"]
@@ -70,6 +93,8 @@ def graded(recipe, S=1):
         img = RL.load_rgb(p)
         if src.get("erase"):
             img = _erase(img, src["erase"])
+        if src.get("clone"):
+            img = _clone(img, src["clone"])
         if src.get("mirror"):
             img = img[:, ::-1]
         top, left = src.get("pad", (0, 0))
@@ -131,6 +156,8 @@ def derived_mask(recipe, name, S):
     img = RL.load_rgb(CACHE / cache_name(src["texture"]))
     if src.get("erase"):
         img = _erase(img, src["erase"])
+    if src.get("clone"):
+        img = _clone(img, src["clone"])
     if src.get("mirror"):
         img = img[:, ::-1]
     x, y, w, h = src["crop"]
