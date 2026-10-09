@@ -1,0 +1,50 @@
+{
+ "name": "meteor-shower",
+ "about": "Our own painting: a meteor shower over the mountains on a still night. Seven bright meteors and a spray of faint ones streak away from the radiant in the upper left, the fireball across the upper right leaving a faint train; the Milky Way rises up the right side; the airglow lights the horizon aqua over three ranges of mountains, the far one snow-capped (painters/meteors.py; shipped as a JPEG). The second jewel is the airglow's aqua on the mountains and the mist in their valleys, below the pieces (a band among the meteors would sit under the orange candidates, and protan orange on aqua fails F9), faded at the walls.",
+ "source": {
+  "kind": "painting",
+  "painter": "meteors",
+  "params": {}
+ },
+ "veil": 0.22,
+ "dress": {
+  "palette": {
+   "name": "Azure night, the airglow aqua over the mountains",
+   "sky": "#0C2050",
+   "deep": "#040818",
+   "jewel1": "#2890D0",
+   "jewel2": "#3EAA70",
+   "warm": "#FFB45E",
+   "rim": "#C8E0FF"
+  },
+  "jewel": {
+   "bands": [[0, "#2A8ACC"], [300, "#2890D0"], [600, "#2888C4"]],
+   "valueHues": [[0.08, "#0B4682"], [0.45, "#CCE8FF"]],
+   "chroma": 1.4,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#3EAA70",
+     "chroma": 0.40,
+     "mask": [["y", 430, 480], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [70, 28],
+   "regionQuiet": 0.6
+  },
+  "shafts": [],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16144A",
+   "rim": "#C0C8FF",
+   "rimK": 0.0,
+   "seed": 29
+  }
+ },
+ "runtime": {
+  "motion": {
+   "stars": 36,
+   "starWhere": [["poly", "star sky", 8]]
+  }
+ }
+}

@@ -4,341 +4,390 @@
  "stage": 6,
  "number": 28,
  "scene": "seers-chart",
- "subject": "Eorzea's cities as stars joined by the ley lines Urianger reads",
- "technique": "a set of points (each city a ring stop) joined by dotted ley lines",
+ "subject": "Eorzea's cities as stars on the world map, joined by the ley lines Urianger reads",
+ "technique": "a set of points (each city a ring of moons round its star) joined by dotted ley lines",
  "source": "ui/map/world/01/world01_m.tex",
  "checks": {
   "preflight": {
    "problems": [],
-   "pieces": 75,
-   "pegs": 74,
-   "bricks": 1,
+   "pieces": 73,
+   "pegs": 69,
+   "bricks": 4,
    "movers": 0,
    "orange_candidates": 30,
-   "never_green": 39,
+   "never_green": 37,
    "skipped_while_tracing": [
     [
      [
-      490,
-      160
+      298,
+      361
      ],
-     "cloud edge",
-     "-9.0 from the peg at (486, 166)"
+     "ley limsa",
+     "-0.5 from the peg at (311, 354)"
     ],
     [
      [
-      638,
-      242
+      332,
+      298
      ],
-     "cloud edge",
-     "-2.4 from the peg at (646, 253)"
+     "ley ishgard",
+     "3.3 from the peg at (346, 310)"
     ],
     [
      [
-      666,
-      262
+      393,
+      329
      ],
-     "cloud edge",
-     "5.9 from the peg at (646, 253)"
+     "ley ala mhigo",
+     "4.7 from the peg at (374, 324)"
+    ],
+    [
+     [
+      229,
+      288
+     ],
+     "ley west",
+     "10.0 from the peg at (214, 306)"
+    ],
+    [
+     [
+      368,
+      233
+     ],
+     "ley north",
+     "12.7 from the peg at (387, 253)"
+    ],
+    [
+     [
+      503,
+      309
+     ],
+     "ley south-east",
+     "8.4 from the peg at (524, 299)"
+    ],
+    [
+     [
+      377,
+      421
+     ],
+     "ley south-east",
+     "14.0 from the peg at (398, 402)"
+    ],
+    [
+     [
+      289,
+      447
+     ],
+     "ley south",
+     "7.5 from the peg at (311, 447)"
     ]
    ]
   },
   "loader": {
    "ok": true,
    "output": [
-    "OK   base-28.json  id=base-28 \"The Seer's Chart\"  pieces=75 (round 74, bricks 1, movers 0)  mayBeOrange=30",
-    "     still round pegs 74: closest surfaces 14.1 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
-    "     rows used y 138..509"
+    "OK   base-28.json  id=base-28 \"The Seer's Chart\"  pieces=73 (round 69, bricks 4, movers 0)  mayBeOrange=30",
+    "     still round pegs 69: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 122..479"
    ]
   },
   "sweep": {
    "angles": 681,
-   "pegs_median": 10,
-   "pegs_mean": 10.0,
-   "pegs_max": 23,
-   "oranges_mean": 3.41,
+   "pegs_median": 8,
+   "pegs_mean": 8.5,
+   "pegs_max": 21,
+   "oranges_mean": 3.36,
    "no_hit": 0,
    "stuck": 8,
    "stuck_share": 0.012,
    "long_flights": 0,
-   "bucket": 106,
+   "bucket": 92,
    "unreached": [],
-   "pieces": 75
+   "pieces": 73
   },
   "reach": {
    "rounds": 1,
    "never": []
   },
   "play": {
-   "greedy_won": 22,
+   "greedy_won": 21,
    "games": 48,
    "oranges_left_when_lost": [
+    2,
+    1,
     5,
+    1,
+    1,
+    1,
+    1,
+    1,
+    2,
+    1,
+    2,
+    1,
+    2,
+    1,
+    5,
+    5,
+    1,
+    2,
+    2,
+    2,
+    4,
     6,
-    2,
-    3,
-    2,
-    3,
-    3,
-    1,
-    4,
-    2,
-    2,
-    2,
-    1,
-    1,
-    1,
-    4,
-    2,
-    2,
-    3,
-    7,
-    1,
-    1,
-    2,
     5,
-    4,
-    3
+    2,
+    2,
+    1,
+    1
    ],
    "ramp_games": 1728,
-   "ramp_won": 840,
-   "ramp_per_48": 23.3,
-   "shots_mean": 13.9,
-   "stuck_fires": 69,
-   "random_won": 1,
-   "random_oranges_mean": 18.6,
+   "ramp_won": 804,
+   "ramp_per_48": 22.3,
+   "shots_mean": 13.8,
+   "stuck_fires": 73,
+   "random_won": 0,
+   "random_oranges_mean": 18.5,
    "low_left_share": 0.0,
    "lost_with_low_orange": 0.0,
    "holdouts": [
     {
-     "piece": 29,
+     "piece": 44,
      "at": [
-      212,
-      410
+      214,
+      306
      ],
-     "share_of_lost_games": 0.16
+     "share_of_lost_games": 0.23
     },
     {
-     "piece": 21,
+     "piece": 68,
      "at": [
-      353,
-      361
+      700,
+      300
      ],
-     "share_of_lost_games": 0.16
+     "share_of_lost_games": 0.21
     },
     {
-     "piece": 53,
+     "piece": 67,
      "at": [
-      646,
-      253
+      536,
+      400
      ],
-     "share_of_lost_games": 0.16
+     "share_of_lost_games": 0.18
     },
     {
-     "piece": 64,
+     "piece": 65,
      "at": [
-      610,
-      334
+      570,
+      343
      ],
-     "share_of_lost_games": 0.16
-    },
-    {
-     "piece": 18,
-     "at": [
-      431,
-      361
-     ],
-     "share_of_lost_games": 0.15
+     "share_of_lost_games": 0.17
     },
     {
      "piece": 22,
      "at": [
-      361,
-      327
+      338,
+      428
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 62,
+     "at": [
+      590,
+      323
      ],
      "share_of_lost_games": 0.15
     },
     {
-     "piece": 59,
+     "piece": 66,
      "at": [
-      574,
-      422
+      660,
+      358
      ],
      "share_of_lost_games": 0.15
     },
     {
-     "piece": 39,
+     "piece": 3,
      "at": [
-      264,
-      393
+      362,
+      378
      ],
      "share_of_lost_games": 0.15
-    },
-    {
-     "piece": 19,
-     "at": [
-      409,
-      388
-     ],
-     "share_of_lost_games": 0.14
-    },
-    {
-     "piece": 60,
-     "at": [
-      698,
-      342
-     ],
-     "share_of_lost_games": 0.11
-    },
-    {
-     "piece": 36,
-     "at": [
-      488,
-      315
-     ],
-     "share_of_lost_games": 0.11
-    },
-    {
-     "piece": 47,
-     "at": [
-      288,
-      260
-     ],
-     "share_of_lost_games": 0.1
-    },
-    {
-     "piece": 12,
-     "at": [
-      588,
-      278
-     ],
-     "share_of_lost_games": 0.1
     },
     {
      "piece": 28,
      "at": [
-      180,
-      386
+      157,
+      407
+     ],
+     "share_of_lost_games": 0.14
+    },
+    {
+     "piece": 35,
+     "at": [
+      190,
+      397
+     ],
+     "share_of_lost_games": 0.13
+    },
+    {
+     "piece": 34,
+     "at": [
+      218,
+      387
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 40,
+     "at": [
+      476,
+      299
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 19,
+     "at": [
+      556,
+      299
      ],
      "share_of_lost_games": 0.09
     },
     {
-     "piece": 63,
+     "piece": 31,
      "at": [
-      662,
-      342
+      103,
+      407
      ],
-     "share_of_lost_games": 0.08
+     "share_of_lost_games": 0.09
     },
     {
-     "piece": 71,
+     "piece": 41,
      "at": [
-      582,
-      204
-     ],
-     "share_of_lost_games": 0.08
-    },
-    {
-     "piece": 32,
-     "at": [
-      148,
-      410
+      160,
+      376
      ],
      "share_of_lost_games": 0.07
     },
     {
-     "piece": 58,
+     "piece": 20,
      "at": [
-      105,
-      302
+      524,
+      299
      ],
      "share_of_lost_games": 0.06
     },
     {
-     "piece": 73,
+     "piece": 37,
      "at": [
-      694,
-      280
+      317,
+      244
      ],
      "share_of_lost_games": 0.06
     },
     {
-     "piece": 56,
+     "piece": 42,
      "at": [
-      200,
-      150
+      179,
+      352
      ],
      "share_of_lost_games": 0.06
     },
     {
-     "piece": 11,
+     "piece": 18,
      "at": [
-      559,
-      257
+      567,
+      267
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 16,
+     "piece": 27,
      "at": [
-      392,
-      312
+      130,
+      388
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 54,
+     "piece": 10,
      "at": [
-      676,
-      242
-     ],
-     "share_of_lost_games": 0.04
-    },
-    {
-     "piece": 15,
-     "at": [
-      530,
-      278
-     ],
-     "share_of_lost_games": 0.04
-    },
-    {
-     "piece": 6,
-     "at": [
-      472,
-      236
+      286,
+      215
      ],
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 51,
+     "piece": 21,
      "at": [
-      501,
-      138
+      513,
+      267
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 16,
+     "at": [
+      387,
+      253
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 47,
+     "at": [
+      348,
+      221
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 11,
+     "at": [
+      275,
+      183
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 17,
+     "at": [
+      540,
+      248
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 12,
+     "at": [
+      414,
+      234
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 7,
+     "at": [
+      302,
+      164
      ],
      "share_of_lost_games": 0.01
     },
     {
-     "piece": 4,
+     "piece": 8,
      "at": [
-      314,
-      172
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 0,
-     "at": [
-      350,
-      172
+      329,
+      183
      ],
      "share_of_lost_games": 0.0
     },
     {
-     "piece": 1,
+     "piece": 9,
      "at": [
-      360,
-      205
+      318,
+      215
      ],
      "share_of_lost_games": 0.0
     }
@@ -346,7 +395,7 @@
    "ramp_first_seed": 865
   },
   "ceiling": {
-   "p99_luma": 0.461,
+   "p99_luma": 0.378,
    "limit": 0.465
   },
   "framecheck": {
@@ -361,8 +410,8 @@
     "peg_sized_discs": [],
     "lights_too_close": [],
     "lights_per_band_max": 2,
-    "lights_nearest": 95.7,
-    "darkened_min_clearance": 17.8,
+    "lights_nearest": 108.1,
+    "darkened_min_clearance": 14.63,
     "elements_dropped_for_clearance": 0
    },
    "fails": []
@@ -370,7 +419,7 @@
   "colours": {
    "seed": 1,
    "counts": {
-    "blue": 47,
+    "blue": 45,
     "green": 2,
     "orange": 25,
     "purple": 1
@@ -380,161 +429,161 @@
    "report": {
     "faces": {
      "1x": {
-      "blue": 0.684,
-      "orange": 0.615,
-      "green": 0.711,
-      "purple": 0.589
+      "blue": 0.677,
+      "orange": 0.61,
+      "green": 0.707,
+      "purple": 0.572
      },
      "0.8x": {
-      "blue": 0.673,
-      "orange": 0.601,
-      "green": 0.697,
-      "purple": 0.582
+      "blue": 0.668,
+      "orange": 0.602,
+      "green": 0.704,
+      "purple": 0.576
      }
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.342,
+      "worst": 0.389,
       "at": [
-       360,
-       205
+       441,
+       253
       ],
-      "undressed": 0.33,
-      "drop": -0.012
+      "undressed": 0.399,
+      "drop": 0.01
      },
      "orange 1x": {
-      "worst": 0.274,
+      "worst": 0.332,
       "at": [
-       360,
-       205
+       700,
+       300
       ],
-      "undressed": 0.281,
-      "drop": 0.007
+      "undressed": 0.341,
+      "drop": 0.009
      },
      "green 1x": {
-      "worst": 0.412,
+      "worst": 0.429,
       "at": [
-       234,
-       340
+       700,
+       300
       ],
-      "undressed": 0.414,
-      "drop": 0.002
+      "undressed": 0.437,
+      "drop": 0.008
      },
      "purple 1x": {
-      "worst": 0.247,
+      "worst": 0.285,
       "at": [
-       360,
-       205
+       441,
+       253
       ],
-      "undressed": 0.235,
-      "drop": -0.012
+      "undressed": 0.295,
+      "drop": 0.01
      },
      "blue 0.8x": {
-      "worst": 0.341,
+      "worst": 0.384,
       "at": [
-       360,
-       205
+       441,
+       253
       ],
-      "undressed": 0.338,
-      "drop": -0.003
+      "undressed": 0.393,
+      "drop": 0.009
      },
      "orange 0.8x": {
-      "worst": 0.27,
+      "worst": 0.326,
       "at": [
-       360,
-       205
+       700,
+       300
       ],
-      "undressed": 0.266,
-      "drop": -0.004
+      "undressed": 0.333,
+      "drop": 0.007
      },
      "green 0.8x": {
-      "worst": 0.404,
+      "worst": 0.428,
       "at": [
-       234,
-       340
+       700,
+       300
       ],
-      "undressed": 0.401,
-      "drop": -0.003
+      "undressed": 0.435,
+      "drop": 0.007
      },
      "purple 0.8x": {
-      "worst": 0.25,
+      "worst": 0.292,
       "at": [
-       360,
-       205
+       441,
+       253
       ],
-      "undressed": 0.247,
-      "drop": -0.003
+      "undressed": 0.301,
+      "drop": 0.009
      }
     },
-    "worst_margin": 0.247,
-    "largest_drop": 0.007,
+    "worst_margin": 0.285,
+    "largest_drop": 0.01,
     "bricks_min_margin": [
-     0.407,
+     0.412,
      "blue"
     ],
-    "protan_orange_p10": 0.104,
+    "protan_orange_p10": 0.13,
     "protan_places": 30,
     "protan_worst_at": [
-     472,
-     236
+     570,
+     343
     ],
-    "protan_min": 0.102,
+    "protan_min": 0.128,
     "jewels": {
-     "coloured_px_pct": 79.3,
-     "mean_chroma": 0.068,
-     "second_at_walls_x": 0.22,
+     "coloured_px_pct": 91.7,
+     "mean_chroma": 0.062,
+     "second_at_walls_x": 0.7,
      "second_at_walls_worst_window": [
-      0.58,
-      541
+      1.65,
+      216
      ],
-     "first_jewel_hue": 292,
-     "first_share": 0.751,
-     "second_jewel_hue": 210,
-     "second_share": 0.244,
-     "apart_deg": 83,
+     "first_jewel_hue": 290,
+     "first_share": 0.728,
+     "second_jewel_hue": 169,
+     "second_share": 0.27,
+     "apart_deg": 121,
      "bins_pct": [
-      0.1,
       0.0,
       0.0,
-      0.1,
-      0.1,
-      1.9,
-      9.2,
-      13.3,
-      5.8,
-      67.0,
-      2.3,
-      0.3
+      0.0,
+      0.0,
+      0.2,
+      21.4,
+      3.9,
+      1.7,
+      2.7,
+      61.7,
+      8.4,
+      0.0
      ]
     },
-    "ghost_median": 0.042,
+    "ghost_median": 0.06,
     "ghost_worst": [
-     0.0416981540620327,
+     0.059506483376026154,
      [
-      200,
-      150
+      536,
+      400
      ]
     ],
-    "ghost_isolated_pegs": 2,
+    "ghost_isolated_pegs": 1,
     "print": {
      "median": 0.0,
-     "p90": 0.006,
+     "p90": 0.0,
      "worst": [
-      0.0338,
+      0.0093,
       [
-       488,
-       509
+       354,
+       479
       ]
      ],
-     "samples": 70,
+     "samples": 65,
      "mode": "pegs",
-     "hue_median": 0.0101
+     "hue_median": 0.0022
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 32.8,
+ "seconds": 29.0,
  "verdict": "PASS"
 }

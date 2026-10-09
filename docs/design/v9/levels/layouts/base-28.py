@@ -1,72 +1,77 @@
-"""6-3 "The Seer's Chart" (The Silent Stars, Urianger): a set of points.
+"""6-3 "The Seer's Chart" (The Silent Stars, Urianger; set nowhere): a set of points.
 
-Subject: Eorzea's cities read as stars on the game's own world map (the Adventure map's painting), joined by the ley
-lines Urianger reads: Mor Dhona at the heart, a line to each city, and the cities joined round the rim.
+Subject: Eorzea's cities as stars on the game's own world map (`ui/map/world/01/world01_m.tex`, the Adventure map's
+painting, read from the install at runtime), joined by the ley lines Urianger reads. Each city is a star: a small light
+at its banner (the dress's lights) ringed by five moons (Ishgard, Gridania, Ala Mhigo, Ul'dah, Limsa Lominsa), and
+Mor Dhona, where the lines meet, a ring of seven round its lake. The ley lines run from Mor Dhona to the far cities
+and round the five as one loop; each is engraved on the chart in pale lilac (the scene's overlays, where the runtime's
+glints run) and dotted with small moons where it is long enough to hold them (Mor Dhona's lines to Gridania and
+Ul'dah are only engraved: the rings all but touch there).
 
-Technique: each city is a ring of moons round its shield (Gridania six at 36, clear of its banner; Mor Dhona, the
-heart, seven at 40), and a small star of light sits where its ley lines meet. The ley lines are drawn on the chart
-(the scene's overlays, where the runtime's glints run) and dotted with small moons (r 8) wherever a line is long enough
-to hold one clear of the rings; the spokes from the heart run on past Ishgard, Gridania, Ala Mhigo and Limsa as rays
-out to sea. Round them, the chart's own figures: a moon on each flying dragon and each ship, a ring of four round the
-kraken and the southern compass rose, a moon on the eastern rose's heart, a brick crown on Coerthas's peak, and the
-cloud sea's edge dotted.
+Technique (SP): a set of points, each a ring stop, joined by dotted lines. The chart round them carries the rest:
+a brick crown on Coerthas's snowy peak, the wing of the dragon over the Northern Sea and the compass rose under it,
+the compass rose and the kraken in the eastern sea, the ship off the coast, the isle south of Ala Mhigo, and three
+brick humps on the cloud sea's billows (the sea-green second jewel). The isle, the kraken and the middle cloud hump
+stand in the lanes that the first sweep found dead (every first shot now meets the chart).
 
-Candidates (30, the charter's count): the cities' upper moons and the heart's ring, the ley lines, the rays, and the
-chart's figures, kept to the spread rule (10 per 200 x 200; Limsa's two side moons and the eastern ship are the
-candidates in y 400-430). Ul'dah's ring stays blue: its upper moons sit at y 422 and were left in 22-27% of lost games
-(MR 3 round 1, m3), so the city's star is carried by the lines alone. Tuned on the tuning seeds and the second block
-(seeds 20001-23456): 22.7 and 21.4 per 48 against the target of 22; held out 23.3 (the three blocks pooled, 22.1).
+Candidates (30, the charter's count): `mfl.py ease --pick 30` on the tuning seeds, among the cities' rings, the ley
+lines and the chart's places, kept to the spread rule (10 per 200 x 200, which the dense middle of the map binds, so
+the eastern sea's rose, kraken and ship carry candidates; the isle (536, 400) is the right half's one at y 400-430),
+then one Mor Dhona moon (346, 310) gave its candidate to the west ley line's (214, 306) to bring the ramp to the
+target: tuning seeds 1-864 22.3 and the second block (20001-23456) 22.6 per 48, against the charter's 22. Held out
+22.3. No candidate is at y 430 or lower.
 """
+import math
 
 LEVEL = dict(id="base-28", name="The Seer's Chart", stage=6, number=28, scene="seers-chart",
-             subject="Eorzea's cities as stars joined by the ley lines Urianger reads",
-             technique="a set of points (each city a ring stop) joined by dotted ley lines")
+             subject="Eorzea's cities as stars on the world map, joined by the ley lines Urianger reads",
+             technique="a set of points (each city a ring of moons round its star) joined by dotted ley lines")
 
-CITIES = ("ishgard", "gridania", "ala mhigo", "mor dhona", "uldah", "limsa")
-LINES = ("ley ishgard", "ley gridania", "ley ala mhigo", "ley uldah", "ley limsa",
-         "rim north", "rim east", "rim south", "rim west")
-START = {"ishgard": -54, "uldah": -54}
-RADIUS = {"mor dhona": 40, "gridania": 36, "limsa": 34}
-COUNT = {"mor dhona": 7, "gridania": 6}
-RAYS = ("ray ishgard", "ray gridania", "ray ala mhigo", "ray limsa")
+# (feature, ring radius, moons, first moon's angle)
+CITIES = (("ishgard", 28, 5, -90), ("gridania", 28, 5, -90), ("ala mhigo", 28, 5, -90),
+          ("uldah", 28, 5, -90), ("limsa", 28, 5, -90))
+LEYS = ("ley limsa", "ley ishgard", "ley ala mhigo", "ley west", "ley north", "ley east", "ley south-east",
+        "ley south")
 
 
 def build(b):
-    for name in CITIES:
+    # Mor Dhona, where the ley lines meet: a ring of seven moons round the lake
+    (x, y), = b.f("mor dhona")
+    b.stop(x, y, R=36, n=7, r=8, oranges=(), start_deg=-90, tag="mor dhona")
+    # the cities: a ring of five moons round each city's star
+    for (name, R, n, a0) in CITIES:
         (x, y), = b.f(name)
-        n, R = COUNT.get(name, 5), RADIUS.get(name, 30)
-        b.stop(x, y, R=R, n=n, r=9, oranges=(), start_deg=START.get(name, -90), tag=name)
-    # a line's moons start clear of the rings at its ends (ring radius + the ring moon's 9 + a dotted gap + 8)
-    ring = {tuple(b.f(c)[0]): RADIUS.get(c, 30) + 31 for c in CITIES}
-    for name in LINES:
-        pts = b.f(name)
-        b.trace(name, spacing=32, r=8, start=ring[pts[0]], end_trim=ring[pts[-1]], tag=name)
-    for name in RAYS:
-        b.trace(name, spacing=32, r=8, start=ring[b.f(name)[0]], tag=name)
-    for (x, y) in b.f("dragons"):
-        b.place(x, y, r=9, tag="dragon")
-    for (x, y) in b.f("ships"):
-        b.place(x, y, r=9, tag="ship")
-    (x, y), = b.f("kraken")
-    b.stop(x, y, R=26, n=4, r=9, oranges=(), start_deg=-45, tag="kraken")
-    (x, y), = b.f("compass")
-    b.place(x, y, r=9, tag="compass")
-    (x, y), = b.f("south compass")
-    b.stop(x, y, R=24, n=4, r=8, oranges=(), start_deg=-45, green=True, tag="south compass")
+        b.stop(x, y, R=R, n=n, r=8, oranges=(), start_deg=a0, tag=name)
+    # the ley lines between them, dotted where they are long enough
+    for name in LEYS:
+        b.trace(name, spacing=28, r=7, start=50, end_trim=50, tag=name)
+    # the chart round them
     (px, py), = b.f("peak")
     b.arc_bricks(px, py + 26, 28, 215, 110, n=1, tag="peak", green=False)
-    b.trace("cloud edge", spacing=34, r=8, tag="cloud edge")
+    for (x, y) in b.f("dragon"):
+        b.place(x, y, r=9, tag="dragon")
+    for (cx, cy) in b.f("compass"):
+        for k in range(4):
+            a = math.radians(90 * k - 90)
+            b.place(cx + 20 * math.cos(a), cy + 20 * math.sin(a), r=7, tag="compass")
+    for (x, y) in b.f("cloud humps"):
+        b.arc_bricks(x, y + 24, 28, 220, 100, n=1, tag="cloud hump")
+    for (x, y) in b.f("kraken") + b.f("isles"):
+        b.place(x, y, r=9, tag="sea")
+    for (x, y) in b.f("ships"):
+        b.place(x, y, r=9, tag="ship")
+    # the candidates (see the docstring): set last, by place
     for p in b.pegs:
         p["canBeOrange"] = (round(p["x"]), round(p["y"])) in CANDS
     b.greens_in_reach()
 
 
-CANDS = {(314, 172), (350, 172), (360, 205),                         # Ishgard
-         (472, 236),                                                 # Gridania
-         (559, 257), (588, 278), (530, 278),                         # Ala Mhigo
-         (392, 312), (361, 327), (431, 361), (409, 388), (353, 361),  # Mor Dhona, the heart
-         (148, 410), (212, 410), (180, 386),                         # Limsa Lominsa
-         (288, 260), (264, 393), (488, 315),                         # the ley lines
-         (311, 139), (501, 138), (646, 253), (676, 242),             # the rays beyond the cities
-         (200, 150), (105, 302), (574, 422), (662, 342), (698, 342),  # the chart's dragon, ships and kraken
-         (582, 204), (694, 280), (610, 334)}                         # the cloud sea's edge and the compass rose
+CANDS = {(275, 183), (302, 164), (329, 183), (318, 215), (286, 215),            # Ishgard
+         (414, 234), (387, 253),                                                 # Gridania
+         (540, 248), (567, 267), (513, 267), (556, 299), (524, 299),             # Ala Mhigo
+         (338, 428),                                                             # Ul'dah
+         (130, 388), (157, 407), (103, 407),                                     # Limsa Lominsa
+         (362, 378),                                                             # Mor Dhona
+         (317, 244), (348, 221), (476, 299),                                     # the ley lines north and east
+         (160, 376), (179, 352), (214, 306), (190, 397), (218, 387),             # the ley lines west and south-west
+         (536, 400), (570, 343), (590, 323), (660, 358), (700, 300)}             # the isle, the rose, kraken, ship

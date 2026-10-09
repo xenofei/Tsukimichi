@@ -1,136 +1,18 @@
 {
  "name": "seers-chart",
- "about": "Eorzea on the game's own world map (ui/map/world/01, the Adventure map's painting): Aldenard and Vylbrand with Ishgard, Gridania, Ala Mhigo, Mor Dhona, Ul'dah and Limsa Lominsa, the chart's dragons, ships, kraken and compass roses, read as a seer's star chart. The map's parchment sea sinks to a deep amethyst night (a tone of 0.55 outside the land) and the land keeps its painted relief under an aether-teal region; the ley lines are drawn over it in pale aether from Mor Dhona's heart to each city and on out to sea, with the cities joined round the rim, and a small star of light where each city's lines meet. Crop [80, 888, 760, 570]: the texture's painted band is y 588-1458 of 2048, so the crop ends on the map's own lower border (the bucket's strip) and keeps Old Sharlayan's label off the board; Ul'dah, the lowest city, sits at y 446. A faint board-wide glow (radius 2000) keeps the dark land off sRGB 0-1 (3-1's fix for the converter's gate, MR 3 round 1, B1). The north-east cloud sea is cut out of the land mask by a poly, since its dark gaps read as land.",
+ "about": "The game's own world map (the Adventure map's painting, ui/map/world/01/world01_m.tex, read from the install at runtime and never shipped), cropped to Eorzea [140, 905, 720, 540] and read as a seer's star chart under the moon: the parchment seas in amethyst, the land a shade deeper (a tone on the land mask, x 0.9), the cloud sea's billows in the upper right in sea-green (the second jewel, shaped by the clouds' own lightness and faded at the right wall) and a faint sea-green on the southern sea below the pieces. Each city's banner carries a small star (the lights), and the ley lines Urianger reads are engraved in pale lilac between them: one loop round the five cities and spokes from Mor Dhona (the overlays, where the runtime's glints run). A faint lilac lift over the whole board (a glow of radius 2000) keeps the chart's dark land off sRGB 0-1 (MR 3 round 1, B1). The crop is the first on this texture; the map is the same art as the world painting (-nowloading_base05_hr1) that 3-1 crops, and overlaps 3-1's Aldenard by about two thirds of its area (Ishgard, Gridania and Ala Mhigo are in both).",
  "source": {
   "kind": "game",
   "texture": "ui/map/world/01/world01_m.tex",
   "mirror": false,
-  "crop": [80, 888, 760, 570],
+  "crop": [140, 905, 720, 540],
   "grade": {
-   "gamma": 1.2,
-   "exposure": 0.72,
+   "gamma": 1.45,
+   "exposure": 0.66,
    "ceiling": 0.35,
    "warm_keep": 0.25,
    "chroma_mid": 0.45
   }
- },
- "veil": 0.34,
- "features": {
-  "ishgard": [[332, 196]],
-  "gridania": [[441, 254]],
-  "ala mhigo": [[559, 287]],
-  "mor dhona": [[392, 352]],
-  "uldah": [[374, 446]],
-  "limsa": [[180, 420]],
-  "ley ishgard": [[392, 352], [332, 196]],
-  "ley gridania": [[392, 352], [441, 254]],
-  "ley ala mhigo": [[392, 352], [559, 287]],
-  "ley uldah": [[392, 352], [374, 446]],
-  "ley limsa": [[392, 352], [180, 420]],
-  "rim north": [[332, 196], [441, 254]],
-  "rim east": [[441, 254], [559, 287]],
-  "rim south": [[374, 446], [180, 420]],
-  "rim west": [[180, 420], [332, 196]],
-  "dragons": [[200, 150], [108, 168]],
-  "ships": [[105, 302], [574, 422]],
-  "kraken": [[680, 360]],
-  "compass": [[610, 334]],
-  "south compass": [[505, 492]],
-  "peak": [[250, 174]],
-  "cloud edge": {
-   "points": [[490, 160], [530, 176], [570, 198], [612, 222], [652, 252], [700, 284]],
-   "smooth": 6
-  },
-  "ray ishgard": [[332, 196], [305, 124]],
-  "ray gridania": [[441, 254], [506, 128]],
-  "ray ala mhigo": [[559, 287], [700, 232]],
-  "ray limsa": [[180, 420], [96, 447]],
-  "cloud sea": [
-   [470, 40],
-   [725, 40],
-   [725, 300],
-   [700, 284],
-   [652, 252],
-   [612, 222],
-   [570, 198],
-   [530, 176],
-   [490, 160],
-   [470, 140]
-  ]
- },
- "dress": {
-  "palette": {
-   "name": "Amethyst and aether (the seer's chart)",
-   "sky": "#1C1240",
-   "deep": "#0A0620",
-   "jewel1": "#8A3EC0",
-   "jewel2": "#44B08C",
-   "warm": "#FFB45E",
-   "rim": "#A6E8D6"
-  },
-  "jewel": {
-   "bands": [[0, "#8A3EC0"], [600, "#7E38B0"]],
-   "valueHues": [[0.08, "#2A1468"], [0.45, "#E2D2FF"]],
-   "chroma": 1.8,
-   "floor": 0.05,
-   "regions": [
-    {
-     "hex": "#44B08C",
-     "chroma": 1.3,
-     "mask": [["mask", "land", 10], ["not-poly", "cloud sea", 30], ["x", 75, 135], ["x", 725, 665]]
-    }
-   ],
-   "quiet": [60, 22],
-   "regionQuiet": 0.8
-  },
-  "shafts": [
-   {
-    "origin": [-60, -160],
-    "angles": [48, 57, 66],
-    "widths": [44, 30, 50],
-    "k": 0.04,
-    "col": "#E6E0FF"
-   }
-  ],
-  "extras": [
-   {
-    "kind": "chart_border"
-   }
-  ],
-  "silhouette": {
-   "body": "#08061A",
-   "inner": "#1E164E",
-   "rim": "#A6E8D6",
-   "rimK": 0.0,
-   "seed": 28
-  },
-  "glows": [
-   {
-    "x": 400,
-    "y": 318,
-    "r": 2000,
-    "col": "#B4A4D8",
-    "k": 0.024
-   }
-  ],
-  "lights": [
-   {
-    "points": [[332, 196, 2.0], [441, 254, 2.0], [559, 287, 2.0], [374, 446, 2.0], [392, 352, 2.6]],
-    "col": "#F2EEFF",
-    "r": 1.8,
-    "k": 0.9,
-    "halo": 9,
-    "hk": 0.32
-   },
-   {
-    "points": [[180, 420, 1.6]],
-    "col": "#F2EEFF",
-    "r": 1.4,
-    "k": 0.8,
-    "halo": 5,
-    "hk": 0.24
-   }
-  ]
  },
  "masks": {
   "land": {
@@ -139,131 +21,189 @@
    "grow": 3
   }
  },
+ "veil": 0.34,
+ "features": {
+  "ishgard": [[302, 192]],
+  "gridania": [[414, 262]],
+  "ala mhigo": [[540, 276]],
+  "mor dhona": [[346, 346]],
+  "uldah": [[338, 456]],
+  "limsa": [[130, 416]],
+  "ley limsa": [[346, 346], [130, 416]],
+  "ley ishgard": [[346, 346], [302, 192]],
+  "ley gridania": [[346, 346], [414, 262]],
+  "ley ala mhigo": [[346, 346], [540, 276]],
+  "ley uldah": [[346, 346], [338, 456]],
+  "ley west": [[130, 416], [302, 192]],
+  "ley north": [[302, 192], [414, 262]],
+  "ley east": [[414, 262], [540, 276]],
+  "ley south-east": [[540, 276], [338, 456]],
+  "ley south": [[338, 456], [130, 416]],
+  "peak": [[215, 168]],
+  "dragon": [[165, 122]],
+  "compass": [[120, 147], [590, 343]],
+  "cloud humps": [[560, 150], [616, 240], [668, 186]],
+  "kraken": [[660, 358]],
+  "isles": [[536, 400]],
+  "ships": [[700, 300]],
+  "cloud sea": {
+   "points": [[460, 30], [740, 30], [740, 340], [680, 320], [640, 290], [600, 262], [575, 228], [540, 205], [500, 178], [465, 140]]
+  }
+ },
+ "dress": {
+  "palette": {
+   "name": "Amethyst and sea-green (the seer's chart)",
+   "sky": "#1A1048",
+   "deep": "#08061C",
+   "jewel1": "#9A40C8",
+   "jewel2": "#3EAA70",
+   "warm": "#FFB45E",
+   "rim": "#D8C8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#9A40C8"], [600, "#8E3CC0"]],
+   "valueHues": [[0.08, "#2A1270"], [0.45, "#E8D8FF"]],
+   "chroma": 0.95,
+   "floor": 0.05,
+   "regions": [
+    {
+     "hex": "#3EAA70",
+     "chroma": 0.42,
+     "mask": [["poly", "cloud sea", 60], ["luma", 0.2, 0.32, 3], ["x", 725, 665]]
+    },
+    {
+     "hex": "#3EAA70",
+     "chroma": 0.16,
+     "mask": [["y", 440, 540], ["luma", 0.16, 0.28, 3], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [54, 20],
+   "regionQuiet": 0.7
+  },
+  "shafts": [],
+  "extras": [
+   {
+    "kind": "chart_border"
+   }
+  ],
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#1A1448",
+   "rim": "#D8C8FF",
+   "rimK": 0.0,
+   "seed": 28
+  },
+  "glows": [
+   {
+    "x": 400,
+    "y": 318,
+    "r": 2000,
+    "col": "#B4A8D8",
+    "k": 0.024
+   }
+  ],
+  "lights": [
+   {
+    "points": [[130, 416, 1.0], [302, 192, 1.0], [414, 262, 1.0], [540, 276, 1.0], [338, 456, 1.0], [346, 346, 1.0]],
+    "col": "#F4ECFF",
+    "r": 2.2,
+    "k": 0.95,
+    "halo": 11,
+    "hk": 0.22
+   }
+  ]
+ },
  "overlays": [
   {
    "kind": "route",
-   "points": [[180, 420], [332, 196], [441, 254], [559, 287]],
-   "color": "#B8F4E4",
-   "width": 2.4,
-   "alpha": 0.75,
-   "smooth": false,
-   "dash": 7.0,
-   "gap": 3.5
+   "points": [[130, 416], [302, 192], [414, 262], [540, 276], [338, 456], [130, 416]],
+   "color": "#D6C8FF",
+   "width": 1.8,
+   "alpha": 0.5
   },
   {
    "kind": "route",
-   "points": [[392, 352], [332, 196], [305, 124]],
-   "color": "#B8F4E4",
-   "width": 2.4,
-   "alpha": 0.75,
-   "smooth": false,
-   "dash": 7.0,
-   "gap": 3.5
+   "points": [[346, 346], [130, 416]],
+   "color": "#D6C8FF",
+   "width": 1.4,
+   "alpha": 0.42
   },
   {
    "kind": "route",
-   "points": [[392, 352], [441, 254], [506, 128]],
-   "color": "#B8F4E4",
-   "width": 2.4,
-   "alpha": 0.75,
-   "smooth": false,
-   "dash": 7.0,
-   "gap": 3.5
+   "points": [[346, 346], [302, 192]],
+   "color": "#D6C8FF",
+   "width": 1.4,
+   "alpha": 0.42
   },
   {
    "kind": "route",
-   "points": [[392, 352], [559, 287], [700, 232]],
-   "color": "#B8F4E4",
-   "width": 2.4,
-   "alpha": 0.75,
-   "smooth": false,
-   "dash": 7.0,
-   "gap": 3.5
+   "points": [[346, 346], [414, 262]],
+   "color": "#D6C8FF",
+   "width": 1.4,
+   "alpha": 0.42
   },
   {
    "kind": "route",
-   "points": [[392, 352], [180, 420], [96, 447]],
-   "color": "#B8F4E4",
-   "width": 2.4,
-   "alpha": 0.75,
-   "smooth": false,
-   "dash": 7.0,
-   "gap": 3.5
+   "points": [[346, 346], [540, 276]],
+   "color": "#D6C8FF",
+   "width": 1.4,
+   "alpha": 0.42
   },
   {
    "kind": "route",
-   "points": [[392, 352], [374, 446]],
-   "color": "#B8F4E4",
-   "width": 2.4,
-   "alpha": 0.75,
-   "smooth": false,
-   "dash": 7.0,
-   "gap": 3.5
-  },
-  {
-   "kind": "route",
-   "points": [[374, 446], [180, 420]],
-   "color": "#B8F4E4",
-   "width": 2.4,
-   "alpha": 0.75,
-   "smooth": false,
-   "dash": 7.0,
-   "gap": 3.5
+   "points": [[346, 346], [338, 456]],
+   "color": "#D6C8FF",
+   "width": 1.4,
+   "alpha": 0.42
   }
  ],
  "runtime": {
   "motion": {
-   "dust": 16
+   "dust": 18
   },
   "glints": [
    {
     "overlay": 0,
-    "speed": 26,
-    "every": 34,
+    "speed": 30,
+    "every": 30,
     "offset": 0
    },
    {
     "overlay": 1,
-    "speed": 26,
-    "every": 34,
-    "offset": 5
+    "speed": 30,
+    "every": 30,
+    "offset": 7
    },
    {
     "overlay": 2,
-    "speed": 26,
-    "every": 34,
-    "offset": 10
+    "speed": 30,
+    "every": 30,
+    "offset": 14
    },
    {
     "overlay": 3,
-    "speed": 26,
-    "every": 34,
-    "offset": 15
+    "speed": 30,
+    "every": 30,
+    "offset": 21
    },
    {
     "overlay": 4,
-    "speed": 26,
-    "every": 34,
-    "offset": 20
+    "speed": 30,
+    "every": 30,
+    "offset": 28
    },
    {
     "overlay": 5,
-    "speed": 26,
-    "every": 34,
-    "offset": 25
-   },
-   {
-    "overlay": 6,
-    "speed": 26,
-    "every": 34,
-    "offset": 30
+    "speed": 30,
+    "every": 30,
+    "offset": 5
    }
   ]
  },
  "tone": [
   {
-   "mask": [["not-mask", "land", 12]],
-   "mul": 0.55
+   "mask": [["mask", "land", 10]],
+   "mul": 0.9
   }
  ]
 }
