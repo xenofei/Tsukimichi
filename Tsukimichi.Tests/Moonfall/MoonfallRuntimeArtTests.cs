@@ -965,19 +965,13 @@ public sealed class MoonfallRuntimeArtTests(ITestOutputHelper output)
         return d;
     }
 
-    /// <summary>Frames until <paramref name="done"/> (the work runs on the thread pool), at most 20 s.</summary>
-    private static void Until(MoonfallGameArt<Tex> art, FakeHost host, MoonfallLevel level, Func<bool> done, bool twoX = false)
-    {
-        var until = DateTime.UtcNow.AddSeconds(20);
-        while (!done() && DateTime.UtcNow < until)
+    /// <summary>Frames until <paramref name="done"/>: while the art's work runs on the thread pool, however long (<see cref="MoonfallArtWait"/>).</summary>
+    private static void Until(MoonfallGameArt<Tex> art, FakeHost host, MoonfallLevel level, Func<bool> done, bool twoX = false) =>
+        MoonfallArtWait.Until(art, done, () =>
         {
             host.Frame++;
             art.Frame(level, twoX, pegMarks: false);
-            Thread.Sleep(2);
-        }
-
-        Assert.True(done(), "the game art never settled");
-    }
+        });
 
     private static MoonfallLevel LevelTaking(string recipe) =>
         MoonfallCampaigns.LoadBuiltIn().Base.Levels.First(l => MoonfallSceneRecipeLoader.Pick(MoonfallSceneRecipeLoader.LoadBuiltIn(), l)?.Name == recipe);

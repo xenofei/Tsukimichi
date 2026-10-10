@@ -45,10 +45,13 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
 
         public Task<MoonfallImage?> ReadGameTexture(string path) => Gate.ContinueWith(_ => Texture(path), TaskScheduler.Default);
 
+        /// <summary>Reads one of Moonfall's pictures; the shipped one by default.</summary>
+        public Func<string, MoonfallImage?> Picture { get; init; } = static name => MoonfallSceneKit.Picture(name, twoX: false);
+
         public Task<MoonfallImage?> ReadPicture(string name)
         {
             Pictures.Add(name);
-            return Task.FromResult(MoonfallSceneKit.Picture(name, twoX: false));
+            return Task.FromResult(Picture(name));
         }
 
         public Task<Tex> Upload(MoonfallRgba pixels, string name)
@@ -73,18 +76,6 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
 
     private static (MoonfallLevel Level, MoonfallSceneRecipe Recipe) AScene() => MoonfallSceneKit.ShippedScenes().First();
 
-    private static void Until(Func<bool> done, Action frame)
-    {
-        var until = DateTime.UtcNow.AddSeconds(30);
-        while (!done() && DateTime.UtcNow < until)
-        {
-            frame();
-            Thread.Sleep(2);
-        }
-
-        Assert.True(done(), "never settled");
-    }
-
     [Fact]
     public void A_level_built_ahead_opens_with_its_scene_within_two_frames()
     {
@@ -93,7 +84,7 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         var (level, _) = AScene();
 
         // Level select: the menus' frame, and the level the player is about to start built ahead.
-        Until(() => { art.Warm(level, twoX: true); return !art.Warming && art.Chrome is not null; }, () => { host.Frame++; art.Menu(); });
+        MoonfallArtWait.Until(art, () => { art.Warm(level, twoX: true); return !art.Warming && art.Chrome is not null; }, () => { host.Frame++; art.Menu(); });
 
         // Play: the scene is uploaded from the cache, never built on the way in.
         var frames = 0;
@@ -116,12 +107,12 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         var host = new Host();
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
         var (level, _) = AScene();
-        Until(() => art.Scene is not null, () => { host.Frame++; art.Frame(level, twoX: true, pegMarks: false); });
+        MoonfallArtWait.Until(art, () => art.Scene is not null, () => { host.Frame++; art.Frame(level, twoX: true, pegMarks: false); });
 
         // The first scene on screen is the 1x tier, standing in (not settled: the 2x is still to come).
         var first = art.Scene!;
         Assert.Equal(1, first.Layers.Base.Width / (int)(MoonfallSceneBuilder.OpeningRect.Z - MoonfallSceneBuilder.OpeningRect.X));
-        Until(() => art.SceneSettled, () => { host.Frame++; art.Frame(level, twoX: true, pegMarks: false); });
+        MoonfallArtWait.Until(art, () => art.SceneSettled, () => { host.Frame++; art.Frame(level, twoX: true, pegMarks: false); });
         Assert.NotSame(first, art.Scene);
         Assert.Equal(2, art.Scene!.Layers.Base.Width / (int)(MoonfallSceneBuilder.OpeningRect.Z - MoonfallSceneBuilder.OpeningRect.X));
     }
@@ -132,7 +123,7 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         var host = new Host();
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
         var (level, _) = AScene();
-        Until(() => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
+        MoonfallArtWait.Until(art, () => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
         Assert.Contains(host.Uploaded, static u => u.Name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal) && u.Bytes <= MoonfallGameArt<Tex>.ThumbWidth * 300 * 4);
         Assert.Equal(0, art.ThumbsPending);
 
@@ -178,12 +169,75 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         hide = MoonfallSceneHide.Fallback;
         art.VeilChanged();
         gate.SetResult();
-        Until(() => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
+        MoonfallArtWait.Until(art, () => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
 
         // One thumbnail landed, and it was built from the fallback picture, never from the Ul'dah build.
         Assert.Single(host.Uploaded, static u => u.Name.StartsWith("Moonfall thumbnail", StringComparison.Ordinal));
         Assert.Contains(recipe.Fallback!, host.Pictures);
         Assert.Equal(safe, Assert.Single(host.ThumbHashes));
+    }
+
+    [Fact]
+    public void A_build_counts_as_running_for_as_long_as_it_takes_so_a_wait_follows_it_and_not_a_clock()
+    {
+        // A busy machine can hold a build for any time: here its painting is held for 200 frames. The waits in these tests
+        // follow Running (a set time made the thumbnail test fail whenever the machine was loaded).
+        var gate = new TaskCompletionSource();
+        var host = new Host { Gate = gate.Task, Texture = Sentinel };
+        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
+        var (level, _) = AScene();
+        Assert.Equal(0, art.Running);
+        art.Menu(); // the menus open (a thumbnail is asked for only once they have)
+        for (var i = 0; i < 200; i++)
+        {
+            host.Frame++;
+            _ = art.Thumb(level, out _);
+            art.Menu();
+            Assert.True(art.Running >= 2, $"frame {i}: the chrome and the thumbnail are reading, yet {art.Running} running");
+        }
+
+        Assert.Null(art.Thumb(level, out _));
+        gate.SetResult();
+        MoonfallArtWait.Until(art, () => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
+    }
+
+    [Fact]
+    public void A_wait_for_art_that_will_never_come_fails_once_nothing_is_running()
+    {
+        // Neither the painting nor its fallback can be read: the thumbnail's build finishes with nothing to show. The wait
+        // fails within a few frames of the build finishing, never by running out a clock.
+        var host = new Host { Texture = static _ => null, Picture = static _ => null };
+        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
+        var (level, _) = AScene();
+        var idleFrames = 0;
+        var failure = Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => MoonfallArtWait.Until(art, () => art.Thumb(level, out _) is not null, () =>
+        {
+            idleFrames += art.Running == 0 ? 1 : 0;
+            host.Frame++;
+            art.Menu();
+        }));
+
+        Assert.Contains("never settled", failure.Message, StringComparison.Ordinal);
+        Assert.Equal(0, art.Running);
+        Assert.InRange(idleFrames, 1, MoonfallArtWait.LandingFrames + 2);
+    }
+
+    [Fact]
+    public void A_hung_build_fails_at_the_safety_cap_naming_what_is_still_running()
+    {
+        // The painting is never read (a deadlock, say): the wait gives up at its cap and names the work that never
+        // finished, rather than holding the test run forever. The real cap is ten minutes; this test sets a short one.
+        var gate = new TaskCompletionSource();
+        var host = new Host { Gate = gate.Task, Texture = Sentinel };
+        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
+        var (level, _) = AScene();
+        var failure = Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => MoonfallArtWait.Until(
+            art, () => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); }, hangCap: TimeSpan.FromMilliseconds(300)));
+
+        Assert.StartsWith("hung:", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("chrome", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("thumbnail " + level.Id, failure.Message, StringComparison.Ordinal);
+        gate.SetResult();
     }
 
     /// <summary>The pixels' hash of <paramref name="level"/>'s thumbnail built over the sentinel with its scene <paramref name="hide"/>.</summary>
@@ -192,7 +246,7 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         var host = new Host { Texture = Sentinel };
         using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
         art.HidesScene = (_, _) => hide;
-        Until(() => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
+        MoonfallArtWait.Until(art, () => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); });
         return Assert.Single(host.ThumbHashes);
     }
 
