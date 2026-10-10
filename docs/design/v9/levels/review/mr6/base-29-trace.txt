@@ -1,0 +1,7 @@
+  skipped ((310, 322), 'meteor 4 tail', '14.0 from the peg at (294, 299)')
+  skipped ((73, 371), 'faint meteor', "off the board (walls, launcher's swing or bucket)")
+  skipped ((240, 237), 'faint meteor', '12.1 from the peg at (228, 260)')
+  skipped ((179, 259), 'faint meteor', '7.5 from the peg at (160, 270)')
+  skipped ((706, 380), 'faint meteor', 'wall pinch 11.3')
+  pieces 65 (pegs 60, bricks 5, movers 12); candidates 31; green-only 22; skipped while tracing 5
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-20\docs\design\v9\levels\build\trace\base-29.png

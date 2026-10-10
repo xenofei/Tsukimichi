@@ -52,12 +52,12 @@ public static partial class MoonfallRules
     public const double WingsMouth = BucketMouth * 2;
 
     /// <summary>
-    /// [J] Lunar Burst (the original's Space Blast) lights every peg whose surface is within this distance of the green
-    /// peg's centre [R §5 l.110: "within a radius (about 4 pegs wide)"]. Read as four peg diameters (4 × 20 px), not
-    /// four pegs across in all: Moonfall's levels set pegs 34–45 px apart, so an 80 px diameter would reach only the
-    /// green's next-door pegs, which is no blast. 80 px lights about a dozen pegs in a typical field.
+    /// Lunar Burst (the original's Space Blast) lights every peg within 100 px of the green peg [O; R §5 l.110: "within
+    /// a radius (about 4 pegs wide)"]. [J] Measured from the green's centre to the other peg's surface: the original's
+    /// basis (centre or surface) was not decoded, and the surface keeps a brick whose middle is far but whose end is near
+    /// in the blast, as a player reads it. (Before the owner's Peggle decision of 9 October 2026 it was 80 px.)
     /// </summary>
-    public const double BurstRadius = 80;
+    public const double BurstRadius = 100;
 
     /// <summary>
     /// [J] Flippers last 3 turns. The sources conflict [R §5 l.111: "patent: lasts the shot; wiki: 3 turns"]; the wiki's
@@ -94,6 +94,9 @@ public static partial class MoonfallRules
     /// walls' 0.75 a ball falling onto a rising flipper would leave at over 1,200 px/s and slam the ceiling.
     /// </summary>
     public const double FlipperRestitution = 0.5;
+
+    /// <summary>[J] What a flipper keeps of the ball's run along its face: 0.95, the footage's peg reading [M 4] (the original's flipper is not decoded).</summary>
+    public const double FlipperTangentRestitution = 0.95;
 
     /// <summary>Moon Gate (the original's Spooky Ball): the ball falls out once and comes back in at the top, this shot only [R §5 l.112].</summary>
     public const int GateReentries = 1;
@@ -176,10 +179,12 @@ public static partial class MoonfallRules
     /// <summary>The most points the bolt's drawn path keeps (its two ends and the pegs between).</summary>
     public const int BoltMaxPoints = 48;
 
-    // ---- Style shots [R §3 l.73–87] ----
+    // ---- Style shots [R §3 l.73–87, O] ----
     // [J] Each style shot is paid at most once a shot; its bonus is added to the shot's score after the peg score
-    // (values × pegs), and is not multiplied by the Fever meter [R §3 l.87, unverified], nor by a triple score. It counts
-    // towards the free balls, which come from the shot's score [R §3 l.70, P: "adds any style points to the shot score"].
+    // (values × pegs), and is not multiplied by the Fever meter [R §3 l.87, unverified], nor by a triple score. It does
+    // not count towards the free balls, which come from the peg score alone [O; FreeBallThresholds]. The values are the
+    // original's [O]; so are the triggers of Long Shot, Super Long Shot and Orange Sweep. The others' triggers were not
+    // decoded and stay as the research describes them.
 
     /// <summary>One-Peg Catch (the original's "Free Ball Skillz"): one peg, then the bucket [R §3 l.75].</summary>
     public const int OnePegCatchBonus = 5_000;
@@ -215,20 +220,35 @@ public static partial class MoonfallRules
     public const int LiveWireBonus = 25_000;
 
     /// <summary>
-    /// A long leg: a ball lights a non-blue peg, then another at least a third of the screen's width (800 / 3) away
-    /// [R §3 l.76]. [J] Measured as the straight distance between the two pegs, which is what the player sees; the
-    /// path the ball took between them is not counted, so a wall bounce does not make a short hop long.
+    /// Long Shot [O]: the first two pegs the shot's ball lights are both non-blue and more than 200 px apart, centre to
+    /// centre (the straight distance, not the ball's path). It is an opening-shot skill: once the shot's second peg is
+    /// lit (or its first is blue) there is no Long Shot that shot. (Before the owner's Peggle decision of 9 October 2026
+    /// any non-blue to non-blue leg of 267 px anywhere in a shot paid it.)
     /// </summary>
-    public const double LongShotDistance = Width / 3;
+    public const double LongShotDistance = 200;
 
-    /// <summary>A super long leg: two thirds of the screen's width [R §3 l.77].</summary>
-    public const double SuperLongShotDistance = Width * 2 / 3;
+    /// <summary>Super Long Shot [O]: the same, more than 450 px apart; it is paid instead of the Long Shot.</summary>
+    public const double SuperLongShotDistance = 450;
 
     /// <summary>
-    /// [J] "Next or soon after" [R §3 l.76]: the second non-blue peg may come after at most one blue peg. One stray blue
-    /// on the way still reads as one long flight; two or more is a run through the field, not a long shot.
+    /// A blue peg grazed between the first two non-blue pegs is forgiven when the second comes less than this many game
+    /// ticks after it [O]; [J] one blue only, as the original's rule is read.
     /// </summary>
-    public const int LongShotBluesAllowed = 1;
+    public const int LongShotBlueGraceTicks = 10;
+
+    /// <summary>
+    /// A long leg for Double Long Shot (a night-campaign style shot of the original's whose trigger was not decoded, so it
+    /// stays as the research reads it [R §3 l.78]): a ball lights a non-blue peg, then another at least a third of the
+    /// screen's width (800 / 3) away, with at most one blue between (<see cref="DoubleLongShotBluesAllowed"/>); two such
+    /// legs in a row pay it. [J] The straight distance between the two pegs, which is what the player sees.
+    /// </summary>
+    public const double DoubleLongShotLegDistance = Width / 3;
+
+    /// <summary>
+    /// [J] "Next or soon after" [R §3 l.76]: a long leg's second non-blue peg may come after at most one blue peg. One
+    /// stray blue on the way still reads as one long flight; two or more is a run through the field.
+    /// </summary>
+    public const int DoubleLongShotBluesAllowed = 1;
 
     /// <summary>
     /// Off the Wall: from a wall bounce to a non-blue peg a fifth of the screen's width (160 px) away [R §3 l.79]. [J] The
@@ -247,14 +267,21 @@ public static partial class MoonfallRules
     public const double LuckyBounceRise = Height / 4;
 
     /// <summary>
-    /// [J] Orange Sweep: a shot lights at least a third (rounded up) of the oranges left when it was fired, and never
-    /// fewer than <see cref="OrangeSweepMinimum"/>. The research says only "a large share … depends on how many remain"
-    /// [R §3 l.82]; a third is 9 of a fresh level's 25, a rare and memorable shot, and 4 of the last 10.
+    /// Orange Sweep (the original's Orange Attack) [O]: one shot lights this many oranges, set by the oranges the level
+    /// dealt: 31 or more need 15, 21–30 need 10 (so a level's usual 25 need 10), 16–20 need 9, 11–15 need 8, 7–10 all but
+    /// two, 5–6 all but one. [J] A level of fewer than 5 oranges has none (the original's table stops there). (Before the
+    /// owner's Peggle decision of 9 October 2026 it was a third of the oranges left at the shot, at least 3.)
     /// </summary>
-    public const int OrangeSweepShare = 3;
-
-    /// <summary>[J] At least three oranges, so the last two or three are not a sweep for the asking.</summary>
-    public const int OrangeSweepMinimum = 3;
+    public static int OrangeSweepNeeds(int orangesDealt) => orangesDealt switch
+    {
+        >= 31 => 15,
+        >= 21 => 10,
+        >= 16 => 9,
+        >= 11 => 8,
+        >= 7 => orangesDealt - 2,
+        >= 5 => orangesDealt - 1,
+        _ => int.MaxValue,
+    };
 
     /// <summary>Long Slide: a ball slides along pegs and lights 12 [R §3 l.83].</summary>
     public const int LongSlidePegs = 12;
