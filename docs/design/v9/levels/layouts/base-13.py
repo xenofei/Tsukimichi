@@ -16,13 +16,13 @@ are the subject's own shapes: never green.
 
 Peggle refit (owner's rules of 9 October 2026): densified from the shipped layout (88 pieces, 30 candidates), which
 traced the subject better than the three generated variants (they scattered pieces over the cathedral and the
-mountain); pegs r 10 and bricks t 20, 111 pieces (28 bricks, 25%: the subject has few more steep or crested lines
-that take brick without notches against its neighbours). Candidates by exclusion (`b.candidates`), 68 of 111: the
-fog's piers and the lower town stay blue (the greens' pool), and so do the crest's and the deck's bricks, the boards'
-easiest targets (blue, they took the held-out figure from 6.9 to 5.6 per 48); blue moons in the open sky by the
-launcher and the high spires harden it. The hardest places are the shadowed ones: under the billows, under the
-crest, under the deck and in the rose window. Tuned (`mfl.py tune`) on seeds 1-864 to 4.0 per 48; held out 4.9 (band
-3.04-5.24, stage mean 4.14).
+mountain); pegs r 10 and bricks t 20, 113 pieces, 35 bricks (31%). The great spire now has a roof of brick down both
+its sides (a closed peak: a moon on its bright tip did not read), so the cathedral is outlined from spire to flanks,
+and the billows and the roof are cut into bricks of the crest's length. Candidates by exclusion (`b.candidates`), 78
+of 113 (lower third 24%): the fog's piers and the lower town stay blue (the greens' pool), and so do the crest's and
+the deck's bricks, the board's easiest targets, and the moons in the open sky. The hardest places are the shadowed
+ones: under the billows, under the crest, under the deck and in the rose window. Tuned (`mfl.py tune --band 3.6,4.7`,
+near the stage mean 4.14) to held out 4.6 per 48 (stage band 3.04-5.24).
 """
 
 import math
@@ -48,8 +48,9 @@ SUMMITS = ((162, 110), (256, 144), (341, 194))     # 16 or more above the crest'
 HEARTS = ((100, 352), (209, 340), (330, 340))
 EAST_BILLOW_CUT = 10.0
 RIDGE_SLOT = 4.0                 # opens the summit's notch past the limit
-PINNACLES = ((548, 140), (592, 172), (530, 192), (612, 228), (520, 250), (600, 268))   # the cathedral's inner spires
+PINNACLES = ((549, 160), (600, 178), (530, 192), (612, 228), (520, 250), (600, 268))   # the cathedral's inner spires
 LEFT_FLANK_TRIM = 40.0           # the flank ends clear of the east billow
+SPIRE_ROOF = (((537, 82), (519, 136)), ((557, 82), (580, 146)))   # brick down both sides of the great spire
 
 
 def build(b):
@@ -65,7 +66,7 @@ def build(b):
     b.trace(below(ridge[1:9], 48), spacing=36, tag="snow line")
     for (x, y) in ((228, 104), (300, 124), (110, 120), (170, 66), (250, 60)):
         b.place(x, y, tag="high cloud")
-    for (x, y) in ((400, 214), (436, 214), (330, 160), (344, 278), (120, 70), (520, 60), (580, 66), (660, 128)):
+    for (x, y) in ((400, 214), (436, 214), (330, 160), (344, 278), (120, 70), (660, 128)):
         b.place(x, y, tag="open sky")
     for (x, y) in ((100, 262), (150, 262), (200, 270)):
         b.place(x, y, tag="mountain's foot")
@@ -74,7 +75,7 @@ def build(b):
         cx, cy, R, a0, sw = b.circle(name)
         if name == "billow east":
             sw -= EAST_BILLOW_CUT        # its east end stops short of the cathedral's left flank (a notch)
-        b.arc(cx, cy, R, a0, sw, tag="billow")
+        b.arc_bricks(cx, cy, R, a0, sw, n=2, tag="billow")
     for (x, y) in HEARTS:
         b.place(x, y, tag="billow heart")
     for (x, y) in ((150, 338), (268, 328), (392, 344)):
@@ -93,7 +94,11 @@ def build(b):
     b.bricks_along(b.f("left flank"), length=34, gap=2.5, trim1=LEFT_FLANK_TRIM, green=False, tag="left flank")
     b.bricks_along(b.f("right flank"), length=34, gap=2.5, green=False, tag="right flank")
     for (x, y) in b.f("spire tips"):
-        b.place(x, y, green=False, tag="spire tip")
+        if (x, y) != (514, 100):                 # under the great spire's roof
+            b.place(x, y, green=False, tag="spire tip")
+    # the great spire's own tip is too bright to read a moon on: its roof meets closed (a peak, no keystone)
+    for run in SPIRE_ROOF:
+        b.bricks_along(list(run), length=27, gap=2.5, green=False, tag="spire roof")
     cx, cy, R, _, _ = b.circle("rose window")
     b.arc_bricks(cx, cy, R, 195, 150, n=3, green=False, tag="rose window arch")
     for a in (30, 90, 150):
@@ -104,7 +109,7 @@ def build(b):
         b.place(x, y, tag="pinnacle")
     for (x, y) in ((628, 318), (620, 400), (500, 420), (560, 430), (600, 440)):
         b.place(x, y, tag="cathedral body")
-    for (x, y) in ((690, 112), (700, 420), (650, 80), (690, 62)):
+    for (x, y) in ((690, 112), (700, 420)):
         b.place(x, y, tag="cloud beyond")
     # ---- below: the cathedral's foot, the piers in the fog and the lower town
     for (x, y) in b.f("cathedral foot"):
@@ -117,8 +122,8 @@ def build(b):
     b.candidates(exclude_tags=EXCLUDE_TAGS)
 
 
-# ---- tuning (written by `mfl.py tune`; held out 5.1/48, tuning seeds 4.0/48, band 3.60-4.70; NOT in band: stuck)
+# ---- tuning (written by `mfl.py tune`; held out 4.6/48, tuning seeds 3.3/48, band 3.60-4.70)
 TUNING = {
-    "blue": [[256.0, 144.0], [228.0, 104.0], [514.0, 100.0], [484.0, 150.0], [588.0, 506.0], [268.0, 290.0], [387.6, 306.2], [475.1, 212.2], [467.1, 250.7], [459.2, 289.2]],
-    "orange": [[400.0, 214.0], [436.0, 214.0], [344.0, 278.0], [115.0, 171.2], [147.2, 156.2], [215.5, 173.2]]
+    "blue": [[256.0, 144.0]],
+    "orange": [[115.0, 171.2], [147.2, 156.2]]
 }
