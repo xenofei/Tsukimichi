@@ -23,15 +23,16 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 
 | Command | What it does |
 |---|---|
-| `py -3 tools/moonfall-levels/mfl.py fetch` | Dumps every game texture the recipes name, plus the chrome's UI art, the cards and the fonts, into `docs/design/v9/rich/.cache` (gitignored) |
-| `py -3 tools/moonfall-levels/mfl.py selftest` | Runs every checker against its known-bad and known-good cases |
+| `py -3 tools/moonfall-levels/mfl.py fetch` | Dumps every game texture the recipes name, plus the chrome's UI art, the cards and the fonts, into `docs/design/v9/rich/.cache` (gitignored) and copies them to the shared cache. You rarely need it: `build`, `selftest` and `convert` restore the textures from the shared cache and fetch from the install only what is in neither (see Result caches) |
+| `py -3 tools/moonfall-levels/mfl.py selftest [--force-selftest]` | Runs every checker against its known-bad and known-good cases, its independent sections in parallel processes (about 2 minutes). Skipped (one line, about a second) when a previous run passed on the same code, tools and fixtures; `--force-selftest` reruns |
+| `py -3 tools/moonfall-levels/mfl.py check <id>... [--json]` | **The fast inner loop (about 3 s a level).** The pre-flight, the shipped loader, the first-shot sweep, the pocket rule and the rule's 48 greedy games on the level's layout file. Prints `PASS`, or every problem with the piece's layout tag, its x, y and a hint at the fix. Writes nothing; exit 1 on a problem. A PASS is necessary, not sufficient: `build` also grades the scene and checks the framing and readability. Run it after every layout edit, before `build` |
 | `py -3 tools/moonfall-levels/mfl.py trace <scene or level-id>` | The tracing sheet (`docs/design/v9/levels/build/trace/`): the graded scene at 2x, a 50-unit grid, the opening, the launcher's swing, the bucket's lane, the recipe's features, and for a level its pieces (oranges ringed orange, never-green pegs barred, skipped points as red crosses) plus the pre-flight |
-| `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force` |
-| `py -3 tools/moonfall-levels/mfl.py stage <key>` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. The mean bands for every stage are `stagecheck.MEAN_BANDS`: Peggle's own stage means measured on the new engine (2026-10-09, charter section 1.1) plus or minus 1.1 per 48, the lower edge never below the 2-of-48 floor (owner's decision, 9 October 2026, "Follow Peggle, lower the floor"; only Moon Road 9-11 and Far Shore 10-12 reach it: 2.0 to mean + 1.1). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a stage whose mean per 48 is outside its band (by more than one standard error of a mean, 0.3), and a finale that is not resolvably harder than the stage's average (owner's decision, 9 October 2026, "Harder than the stage's average": it wins fewer games per 48 than the mean of the stage's other four levels, the gap less one standard error on the pooled games at least 0; it need not be the single hardest). There is no rule between the other levels' order (the old step of 0.5 per level is gone). |
+| `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force] [--keep-going] [--force-selftest] [--json]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force`. The self-test is skipped when unchanged (`--force-selftest` reruns). A level stops after its cheap phase (the `check` above) when that finds a fault, so a level that will be refused costs seconds; `--keep-going` runs the rest as before. `--json` prints `{command, verdict, fails, figures}` on stdout (the human lines go to stderr) |
+| `py -3 tools/moonfall-levels/mfl.py stage <key> [--force] [--json]` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. The mean bands for every stage are `stagecheck.MEAN_BANDS`: Peggle's own stage means measured on the new engine (2026-10-09, charter section 1.1) plus or minus 1.1 per 48, the lower edge never below the 2-of-48 floor (owner's decision, 9 October 2026, "Follow Peggle, lower the floor"; only Moon Road 9-11 and Far Shore 10-12 reach it: 2.0 to mean + 1.1). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a stage whose mean per 48 is outside its band (by more than one standard error of a mean, 0.3), and a finale that is not resolvably harder than the stage's average (owner's decision, 9 October 2026, "Harder than the stage's average": it wins fewer games per 48 than the mean of the stage's other four levels, the gap less one standard error on the pooled games at least 0; it need not be the single hardest). There is no rule between the other levels' order (the old step of 0.5 per level is gone). |
 | `py -3 tools/moonfall-levels/mfl.py challenge <ch-id>` or `challenge <level-id> <oranges>` | The challenge carrier check (`mflkit/challenge.py`): the greedy player on the carrier level(s) at the challenge's orange count (`mfcheck play ... <oranges>`); at least 5 of the rule's 48 games must win, and the level must have at least that many candidates. Recorded carriers (charter 1.6): ch-03 35 oranges on `base-27`, ch-04 45 on `base-37`, and ch-06, ch-08, ch-09, ch-11, ch-12 at the standard 25 on the levels the charter lists. More than 35 oranges are allowed only for the entries of `challenge.EXCEPTIONS` (today `base-37` at 45, with the reason recorded there). The pre-flight needs a carrier to have at least as many candidates as its challenge's oranges (`challenge.candidate_range`: 60-90% of the pieces, never fewer than 35 on `base-27` or 45 on `base-37`). A recorded carrier not built yet is reported, not failed |
 | `py -3 tools/moonfall-levels/mfl.py precheck <id>... \| --all [--rev <git rev>] [--only legibility,axis,repeats,patches,play,margins] [--strict]` | The recurring review findings, measured before review (below). Reads each level's committed file, recipe, composite and report, so it needs no build and no game install; `--rev` reads a past commit. Report only: exit 0 unless `--strict` and a check FAILs. `stage` prints it after its table |
-| `py -3 tools/moonfall-levels/mfl.py stuck <id>` | Where balls come to rest on the first shots the stuck rule fires on |
-| `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane |
+| `py -3 tools/moonfall-levels/mfl.py stuck <id>` | Where balls come to rest on the first shots the stuck rule fires on (one `mfcheck trace-many` process for all the aims) |
+| `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane (likewise) |
 | `py -3 tools/moonfall-levels/mfl.py ease <id> [tags] [--pick N] [--skip tags]` | A scratch copy with every (tagged) peg a candidate, 864 games: each place ranked by how often it is the orange left behind; `--pick` proposes the N most readily cleared places that keep the spread rule and stay above y 430 (a way to choose which places to exclude from `b.candidates`) |
 | `py -3 tools/moonfall-levels/mfl.py sources` | Writes `docs/design/v9/levels/sources.json`: every game file a scene reads, and which level uses it |
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all` | The converter (`mflkit/convert.py`): each level's runtime recipe (`Tsukimichi.Core/Moonfall/Levels/scenes/<scene>.json`), our painting undressed at 2x and the dress's plates (`Tsukimichi/assets/moonfall/scenes/`) |
@@ -79,10 +80,23 @@ those boards' extremes, so recalibrate them on the first refitted (85+ piece) st
 
 ## Result caches
 
-Nothing is redone on unchanged inputs; no check's rule or threshold changes. Caches live in
-`docs/design/v9/levels/build/cache` (gitignored; delete the folder to reset).
+Nothing is redone on unchanged inputs; no check's rule or threshold changes. The caches live outside the worktree, in a
+folder every worktree shares: `%LOCALAPPDATA%/tsukimichi-moonfall-cache`, or the folder named by the environment
+variable `MOONFALL_CACHE`. Everything in it is keyed by content (a stamp's file name carries its key), so worktrees on
+different code never read each other's results, and writes are atomic. Delete the folder (or its `levels/`) to reset.
 
-- **`build`** writes a stamp after a level's PASS, keyed on its layout file, its scene recipe, the painter source or the
+- **Self-test stamp** (`levels/selftest-<key>.json`): `build` and `selftest` skip the self-test when a previous run
+  PASSED on the same inputs: every `mflkit/*.py`, `mfl.py` and the design kit they import, the built mfcheck and
+  `Tsukimichi.Core.dll`, the C# sources of mfcheck and MoonfallRender (and its build), and the self-test's fixtures (the
+  approved pilots, `json/base-01..10` and `base-25` with the recipes, painters and textures they name, the chrome art).
+  A new level or a layout edit does not touch it. On a miss the sections run in parallel processes (the converter's
+  five levels are separate sections); every section's cases still run. `--force-selftest` reruns.
+- **Textures** (`textures/`): `docs/design/v9/rich/.cache` is what the design kit reads, so it stays in the worktree, but
+  `build`, `selftest` and `convert` first copy from the shared mirror whatever the worktree lacks, then fetch from the
+  game install only what the mirror lacks too, and copy new files to the mirror. A fresh worktree needs no `fetch`.
+  `MFL_NO_TEXTURE_SYNC=1` turns this off.
+
+- **`build`** (`levels/build-<id>-<key>.json`) writes a stamp after a level's PASS, keyed on its layout file, its scene recipe, the painter source or the
   game texture the scene reads, the chrome art's file list, `mflkit/*.py` and `mfl.py`, the design kit it imports
   (`docs/design/v9/src`, `rich/src`, `rich2/src`) and the built mfcheck and engine DLLs. The next `build` of the same
   level prints `unchanged since last PASS (<time>)` and skips it, provided its outputs and a PASS report still exist
@@ -91,8 +105,23 @@ Nothing is redone on unchanged inputs; no check's rule or threshold changes. Cac
   (level file hash, level number, games, first seed block, mfcheck build hash) and re-read for an unchanged level, so
   `stage <n>` replays only the levels that changed. `stage <n> --force`, or `MFL_NO_CACHE=1` for any command, replays.
 - A challenge run (`challenge`, `engine.play(..., oranges=n)`) keys its stored games on the orange count too.
-- **MoonfallRender** has the same idea for pictures: `Tsukimichi.MoonfallRender <out.png> ... --cache <dir>`.
+- **Graded scenes** (`scenes/`) are keyed on the recipe, the painter or the game texture, the grade's code and the scale.
+- **MoonfallRender** has the same idea for pictures: `Tsukimichi.MoonfallRender <out.png> ... --cache <dir>`. A single
+  level's picture (`--scene-only`, or the play board of an explicit `--level`) is keyed on that level alone: its
+  arguments, the renderer's build, the C# sources of the engine and the window, that level's JSON, its scene recipe and
+  its pictures; editing another level leaves it cached. If a source or that level's file is newer than the built DLLs the
+  render is neither served from nor stored in the cache (rebuild first). Other screens are keyed on every level.
   See `docs/team/agent-brief-common.md`.
+
+## Machine-readable output and findings
+
+`check`, `build` and `stage` take `--json`: stdout carries one document, `{command, verdict: "PASS"|"REFUSED", fails:
+[{level, rule, piece, x, y, hint, message}], figures: {<level>: {pieces, candidates, stuck, angles, dead,
+never_reached, greedy_won_of_48, ramp_per_48, ...}}}`, and the human lines go to stderr. `piece` is the layout tag
+(`tag=` in the layout file) and `x`, `y` the piece's place (a brick's midpoint), as the pre-flight prints them
+(`peg 'hill west' (223.1, 138.7)`, `brick 'west shore' (348, 317)`), not a file-order index; the loader's `pegs[7]`
+is translated the same way. `rule` is `preflight:<rule>`, `loader`, `sweep`, `reach`, `play`, `ceiling`, `framecheck`,
+`readcheck` or `stage`. A report written by `build` carries the same list as `problems`.
 
 The raw commands stay as they were: without a cache hit (or with `--force`) every step runs.
 
