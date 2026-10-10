@@ -4,9 +4,11 @@ Minfilia hears the Mother Crystal through the Echo; here its call is written in 
 figure of a tall faceted crystal (two tips, four shoulders, the front ridge's two ends), joined by faint engraved gilt
 lines and, fainter still, an old star atlas's drawing of its facets. A Milky Way crosses the sky behind it with its
 dust lanes; below, the dark dunes of Western Thanalan and the Waking Sands' low house with its dome, its lit windows and
-two date palms. The moon's glow comes from beyond the upper left.
+two date palms. The moon's glow comes from beyond the upper left. The crystal's call spreads through the sky as four
+faint rings of aquamarine light round the figure, broken under the launcher and fading as they travel.
 
-FEATURES (board units): the stars, the figure's lines, the Milky Way's spine, the horizon and the house's roofline.
+FEATURES (board units): the stars, the figure's lines, the Milky Way's spine, the horizon, the house's roofline and the
+call's rings (circles with the arcs painted).
 """
 import math
 
@@ -27,6 +29,13 @@ HORIZON = [(0, 506), (90, 500), (180, 494), (260, 498), (330, 506), (420, 510), 
 HOUSE = [(120, 497), (120, 470), (150, 470), (150, 458), (196, 458), (196, 470), (232, 470), (232, 497)]
 DOME = (173, 458, 16)
 MILKY = [(90, 560), (260, 420), (430, 300), (600, 190), (760, 90)]
+# the call: three ripples of the crystal's light spreading from its heart through the sky (the Echo's rings), broken
+# under the launcher at the top; each ring is (radius, [(from, sweep), ...] in degrees, strength)
+CALL = (440, 332)
+CALL_RINGS = {"call inner": (180, [(160, 78), (282, 98)], 0.20),
+              "call middle": (225, [(192, 46), (284, 64)], 0.15),
+              "call outer": (270, [(198, 40), (290, 52)], 0.11),
+              "call far": (315, [(170, 58), (309, 16)], 0.08)}
 
 FEATURES = {
     "stars": [[x, y] for (x, y, _m) in STARS.values()],
@@ -34,6 +43,7 @@ FEATURES = {
     "milky way": {"points": [list(p) for p in MILKY]},
     "crystal": [list(STARS[k][:2]) for k in ("top", "right shoulder", "right hip", "foot", "left hip", "left shoulder")],
     "horizon": {"points": [list(p) for p in HORIZON]},
+    **{name: {"circle": [CALL[0], CALL[1], R], "arcs": [list(a) for a in arcs]} for name, (R, arcs, _k) in CALL_RINGS.items()},
 }
 
 
@@ -80,6 +90,20 @@ def paint(S=1):
                   length=(8, 18), width=(1.6, 3.0), jitter=0.02, hue_jitter=0.004, seed=6)
     px = RL.stars(sky, S, 1100, 33, (0, 0, W, 505 * S),
                   avoid=lambda x, y: 0.35 + 0.65 * float(np.exp(-(dist[min(H - 1, int(y)), min(W - 1, int(x))] / 90) ** 2)), bright=0.5)
+    # the call: the crystal's light spreading through the sky in rings, each a fine bright line in a soft halo,
+    # tapering at its ends and fainter the further it travels
+    d_call = np.sqrt((X - CALL[0]) ** 2 + (Y - CALL[1]) ** 2)
+    ang = np.degrees(np.arctan2(Y - CALL[1], X - CALL[0])) % 360
+    for name, (R, arcs, k) in CALL_RINGS.items():
+        win = np.zeros((H, W), np.float32)
+        for (a0, sw) in arcs:
+            t = ((ang - a0) % 360) / sw
+            t = np.where(t <= 1.0, t, -1.0)
+            win = np.maximum(win, np.where(t >= 0, smooth(0.0, 0.18, t) * smooth(1.0, 0.82, t), 0.0))
+        line = np.exp(-((d_call - R) / 1.3) ** 2) + 0.55 * np.exp(-((d_call - R - 5) / 0.9) ** 2)
+        halo = np.exp(-((d_call - R) / 11) ** 2)
+        a = win * (line * k * 1.6 + halo * k * 0.45) * smooth(500, 470, Y)
+        px = screen(px, hexc("#86E8BC") * a[..., None])
     # the figure: the atlas's faint facet drawing (fill hatching inside the crystal), the gilt lines, the stars
     pts = [STARS[k][:2] for k in ("top", "right shoulder", "right hip", "foot", "left hip", "left shoulder")]
     im = Image.new("L", (W * 3, H * 3), 0)
