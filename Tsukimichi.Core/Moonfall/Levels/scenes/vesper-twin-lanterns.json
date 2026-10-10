@@ -18,7 +18,7 @@
   "regions": [
    {
     "hue": "#2A9EA8",
-    "chroma": 0.12,
+    "chroma": 0.14,
     "where": [
      {
       "y": [240, 130]
@@ -39,18 +39,6 @@
     "invert": true,
     "scale": 0.5
    }
-  ],
-  "spare": [
-   [
-    {
-     "disc": [196, 240, 12, 4]
-    }
-   ],
-   [
-    {
-     "disc": [604, 240, 12, 4]
-    }
-   ]
   ]
  },
  "light": [
@@ -92,74 +80,19 @@
  ],
  "lights": [
   {
-   "x": 389.022,
-   "y": 474.551,
-   "size": 0.9644,
+   "x": 273.71,
+   "y": 410.119,
+   "size": 0.7763,
    "colour": "#FFD27A",
    "core": 1.4,
    "k": 0.8,
    "halo": 5,
    "haloK": 0.22,
-   "flicker": true
-  },
-  {
-   "x": 551.094,
-   "y": 443.113,
-   "size": 0.9471,
-   "colour": "#FFD27A",
-   "core": 1.4,
-   "k": 0.8,
-   "halo": 5,
-   "haloK": 0.22,
-   "flicker": true
-  },
-  {
-   "x": 430.06,
-   "y": 383.162,
-   "size": 0.9873,
-   "colour": "#FFD27A",
-   "core": 1.4,
-   "k": 0.8,
-   "halo": 5,
-   "haloK": 0.22,
-   "flicker": true
-  },
-  {
-   "x": 156.195,
-   "y": 395.282,
-   "size": 0.8418,
-   "colour": "#FFD27A",
-   "core": 1.4,
-   "k": 0.8,
-   "halo": 5,
-   "haloK": 0.22,
-   "flicker": true
-  },
-  {
-   "x": 148.046,
-   "y": 506.182,
-   "size": 0.836,
-   "colour": "#FFD27A",
-   "core": 1.4,
-   "k": 0.8,
-   "halo": 5,
-   "haloK": 0.22,
-   "flicker": true
-  },
-  {
-   "x": 196.0,
-   "y": 240.0,
-   "size": 1.0,
-   "colour": "#FFB45E",
-   "core": 1.6,
-   "k": 0.7,
-   "halo": 6,
-   "haloK": 0.2,
    "flicker": true
   },
   {
    "x": 604.0,
-   "y": 240.0,
+   "y": 460.0,
    "size": 1.0,
    "colour": "#FFB45E",
    "core": 1.6,
