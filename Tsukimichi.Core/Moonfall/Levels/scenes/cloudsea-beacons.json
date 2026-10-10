@@ -133,28 +133,6 @@
    "halo": 8,
    "haloK": 0.14,
    "flicker": true
-  },
-  {
-   "x": 374.2,
-   "y": 268.2,
-   "size": 0.6,
-   "colour": "#CFF4FF",
-   "core": 1.6,
-   "k": 0.6,
-   "halo": 8,
-   "haloK": 0.14,
-   "flicker": true
-  },
-  {
-   "x": 425.8,
-   "y": 268.2,
-   "size": 0.6,
-   "colour": "#CFF4FF",
-   "core": 1.6,
-   "k": 0.6,
-   "halo": 8,
-   "haloK": 0.14,
-   "flicker": true
   }
  ],
  "veil": 0.22,
