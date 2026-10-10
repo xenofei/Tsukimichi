@@ -748,92 +748,92 @@
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.353,
+      "worst": 0.376,
       "at": [
        517,
        386
       ],
-      "undressed": 0.353,
-      "drop": 0.0
+      "undressed": 0.374,
+      "drop": -0.002
      },
      "orange 1x": {
-      "worst": 0.286,
+      "worst": 0.309,
       "at": [
        517,
        386
       ],
-      "undressed": 0.286,
-      "drop": 0.0
+      "undressed": 0.307,
+      "drop": -0.002
      },
      "green 1x": {
-      "worst": 0.404,
+      "worst": 0.427,
       "at": [
        168,
        376
       ],
-      "undressed": 0.409,
+      "undressed": 0.432,
       "drop": 0.005
      },
      "purple 1x": {
-      "worst": 0.241,
+      "worst": 0.264,
       "at": [
        517,
        386
       ],
-      "undressed": 0.241,
-      "drop": 0.0
+      "undressed": 0.261,
+      "drop": -0.003
      },
      "blue 0.8x": {
-      "worst": 0.347,
+      "worst": 0.367,
       "at": [
        517,
        386
       ],
-      "undressed": 0.348,
-      "drop": 0.001
+      "undressed": 0.367,
+      "drop": 0.0
      },
      "orange 0.8x": {
-      "worst": 0.279,
+      "worst": 0.299,
       "at": [
        517,
        386
       ],
-      "undressed": 0.28,
-      "drop": 0.001
+      "undressed": 0.299,
+      "drop": 0.0
      },
      "green 0.8x": {
-      "worst": 0.397,
+      "worst": 0.419,
       "at": [
-       177,
-       290
+       168,
+       376
       ],
-      "undressed": 0.4,
-      "drop": 0.003
+      "undressed": 0.423,
+      "drop": 0.004
      },
      "purple 0.8x": {
-      "worst": 0.25,
+      "worst": 0.27,
       "at": [
        517,
        386
       ],
-      "undressed": 0.251,
-      "drop": 0.001
+      "undressed": 0.27,
+      "drop": 0.0
      }
     },
-    "worst_margin": 0.241,
+    "worst_margin": 0.264,
     "largest_drop": 0.005,
     "bricks_min_margin": [
-     0.285,
+     0.308,
      "orange"
     ],
-    "protan_orange_p10": 0.112,
+    "protan_orange_p10": 0.111,
     "protan_places": 64,
     "protan_worst_at": [
      "brick",
      684,
      392
     ],
-    "protan_min": 0.084,
+    "protan_min": 0.083,
     "jewels": {
      "coloured_px_pct": 90.2,
      "mean_chroma": 0.063,
@@ -862,9 +862,9 @@
       4.4
      ]
     },
-    "ghost_median": 0.06,
+    "ghost_median": 0.066,
     "ghost_worst": [
-     0.059763699769973755,
+     0.06617217510938644,
      [
       330,
       170
@@ -890,6 +890,7 @@
   }
  },
  "fails": [],
- "seconds": 49.7,
+ "problems": [],
+ "seconds": 59.6,
  "verdict": "PASS"
 }

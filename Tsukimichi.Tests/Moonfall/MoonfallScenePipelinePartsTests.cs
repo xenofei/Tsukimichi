@@ -119,8 +119,8 @@ public sealed class MoonfallScenePipelinePartsTests
         Refused(Edited("horizon-by-night", static n => n["palette"]!["regions"]![0]!["chroma"] = 0.31), "chroma must be");
         Refused(Edited("sagolii-cactuar", static n => n["palette"]!["spare"] = JsonNode.Parse("[[], [], [], [], []]")), "at most 4 masks");
 
-        // 1-2's water region pushes 0.252, over the old limit of 0.2 (its approved green, kept in the shipped gamut).
-        Assert.Equal(0.252f, Read(Shipped("horizon-by-night")).Palette!.Regions[0].Chroma, 3);
+        // 1-2's water region pushes 0.275 (the Peggle refit; 0.252 before), over the old limit of 0.2 (its approved green, kept in the shipped gamut).
+        Assert.Equal(0.275f, Read(Shipped("horizon-by-night")).Palette!.Regions[0].Chroma, 3);
     }
 
     [Fact]

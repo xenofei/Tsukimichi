@@ -16,7 +16,7 @@ public sealed class MoonfallDuelTests
     private static List<MoonfallDuelTurn> PlayDuel(MoonfallDuel duel, int maxTicks = 400_000)
     {
         var turns = new List<MoonfallDuelTurn>();
-        MoonfallDuelTurn? last = null;
+        var closed = 0;
         var shot = 0;
         for (var t = 0; t < maxTicks && duel.Outcome == MoonfallDuelOutcome.Undecided; t++)
         {
@@ -30,10 +30,10 @@ public sealed class MoonfallDuelTests
             {
             }
 
-            if (duel.LastTurn != last)
+            if (duel.TurnsClosed != closed)
             {
-                last = duel.LastTurn;
-                turns.Add(last!.Value);
+                closed = duel.TurnsClosed;
+                turns.Add(duel.LastTurn!.Value);
                 if (duel.Outcome == MoonfallDuelOutcome.Undecided)
                 {
                     Assert.Equal(duel.Game.BallsLeft, duel.BallsLeft(0) + duel.BallsLeft(1));
