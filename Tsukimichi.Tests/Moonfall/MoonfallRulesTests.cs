@@ -39,9 +39,66 @@ public sealed class MoonfallRulesTests
     }
 
     [Fact]
+    public void The_greens_are_dealt_high_first_and_150_px_apart()
+    {
+        // [O] Blue pegs above y 410 take the greens first, and the two stand at least 150 px apart. Rows at y 200 and
+        // 250 (high) and 480 and 530 (low); every peg may be green, none orange.
+        var pegs = new List<MoonfallPeg>();
+        foreach (var y in (ReadOnlySpan<double>)[200, 250, 480, 530])
+        {
+            for (var x = 100.0; x <= 700; x += 40)
+            {
+                pegs.Add(Blue(x, y));
+            }
+        }
+
+        var board = Board([.. pegs]);
+        var spreads = new HashSet<int>();
+        for (var seed = 1UL; seed <= 200; seed++)
+        {
+            var game = new MoonfallGame(board, MoonfallRules.FirstGreenLevel, seed);
+            var greens = Indices(game, PegColour.Green).Select(i => game.Peg(i)).ToList();
+            Assert.Equal(2, greens.Count);
+            Assert.All(greens, static g => Assert.True(g.Y < MoonfallRules.GreenHighY, $"a green dealt low at y {g.Y}"));
+            var apart = Math.Sqrt(Math.Pow(greens[0].X - greens[1].X, 2) + Math.Pow(greens[0].Y - greens[1].Y, 2));
+            Assert.True(apart >= MoonfallRules.GreenSpacing, $"seed {seed}: greens {apart:0} px apart");
+            spreads.Add((int)apart);
+        }
+
+        Assert.True(spreads.Count > 10, "the greens should land all over the high rows");
+
+        // With no high peg that may be green, the low ones take them.
+        var low = new MoonfallGame(Board([.. pegs.Where(static p => p.Y > 400)]), MoonfallRules.FirstGreenLevel, 5);
+        Assert.Equal(2, Indices(low, PegColour.Green).Count());
+    }
+
+    [Fact]
+    public void Two_greens_too_close_for_150_px_are_still_both_dealt()
+    {
+        // [J] When no peg that may be green stands 150 px from the first, the second is the next in the deal.
+        var game = new MoonfallGame(Board(Blue(380, 200), Blue(420, 200), Blue(460, 200)), MoonfallRules.FirstGreenLevel, 7);
+        Assert.Equal(2, Indices(game, PegColour.Green).Count());
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void No_purple_peg_before_the_fourth_level(int levelNumber)
+    {
+        // [O] The purple peg comes in at the fourth level (it used to be on every level).
+        var game = new MoonfallGame(Grid(60), levelNumber, 11);
+        Assert.Equal(-1, game.PurplePeg);
+        Assert.Empty(Indices(game, PegColour.Purple));
+        game.PlaceBall(90, 580, 0, 300);
+        RunUntil(game, static g => g.Phase == MoonfallPhase.Aiming);
+        Assert.Equal(-1, game.PurplePeg);
+    }
+
+    [Fact]
     public void One_purple_moves_to_another_blue_peg_each_shot()
     {
-        var game = new MoonfallGame(Grid(60), 3, 11);
+        var game = new MoonfallGame(Grid(60), MoonfallRules.FirstPurpleLevel, 11);
         var seen = new List<int>();
         for (var shot = 0; shot < 5; shot++)
         {
@@ -79,11 +136,41 @@ public sealed class MoonfallRulesTests
     [InlineData(4, 5)]
     [InlineData(3, 10)]
     [InlineData(1, 10)]
-    [InlineData(0, 10)]
+    [InlineData(0, 100)]
     [InlineData(45, 1)]
-    public void The_multiplier_steps_at_15_10_6_and_3_oranges_left(int left, int multiplier)
+    public void The_multiplier_steps_at_15_10_6_and_3_oranges_left_and_is_100_with_none(int left, int multiplier)
     {
+        // [O] ×100 once no orange is left (owner decision, 9 October 2026; it stopped at ×10).
         Assert.Equal(multiplier, MoonfallRules.Multiplier(left));
+    }
+
+    [Fact]
+    public void After_the_last_orange_pegs_score_100_times_and_a_purple_counts_as_100()
+    {
+        // [O] The last orange scores ×10 (the meter before it counts); every peg after it ×100, a purple's 500 capped to 100.
+        var game = new MoonfallGame(Grid(60), MoonfallRules.FirstPurpleLevel, 5);
+        game.PlaceBall(90, 580, 0, 300);
+        var oranges = Indices(game, PegColour.Orange).ToList();
+        foreach (var i in oranges.SkipLast(1))
+        {
+            game.LightForTest(i);
+        }
+
+        var before = game.ShotValue;
+        game.LightForTest(oranges[^1]);
+        Assert.Equal(before + (100 * 10), game.ShotValue);
+        Assert.Equal(0, game.OrangesLeft);
+        Assert.Equal(100, game.Multiplier);
+
+        before = game.ShotValue;
+        game.LightForTest(Indices(game, PegColour.Blue).First());
+        Assert.Equal(before + 1_000, game.ShotValue);
+
+        before = game.ShotValue;
+        game.LightForTest(Indices(game, PegColour.Purple).Single());
+        Assert.Equal(before + 10_000, game.ShotValue);
+        Assert.Equal(10_000, MoonfallRules.PegScore(PegColour.Purple, 100));
+        Assert.Equal(5_000, MoonfallRules.PegScore(PegColour.Purple, 10));
     }
 
     [Fact]
@@ -119,7 +206,7 @@ public sealed class MoonfallRulesTests
     public void A_peg_scores_the_multiplier_in_force_when_it_is_touched()
     {
         // 16 oranges left: the 10th orange of the level scores ×1 and lifts the meter to ×2 for the next peg.
-        var game = new MoonfallGame(Grid(60), 1, 5);
+        var game = new MoonfallGame(Grid(60), MoonfallRules.FirstPurpleLevel, 5);
         game.PlaceBall(90, 580, 0, 300);
         var oranges = Indices(game, PegColour.Orange).ToList();
         for (var k = 0; k < 10; k++)
@@ -138,7 +225,7 @@ public sealed class MoonfallRulesTests
     public void A_shot_earns_free_balls_at_25k_75k_and_125k()
     {
         // 25 oranges and a purple in one shot: the score passes all three thresholds as it climbs.
-        var game = new MoonfallGame(Grid(60), 1, 9);
+        var game = new MoonfallGame(Grid(60), MoonfallRules.FirstPurpleLevel, 9);
         var balls = game.BallsLeft;
         game.PlaceBall(90, 580, 0, 300);
         var thresholds = new List<long>();
@@ -181,7 +268,7 @@ public sealed class MoonfallRulesTests
             shots++;
             foreach (var (_, e) in RunUntil(game, static g => g.Phase is MoonfallPhase.Aiming or MoonfallPhase.Lost))
             {
-                // A catch is a free ball, and so is a shot whose style bonus reaches 25,000 (a Lucky Bounce off the rim).
+                // A catch is a free ball, and so is a miss whose coin flip comes up [O] (these shots light no peg).
                 freeBalls += e.Kind == MoonfallEventKind.FreeBall ? 1 : 0;
             }
         }
@@ -323,7 +410,9 @@ public sealed class MoonfallRulesTests
         Assert.Equal(MoonfallEventKind.BallLost, run.End);
         Assert.Equal(0, run.Pinches);
         Assert.True(run.Bounces <= 6, $"the ball bounced {run.Bounces} times");
-        Assert.InRange(run.Ticks, 40, MoonfallRules.StuckTicks - 1);
+        // At most 1.5 s on the ledge (the bound this test has always held). That outlasts the stuck rule's 0.5 s [O], which
+        // then clears the shot's lit pegs early; they still count, and this board has none.
+        Assert.InRange(run.Ticks, 40, 149);
     }
 
     [Fact]
@@ -347,7 +436,7 @@ public sealed class MoonfallRulesTests
                         Assert.True(run.Pinches <= 1, $"{what}: the ball was caught between the rim and the wall on {run.Pinches} ticks");
                         Assert.True(run.Switches <= 6, $"{what}: the ball went between the rim and the wall {run.Switches} times");
                         Assert.True(run.Bounces <= 10, $"{what}: the ball bounced {run.Bounces} times");
-                        Assert.True(run.Ticks < MoonfallRules.StuckTicks * 2, $"{what}: the ball took {run.Ticks} ticks to leave");
+                        Assert.True(run.Ticks < 300, $"{what}: the ball took {run.Ticks} ticks to leave");
                     }
                 }
             }
@@ -399,12 +488,97 @@ public sealed class MoonfallRulesTests
     [Fact]
     public void A_ball_beside_the_bucket_is_lost()
     {
-        var game = new MoonfallGame(Board(), 1, 1);
+        // The shot lights a peg first, so no coin flip for a miss can give the ball back.
+        var game = new MoonfallGame(Board(Blue(700, 120)), 1, 1);
         var balls = game.BallsLeft;
         game.PlaceBall(100, 500, 0, 0);
+        game.LightForTest(0);
         var events = RunUntil(game, static g => g.Phase != MoonfallPhase.Flying, 200);
         Assert.Contains(events, e => e.Event.Kind == MoonfallEventKind.BallLost);
+        Assert.DoesNotContain(events, e => e.Event.Kind is MoonfallEventKind.FreeBall or MoonfallEventKind.MissFlipped);
         Assert.Equal(balls, game.BallsLeft);
+    }
+
+    // ---- A shot that lights no peg [O] ----
+
+    /// <summary>Plays <paramref name="misses"/> shots that light nothing (dropped beside the left wall) and returns each flip's result.</summary>
+    private static List<bool> Misses(MoonfallGame game, int misses)
+    {
+        var flips = new List<bool>();
+        for (var k = 0; k < misses && game.Phase == MoonfallPhase.Aiming; k++)
+        {
+            game.PlaceBall(90, 580, 0, 300);
+            foreach (var (_, e) in RunUntil(game, static g => g.Phase is MoonfallPhase.Aiming or MoonfallPhase.Lost))
+            {
+                if (e.Kind == MoonfallEventKind.MissFlipped)
+                {
+                    flips.Add(e.Value == 1);
+                    Assert.Equal(flips.Count, e.Count);
+                }
+            }
+        }
+
+        return flips;
+    }
+
+    [Fact]
+    public void A_miss_wins_its_ball_back_on_a_coin_flip_81_in_100_first_then_61()
+    {
+        // [O] The level's first miss is won when a draw of 0–99 is at most 80, every later one at most 60.
+        var first = 0;
+        var later = 0;
+        var laterFlips = 0;
+        const int Seeds = 2000;
+        for (var seed = 1UL; seed <= Seeds; seed++)
+        {
+            var game = new MoonfallGame(Board(Blue(700, 120)), 1, seed);
+            var flips = Misses(game, 3);
+            Assert.Equal(3, flips.Count);
+            first += flips[0] ? 1 : 0;
+            later += flips.Skip(1).Count(static f => f);
+            laterFlips += flips.Count - 1;
+        }
+
+        Assert.InRange(first / (double)Seeds, 0.78, 0.84);
+        Assert.InRange(later / (double)laterFlips, 0.58, 0.64);
+    }
+
+    [Fact]
+    public void A_won_flip_returns_the_ball_and_the_same_seed_flips_the_same_way()
+    {
+        for (var seed = 1UL; seed <= 40; seed++)
+        {
+            var game = new MoonfallGame(Board(Blue(700, 120)), 1, seed);
+            var balls = game.BallsLeft;
+            game.PlaceBall(90, 580, 0, 300);
+            var events = RunUntil(game, static g => g.Phase is MoonfallPhase.Aiming or MoonfallPhase.Lost).Select(static e => e.Event).ToList();
+            var flip = Assert.Single(events, static e => e.Kind == MoonfallEventKind.MissFlipped);
+            var won = flip.Value == 1;
+            Assert.Equal(won, events.Any(static e => e.Kind == MoonfallEventKind.FreeBall));
+            Assert.Equal(balls + (won ? 1 : 0), game.BallsLeft);
+
+            var again = new MoonfallGame(Board(Blue(700, 120)), 1, seed);
+            Assert.Equal(Misses(new MoonfallGame(Board(Blue(700, 120)), 1, seed), 4), Misses(again, 4));
+        }
+    }
+
+    [Fact]
+    public void No_coin_flip_when_a_peg_was_lit_the_bucket_caught_it_or_in_a_duel()
+    {
+        var lit = new MoonfallGame(Board(Blue(700, 120)), 1, 1);
+        lit.PlaceBall(90, 580, 0, 300);
+        lit.LightForTest(0);
+        Assert.DoesNotContain(RunUntil(lit, static g => g.Phase == MoonfallPhase.Aiming), static e => e.Event.Kind == MoonfallEventKind.MissFlipped);
+
+        var caught = new MoonfallGame(Board(Blue(700, 120)), 1, 1);
+        caught.PlaceBall(MoonfallBucket.CentreAt(1), MoonfallRules.CatchLine - 1, 0, 150);
+        var events = RunUntil(caught, static g => g.Phase == MoonfallPhase.Aiming);
+        Assert.Contains(events, static e => e.Event.Kind == MoonfallEventKind.BucketCatch);
+        Assert.DoesNotContain(events, static e => e.Event.Kind == MoonfallEventKind.MissFlipped);
+
+        var duel = new MoonfallGame(Board(Blue(700, 120)), 1, 1, balls: 4, ruleSet: MoonfallRuleSet.Duel);
+        duel.PlaceBall(90, 580, 0, 300);
+        Assert.DoesNotContain(RunUntil(duel, static g => g.Phase == MoonfallPhase.Aiming), static e => e.Event.Kind == MoonfallEventKind.MissFlipped);
     }
 
     // ---- The end of a turn [M 7] ----
@@ -418,8 +592,8 @@ public sealed class MoonfallRulesTests
         game.PlaceBall(90, 560, 0, 300);
         int[] order = [2, 0, 3, 1];
 
-        // No oranges on this board, so the meter stands at ×10 (0 left).
-        var expectedValue = order.Sum(i => MoonfallRules.BaseValue(game.Peg(i).Colour) * 10L);
+        // No oranges on this board, so the meter stands at ×100 (0 left [O]).
+        var expectedValue = order.Sum(i => MoonfallRules.BaseValue(game.Peg(i).Colour) * 100L);
         foreach (var i in order)
         {
             game.LightForTest(i);
@@ -443,30 +617,73 @@ public sealed class MoonfallRulesTests
         Assert.Equal(scored.Tick + 80, next.Tick);
     }
 
-    // ---- The stuck ball (judgement, MoonfallRules.StuckTicks) ----
+    // ---- The stuck ball [O] (MoonfallRules.StuckTicks) ----
 
     [Fact]
-    public void A_ball_wedged_between_two_pegs_clears_the_last_one_hit_after_1_5_s_and_falls_free()
+    public void A_ball_wedged_between_two_pegs_clears_every_lit_peg_after_half_a_second_and_falls_free()
     {
-        // Two touching pegs make a notch; a ball dropped into it settles and stays.
-        var game = new MoonfallGame(Board(Blue(390, 300), Blue(410, 300)), 1, 1);
+        // Two touching pegs make a notch; a ball dropped into it settles and stays. [O] 0.5 s within 2 px of its noted
+        // places, and every peg the shot lit clears at once (it used to be 1.5 s within 15 px, one touching peg a time).
+        var game = new MoonfallGame(Board(Blue(390, 300), Blue(410, 300), Blue(700, 120)), 1, 1);
         game.PlaceBall(400, 270, 0, 0);
-        var events = RunUntil(game, static g => g.Phase != MoonfallPhase.Flying, 2000);
+        game.LightForTest(2);
+
+        // The ball's place every game tick, to find when it came to rest.
+        var track = new List<(double X, double Y)> { (game.BallX, game.BallY) };
+        var events = new List<(long Tick, MoonfallEvent Event)>();
+        for (var t = 0; t < 2000 && game.Phase == MoonfallPhase.Flying; t++)
+        {
+            game.Tick();
+            track.Add((game.BallX, game.BallY));
+            while (game.TryReadEvent(out var e))
+            {
+                events.Add((game.GameTick, e));
+            }
+        }
+
         var stuck = events.Where(e => e.Event.Kind == MoonfallEventKind.StuckClear).ToList();
-        Assert.Single(stuck);
+        Assert.Equal([0, 1, 2], stuck.Select(static e => e.Event.Peg).Order());
+        Assert.Equal(2, stuck[0].Event.Peg);
+        Assert.Equal([1L, 0L, 0L], stuck.Select(static e => e.Event.Value));
+        Assert.Single(stuck.Select(static e => e.Tick).Distinct());
         var hits = events.Where(e => e.Event.Kind == MoonfallEventKind.PegHit).Select(e => e.Event.Peg).ToList();
-        Assert.Equal(2, hits.Count);
-        Assert.Equal(hits[^1], stuck[0].Event.Peg);
+        Assert.Equal([0, 1, 2], hits.Order());
+        // It cleared half a second after the ball came to rest (its last move of 2 px or more in a tick's look back of up
+        // to 60 ticks), at most a sampling period later, then left the board.
+        var clear = (int)stuck[0].Tick;
+        var rest = 0;
+        for (var t = 1; t <= clear; t++)
+        {
+            for (var back = 1; back <= 60 && back <= t; back++)
+            {
+                var (x0, y0) = track[t - back];
+                var (x1, y1) = track[t];
+                if (Math.Sqrt(((x1 - x0) * (x1 - x0)) + ((y1 - y0) * (y1 - y0))) >= MoonfallRules.StuckRadius)
+                {
+                    rest = t;
+                }
+            }
+        }
 
-        // It cleared 1.5 s after the ball last moved more than 15 px, and the ball then left the board.
-        Assert.InRange(stuck[0].Tick, 150, 260);
+        Assert.InRange(clear - rest, MoonfallRules.StuckTicks - MoonfallRules.StuckSampleTicks, MoonfallRules.StuckTicks + MoonfallRules.StuckSampleTicks);
         Assert.Contains(events, e => e.Event.Kind is MoonfallEventKind.BallLost or MoonfallEventKind.BucketCatch);
-        Assert.Equal(2, game.ShotPegs);
+        Assert.Equal(3, game.ShotPegs);
 
-        // The early peg is not cleared twice: the end of turn pops only the other.
+        // No peg is cleared twice: the end of turn pops none.
         var popped = RunUntil(game, static g => g.Phase == MoonfallPhase.Aiming).Where(e => e.Event.Kind == MoonfallEventKind.PegCleared).ToList();
-        Assert.Single(popped);
-        Assert.Equal(hits[0], popped[0].Event.Peg);
+        Assert.Empty(popped);
+    }
+
+    [Fact]
+    public void A_ball_that_creeps_more_than_2_px_in_its_watch_is_not_stuck()
+    {
+        // A ball set down on a brick sloping 9° slides off from rest, slowly at first: within half a second it is always
+        // 2 px or more from where it was 10 to 60 ticks before, so it is never stuck.
+        var game = new MoonfallGame(Board(MoonfallPeg.Line(150, 300, 650, 300 + (500 * Math.Tan(9 * Math.PI / 180)), canBeOrange: false)), 1, 1);
+        game.PlaceBall(170, 300 + (20 * Math.Tan(9 * Math.PI / 180)) - (16 / Math.Cos(9 * Math.PI / 180)) - 0.4, 0, 0);
+        var events = RunUntil(game, static g => g.Phase != MoonfallPhase.Flying, 3000);
+        Assert.DoesNotContain(events, static e => e.Event.Kind == MoonfallEventKind.StuckClear);
+        Assert.Contains(events, static e => e.Event.Kind is MoonfallEventKind.BallLost or MoonfallEventKind.BucketCatch);
     }
 
     [Fact]
@@ -541,16 +758,20 @@ public sealed class MoonfallRulesTests
     }
 
     [Theory]
-    [InlineData(600, 87, 85)]
-    [InlineData(200, 50, -85)]
+    [InlineData(600, 87, 90)]
+    [InlineData(200, 87, -90)]
+    [InlineData(700, 20, 97)]
+    [InlineData(200, 50, -97)]
     [InlineData(400, 400, 0)]
     [InlineData(500, 187, 45)]
-    public void The_aim_follows_the_pointer_within_85_degrees(double x, double y, double angle)
+    public void The_aim_follows_the_pointer_within_97_degrees(double x, double y, double angle)
     {
+        // [O] ±97° from straight down: level, and 7° above it (it was ±85°).
         Assert.Equal(angle, MoonfallGame.AimAt(x, y), 6);
         var game = new MoonfallGame(Board(), 1, 1);
         Assert.True(game.Shoot(120));
-        Assert.Equal(Math.Sin(85 * Math.PI / 180) * 395, game.BallVelocityX, 6);
+        Assert.Equal(Math.Sin(97 * Math.PI / 180) * 395, game.BallVelocityX, 6);
+        Assert.True(game.BallVelocityY < 0, "a shot at the limit rises");
     }
 
     private static IEnumerable<int> Indices(MoonfallGame game, PegColour colour) =>

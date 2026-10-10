@@ -1,0 +1,12 @@
+  skipped ((567, 288), 'meridian', '4.0 from a brick')
+  skipped ((538, 387), 'equator', '6.1 from the peg at (557, 400)')
+  skipped ((262, 272), 'equator', '9.5 from a brick')
+  skipped ((537, 390), 'equator', '5.3 from the peg at (557, 400)')
+  skipped ((262, 272), 'ecliptic', '10.0 from a brick')
+  skipped ((286, 292), 'ecliptic', '9.3 from the peg at (266, 307)')
+  skipped ((342, 322), 'ecliptic', '6.3 from the peg at (362, 330)')
+  skipped ((372, 335), 'ecliptic', '9.9 from the peg at (400, 330)')
+  skipped ((401, 348), 'ecliptic', '-1.3 from the peg at (400, 330)')
+  skipped ((431, 360), 'ecliptic', '-3.0 from the peg at (419, 363)')
+  pieces 68 (pegs 60, bricks 8, movers 0); candidates 29; green-only 33; skipped while tracing 10
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-20\docs\design\v9\levels\build\trace\base-26.png

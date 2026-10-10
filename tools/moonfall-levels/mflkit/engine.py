@@ -8,7 +8,7 @@ from . import cache
 from .paths import DOTNET, MFCHECK, TEXDUMP
 
 GREEDY_GAMES = 48
-GREEDY_MIN_WINS = 5          # decision 21: no worse than the weakest shipped level (5 of 48)
+GREEDY_MIN_WINS = 2          # owner's decision, 9 October 2026 ("Follow Peggle, lower the floor"): every level wins at least 2 of 48 (5 before)
 HELD_GAMES = 1728            # the reported ramp: seeds 865-2592, never used for tuning (about +-0.55 per 48)
 RAMP_GAMES = 864             # the difficulty ramp (432 or more: coordinator, round 1; 864 so neighbours separate, GD round 2 G2): the first 48 are the rule's games
 STUCK_MAX_SHARE = 0.05       # level-method.md section 4: the stuck rule fires on fewer than 5% of first shots

@@ -1,0 +1,54 @@
+{
+ "name": "meteor-shower",
+ "about": "Our own painting: a moonless night over a mountain lake at the height of a meteor shower. The streaks pour out of the radiant, a knot of bright stars high on the left, every one on a ray from it: a long fireball crossing to the right with its twisted train, a fan of shorter streaks below it and faint ones between, each brightening to a white-green head with a violet tail. Behind them the sky is still: a deep indigo night thick with stars, the Milky Way climbing from the lower left with its dark rift, a faint green airglow low over the range; the range's snow caps and crests catch the starlight and a still lake holds them, a dark mirror (painters/meteors.py; shipped as a JPEG). The first jewel is the indigo night, the second the airglow's teal over the range and, faint, in the lake under it (MR 6 round 1: teal rather than green, and the lake's at chroma 0.04, since the green on the water read as a striped field, game designer m1, and a protanope saw the green airglow as the orange's grey, UX m2).",
+ "source": {
+  "kind": "painting",
+  "painter": "meteors",
+  "params": {}
+ },
+ "veil": 0.22,
+ "dress": {
+  "palette": {
+   "name": "Sapphire night, the airglow green",
+   "sky": "#0C1440",
+   "deep": "#040818",
+   "jewel1": "#1462B4",
+   "jewel2": "#64AC6A",
+   "warm": "#FFB45E",
+   "rim": "#C8D8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#1462B4"], [300, "#1660B0"], [600, "#10509A"]],
+   "valueHues": [[0.08, "#0A2A6A"], [0.45, "#D4E4FF"]],
+   "chroma": 1.2,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#52AA92",
+     "chroma": 0.13,
+     "mask": [["y", 330, 420], ["y", 524, 470], ["x", 75, 135], ["x", 725, 665]]
+    },
+    {
+     "hex": "#52AA92",
+     "chroma": 0.04,
+     "mask": [["y", 522, 540], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [60, 25],
+   "regionQuiet": 0.3
+  },
+  "silhouette": {
+   "body": "#06061A",
+   "inner": "#16144A",
+   "rim": "#C0C8FF",
+   "rimK": 0.0,
+   "seed": 37
+  }
+ },
+ "runtime": {
+  "motion": {
+   "stars": 40,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "radiant knot", 16]]
+  }
+ }
+}

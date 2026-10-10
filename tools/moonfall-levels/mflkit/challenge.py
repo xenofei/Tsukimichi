@@ -3,7 +3,7 @@
 `mfl.py challenge <ch-id>` plays every carrier of a recorded challenge; `mfl.py challenge <level-id> <oranges>` plays any
 level at any count (a check, not a record). Pure rules first, so they prove themselves in the self-test."""
 
-MIN_WINS = 5                # of 48, the rule's games (seeds 1-48), as for every level (decision 21)
+MIN_WINS = 2                # of 48, the rule's games (seeds 1-48), as for every level (owner's decision, 9 October 2026; 5 before)
 GAMES = 48
 STANDARD_ORANGES = 25            # the standard deal
 # Orange candidates are a share of a level's pieces (owner's decision, 9 October 2026): most pieces may be orange, so a
@@ -84,12 +84,12 @@ def play(level_id, oranges, force=False):
 def selftest(verbose=True):
     cases = [("35 oranges, 35 candidates, 9 wins", faults("base-27", 35, 35, 9), None),
              ("35 oranges on 28 candidates", faults("base-27", 35, 28, 9), "may be orange"),
-             ("a challenge level the greedy player cannot win (4 of 48)", faults("base-27", 35, 35, 4), "needs 5"),
-             ("exactly 5 of 48 passes", faults("base-27", 35, 35, 5), None),
+             ("a challenge level the greedy player cannot win (1 of 48)", faults("base-27", 35, 35, 1), "needs 2"),
+             ("exactly 2 of 48 passes", faults("base-27", 35, 35, 2), None),
              ("45 oranges on the recorded exception", faults("base-37", 45, 45, 7), None),
              ("45 oranges on any other level", faults("base-27", 45, 45, 7), "not an allowed exception"),
              ("46 oranges even on the exception", faults("base-37", 46, 46, 7), "not an allowed exception"),
-             ("45 oranges on the exception, 5 wins short", faults("base-37", 45, 45, 3), "needs 5"),
+             ("45 oranges on the exception, 2 wins short", faults("base-37", 45, 45, 1), "needs 2"),
              ("candidates are 60-90% of 100 pieces, 35 on base-27 and 45 on base-37 at least",
               [] if candidate_range("base-36", 100) == (60, 90) and candidate_range("base-27", 100) == (60, 90)
               and candidate_range("base-37", 60) == (45, 54) and candidate_range("base-27", 50) == (35, 45)
