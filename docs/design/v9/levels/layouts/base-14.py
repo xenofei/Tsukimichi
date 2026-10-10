@@ -28,32 +28,40 @@ LEVEL = dict(id="base-14", name="The Lane by Starlight", stage=3, number=14, sce
 
 # the drifting rows, the nearer drifting further and faster: (crest feature, x range, least spacing, drift dx, period, lift above the crest)
 ROWS = (
-    ("crest 3", (96, 704), 36, 10.0, 11.0, 4.0),
-    ("crest 4", (96, 704), 36, 14.0, 8.5, 2.0),
-    ("crest 5", (96, 704), 36, 18.0, 6.5, 4.0),
+    ("crest 4", (96, 704), 34, 14.0, 8.5, 2.0),
+    ("crest 5", (96, 704), 34, 18.0, 6.5, 4.0),
 )
 
-# the middle bank stands still: a crown of brick on each of its billows (x of the billow's top, the crown's radius)
-CROWNS = ((104, 32), (228, 40), (420, 30), (516, 30), (636, 40))
-CROWN_LIFT = 4.0
+# the far banks stand still: a scalloped run of brick crowns along each crest, one crown per billow, parted where the
+# lane's lamps stand on it: (crest, x from, x to, crown radius, sweep, lift above the crest, gap, x ranges left open)
+SCALLOPS = (
+    ("crest 1", 80, 720, 46.0, 64.0, 6.0, 20.0, ((400, 496),)),
+    ("crest 3", 80, 720, 40.0, 80.0, 4.0, 20.0, ((330, 380), (494, 544))),
+)
 
 # never orange: the sure greens' pool (pieces that may be green and are never orange), then the near bank's moons at
 # the walls, the board's hardest low places (cheap difficulty)
-GREENS = ((169, 287), (300, 130), (292, 349), (240, 395), (602, 282), (520, 214), (556, 349), (644, 405))
-EXCLUDE = GREENS + ((680, 464), (680, 406), (524, 492), (488, 481), (136, 463), (100, 450), (100, 400))
+GREENS = ((158, 283), (476, 242), (328, 370), (240, 396), (601, 276), (512, 230), (564, 350), (646, 405))
+EXCLUDE = GREENS + ((680, 464), (680, 406), (522, 491), (488, 481), (134, 462), (100, 450), (100, 400))
 
 # the towers' steep flanks in brick: (feature, x from, x to)
-FLANKS = (("tower left", 126, 180), ("tower left", 270, 296), ("tower right", 630, 690))
+FLANKS = (("tower left", 126, 180), ("tower left", 270, 296), ("tower right", 652, 700))
 
 # the near banks' steep billow sides, where a drifting moon would leave its crest, in brick: (crest, x from, x to, lift)
-SIDES = (("crest 5", 300, 356, 4.0),)
+SIDES = (("crest 5", 300, 356, 4.0), ("crest 5", 652, 712, 4.0), ("crest 4", 250, 292, 4.0), ("crest 4", 318, 350, 4.0))
 
-# the current down the lane's middle: motes at these heights, closer together toward the horizon
-LANE_MOTES = (300, 336, 374, 418)
+# the star river's spine: a dashed run of brick climbing the sky (dash, gap, where it starts along the spine)
+RIVER_DASH, RIVER_GAP, RIVER_START = 32.0, 20.0, 30.0
+# its two banks of crowded stars, dotted either side of the spine (offsets), and their spacing
+RIVER_BANKS, RIVER_STEP = (-40.0, 40.0), 36.0
+SKY_TOP = 50.0                  # no star above this
 
-STARS = ((520, 214), (590, 240), (250, 100), (300, 130), (640, 150), (420, 230), (470, 250), (540, 180), (600, 200),
-         (296, 82), (500, 82), (542, 94), (140, 148), (98, 178), (86, 220), (674, 160), (572, 154),
-         (326, 154))
+# the lane's centre line: dashes of brick down its middle (y from, y to), shorter and closer toward the horizon
+LANE_DASHES = ((290, 312), (352, 384), (424, 452))
+
+STARS = ((120, 150), (150, 120), (190, 100), (240, 104), (290, 96), (600, 200), (640, 176), (560, 226),
+         (300, 150), (660, 230), (196, 60), (252, 66), (300, 50), (700, 246), (340, 246), (96, 236),
+         (700, 140), (520, 250), (104, 86), (512, 230), (476, 242), (620, 242), (104, 182), (524, 50))
 
 
 def _posts():
@@ -101,6 +109,24 @@ def _flank(b, pts, length=30.0, tag=""):
     return out
 
 
+def _dashes(b, pts, length, gap, start=0.0, end_trim=0.0, tag=""):
+    """A dashed run of straight bricks of `length` along a polyline, at least `gap` apart, packed from its start: where
+    a dash would break the pre-flight's rules the run moves on 4 units and tries again."""
+    from layout import point_at
+    P = np.asarray(pts, np.float64)
+    total = float(np.sum(np.hypot(*np.diff(P, axis=0).T)))
+    out, s = [], start
+    while s + length <= total - end_trim:
+        p, q = point_at(P, s), point_at(P, s + length)
+        t = {"kind": "line", "x1": p[0], "y1": p[1], "x2": q[0], "y2": q[1], "thickness": 20.0}
+        if b.brick_why_not(t):
+            s += 4.0
+            continue
+        out.append(b.line(p[0], p[1], q[0], q[1], tag=tag))
+        s += length + gap
+    return out
+
+
 def build(b):
     # the lane's beacons: the near pair as rings of moons round their lamps, the rest a moon on each lamp
     for (x, y, s, side) in b.features["beacons"]["lamps"]:
@@ -108,27 +134,51 @@ def build(b):
             b.stop(x, y, R=36, n=6, r=10, oranges=(), green=False, tag="near beacon")
         elif s >= 0.15:
             b.place(x, y, r=10, green=False, tag="beacon")
-    # the lane's current: motes down its middle, from the vanishing point toward us
+    # the lane's edges in perspective: a moon halfway between each pair of lamps on a side
+    for side in (0, 1):
+        lamps = sorted((l for l in b.features["beacons"]["lamps"] if l[3] == side), key=lambda l: -l[2])
+        for (p, q) in zip(lamps, lamps[1:]):
+            b.place((p[0] + q[0]) / 2, (p[1] + q[1]) / 2, r=10, tag="lane edge")
+    # the lane's centre line: dashes down its middle, from the vanishing point toward us
     (vx, vy), (nx, ny) = LANE_VP, LANE_MID
-    for y in LANE_MOTES:
-        b.place(vx + (nx - vx) * (y - vy) / (ny - vy), y, r=10, tag="lane")
+    for (y0, y1) in LANE_DASHES:
+        (x0, x1) = (vx + (nx - vx) * (y - vy) / (ny - vy) for y in (y0, y1))
+        if not b.brick_why_not({"kind": "line", "x1": x0, "y1": y0, "x2": x1, "y2": y1, "thickness": 20.0}):
+            b.line(x0, y0, x1, y1, tag="lane")
     # the far towers' steep flanks in brick
     for (name, x0, x1) in FLANKS:
         _flank(b, [p for p in b.f(name) if x0 <= p[0] <= x1], tag=name + " flank")
-    # the middle bank stands still: a crown of brick over each billow
-    mid = b.f("crest 3")
-    for (x, R) in CROWNS:
-        _crown(b, x, _y_at(mid, x) - CROWN_LIFT, R, tag="crest 3")
+    # the far banks stand still: a scalloped run of brick crowns along each crest, parted round the lane's lamps
+    for (name, x0, x1, R, sweep, lift, gap, open_) in SCALLOPS:
+        pts = b.f(name)
+        x = x0
+        while x <= x1:
+            laid = None
+            # the billow's own crown where it fits, else a smaller, flatter one, else one a little higher
+            for (k, dl) in ((1.0, 0.0), (0.85, 0.0), (0.7, 0.0), (1.0, 4.0), (0.85, 4.0), (0.7, 4.0)):
+                Rk, sw = R * k, sweep * k
+                half = Rk * math.sin(math.radians(sw / 2))
+                cx = x + half
+                if cx + half > x1 or any(a - half <= cx <= c + half for (a, c) in open_):
+                    continue
+                top = min(_y_at(pts, cx + d) for d in (-half, 0.0, half)) - lift - dl
+                if _crown(b, cx, top, Rk, sweep=sw, n=2 if k >= 0.85 else 1, tag=name):
+                    laid = half
+                    break
+            x += 2 * laid + gap if laid else 4
     for (name, x0, x1, lift) in SIDES:
         _flank(b, [(x, y - lift) for (x, y) in b.f(name) if x0 <= x <= x1], tag=name + " side")
     # the star river's spine, and the far towers' crowns
-    b.trace("star river", spacing=42, r=10, start=40, end_trim=10, tag="star river")
+    _dashes(b, b.f("star river"), RIVER_DASH, RIVER_GAP, start=RIVER_START, end_trim=10, tag="star river")
+    from mflkit.author import offset_polyline
+    for off in RIVER_BANKS:
+        from layout import resample
+        for (x, y) in resample(offset_polyline(b.f("star river"), off), RIVER_STEP, 10.0, 0.0):
+            if y >= SKY_TOP:
+                b.place(x, y, r=10, tag="star river bank")
+    # the far towers' crowns: moons over their tops
     b.trace([(x, y - 16) for (x, y) in b.f("tower left") if 180 <= x <= 264], spacing=36, r=10, tag="tower")
     b.trace([(x, y - 16) for (x, y) in b.f("tower right") if x >= 688], spacing=36, r=10, start=6, tag="tower")
-    # the far horizon's crest, a light dotted line parted where the lane meets it
-    far = b.f("crest 1")
-    b.trace([p for p in far if p[0] < 400], spacing=40, r=10, start=30, tag="horizon")
-    b.trace([p for p in far if p[0] > 500], spacing=40, r=10, start=20, end_trim=20, tag="horizon")
     # the cloud banks sliding past: a row on each of the nearer crests, packed from the west: each mover rides at its
     # run's mean crest height; a run whose crest rises or falls more than OFF_CREST either side of that is passed
     # over, and so is a run that crosses a beacon's post (between its lamp and its foot), where the moon would look
@@ -148,6 +198,8 @@ def build(b):
                 x += sp
             else:
                 x += 4
+    # the second bank's crest, glimpsed between the brick crowns of its neighbours: moons where they fit
+    b.trace("crest 2", spacing=36, r=10, start=20, end_trim=20, tag="crest 2")
     # stars in the open sky
     for (x, y) in STARS:
         b.place(x, y, r=10, tag="star")
