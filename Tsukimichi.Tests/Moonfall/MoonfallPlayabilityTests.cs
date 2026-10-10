@@ -5,7 +5,7 @@ using Xunit.Abstractions;
 namespace Tsukimichi.Tests.Moonfall;
 
 /// <summary>
-/// The playability gate (plan v9 decision 21): every shipped level wins at least 5 of the greedy player's 48 games.
+/// The playability gate (plan v9 decision 21): every shipped level wins at least 2 of the greedy player's 48 games (the owner's decision, 9 October 2026; 5 before).
 /// Slow (the greedy player tries 85 shots before each of its own), so it carries its own category; the gates run it.
 /// </summary>
 public sealed class MoonfallPlayabilityTests
@@ -39,12 +39,13 @@ public sealed class MoonfallPlayabilityTests
         var watch = Stopwatch.StartNew();
         var report = MoonfallPlayability.Check(level);
         output.WriteLine($"{id}: won {report.Wins} of {report.Games.Count} in {watch.Elapsed.TotalSeconds:0.00} s; Ace {MoonfallAces.For(id)?.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) ?? "none"}, the greedy player suggests {MoonfallAces.Suggest(report)?.ToString("N0", System.Globalization.CultureInfo.InvariantCulture) ?? "none"} over these {report.Games.Count} games (set the Ace over {MoonfallAces.SuggestGames}); {level.OrangeCandidates} pegs may be orange");
-        Assert.True(report.Passes, $"{id} won {report.Wins} of {report.Games.Count}; a level needs {MoonfallPlayability.WinsNeeded} (plan v9 decision 21)");
+        Assert.True(report.Passes, $"{id} won {report.Wins} of {report.Games.Count}; a level needs {MoonfallPlayability.WinsNeeded} (owner's decision, 9 October 2026)");
     }
 
     /// <summary>
-    /// Re-suggests a shipped level's Ace over <see cref="MoonfallAces.SuggestGames"/> games (the rule's 576): none is a hard
-    /// level (14 of 48 or more win), so the fifth-of-all-games rule still applies and the shipped Ace holds. Slow, so it is a
+    /// Re-suggests a shipped level's Ace over <see cref="MoonfallAces.SuggestGames"/> games (the rule's 576): every
+    /// level's Ace is the score the top 40% of its wins reach (the owner's decision, 9 October 2026), so each shipped Ace
+    /// must equal that suggestion. Slow, so it is a
     /// Perf test and runs on request: <c>dotnet test --filter "FullyQualifiedName~Shipped_Aces_are_unchanged"</c>.
     /// </summary>
     [Theory]
@@ -57,7 +58,6 @@ public sealed class MoonfallPlayabilityTests
         var report = MoonfallPlayability.Check(level, MoonfallAces.SuggestGames);
         var suggested = MoonfallAces.Suggest(report);
         output.WriteLine($"{id}: won {report.Wins} of {report.Games.Count}; Ace {MoonfallAces.For(id)}, suggested {suggested}");
-        Assert.True(report.Wins * MoonfallAces.HardOf >= MoonfallAces.HardWins * report.Games.Count, $"{id} is a hard level");
         Assert.Equal(MoonfallAces.For(id), suggested);
     }
 
@@ -91,14 +91,16 @@ public sealed class MoonfallPlayabilityTests
     }
 
     [Fact]
-    public void A_level_passes_on_five_wins_of_forty_eight()
+    public void A_level_passes_on_two_wins_of_forty_eight()
     {
+        // The floor is 2 of 48 (owner's decision, 9 October 2026, "Follow Peggle, lower the floor"; it was 5).
         var won = new MoonfallGreedyGame(true, 12, 0, 200_000, 0);
         var lost = new MoonfallGreedyGame(false, 15, 3, 90_000, 0);
-        var four = Enumerable.Repeat(won, 4).Concat(Enumerable.Repeat(lost, 44)).ToList();
-        var five = Enumerable.Repeat(won, 5).Concat(Enumerable.Repeat(lost, 43)).ToList();
-        Assert.False(new MoonfallPlayabilityReport("x", four).Passes);
-        Assert.True(new MoonfallPlayabilityReport("x", five).Passes);
+        var one = Enumerable.Repeat(won, 1).Concat(Enumerable.Repeat(lost, 47)).ToList();
+        var two = Enumerable.Repeat(won, 2).Concat(Enumerable.Repeat(lost, 46)).ToList();
+        Assert.False(new MoonfallPlayabilityReport("x", one).Passes);
+        Assert.True(new MoonfallPlayabilityReport("x", two).Passes);
+        Assert.Equal(2, MoonfallPlayability.WinsNeeded);
         Assert.Equal(48, MoonfallPlayability.Games);
     }
 }

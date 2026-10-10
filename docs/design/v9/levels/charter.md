@@ -24,7 +24,7 @@ pixels, judged from the cached painting at reduced scale. The stage's author fix
 > curve, without the strict "each level harder than the last" rule. Sections 1.0, 1.1 and 1.6 below carry the change; the
 > pipeline (`tools/moonfall-levels/`) enforces it. The shipped levels were built to the earlier rules and are refitted
 > separately. Where the rest of this charter (the per-level tables in section 2 included) still speaks of 28-35
-> candidates, 60-160 pieces or a level-by-level ramp, section 1 wins.
+> candidates, 60-160 pieces, a level-by-level ramp, a floor of 5 of 48 or a 20%-of-games Ace, section 1 wins.
 
 ### 1.0 Density and candidates (owner's decision, 9 October 2026)
 
@@ -43,9 +43,12 @@ pieces that may be green and are never orange, so the exclusions include them.
 
 ### 1.1 Difficulty bands
 
-> **Owner's decision, 9 October 2026: a stage is judged by its mean within a band plus a finale that is its hardest
-> level.** The per-level step of 0.5 per 48 is dropped, so the levels of a stage may come in any order. The bands below
-> are **measured from Peggle's campaigns on the new engine, 2026-10-09**, and `stagecheck.MEAN_BANDS` holds them.
+> **Owner's decisions, 9 October 2026: a stage is judged by its mean within a band plus a finale harder than the stage's
+> average.** The per-level step of 0.5 per 48 is dropped, so the levels of a stage may come in any order. The bands below
+> are **measured from Peggle's campaigns on the new engine, 2026-10-09**, and `stagecheck.MEAN_BANDS` holds them. Two
+> later answers the same day (see *Owner's answers on matching Peggle*): the bands follow Peggle's stage means and are no
+> longer clamped at 5 ("Follow Peggle, lower the floor"), and the finale must be harder than the average of its stage's
+> other four levels rather than the single hardest ("Harder than the stage's average").
 
 **How they were measured.** Every campaign level of Peggle Deluxe (11 stages × 5, mapped to The Moon Road) and Peggle
 Nights (12 × 5, mapped to The Far Shore) was converted to our level format in scratch and played by mfcheck's greedy
@@ -58,63 +61,62 @@ the other 70 within their stages, so the conversion is a small error next to the
 - **The band** is Peggle's stage mean ± 1.1 per 48. Peggle's own levels spread 2.5 per 48 about their stage's mean, so a
   mean of five hand-made levels carries 2.5 / √5 = 1.1. The measurement (one standard error 0.08-0.21 per stage) is
   smaller. A stage's pooled mean may sit 0.3 outside its band (`MEAN_TOL`, one standard error of a mean of five).
-- **The floor (decision 21).** Every level must still win at least 5 of 48, so no stage's mean can be below 5. Where
-  Peggle's band starts below 5, the band is raised to 5.0-7.2 (the floor plus the band's full width).
-- **The finale** must be the stage's hardest, resolvably: its pooled gap below the next hardest level, less one standard
-  error, is at least `FINALE_GAP` = 0. Peggle meets this in few stages; see *For the owner* below.
+- **The floor (decision 21, lowered).** Every level must still win at least 2 of 48 (5 until the owner's decision of
+  9 October 2026, "Follow Peggle, lower the floor"), so a band's lower edge is never below 2.0. The bands are Peggle's
+  stage means ± 1.1 with no other raising: `max(mean - 1.1, 2.0)` to `mean + 1.1`. Only MR 9-11 and FS 10-12 reach the
+  2.0 edge.
+- **The finale** must win fewer games per 48 than the mean of the stage's other four levels, resolvably: the gap
+  (others' mean less the finale), less one standard error on the pooled games, is at least 0. It need not be the single
+  hardest level (owner's decision, 9 October 2026, "Harder than the stage's average"). Peggle meets this in 17 of its 23
+  stages (15 resolvably).
 
-| Stage | Peggle's mean (±1 SE) | Peggle's finale | Next hardest | Finale gap | Band (`MEAN_BANDS`) | Floor |
+| Stage | Peggle's mean (±1 SE) | Peggle's finale | Next hardest | Finale gap | Band (`MEAN_BANDS`) | Floor (2 of 48) |
 |---|---|---|---|---|---|---|
-| MR 1 | 8.57 (0.19) | 4.42 | 2.50 | −1.92 | 7.47-9.67 | |
-| MR 2 | 6.23 (0.17) | 7.83 | 5.28 | −2.56 | 5.13-7.33 | |
-| MR 3 | 4.14 (0.14) | 4.94 | 3.44 | −1.50 | 5.00-7.20 | raised; mean 0.86 under |
-| MR 4 | 3.86 (0.14) | 3.22 | 3.17 | −0.06 | 5.00-7.20 | raised; mean 1.14 under |
-| MR 5 | 4.78 (0.15) | 2.00 | 2.72 | +0.72 | 5.00-7.20 | raised; mean 0.22 under |
-| MR 6 | 4.77 (0.15) | 5.53 | 2.08 | −3.44 | 5.00-7.20 | raised; mean 0.23 under |
-| MR 7 | 5.36 (0.16) | 3.14 | 3.17 | +0.03 | 5.00-7.20 | low edge raised 0.74 |
-| MR 8 | 3.72 (0.14) | 1.94 | 2.00 | +0.06 | 5.00-7.20 | raised; mean 1.28 under |
-| MR 9 | 2.18 (0.11) | 0.36 | 0.53 | +0.17 | 5.00-7.20 | raised; mean 2.82 under |
-| MR 10 | 2.84 (0.12) | 2.72 | 1.50 | −1.22 | 5.00-7.20 | raised; mean 2.16 under |
-| MR 11 | 3.08 (0.13) | 2.53 | 1.39 | −1.14 | 5.00-7.20 | raised; mean 1.92 under |
-| FS 1 | 10.34 (0.21) | 6.03 | 9.25 | +3.22 | 9.24-11.44 | |
-| FS 2 | 7.43 (0.18) | 3.64 | 4.67 | +1.03 | 6.33-8.53 | |
-| FS 3 | 5.24 (0.16) | 4.36 | 2.97 | −1.39 | 5.00-7.20 | low edge raised 0.86 |
-| FS 4 | 4.23 (0.15) | 3.39 | 3.28 | −0.11 | 5.00-7.20 | raised; mean 0.77 under |
-| FS 5 | 4.68 (0.15) | 4.56 | 2.61 | −1.94 | 5.00-7.20 | raised; mean 0.32 under |
-| FS 6 | 3.56 (0.14) | 2.69 | 3.06 | +0.36 | 5.00-7.20 | raised; mean 1.44 under |
-| FS 7 | 4.11 (0.14) | 4.67 | 1.03 | −3.64 | 5.00-7.20 | raised; mean 0.89 under |
-| FS 8 | 3.66 (0.14) | 5.81 | 1.28 | −4.53 | 5.00-7.20 | raised; mean 1.34 under |
-| FS 9 | 4.16 (0.14) | 7.11 | 1.69 | −5.42 | 5.00-7.20 | raised; mean 0.84 under |
-| FS 10 | 1.87 (0.10) | 1.14 | 0.72 | −0.42 | 5.00-7.20 | raised; mean 3.13 under |
-| FS 11 | 1.33 (0.08) | 0.86 | 0.31 | −0.55 | 5.00-7.20 | raised; mean 3.67 under |
-| FS 12 | 2.57 (0.12) | 1.92 | 0.86 | −1.06 | 5.00-7.20 | raised; mean 2.43 under |
+| MR 1 | 8.57 (0.19) | 4.42 | 2.50 | −1.92 | 7.47-9.67 |  |
+| MR 2 | 6.23 (0.17) | 7.83 | 5.28 | −2.56 | 5.13-7.33 |  |
+| MR 3 | 4.14 (0.14) | 4.94 | 3.44 | −1.50 | 3.04-5.24 |  |
+| MR 4 | 3.86 (0.14) | 3.22 | 3.17 | −0.06 | 2.76-4.96 |  |
+| MR 5 | 4.78 (0.15) | 2.00 | 2.72 | +0.72 | 3.68-5.88 |  |
+| MR 6 | 4.77 (0.15) | 5.53 | 2.08 | −3.44 | 3.67-5.87 |  |
+| MR 7 | 5.36 (0.16) | 3.14 | 3.17 | +0.03 | 4.26-6.46 |  |
+| MR 8 | 3.72 (0.14) | 1.94 | 2.00 | +0.06 | 2.62-4.82 |  |
+| MR 9 | 2.18 (0.11) | 0.36 | 0.53 | +0.17 | 2.00-3.28 | lower edge clamped at 2.0 |
+| MR 10 | 2.84 (0.12) | 2.72 | 1.50 | −1.22 | 2.00-3.94 | lower edge clamped at 2.0 |
+| MR 11 | 3.08 (0.13) | 2.53 | 1.39 | −1.14 | 2.00-4.18 | lower edge clamped at 2.0 |
+| FS 1 | 10.34 (0.21) | 6.03 | 9.25 | +3.22 | 9.24-11.44 |  |
+| FS 2 | 7.43 (0.18) | 3.64 | 4.67 | +1.03 | 6.33-8.53 |  |
+| FS 3 | 5.24 (0.16) | 4.36 | 2.97 | −1.39 | 4.14-6.34 |  |
+| FS 4 | 4.23 (0.15) | 3.39 | 3.28 | −0.11 | 3.13-5.33 |  |
+| FS 5 | 4.68 (0.15) | 4.56 | 2.61 | −1.94 | 3.58-5.78 |  |
+| FS 6 | 3.56 (0.14) | 2.69 | 3.06 | +0.36 | 2.46-4.66 |  |
+| FS 7 | 4.11 (0.14) | 4.67 | 1.03 | −3.64 | 3.01-5.21 |  |
+| FS 8 | 3.66 (0.14) | 5.81 | 1.28 | −4.53 | 2.56-4.76 |  |
+| FS 9 | 4.16 (0.14) | 7.11 | 1.69 | −5.42 | 3.06-5.26 |  |
+| FS 10 | 1.87 (0.10) | 1.14 | 0.72 | −0.42 | 2.00-2.97 | lower edge clamped at 2.0 |
+| FS 11 | 1.33 (0.08) | 0.86 | 0.31 | −0.55 | 2.00-2.43 | lower edge clamped at 2.0 |
+| FS 12 | 2.57 (0.12) | 1.92 | 0.86 | −1.06 | 2.00-3.67 | lower edge clamped at 2.0 |
 
 Figures are wins per 48. A finale gap is the next hardest level's figure less the finale's: positive means the finale is
-the hardest. One standard error of a gap over 1,728 games each is 0.16-0.59.
+the hardest. One standard error of a gap over 1,728 games each is 0.16-0.59. The table's "next hardest" and "finale gap"
+columns were measured for the earlier rule (the finale the single hardest); the rule now is a finale below the mean of the
+stage's other four, which Peggle meets in 17 of 23 stages (15 resolvably).
 
-**For the owner.**
-- **The floor decides most of the curve.** The greedy player wins fewer than 5 of 48 on 82 of Peggle's 115 campaign levels
-  (37 of 55 in Deluxe, 45 of 60 in Nights). Seventeen stage means are below the floor, and 19 bands are raised to it, so
-  from MR 3 and FS 3 on every band is the same 5.0-7.2 and the curve is flat. A band at the floor also leaves little room
-  above the per-level rule: a level that wins 5-6 per 48 on held-out games fails seeds 1-48 often. Following Peggle's
-  shape above the floor would need a different mapping (for example, Peggle's stage-to-stage ratios scaled from MR 1's
-  band). That is a new decision, so it is not made here.
-- **Peggle's finale is seldom the greedy player's hardest.** It is the hardest in 7 of 23 stages (4 resolvably), so no
-  positive margin over the next hardest is met in most stages. The rule kept here is the strictest one that holds the
-  owner's "hardest level": resolvably the hardest, margin 0. What Peggle does meet is a finale below the mean of its
-  stage's other four levels: 17 of 23 stages (15 resolvably). Switching to that would follow Peggle more closely but
-  drop "hardest level", so it is the owner's call.
+**For the owner (settled 9 October 2026).**
+- **The floor** was the first version's decision: 82 of Peggle's 115 campaign levels win under 5 of 48 for the greedy
+  player, 19 bands were raised to 5.0-7.2 and the curve was flat. The owner chose "Follow Peggle, lower the floor": the
+  floor is 2 of 48 and the bands are Peggle's means.
+- **The finale** was "the stage's hardest", which Peggle meets in only 7 of 23 stages (4 resolvably). The owner chose
+  "Harder than the stage's average": below the mean of the other four, which Peggle meets in 17 (15 resolvably).
 
 The shipped ramp on the old engine (the source of the earlier placeholders, kept for the record): stage 1 ran 30.7,
 27.2, 25.1, 23.7, 20.4 (mean 25.4) and stage 2 ran 28.12, 26.75, 25.55, 24.12, 20.65 (mean 25.0, pooled). Under the new
-rules the shipped levels play much harder (`base-20`, `base-23` and `base-25` fall below 5 of 48), and the refit re-tunes
-them to these bands.
+rules the shipped levels play much harder, and the refit re-tunes them to these bands and the floor of 2 of 48.
 
 - **The Far Shore starts over (question 1).** Its stages are numbered from 1, and greens only come at level 3
   (`MoonfallLevelPlace.Number`), so its first two levels have none. Peggle Nights also starts easier than Deluxe ends,
   and its first stage has the highest band of the game.
 - **Tooling.** `stagecheck.MEAN_BANDS` holds every stage, keyed by campaign and stage (`mr3`, `fs1`), from
-  `stagecheck.PEGGLE_STAGE_MEANS`, `MEAN_HALF_WIDTH` and the floor (`engine.GREEDY_MIN_WINS`). `mfl.py stage mr3` /
+  `stagecheck.PEGGLE_STAGE_MEANS`, `MEAN_HALF_WIDTH` and the floor (`engine.GREEDY_MIN_WINS`, 2). `mfl.py stage mr3` /
   `stage fs1` read the level ids' prefix (`base-`, `expansion-`) to pick the campaign, a bare number still means the Moon
   Road, and a stage's first level is compared with the previous stage's last level in the same campaign (Far Shore
   stage 1: nothing).
@@ -251,7 +253,7 @@ Silent Stars) is a sky stage of our own paintings. The per-stage targets:
   - It keeps its recorded exception: only this level may be asked for more than 35 oranges (`challenge.EXCEPTIONS`).
     Every other rule still holds: the candidate share and spread, 85-160 pieces, the reach of every candidate.
   - Both carriers are the second level of a mid-campaign stage, so the challenge starts from an easier board.
-  - **Acceptance:** the greedy player wins at least 5 of 48 at 35 or 45 oranges. Done: `mfcheck play` takes the orange count and
+  - **Acceptance:** the greedy player wins at least 2 of 48 at 35 or 45 oranges (5 until 9 October 2026). Done: `mfcheck play` takes the orange count and
     `mfl.py challenge ch-03` / `ch-04` (or `challenge <level-id> <oranges>`) runs it on the carriers recorded in
     `mflkit/challenge.py`, which also holds the one allow-list entry for 45 candidates (`base-37`, with this section as its reason;
     the pre-flight's 28-35 candidate rule reads it, so no other level can take 45).
@@ -269,16 +271,15 @@ Silent Stars) is a sky stage of our own paintings. The per-stage targets:
 
 ### 1.7 Aces
 
-- **How each Ace is set.** Every level gets its Ace from `MoonfallAces.Suggest` over 576 greedy games at its own number. It
-  is the score that 20% of all games reach, rounded to 10,000, and it is recorded in `Moonfall/Modes/aces.json` when the
-  level ships. The shipped ten are 240-300k, reached by 18.8-21.5% of games.
-- **No hand-set Aces.** A level whose Ace drifts beyond 15-25% of games on 576 fresh seeds is re-suggested, never set by hand.
-- **Hard levels (question 4).** Under 20% wins (9.6 per 48), `Suggest` falls back to the lowest win, so the floor of 11 in
-  section 1.1 keeps every Ace defined. Below about 14 per 48 the Ace sat near the lowest winning score, and almost every win
-  would ace it.
-- **Done (the owner's answer 4, 7 October 2026).** `MoonfallAces.Suggest` keeps the rule at 14 of 48 or more. Below it, the Ace is
-  the score 40% of the winning games reach (`HardWins` 14, `HardOf` 48, `HardWinShare` 0.40; a rate, so exactly 14 of 48 keeps the
-  rule). The shipped ten (252-389 wins of 576) are all above it, and their Aces re-suggest unchanged.
+- **How each Ace is set (owner's decision, 9 October 2026, "Top 40% of wins, every level").** Every level gets its Ace
+  from `MoonfallAces.Suggest` over 576 greedy games at its own number: the score that 40% of the greedy player's winning
+  games reach (`AceShare` 0.40, the best 40% rounded up to a whole game), rounded to 10,000, recorded in
+  `Moonfall/Modes/aces.json` when the level ships. A level with no win has no suggestion.
+- **History.** Until 9 October 2026 an Ace was the score 20% of all games reach, with the 40%-of-wins rule only on hard
+  levels (under 14 of 48, the owner's answer 4 of 7 October 2026: `HardWins`, `HardOf` and `HardWinShare`, now removed).
+  The hard-level rule is now the only rule. The shipped Aces in `aces.json` still hold the old values until the refit
+  re-suggests them; the Perf test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` fails until then.
+- **No hand-set Aces.** A level whose Ace drifts from the suggestion on 576 fresh seeds is re-suggested, never set by hand.
 
 ### 1.8 Motion
 
@@ -512,3 +513,9 @@ A reference study read the owner's Peggle reverse-engineering workspace for fact
 1. **The rules match Peggle's real values.** Free balls come from peg score only. Long Shot and orange-sweep triggers, the stuck-ball rule, the coin flip after a total miss, ×100 Fever, ±97° aim, brick and peg bounce, green placement and the smaller items all follow Peggle. The 30 finished levels are then re-tuned and their Aces re-suggested.
 2. **Boards are dense like Peggle's:** about 95–115 pieces, larger pegs, 30–45% bricks, and most pieces able to be orange. This applies to the remaining 85 levels and, through a refit pass, to the 30 finished ones.
 3. **Difficulty follows Peggle's measured curve.** Each stage is judged by its average plus a hard finale; the strict "each level harder than the last" rule is dropped. The band numbers are re-derived after the rule changes.
+
+### Owner's answers on difficulty and Aces (9 October 2026, later the same day)
+After the first measurement of Peggle's bands, the owner decided:
+1. **"Follow Peggle, lower the floor."** Stage bands are Peggle's measured stage means (table in section 1.1) ± 1.1, no longer clamped at 5. The playability floor drops from 5 of 48 to 2 of 48, and a band's lower edge is never below 2.
+2. **"Harder than the stage's average."** The finale must win fewer games per 48 than the mean of the stage's other four levels, resolved by one standard error on the pooled games. It need not be the single hardest.
+3. **"Top 40% of wins, every level."** Every level's Ace is the score 40% of the greedy player's winning games reach (rounded to 10,000), the hard-level rule extended to all levels.

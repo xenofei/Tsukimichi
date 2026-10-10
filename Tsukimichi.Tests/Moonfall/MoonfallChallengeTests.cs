@@ -202,18 +202,20 @@ public sealed class MoonfallChallengeTests
     }
 
     [Fact]
-    public void The_greedy_player_suggests_the_score_a_fifth_of_its_games_win_at_or_above()
+    public void The_greedy_player_suggests_the_score_the_top_40_percent_of_wins_reach()
     {
-        // Ten games, six won: a fifth of them is two, so the Ace is the second-best win, rounded to the nearest 10,000.
+        // Six wins: 40% is 2.4, rounded up to 3, so the Ace is the third-best win (254,999), rounded to the nearest 10,000.
         var wins = new[] { 100_000L, 210_000, 254_999, 300_001, 400_000, 180_000 }.Select(static s => new MoonfallGreedyGame(true, 10, 0, s, 0));
         var losses = Enumerable.Repeat(new MoonfallGreedyGame(false, 12, 2, 900_000, 0), 4);
-        Assert.Equal(300_000, MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", wins.Concat(losses).ToList())));
+        Assert.Equal(250_000, MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", wins.Concat(losses).ToList())));
 
-        // Fewer wins than a fifth: the lowest win.
-        var few = new[] { new MoonfallGreedyGame(true, 10, 0, 254_999, 0) }.Concat(Enumerable.Repeat(new MoonfallGreedyGame(false, 12, 2, 5, 0), 9)).ToList();
-        Assert.Equal(250_000, MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", few)));
+        // One win is its own top 40%; losing scores never count.
+        var one = new[] { new MoonfallGreedyGame(true, 10, 0, 254_999, 0) }.Concat(Enumerable.Repeat(new MoonfallGreedyGame(false, 12, 2, 5, 0), 9)).ToList();
+        Assert.Equal(250_000, MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", one)));
+
+        // No wins, no suggestion.
         Assert.Null(MoonfallAces.Suggest(new MoonfallPlayabilityReport("x", [new MoonfallGreedyGame(false, 9, 1, 5, 0)])));
-        Assert.Equal(0.20, MoonfallAces.AceShare);
+        Assert.Equal(0.40, MoonfallAces.AceShare);
     }
 
     private static MoonfallPlayabilityReport Wins(int wins, int games) => new("x",
@@ -221,10 +223,9 @@ public sealed class MoonfallChallengeTests
             .Concat(Enumerable.Repeat(new MoonfallGreedyGame(false, 12, 2, 900_000, 0), games - wins)).ToList());
 
     [Fact]
-    public void On_a_hard_level_the_Ace_is_the_score_the_top_40_percent_of_wins_reach()
+    public void On_every_level_the_Ace_is_the_score_the_top_40_percent_of_wins_reach()
     {
-        // 20 wins of 100 (9.6 of 48): the old rule would take the 20th-best win (10,000), any win at all. The top 40% of
-        // 20 wins is 8, so the Ace is the 8th-best: 130,000.
+        // 20 wins of 100: the top 40% of 20 wins is 8, so the Ace is the 8th-best: 130,000.
         Assert.Equal(130_000, MoonfallAces.Suggest(Wins(20, 100)));
 
         // Four wins of 48: 40% of four is two (rounded up), so the second-best, 30,000.
@@ -232,22 +233,11 @@ public sealed class MoonfallChallengeTests
 
         // A single win is its own top 40%.
         Assert.Equal(10_000, MoonfallAces.Suggest(Wins(1, 48)));
-    }
 
-    [Fact]
-    public void The_hard_level_rule_starts_below_14_of_48_and_the_other_levels_keep_a_fifth_of_all_games()
-    {
-        // 13 of 48 is hard: the top 40% of 13 wins is 6, the 6th-best is 80,000.
-        Assert.Equal(80_000, MoonfallAces.Suggest(Wins(13, 48)));
-
-        // Exactly 14 of 48 is not hard: a fifth of 48 games is 10, the 10th-best of 14 wins is 50,000 (the hard rule would give 90,000).
-        Assert.Equal(50_000, MoonfallAces.Suggest(Wins(14, 48)));
-
-        // The threshold is a rate, so 28 of 96 is exactly 14 of 48 too, and 27 of 96 is under it.
-        Assert.Equal(90_000, MoonfallAces.Suggest(Wins(28, 96)));
-        Assert.Equal(170_000, MoonfallAces.Suggest(Wins(27, 96)));
-        Assert.Equal(14, MoonfallAces.HardWins);
-        Assert.Equal(48, MoonfallAces.HardOf);
-        Assert.Equal(0.40, MoonfallAces.HardWinShare);
+        // An easier level is no different: 14 wins of 48 take the 6th-best (40% of 14 is 5.6, rounded up): 90,000, where a
+        // fifth of all games used to give 50,000. The games lost do not move the Ace.
+        Assert.Equal(90_000, MoonfallAces.Suggest(Wins(14, 48)));
+        Assert.Equal(MoonfallAces.Suggest(Wins(14, 48)), MoonfallAces.Suggest(Wins(14, 96)));
+        Assert.Equal(190_000, MoonfallAces.Suggest(Wins(30, 48)));
     }
 }

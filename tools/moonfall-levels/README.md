@@ -4,7 +4,7 @@ One command turns a level's **layout source** and its **scene recipe** into a ch
 and dressed scene, composites at 1x and 2x, and a report. It refuses any level that fails a check. The rules it
 enforces are the approved method: `docs/design/v9/rich/level-method.md` (sections 1-7) and
 `docs/design/v9/rich2/level-method.md` (section 8, the fuller-board F-rules), plus decision 21 (the greedy player
-wins at least 5 of 48 seeded games) and the round-1 supervision decisions (below).
+wins at least 2 of 48 seeded games since the owner's decision of 9 October 2026, 5 before) and the round-1 supervision decisions (below).
 
 **Density rules (owner's decision, 9 October 2026).** Moonfall boards are as dense as Peggle's, and most pieces can be
 orange so every retry deals a new board: at least 85 pieces (95-115 is the target), pegs of radius 10 and bricks of
@@ -27,7 +27,7 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py selftest` | Runs every checker against its known-bad and known-good cases |
 | `py -3 tools/moonfall-levels/mfl.py trace <scene or level-id>` | The tracing sheet (`docs/design/v9/levels/build/trace/`): the graded scene at 2x, a 50-unit grid, the opening, the launcher's swing, the bucket's lane, the recipe's features, and for a level its pieces (oranges ringed orange, never-green pegs barred, skipped points as red crosses) plus the pre-flight |
 | `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force` |
-| `py -3 tools/moonfall-levels/mfl.py stage <key>` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. The mean bands for every stage are `stagecheck.MEAN_BANDS`: Peggle's own stage means measured on the new engine (2026-10-09, charter section 1.1) plus or minus 1.1 per 48, raised to start at the 5-of-48 floor where Peggle's curve is lower (Moon Road 3-11, Far Shore 3-12: 5.0 to 7.2). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a stage whose mean per 48 is outside its band (by more than one standard error of a mean, 0.3), and a finale that is not resolvably the stage's hardest (`FINALE_GAP` 0 below the next hardest level after one standard error over the pooled games; Peggle's finale is the greedy player's hardest in only 7 of its 23 stages, so the margin is the owner's question). There is no rule between the other levels' order (the old step of 0.5 per level is gone). |
+| `py -3 tools/moonfall-levels/mfl.py stage <key>` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. The mean bands for every stage are `stagecheck.MEAN_BANDS`: Peggle's own stage means measured on the new engine (2026-10-09, charter section 1.1) plus or minus 1.1 per 48, the lower edge never below the 2-of-48 floor (owner's decision, 9 October 2026, "Follow Peggle, lower the floor"; only Moon Road 9-11 and Far Shore 10-12 reach it: 2.0 to mean + 1.1). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a stage whose mean per 48 is outside its band (by more than one standard error of a mean, 0.3), and a finale that is not resolvably harder than the stage's average (owner's decision, 9 October 2026, "Harder than the stage's average": it wins fewer games per 48 than the mean of the stage's other four levels, the gap less one standard error on the pooled games at least 0; it need not be the single hardest). There is no rule between the other levels' order (the old step of 0.5 per level is gone). |
 | `py -3 tools/moonfall-levels/mfl.py challenge <ch-id>` or `challenge <level-id> <oranges>` | The challenge carrier check (`mflkit/challenge.py`): the greedy player on the carrier level(s) at the challenge's orange count (`mfcheck play ... <oranges>`); at least 5 of the rule's 48 games must win, and the level must have at least that many candidates. Recorded carriers (charter 1.6): ch-03 35 oranges on `base-27`, ch-04 45 on `base-37`, and ch-06, ch-08, ch-09, ch-11, ch-12 at the standard 25 on the levels the charter lists. More than 35 oranges are allowed only for the entries of `challenge.EXCEPTIONS` (today `base-37` at 45, with the reason recorded there). The pre-flight needs a carrier to have at least as many candidates as its challenge's oranges (`challenge.candidate_range`: 60-90% of the pieces, never fewer than 35 on `base-27` or 45 on `base-37`). A recorded carrier not built yet is reported, not failed |
 | `py -3 tools/moonfall-levels/mfl.py stuck <id>` | Where balls come to rest on the first shots the stuck rule fires on |
 | `py -3 tools/moonfall-levels/mfl.py dead <id>` | Where the first shots that touch nothing fly, so a piece can go in their lane |
@@ -57,12 +57,7 @@ The raw commands stay as they were: without a cache hit (or with `--force`) ever
 
 ## Aces
 
-`MoonfallAces.Suggest` (C#, `Tsukimichi.Core/Moonfall/MoonfallAces.cs`) sets a level's Ace from 576 greedy games. A level
-the greedy player wins at 14 of 48 or more (a rate, so 28 of 96 is the same) keeps the rule: the score a fifth of all games
-reach. Below that, the Ace is the score 40% of the *winning* games reach (the owner's answer, 7 October 2026), since a
-fifth of all games is then close to any win. Each Ace is recorded in `Moonfall/Modes/aces.json` when the level ships. The
-Perf-category test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` re-suggests every shipped level (stages 1-6, all
-above 14 of 48: 197-389 wins of 576, 6-5 the lowest) and holds each to its recorded Ace.
+`MoonfallAces.Suggest` (C#, `Tsukimichi.Core/Moonfall/MoonfallAces.cs`) sets a level's Ace from 576 greedy games: the score 40% of the *winning* games reach (the best 40%, rounded up to a whole game), rounded to 10,000, on every level (owner's decision, 9 October 2026, "Top 40% of wins, every level"; it was a fifth of all games above 14 of 48 wins, with the 40% rule only below). A level the greedy player never wins has no suggestion. Each Ace is recorded in `Moonfall/Modes/aces.json` when the level ships. The Perf-category test `Shipped_Aces_are_unchanged_by_the_hard_level_rule` re-suggests every shipped level and holds each to its recorded Ace; it fails until the refit re-suggests the shipped Aces.
 
 ## What `build` does, in order
 
@@ -78,7 +73,7 @@ above 14 of 48: 197-389 wins of 576, 6-5 the lowest) and holds each to its recor
    isolated), an even dress, a region's edge through the pegs. Pre-flight, round 2: slides of different periods that
    collide in real time, co-moving slides overlapping or in a saddle, a deck at 6.5 degrees, one level brick of 28,
    long bricks across the lane. Stage (rewritten 9 October 2026): a good stage, neighbours with one palette, levels in any order (no step rule), a finale
-   tied with or only 0.1 below the next hardest, a 0.5 gap unresolved on one block and resolved on the pooled games, a stage mean much harder or easier than its band, a stage at the floor in a raised band and one at Peggle's own MR 9 mean below it, every band within the floor. Engine: the loader on a pilot and on a peg in the launcher's swing; play on a pilot and on
+   a finale equal to or above the others' mean, 0.1 below it (unresolved), 0.3 below on one block (unresolved) and 2 below on the pooled games (resolved), an earlier level harder than the finale (allowed), a stage mean much harder or easier than its band, a stage at Peggle's own MR 9 mean inside its band (lower edge 2.0) and the same stage too hard for MR 3's band, every band's lower edge at least 2. Engine: the loader on a pilot and on a peg in the launcher's swing; play on a pilot and on
    oranges sealed in brick rings; the stuck gate on a pilot and on a board of flat decks; dead first shots on a pilot
    and on a chute; reach on a pilot and on a ceiling peg no ball can touch; cheap difficulty (low oranges over-represented among those left, and the lower-third share of the candidates); the colours gate on a green dealt where it may not go. Round 3:
    a 12.8-unit slot between bricks, a chain of short level bricks, movers whose common cycle outlasts a game; the
@@ -211,13 +206,13 @@ above 14 of 48: 197-389 wins of 576, 6-5 the lowest) and holds each to its recor
 - **The ramp**, measured on held-out games at each level's own number (432 at least): stage 1 runs from about 30 down to 21, stage 2 from
   about 27 down to 20, and each finale is its stage's hardest, at least 2.5 per 48 below its 4th level. *Superseded
   on 9 October 2026 (owner's decision): a stage is judged by its mean within a band plus a finale that is its hardest
-  level by a margin, following Peggle's measured curve; the 0.5 step per level is dropped. The bands in
+  level by a margin, following Peggle's measured curve; the 0.5 step per level is dropped. Later the same day: the finale is judged against the mean of the stage's other four, not the single hardest, and the floor is 2 of 48. The bands in
   `stagecheck.MEAN_BANDS` and the finale gap were measured from Peggle's campaigns on the new engine on 9 October
   2026 (charter section 1.1).* Difficulty
   comes from the subject's places, never from low oranges in the bucket's approach (the lower-third band). A
   small finale gap cannot be resolved on one held-out block, so `stage` plays every level of the stage on 5184 more fresh
   seeds (the shipped files in `json/`) and judges the finale gap on the pooled 6912 games by one
-  standard error: the gap less it at least `FINALE_GAP` (2.5 until 9 October 2026, now 0) (game designer rounds 4-6, G19, G20 and
+  standard error: the finale's gap below the others' mean less it at least 0 (`FINALE_GAP` was 2.5 below the next hardest until 9 October 2026 and is gone) (game designer rounds 4-6, G19, G20 and
   G22; critic N22). It prints the pooled figures. Open steps by design rather than by re-measuring.
 - **A finale takes its difficulty from the whole board, not its bottom** (game designer G11; the owner's answer,
   6 October 2026: recommendation taken). 2-5's reflected heads are candidates at their two upper moons only and the

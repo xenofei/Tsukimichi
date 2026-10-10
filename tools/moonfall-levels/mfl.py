@@ -215,9 +215,9 @@ def cmd_stage(args):
     ramps_ = [r for (_l, r, _p) in rows if r is not None]
     if len(ramps_) == len(rows) and len(rows) >= 2:
         lo, hi = stagecheck.MEAN_BANDS[key]
-        nxt = min(ramps_[:-1])
-        print(f"  pooled mean {sum(ramps_) / len(ramps_):.2f} (band {lo:.2f} to {hi:.2f}); finale gap "
-              f"{nxt - ramps_[-1]:.2f} +- {stagecheck.step_se(nxt, ramps_[-1], total, total):.2f} below the next hardest")
+        mo = sum(ramps_[:-1]) / (len(ramps_) - 1)
+        print(f"  pooled mean {sum(ramps_) / len(ramps_):.2f} (band {lo:.2f} to {hi:.2f}); finale "
+              f"{mo - ramps_[-1]:.2f} below the other levels' mean {mo:.2f}")
     # the level the player meets just before this stage's first: the previous stage's last, in the same campaign (the Far
     # Shore's stage 1 has nothing before it)
     prev = stagecheck.previous_stage(key)

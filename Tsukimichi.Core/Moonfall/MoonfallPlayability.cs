@@ -22,7 +22,7 @@ public sealed record MoonfallPlayabilityReport(string LevelId, IReadOnlyList<Moo
 
 /// <summary>
 /// The playability gate (plan v9 decision 21): "every level must play at least as well as the weakest shipped level in
-/// the greedy-player test (5 of 48 wins)". The greedy player is the designer's (<c>docs/design/v9/rich/tools/mfcheck</c>,
+/// the greedy-player test (5 of 48 wins; 2 of 48 since the owner's decision of 9 October 2026)". The greedy player is the designer's (<c>docs/design/v9/rich/tools/mfcheck</c>,
 /// <c>play</c>), ported here so the rule can run over every shipped level in the tests, move for move the same: before
 /// each shot it tries every angle 2° apart from −96° to 96° (the 2° steps inside the launcher's ±97° [O]) on a copy of the game, takes the one that lights the most
 /// (an orange worth 6 pegs more, a bucket catch 5, each stuck-ball fire −0.5), then misses its aim by up to 1.5°.
@@ -37,8 +37,8 @@ public static class MoonfallPlayability
     /// <summary>Games a level is played (decision 21).</summary>
     public const int Games = 48;
 
-    /// <summary>Wins a level needs (decision 21).</summary>
-    public const int WinsNeeded = 5;
+    /// <summary>Wins a level needs: 2 of 48 (the owner's decision, 9 October 2026, "Follow Peggle, lower the floor"; 5 before it, decision 21).</summary>
+    public const int WinsNeeded = 2;
 
     /// <summary>The level number the games are played at: the tool's default, with greens and no power.</summary>
     public const int LevelNumber = 5;
