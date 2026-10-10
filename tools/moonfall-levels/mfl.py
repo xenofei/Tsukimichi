@@ -9,6 +9,9 @@
   stage <key> [--force]         key: mr1-mr11 (The Moon Road; a bare 1-11 means the same) or fs1-fs12 (The Far Shore)
                                 (games already played on an unchanged level file are re-used unless --force)
                                 the stage's table: the held-out ramp, jewels of neighbours, game paintings against ours
+  precheck <level-id>... | --all  the findings the supervisors raised round after round, measured before review: subject
+        [--rev <git rev>] [--only a,b] legibility at 640, a bright disc behind the aim guide, near-repeats, empty and crowded
+        [--strict]                    patches, stuck and holdout hot spots, thin margins (report only; --strict exits 1 on a FAIL)
   challenge <ch-id> | <level-id> <oranges>   the greedy player at a challenge's orange count on its carrier level(s):
                                 at least 5 of 48 wins (ch-03 35 oranges on base-27; ch-04 45 on base-37, the one exception)
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
@@ -232,7 +235,38 @@ def cmd_stage(args):
     print(f"game paintings {game} of {len(reps)}; verdicts: " + ", ".join(f"{r['id']} {r['verdict']}" for r in reps))
     for f in fails:
         print("  !", f)
+    print("precheck (report only, not a gate; `mfl.py precheck <ids>` runs it alone):")
+    try:
+        from mflkit import precheck
+        precheck.precheck([r["id"] for r in reps], print_=lambda t: print("  " + t.replace("\n", "\n  ")))
+    except Exception as e:                           # a report must never break the stage table
+        print(f"  precheck failed to run: {type(e).__name__}: {e}")
     return 1 if fails else 0
+
+
+def cmd_precheck(args):
+    """precheck <level-id>... | --all [--rev <git rev>] [--only legibility,axis,repeats,patches,play,margins] [--strict]:
+    mflkit/precheck.py. Reads the committed level file, scene recipe, composite and build report (no build, no game install),
+    from the working tree or from a past commit with --rev. Report only: the exit code is 0 unless --strict and a check FAILs."""
+    from mflkit import precheck
+    rev, only, strict = None, None, "--strict" in args
+    args = [a for a in args if a != "--strict"]
+    if "--rev" in args:
+        i = args.index("--rev")
+        rev, args = args[i + 1], args[:i] + args[i + 2:]
+    if "--only" in args:
+        i = args.index("--only")
+        only, args = args[i + 1].split(","), args[:i] + args[i + 2:]
+        bad = [o for o in only if o not in precheck.CHECKS]
+        if bad:
+            print(f"unknown check {bad}: use {', '.join(precheck.CHECKS)}")
+            return 2
+    ids = precheck.Source(rev).ids() if args == ["--all"] else args
+    if not ids:
+        print("precheck <level-id>... | --all [--rev <git rev>] [--only a,b] [--strict]")
+        return 2
+    _res, worst = precheck.precheck(ids, rev=rev, only=only)
+    return 1 if strict and worst == precheck.FAIL else 0
 
 
 def cmd_challenge(args):
@@ -414,7 +448,7 @@ def cmd_convert(args):
     return 0 if ok else 1
 
 
-COMMANDS = {"convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
+COMMANDS = {"precheck": cmd_precheck, "convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "challenge": cmd_challenge, "sources": cmd_sources}
 
 if __name__ == "__main__":
