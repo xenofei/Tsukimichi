@@ -148,7 +148,10 @@ public enum MoonfallEventKind : byte
     /// <summary>A lit peg cleared (<see cref="MoonfallEvent.Count"/>: how many have cleared this turn).</summary>
     PegCleared,
 
-    /// <summary>A stuck ball's peg cleared early.</summary>
+    /// <summary>
+    /// A peg cleared early because the balls were stuck: every peg the shot lit clears at once, each with its own event
+    /// (<see cref="MoonfallEvent.Value"/> 1 on the first of them, 0 on the rest, so the values add up to the rule's fires).
+    /// </summary>
     StuckClear,
 
     /// <summary>The ball bounced off a wall or the ceiling.</summary>
@@ -227,6 +230,12 @@ public enum MoonfallEventKind : byte
     /// its bonus), where it happened.
     /// </summary>
     StyleShot,
+
+    /// <summary>
+    /// A shot that lit no peg was flipped for (<see cref="MoonfallRules.MissReturnFirstMax"/>): <see cref="MoonfallEvent.Value"/>
+    /// 1 when it won its ball back (a <see cref="FreeBall"/> follows), <see cref="MoonfallEvent.Count"/> the level's flips so far.
+    /// </summary>
+    MissFlipped,
 }
 
 /// <summary>One game event; a value type, so queuing one allocates nothing.</summary>

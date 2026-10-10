@@ -1,0 +1,68 @@
+{
+ "name": "wheel-of-the-twelve",
+ "about": "Our own painting: the old star atlas's zodiac wheel of Eorzea turning round the night sky, the Twelve's twelve signs set in its gilt band in the calendar's order, each four stars over the atlas's faint engraving of its emblem and joined to the next by a dotted gilt line (one great constellation), the pole star at the hub, the Milky Way behind with a river of rose nebula along it (painters/twelve.py; shipped as a JPEG). The first jewel is the night's blue (the painting's sky is painted blue and the jewel keeps 0.2 of its colour, so it measures about 261); the second is the nebula's rose, a region along the Milky Way (a band 30-140 units either side of its spine, faded beyond 290 units of the hub so its ends do not burn in the corners, and at the walls and the hills), so it crosses the wheel diagonally rather than glowing as a disc behind it (a centred disc echoed 6-1's sphere of light). Its hue is kept red of magenta (#C83E62) since the band's mix with the blue pulls the measured mean toward violet (#BC4A74 measured 322, 60 apart).",
+ "source": {
+  "kind": "painting",
+  "painter": "twelve",
+  "params": {}
+ },
+ "veil": 0.22,
+ "features": {},
+ "dress": {
+  "palette": {
+   "name": "Indigo night and the nebula's rose (the Twelve's wheel)",
+   "sky": "#0E1446",
+   "deep": "#050818",
+   "jewel1": "#1E78D0",
+   "jewel2": "#C83E62",
+   "warm": "#FFB45E",
+   "rim": "#C8D4FF"
+  },
+  "jewel": {
+   "bands": [[0, "#1E78D0"], [300, "#2276CC"], [600, "#1A5EB0"]],
+   "valueHues": [[0.08, "#0E4084"], [0.45, "#C4E0FF"]],
+   "keep": 0.2,
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#C83E62",
+     "chroma": 0.22,
+     "mask": [["near", "milky way", 30, 140], ["disc", 400, 338, 290, 110], ["y", 560, 470], ["x", 75, 135], ["x", 725, 665]]
+    }
+   ],
+   "quiet": [60, 25],
+   "regionQuiet": 0.2
+  },
+  "shafts": [
+   {
+    "origin": [-90, -110],
+    "angles": [38, 46, 54],
+    "widths": [26, 34, 22],
+    "k": 0.035,
+    "col": "#CFD8FF",
+    "reach": 900,
+    "near": 60
+   }
+  ],
+  "framing": [],
+  "silhouette": {
+   "body": "#06071A",
+   "inner": "#141A4A",
+   "rim": "#C0C8FF",
+   "rimK": 0.3,
+   "seed": 27
+  }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 12,
+   "stars": 34,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "sign Halone", 10], ["not-poly", "sign Menphina", 10],
+                 ["not-poly", "sign Thaliak", 10], ["not-poly", "sign Nymeia", 10], ["not-poly", "sign Llymlaen", 10],
+                 ["not-poly", "sign Oschon", 10], ["not-poly", "sign Byregot", 10], ["not-poly", "sign Rhalgr", 10],
+                 ["not-poly", "sign Azeyma", 10], ["not-poly", "sign Nald'thal", 10], ["not-poly", "sign Nophica", 10],
+                 ["not-poly", "sign Althyk", 10]]
+  }
+ }
+}

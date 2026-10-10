@@ -114,11 +114,11 @@ My recommendation is **A for the base campaign and B for the expansion**, so the
 - **Top rail.** The stage (`1-3`) and the level's name on the left; the score on the right, with the label "Score". The score counts up by the measured rule: per 10 ms add 1000 while 10,000 or more is left, then 200, then 100, then 10.
 - **Left rail.** The ball channel: a glass tube with brass caps, where the balls stack from the bottom, each shaded where it rests on the one below. The count and "Balls" sit below it.
 - **Right rail.**
-  - The multiplier dial: a gilt arc fills as oranges are cleared, with ticks at 15, 10, 6 and 3 left, and ×2/×3/×5/×10 in its centre.
+  - The multiplier dial: a gilt arc fills as oranges are cleared, with ticks at 15, 10, 6 and 3 left, and ×2/×3/×5/×10 in its centre (×100 once the last orange is lit, the original's Fever value).
   - Below it, the count of oranges left beside a small amber moon.
   - Then the power's medallion: its carrier in silhouette, the power's name, and pips for the turns left.
   - Our own read on this rail replaces the original's tube meter.
-- **The free-ball gauge.** A crescent glass channel above the launcher's hub fills with moonlight as the shot's score climbs. At 25k, 75k and 125k its notch blooms (a soft glow, no rays, 0.4 s), and a ball arrives at the top of the channel with a soft bloom and a quiet "+1". A bucket catch gives the same "+1", and a chime.
+- **The free-ball gauge.** A crescent glass channel above the launcher's hub fills with moonlight as the shot's peg score climbs (style bonuses never count towards a free ball, as in the original). At 25k, 75k and 125k its notch blooms (a soft glow, no rays, 0.4 s), and a ball arrives at the top of the channel with a soft bloom and a quiet "+1". A bucket catch gives the same "+1", and a chime.
 
 ## Fever ("Full Moon")
 
@@ -126,6 +126,31 @@ My recommendation is **A for the base campaign and B for the expansion**, so the
 - **The hit.** Every peg left lights at once ("the board goes full"). The banner reads **FULL MOON**, our own name for the original's distinctive one (decision 2). It sits in the frame's serif with a gilt rule, on a soft band behind the pegs, for 2.95 s.
 - **The cups.** Five brass bowls along the foot, valued 10,000 / 50,000 / 100,000 / 50,000 / 10,000. The centre one is gilded brightest, and each value is on a plate set into its bowl.
 - No rainbow, no fireworks and no music cue are drawn here. Those are G8's sound and finale work.
+
+## The original's values (owner decision, 9 October 2026)
+
+The owner decided that Moonfall's rules match Peggle's real values. A reference study measured the original's values (facts only: no code or text of the original is copied) and compared them with Moonfall's, rule by rule; every rule that differed in the engine was changed to the original's. In the code these values are tagged `[O]` (`Tsukimichi.Core/Moonfall/MoonfallRules*.cs`).
+
+| Rule | Was | Now [O] |
+|---|---|---|
+| Free balls (25k / 75k / 125k) | the shot's score, style bonuses included | the peg score only; style bonuses never count |
+| Long Shot | any non-blue to non-blue leg of 267 px or more, anywhere in a shot, one blue between | the shot's first two pegs, both non-blue, more than 200 px apart; a blue grazed under 10 ticks before the second is forgiven |
+| Super Long Shot | 533 px | more than 450 px |
+| Orange Sweep | a third of the oranges left at the shot, at least 3 | 10 in one shot on a level of 25 (31+ → 15, 21–30 → 10, 16–20 → 9, 11–15 → 8, 7–10 → all but two, 5–6 → all but one) |
+| Stuck ball | 1.5 s within 15 px; clears the touching lit peg hit last, one at a time | 0.5 s within 2 px of its places 10–60 ticks back (every ball in play); clears every peg the shot lit at once |
+| A shot that lights no peg | always costs the ball | a coin flip from the seeded random numbers gives it back: 81 in 100 the level's first time, 61 in 100 after; not in a duel |
+| Multiplier with no orange left | ×10 | ×100; a purple counts 100 at ×100 |
+| Aim limit | ±85° from straight down | ±97° (7° above level either side) |
+| Round peg bounce | 0.80 normal, 0.95 along; rests under 20 px/s | 0.80 normal, 1.0 along; at 111 px/s or less along the normal it rolls (keeps a tenth of its approach) |
+| Brick bounce | as a peg | 0.82 of the whole velocity; slides under 140 px/s (28 px/s on a level or upright face) |
+| Ball speed | no limit | 1,500 px/s |
+| Twin balls | pass through each other | meet as equal masses (the exchange at 0.95) |
+| Greens | any blue that may be green | those above y 410 first, the two at least 150 px apart |
+| Purple peg | from the first level | from the fourth |
+| Lunar Burst | 80 px | 100 px |
+| Duel | 5 balls a side; cups a quarter (2.5k / 12.5k / 25k); Double Long Shot and Clear Night 10k, Lucky Bounce 5k | 6 balls a side; cups half (5k / 25k / 50k; 50k each on a perfect clear); Double Long Shot and Clear Night 5k, Lucky Bounce 2.5k |
+
+Unchanged, because the study could not pin the original's value or it is level data: the launcher's height (y 87 against a code value of 70 that may be a sprite anchor), the ceiling (y 0 against about 49; shipped levels reach y 52), the aim guide's length (200 px against 200 ticks of flight), the Super Guide's shape, the Fever look-ahead (11 against 4 ticks, low confidence), the slow-motion speed, the fine-aim step (a window setting), the original's "always win the flip early in the adventure" flag, the Adventure try bonus (100k / 50k / 25k for the first, second and third try: it needs a saved try count and a tally line, so it is left for its own change), the duel's free balls (the original pays 2,500 style points instead) and the style shots whose triggers were not decoded (Double Long Shot, Off the Wall, Rim Shot, Lucky Bounce, Clear Night). Peg size and brick thickness, and the orange pool, are level data, for the level refit. The original's extra style shots are listed in `moonfall-powers.md`.
 
 ## Readability at the smallest window
 

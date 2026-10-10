@@ -54,6 +54,13 @@ public static partial class MoonfallSceneRecipeLoader
     /// </summary>
     public const int MaxMaskTerms = 8;
 
+    /// <summary>
+    /// The most terms the star mask (<c>motion.starWhere</c>) multiplies. It is evaluated once, at 1x, when the stars are
+    /// picked, and keeps them off each of a subject's small figures: 6-2's twelve signs or the twelve discs round 6-5's gate,
+    /// each a term of its own, after the sky's.
+    /// </summary>
+    public const int MaxStarMaskTerms = 16;
+
     /// <summary>How far a squeezed crop's shape may be from the board's 4:3 (a share of it, either way).</summary>
     public const float MaxSqueeze = 0.25f;
 
@@ -586,15 +593,15 @@ public static partial class MoonfallSceneRecipeLoader
             };
         }
 
-        private List<MoonfallMaskTerm> Mask(JsonElement owner, string key, string at) =>
-            owner.TryGetProperty(key, out var list) ? MaskList(list, $"{at}.{key}") : [];
+        private List<MoonfallMaskTerm> Mask(JsonElement owner, string key, string at, int most = MaxMaskTerms) =>
+            owner.TryGetProperty(key, out var list) ? MaskList(list, $"{at}.{key}", most) : [];
 
-        private List<MoonfallMaskTerm> MaskList(JsonElement list, string at)
+        private List<MoonfallMaskTerm> MaskList(JsonElement list, string at, int most = MaxMaskTerms)
         {
             var terms = new List<MoonfallMaskTerm>();
-            if (list.ValueKind != JsonValueKind.Array || list.GetArrayLength() > MaxMaskTerms)
+            if (list.ValueKind != JsonValueKind.Array || list.GetArrayLength() > most)
             {
-                errors.Add($"{at} must be a list of at most {MaxMaskTerms} terms");
+                errors.Add($"{at} must be a list of at most {most} terms");
                 return terms;
             }
 
@@ -991,7 +998,7 @@ public static partial class MoonfallSceneRecipeLoader
 
             return new MoonfallMotionRecipe
             {
-                StarWhere = Mask(m, "starWhere", "motion"),
+                StarWhere = Mask(m, "starWhere", "motion", MaxStarMaskTerms),
                 Glints = glints,
                 Dust = Int(m, "dust", 0, 0, MaxParticles),
                 Stars = Int(m, "stars", 0, 0, MaxParticles),

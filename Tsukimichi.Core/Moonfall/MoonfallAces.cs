@@ -8,11 +8,9 @@ namespace Tsukimichi.Core.Moonfall;
 /// <c>Moonfall/Modes/aces.json</c> (<c>{ "format": "moonfall-aces", "version": 1, "aces": { "base-01": 290000 } }</c>),
 /// apart from the level files so a level's author can tune its Ace without touching its pegs. A level without one has no
 /// Ace: no badge, no bonus. [J] Each value is set from the greedy player (<see cref="Suggest"/>) over
-/// <see cref="SuggestGames"/> games: the score that <see cref="AceShare"/> of all its games win at or above, rounded to
-/// 10,000, so every level's Ace is about as hard to reach (levels runtime round 1: a quartile of 48 games' wins gave
-/// shares from 6% to 26%). On the hardest levels (the greedy player wins under <see cref="HardWins"/> of
-/// <see cref="HardOf"/>) a fifth of all games is little more than "any win", so the Ace is set at the score
-/// <see cref="HardWinShare"/> of the winning games reach instead (the owner's answer to question 4 of the Moonfall
+/// <see cref="SuggestGames"/> games: the score that <see cref="AceShare"/> of its winning games reach, rounded to
+/// 10,000, on every level (the owner's decision, 9 October 2026, "Top 40% of wins, every level"; before it a fifth of all
+/// games on ordinary levels and the top 40% of wins only on hard ones, the owner's answer to question 4 of the Moonfall
 /// production charter, 7 October 2026).
 /// </summary>
 public static class MoonfallAces
@@ -23,17 +21,8 @@ public static class MoonfallAces
 
     private static readonly Lazy<(IReadOnlyDictionary<string, long> Aces, IReadOnlyList<string> Errors)> BuiltIn = new(LoadBuiltIn);
 
-    /// <summary>The share of the greedy player's games that win at or above a level's Ace.</summary>
-    public const double AceShare = 0.20;
-
-    /// <summary>A level is hard when the greedy player wins under <see cref="HardWins"/> of every <see cref="HardOf"/> games (14 of 48).</summary>
-    public const int HardWins = 14;
-
-    /// <summary>See <see cref="HardWins"/>.</summary>
-    public const int HardOf = 48;
-
-    /// <summary>On a hard level, the share of the winning games that reach the Ace (the top 40% of wins).</summary>
-    public const double HardWinShare = 0.40;
+    /// <summary>The share of the greedy player's winning games that reach a level's Ace (the top 40% of wins).</summary>
+    public const double AceShare = 0.40;
 
     /// <summary>How many of the greedy player's games an Ace is suggested from (48 gave Aces from 7% to 26% of games).</summary>
     public const int SuggestGames = 576;
@@ -54,10 +43,9 @@ public static class MoonfallAces
     public static long Bonus(string? levelId, bool won, long score) => won && IsAce(levelId, score) ? MoonfallRules.AceBonus : 0;
 
     /// <summary>
-    /// The Ace score the greedy player suggests for a level: the score <see cref="AceShare"/> of all its games win at or
-    /// above (the lowest of its wins when fewer win), rounded to the nearest 10,000; null when it won none. On a hard level
-    /// (wins below <see cref="HardWins"/> of <see cref="HardOf"/>, exactly 14 of 48 is not hard) it is instead the score
-    /// <see cref="HardWinShare"/> of the winning games reach. Play it over <see cref="SuggestGames"/> games.
+    /// The Ace score the greedy player suggests for a level: the score <see cref="AceShare"/> of its winning games reach (the
+    /// best 40%, rounded up to a whole game, so a single win is its own top 40%), rounded to the nearest 10,000; null when
+    /// it won none. Play it over <see cref="SuggestGames"/> games.
     /// </summary>
     public static long? Suggest(MoonfallPlayabilityReport report)
     {
@@ -68,8 +56,7 @@ public static class MoonfallAces
             return null;
         }
 
-        var hard = (long)won.Count * HardOf < (long)HardWins * report.Games.Count;
-        var reaching = hard ? (int)Math.Ceiling(won.Count * HardWinShare) : (int)Math.Ceiling(report.Games.Count * AceShare);
+        var reaching = (int)Math.Ceiling(won.Count * AceShare);
         var at = won[Math.Min(won.Count, Math.Max(1, reaching)) - 1];
         return (at + 5_000) / 10_000 * 10_000;
     }
