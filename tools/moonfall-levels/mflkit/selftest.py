@@ -3,7 +3,7 @@ supervisors' rule since rich pass 2, round 3). `mfl.py build` runs this first an
 import json
 import math
 
-from . import author, challenge, engine, frames, precheck, readability, stagecheck
+from . import author, challenge, engine, frames, precheck, readability, reviewcmds, stagecheck
 from .paths import BUILD, RICH
 
 
@@ -130,7 +130,7 @@ def run(verbose=True):
     results = {"generate": generate.selftest(verbose), "tune": tune.selftest(verbose), "jewels": jewels.selftest(verbose),
                "preflight": author.selftest(verbose), "framecheck": frames.selftest(verbose),
                "readcheck": readability.selftest(verbose), "stage": stagecheck.selftest(verbose), "challenge": challenge.selftest(verbose),
-               "precheck": precheck.selftest(verbose),
+               "precheck": precheck.selftest(verbose), "review": reviewcmds.selftest(verbose),
                "engine": engine_cases(verbose), "convert": convert.selftest(verbose)}
     if verbose:
         print("self-test:", ", ".join(f"{k} {'ok' if v else 'FAILED'}" for k, v in results.items()))
