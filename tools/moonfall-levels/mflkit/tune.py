@@ -323,34 +323,169 @@ def write_tuning(src, dst, tuning, note):
         text = text[:text.index(MARK)].rstrip() + "\n"
     elif re.search(r"^TUNING\s*=", text, re.M):
         raise SystemExit(f"{src} has a TUNING block not written by the tuner: merge by hand")
-    body = json.dumps(tuning, indent=1).replace("\n", "\n")
+    body = "{" + ",".join(f"\n    {json.dumps(k)}: {json.dumps(v)}" for k, v in tuning.items()) + ("\n}" if tuning else "}")
     text += f"\n\n{MARK}; {note})\nTUNING = {body}\n"
     pathlib.Path(dst).parent.mkdir(parents=True, exist_ok=True)
     pathlib.Path(dst).write_text(text, encoding="utf-8")
     return dst
 
 
-def tune_layout(arg, band=None, finale_vs=None, max_plays=40, out=None, log=print):
-    """The command: a level id (layouts/<id>.py) or a layout file. Writes the tuned layout in place, or to `out`."""
+HOLD_TOL = 0.6          # --hold: back within this of the locked held-out figure (about one standard error of 1728 games)
+STAGE_TOL = 0.6         # --stage: a level within this of its target is left as it is
+FINALE_MARGIN = 0.5     # --stage: the finale's target sits this far beyond the one-SE gap the stage check asks
+
+
+def report_path(level_id):
+    return paths.REPORT / f"{level_id}.json"
+
+
+def lock_of(level_id):
+    """The level's locked held-out figure: its report's `locked` (written by tune), else the held-out figure the
+    report carries (the last build's), or None."""
+    p = report_path(level_id)
+    if not p.exists():
+        return None
+    rep = json.loads(p.read_text(encoding="utf-8"))
+    return (rep.get("locked") or {}).get("held_out", rep.get("checks", {}).get("play", {}).get("ramp_per_48"))
+
+
+def record_lock(level_id, held, band, how, path=None):
+    """Writes the level's locked target into its report (the build carries it forward), so a later fixer re-tunes to
+    it with --hold instead of moving the stage."""
+    p = pathlib.Path(path) if path else report_path(level_id)
+    rep = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {"id": level_id}
+    rep["locked"] = {"held_out": held, "band": [round(band[0], 2), round(band[1], 2)], "how": how,
+                     "when": time.strftime("%Y-%m-%d %H:%M")}
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(rep, indent=1) + "\n", encoding="utf-8")
+    return p
+
+
+def tune_layout(arg, band=None, finale_vs=None, max_plays=40, out=None, log=print, hold=False, lock=None, how="tune"):
+    """The command: a level id (layouts/<id>.py) or a layout file. Writes the tuned layout in place, or to `out`.
+    hold: re-tune to the level's locked held-out figure (`lock`, else its report's) within HOLD_TOL, the
+    difficulty-neutral mode for fixers. A tune of a level id in place records the confirmed figure as its lock."""
     path = pathlib.Path(arg) if arg.endswith(".py") else paths.LAYOUTS / f"{arg}.py"
     mod = load_layout(pathlib.Path(arg).stem if arg.endswith(".py") else arg, path)
     meta = dict(mod.LEVEL)
+    if hold:
+        lock = lock if lock is not None else lock_of(meta["id"])
+        if lock is None:
+            raise SystemExit(f"{meta['id']}: no locked figure (no report): pass --lock X")
+        band = (lock - HOLD_TOL, lock + HOLD_TOL)
+        how = "hold"
     if band is None:
         band = stagecheck.MEAN_BANDS[stagecheck.level_campaign(meta["id"]) + str(meta["stage"])]
     t0 = time.time()
     player = Engine(meta["id"], meta["number"])
     tuner = Tuner(lambda T: board_of(mod, tuning=T)[2], meta["number"], band, player, finale_vs, max_plays, log)
     log(f"{meta['id']} ({path.name}): band {tuner.lo:.2f}-{tuner.hi:.2f} per 48 held out"
-        + (f" (finale below the others' mean {finale_vs})" if finale_vs is not None else ""))
+        + (f" (finale below the others' mean {finale_vs})" if finale_vs is not None else "")
+        + (f" (held at its locked {lock}/48)" if hold else ""))
     res = tuner.run(tuner.start_state(getattr(mod, "TUNING", None)))
     T = tuner.tuning(res["state"])
     note = (f"held out {res.get('held')}/48, tuning seeds {res.get('tuning')}/48, band {tuner.lo:.2f}-{tuner.hi:.2f}"
             + ("" if res["ok"] else f"; NOT in band: {res.get('reason')}"))
     dst = write_tuning(path, out or path, T, note)
+    if res["ok"] and (out is None and not arg.endswith(".py")):
+        record_lock(meta["id"], res["held"], (tuner.lo, tuner.hi), how)
+    elif res["ok"] and out is not None:
+        record_lock(meta["id"], res["held"], (tuner.lo, tuner.hi), how, pathlib.Path(out).with_suffix(".report.json"))
     log(f"{'tuned' if res['ok'] else 'NOT tuned'} in {time.time() - t0:.0f} s: {len(tuner.moves)} moves, {player.runs} plays "
         f"({player.games} games) and {tuner.evals} evaluations; wrote {dst}")
-    res.update(plays=player.runs, games=player.games, path=str(dst))
+    res.update(plays=player.runs, games=player.games, path=str(dst), band=(tuner.lo, tuner.hi))
     return res
+
+
+def stage_targets(figs, band, gap):
+    """Each level's held-out target for a stage (finale last): the others move together, by the least shift that
+    puts the stage's mean at its band's centre with the finale `gap` below their mean; a level already within
+    STAGE_TOL of its target is left (target None)."""
+    lo, hi = band
+    mid = (lo + hi) / 2
+    others = figs[:-1]
+    m_o = mid + gap / len(figs)                  # (k * m_o + (m_o - gap)) / (k + 1) = mid
+    mean_o = sum(others) / len(others)
+    ok_mean = lo + 0.3 <= sum(figs) / len(figs) <= hi - 0.3
+    shift = 0.0 if ok_mean and mean_o - figs[-1] >= gap else m_o - mean_o
+    if ok_mean and mean_o - figs[-1] >= gap:
+        return [None] * len(figs)
+    if ok_mean:                                  # only the finale is wrong: move it alone if the mean allows
+        f = mean_o - gap
+        if lo <= (sum(others) + f) / len(figs) <= hi:
+            return [None] * len(others) + [max(f, float(engine.GREEDY_MIN_WINS))]
+    t_o = [max(x + shift, float(engine.GREEDY_MIN_WINS)) for x in others]
+    f = max(sum(t_o) / len(t_o) - gap, float(engine.GREEDY_MIN_WINS))
+    targets = t_o + [f]
+    return [None if abs(t - x) <= STAGE_TOL else round(t, 2) for t, x in zip(targets, figs)]
+
+
+def stage_levels(key):
+    """The stage's level ids in play order (the finale last), from the layouts' LEVEL."""
+    camp, n = key[:2], int(key[2:])
+    prefix = {"mr": "base-", "fs": "expansion-"}[camp]
+    out = []
+    for p in sorted(paths.LAYOUTS.glob(prefix + "*.py")):
+        meta = load_layout(p.stem).LEVEL
+        if meta["stage"] == n:
+            out.append((meta["number"], p.stem))
+    return [lid for (_n, lid) in sorted(out)]
+
+
+def tune_stage(key, max_plays=40, out_dir=None, rounds=2, log=print):
+    """`tune --stage <key>`: the five levels together against the stage's mean band and the finale rule. Each level
+    is tuned (tuning seeds, confirmed held out) to its share of the plan; the stage is then validated on the stage
+    check's fresh block (seeds 2593-7776, 5184 games a level), which no tuning step used, pooled with the held-out
+    block exactly as `mfl.py stage` judges it. Up to `rounds` plans. Writes each tuned layout (in place, or to
+    out_dir) and records each level's lock."""
+    key = stagecheck.stage_key(key)
+    ids = stage_levels(key)
+    band = stagecheck.MEAN_BANDS[key]
+    t0 = time.time()
+    log(f"stage {key}: {', '.join(ids)}; band {band[0]:.2f}-{band[1]:.2f}, finale below the others' mean by one SE")
+    files = {lid: (pathlib.Path(out_dir) / f"{lid}.py" if out_dir else paths.LAYOUTS / f"{lid}.py") for lid in ids}
+    if out_dir:
+        pathlib.Path(out_dir).mkdir(parents=True, exist_ok=True)
+        for lid in ids:
+            if not files[lid].exists():
+                files[lid].write_text((paths.LAYOUTS / f"{lid}.py").read_text(encoding="utf-8"), encoding="utf-8")
+    plays = 0
+    pooled = {}
+    for rnd in range(rounds + 1):
+        held, fresh, total = {}, {}, engine.HELD_GAMES + stagecheck.CONFIRM_GAMES
+        for lid in ids:
+            mod = load_layout(lid, files[lid])
+            meta = mod.LEVEL
+            pl = Engine(lid, meta["number"])
+            lv = board_of(mod)[2].level_json(lid, meta["name"], meta["scene"])
+            held[lid] = pl.play(lv, engine.HELD_GAMES, engine.RAMP_GAMES)["ramp_per_48"]
+            fresh[lid] = pl.play(lv, stagecheck.CONFIRM_GAMES, engine.RAMP_GAMES + engine.HELD_GAMES)["ramp_per_48"]
+            pooled[lid] = round((held[lid] * engine.HELD_GAMES + fresh[lid] * stagecheck.CONFIRM_GAMES) / total, 2)
+            plays += pl.runs
+        rows = [(lid, pooled[lid], (None, None)) for lid in ids]
+        faults = [f for f in stagecheck.faults(key, rows, None, {lid: total for lid in ids}) if not f.startswith("F7")]
+        figs = [pooled[lid] for lid in ids]
+        log(f"  round {rnd}: pooled {', '.join(f'{lid} {pooled[lid]}' for lid in ids)}; mean {sum(figs) / len(figs):.2f}"
+            + ("; " + " | ".join(faults) if faults else "; the stage passes"))
+        if not faults or rnd == rounds:
+            break
+        fin = figs[-1]
+        se_gap = math.hypot(stagecheck.se48(fin, total),
+                            math.sqrt(sum(stagecheck.se48(f, total) ** 2 for f in figs[:-1])) / (len(figs) - 1))
+        targets = stage_targets([held[lid] for lid in ids], band, se_gap + FINALE_MARGIN)
+        for lid, t in zip(ids, targets):
+            if t is None:
+                continue
+            log(f"  {lid}: held out {held[lid]} -> target {t}")
+            r = tune_layout(str(files[lid]) if out_dir else lid, band=(t - STAGE_TOL, t + STAGE_TOL), max_plays=max_plays,
+                            out=files[lid] if out_dir else None, log=lambda s: log("    " + s), how=f"stage {key}")
+            plays += r["plays"]
+    ok = not faults
+    for lid in ids:
+        if ok and not out_dir:
+            record_lock(lid, held[lid], band, f"stage {key}")
+    log(f"stage {key} {'PASSES' if ok else 'still faults'} after {time.time() - t0:.0f} s and {plays} engine plays")
+    return dict(ok=ok, pooled=pooled, plays=plays, seconds=time.time() - t0)
 
 
 class MockPlayer:
@@ -409,6 +544,39 @@ def selftest(verbose=True):
         b = grid(tu.tuning(res["state"]))
         cases.append((f"the tuner brings a synthetic board {name} into {band[0]:.1f}-{band[1]:.1f} (from {start}): "
                       f"{res.get('held')} in {pl.runs} plays", res["ok"] and not b.check(verbose=False)))
+    # --hold: a fix that made the board easier (its hardest candidates blue) is tuned back to the locked figure
+    pl = MockPlayer()
+    lock = start
+    b0 = grid({})
+    easy = sorted((p for p in b0.pegs if p["canBeOrange"]), key=lambda p: -MockPlayer.hardness(p["x"], p["y"]))[:10]
+    fixed = {"blue": [[p["x"], p["y"]] for p in easy]}
+    moved = pl.play(grid(fixed).level_json("g", "g", "g"), 864, 0)["ramp_per_48"]
+    tu = Tuner(lambda T: grid({**fixed, **{k: fixed.get(k, []) + v for k, v in T.items()}}), 3,
+               (lock - HOLD_TOL, lock + HOLD_TOL), pl, max_plays=25, log=lambda *_a: None)
+    res = tu.run()
+    cases.append((f"--hold: a fix moved the board from its locked {lock} to {moved}; tuned back to {res.get('held')} "
+                  f"{res.get('reason', '')} "
+                  f"in {pl.runs} plays", res["ok"] and abs(moved - lock) > HOLD_TOL))
+    # the lock is written to the report and read back
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        p = record_lock("selftest", 8.4, (7.8, 9.0), "hold", pathlib.Path(d) / "r.json")
+        got = json.loads(p.read_text(encoding="utf-8"))["locked"]["held_out"]
+    cases.append(("the locked figure is recorded in the report", got == 8.4))
+    # --stage: the plan, judged by the stage check itself on the planned figures
+    band = stagecheck.MEAN_BANDS["mr3"]
+    for name, figs in (("a stage in its band, the finale below", [4.6, 4.2, 4.8, 4.4, 3.0]),
+                       ("a finale easier than the others", [4.0, 4.4, 4.2, 4.0, 5.2]),
+                       ("a stage far too easy", [9.0, 8.5, 9.4, 8.8, 8.0]),
+                       ("a stage too hard", [2.4, 2.6, 2.2, 2.9, 2.5])):
+        gap = 0.25 + FINALE_MARGIN
+        tg = stage_targets(figs, band, gap)
+        after = [f if t is None else t for f, t in zip(figs, tg)]
+        rows = [(f"l{i}", a, (None, None)) for i, a in enumerate(after)]
+        faults = stagecheck.faults("mr3", rows, None, {f"l{i}": 6912 for i in range(5)})
+        untouched = sum(t is None for t in tg)
+        cases.append((f"--stage plan, {name}: {figs} -> {after} ({untouched} untouched){'; ' + faults[0] if faults else ''}",
+                      not faults and (untouched == 5 if name.startswith("a stage in") else True)))
     ok = True
     for name, good in cases:
         ok &= good

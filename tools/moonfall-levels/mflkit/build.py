@@ -201,6 +201,12 @@ def build(level_id, keep2x=False, log=print):
             f"protan {rrep['protan_orange_p10']}, ghost {rrep['ghost_median']}; fails {rfails or 'none'}")
 
     rep["seconds"] = round(time.time() - t0, 1)
+    try:                                         # the level's locked difficulty (mfl.py tune) survives a rebuild
+        old = json.loads((REPORT / f"{level_id}.json").read_text(encoding="utf-8")).get("locked")
+    except (OSError, ValueError):
+        old = None
+    if old:
+        rep["locked"] = old
     rep["verdict"] = "PASS" if not fails else "REFUSED"
     REPORT.mkdir(parents=True, exist_ok=True)
     (REPORT / f"{level_id}.json").write_text(json.dumps(rep, indent=1) + "\n", encoding="utf-8")

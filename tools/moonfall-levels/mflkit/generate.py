@@ -1138,9 +1138,11 @@ def subject_used(gen):
     return sum(k for (name, _how, k) in gen.used if name != "(open board)")
 
 
-def generate(level_id, seed=1, variants=4, scene_name=None, out_dir=None, use_engine=True, preview=True, log=print):
+def generate(level_id, seed=1, variants=4, scene_name=None, out_dir=None, use_engine=True, preview=True, log=print,
+             jewel_tries=6):
     """Writes `variants` layouts for the level to out_dir (default build/generate/<id>/): v<k>.py, and with the
-    engine v<k>.json, v<k>.png and summary.txt. Returns [(path, problems, report)]."""
+    engine v<k>.json, v<k>.png, v<k>.dress.json (a jewel pair passing F6, F7 and F9 on the variant: mflkit/jewels.py),
+    contact.png and summary.json. Returns [(path, problems, report)]."""
     from .build import board_of, load_layout
     meta = level_meta(level_id, scene_name)
     recipe = scene.load_recipe(meta["scene"])
@@ -1177,6 +1179,12 @@ def generate(level_id, seed=1, variants=4, scene_name=None, out_dir=None, use_en
                    mirrored=gen.sym, preflight=probs, warnings=list(gen.b.warnings), **{k: v_ for k, v_ in rep.items() if k != "preflight"})
         if use_engine and preview:
             row["preview"] = str(render_preview(gen, out_dir / f"v{v}.json", out_dir / f"v{v}.png"))
+        if use_engine and jewel_tries:
+            from . import jewels
+            jw = jewels.choose(gen, out_dir / f"v{v}.json", tries=jewel_tries, log=log)
+            (out_dir / f"v{v}.dress.json").write_text(json.dumps({k: jw[k] for k in ("palette", "jewel")}, indent=1) + "\n",
+                                                     encoding="utf-8")
+            row["jewels"] = {"pair": jw["pair"], "measured": jw["measured"], "fails": jw["fails"]}
         log(f"  v{v}: {n} pieces ({row['brick_share']:.0%} brick, {row['movers']} movers), candidates {row['candidate_share']:.0%} "
             f"(lower third {row['lower_third']:.0%}), subject {row['subject_pieces']}; pre-flight "
             f"{'PASS' if not probs else 'FAULTS: ' + '; '.join(probs)}"
