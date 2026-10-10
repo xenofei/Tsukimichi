@@ -112,10 +112,10 @@ def build(b):
     beam(b, 42, 88, 200, 3)
     beam(b, 66, 92, 176, 2)
     # the dunes: crowns of curved brick on the crests, opened at the summit
-    mid_w = crown(b, [(60, 400), (140, 380), (220, 372), (300, 384), (380, 410)], 100, 345, 70, "mid dune")
-    far_w = crown(b, [(60, 330), (160, 312), (250, 318), (330, 336)], 112, 292, 70, "far dune")
-    mid_e = crown(b, [(560, 420), (620, 396), (680, 384), (740, 392)], 625, 700, 44, "mid dune")
-    far_e = crown(b, [(520, 344), (640, 322), (720, 316), (800, 324)], 624, 696, 44, "far dune")
+    mid_w = crown(b, [(60, 400), (140, 380), (220, 372), (300, 384), (380, 410)], 100, 345, 115, "mid dune")
+    far_w = crown(b, [(60, 330), (160, 312), (250, 318), (330, 336)], 112, 292, 115, "far dune")
+    mid_e = crown(b, [(560, 420), (620, 396), (680, 384), (740, 392)], 625, 640, 44, "mid dune")
+    far_e = crown(b, [(520, 344), (640, 322), (720, 316), (800, 324)], 624, 640, 44, "far dune")
     # the near dune's two slopes (13 to 19 degrees), its flat floor dotted below
     b.bricks_along([(104, 464), (150, 480), (198, 491)], length=34, tag="near dune")
     b.bricks_along([(594, 494), (700, 469)], length=34, tag="near dune")
@@ -154,7 +154,8 @@ def build(b):
         b.key(x, y, orange=False, green=False, within=40)
 
 
-# ---- tuning (written by `mfl.py tune`; held out 9.1/48, tuning seeds 7.5/48, band 7.90-9.10)
+# ---- tuning (written by `mfl.py tune`; held out 8.9/48, tuning seeds 9.7/48, band 8.50-9.70)
 TUNING = {
-    "orange": [[566.0, 105.5], [310.0, 186.0], [332.0, 214.0], [332.0, 156.0], [536.0, 192.0]]
+    "blue": [[458.0, 166.0], [669.9, 204.8], [669.9, 239.2], [690.0, 280.0]],
+    "orange": [[566.0, 105.5], [310.0, 186.0], [505.0, 140.0], [332.0, 214.0], [332.0, 156.0], [536.0, 192.0]]
 }
