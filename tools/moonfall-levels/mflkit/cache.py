@@ -3,6 +3,7 @@ unchanged level file is read back instead of replayed. They live outside the wor
 worktree shares (paths.SHARED: %LOCALAPPDATA%/tsukimichi-moonfall-cache, or the environment variable MOONFALL_CACHE).
 Nothing here changes what a check decides: a cache hit returns exactly what the same inputs produced before, and
 `--force` (build, stage) or the environment variable MFL_NO_CACHE=1 recomputes."""
+import functools
 import hashlib
 import json
 import os
@@ -48,18 +49,34 @@ def kit_hash():
     return digest(*[f"{f.name}:{file_hash(f)}" for f in kit_files()])
 
 
+@functools.lru_cache(maxsize=1)
+def core_sources():
+    """What mfcheck's engine is built from: mfcheck's own source and project, Tsukimichi.Core's code and data (not the
+    shipped levels and scene recipes under Moonfall/Levels, which mfcheck reads from the file it is given), and the solution's
+    props. Hashing these, not the built DLLs, keeps the key the same in every worktree (a build embeds its own paths)."""
+    files = [TOOL / "dotnet" / "mfcheck" / n for n in ("Program.cs", "mfcheck.csproj")]
+    files += [p for p in REPO.glob("Directory.*.props")]
+    core = REPO / "Tsukimichi.Core"
+    for root, dirs, names in os.walk(core):
+        dirs[:] = [d for d in dirs if d not in ("bin", "obj")]
+        rel = pathlib.Path(root).relative_to(core).as_posix()
+        if rel == "Moonfall/Levels" or rel.startswith("Moonfall/Levels/"):
+            continue
+        files += [pathlib.Path(root) / n for n in names if n.endswith((".cs", ".csproj", ".json", ".props"))]
+    return tuple(sorted(files))
+
+
+@functools.lru_cache(maxsize=1)
 def mfcheck_hash():
-    """The built mfcheck and the engine it carries (mfcheck.dll next to Tsukimichi.Core.dll)."""
-    d = MFCHECK.parent
-    return digest(*[file_hash(d / n) for n in ("mfcheck.dll", "Tsukimichi.Core.dll")])
+    """The engine mfcheck runs, by its sources (see core_sources); `engine.ensure_built` rebuilds when they are newer."""
+    return digest("mfcheck", *[f"{f.name}:{file_hash(f)}" for f in core_sources()])
 
 
 def tools_hash():
-    """The C# the pipeline runs: mfcheck's and the renderer's sources and builds, and the engine (Tsukimichi.Core.dll)."""
+    """The C# the pipeline runs: the engine mfcheck is built from (mfcheck_hash) and the renderer's sources."""
     files = [TOOL / "dotnet" / "mfcheck" / n for n in ("Program.cs", "mfcheck.csproj")]
     render = REPO / "tools" / "Tsukimichi.MoonfallRender"
     files += sorted(render.glob("*.cs")) + [render / "Tsukimichi.MoonfallRender.csproj"]
-    files += [render / "bin" / "Release" / "net10.0-windows" / "Tsukimichi.MoonfallRender.dll"]
     return digest(mfcheck_hash(), *[f"{f.name}:{file_hash(f)}" for f in files])
 
 

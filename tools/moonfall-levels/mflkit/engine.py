@@ -60,9 +60,10 @@ def cheap(play_result, homes):
 
 
 def ensure_built():
+    """Build mfcheck and texdump when missing or older than their sources (for mfcheck, also the engine's: cache.core_sources)."""
     for proj, dll in (("mfcheck", MFCHECK), ("texdump", TEXDUMP)):
-        src = DOTNET / proj / "Program.cs"
-        if not dll.exists() or dll.stat().st_mtime < src.stat().st_mtime:
+        srcs = cache.core_sources() if proj == "mfcheck" else [DOTNET / proj / "Program.cs"]
+        if not dll.exists() or dll.stat().st_mtime < max(f.stat().st_mtime for f in srcs):
             subprocess.run(["dotnet", "build", str(DOTNET / proj), "-c", "Release", "--nologo", "-v", "q"], check=True)
 
 
