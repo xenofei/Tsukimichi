@@ -32,9 +32,7 @@ def file_hash(path):
         else:
             data = p.read_bytes()
             if p.suffix.lower() in TEXT_SUFFIXES:
-                data = data.replace(b"
-", b"
-")
+                data = data.replace(b"\r\n", b"\n")
             _MEMO[k] = hashlib.sha1(data).hexdigest()
     return _MEMO[k]
 
