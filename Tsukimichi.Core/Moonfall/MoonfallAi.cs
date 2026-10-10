@@ -14,7 +14,7 @@ public enum MoonfallAiDifficulty : byte
 }
 
 /// <summary>How one difficulty plays (<see cref="MoonfallAi.ProfileOf"/>).</summary>
-/// <param name="StepDegrees">The angles it weighs, this far apart from −84° to 84°.</param>
+/// <param name="StepDegrees">The angles it weighs, this far apart from −96° to 96° (<see cref="MoonfallAi.Reach"/>).</param>
 /// <param name="AimErrorDegrees">How far it may miss the angle it chose, either way.</param>
 /// <param name="SubStepsPerShot">One weighed angle's budget of physics sub-steps.</param>
 /// <param name="AnglesPerTick">How many angles it weighs in one game tick (the cost of a tick is this × the budget at most).</param>
@@ -52,8 +52,8 @@ public readonly record struct MoonfallAiProfile(
 /// </summary>
 public sealed class MoonfallAi
 {
-    /// <summary>The widest angle it weighs either way (inside the launcher's limit, as the designer's greedy player).</summary>
-    public const double Reach = 84;
+    /// <summary>The widest angle it weighs either way (inside the launcher's limit, as the designer's greedy player: <see cref="MoonfallPlayability.TrialTo"/>).</summary>
+    public const double Reach = MoonfallPlayability.TrialTo;
 
     private readonly double[] bestAngles;
     private readonly long[] bestWorths;

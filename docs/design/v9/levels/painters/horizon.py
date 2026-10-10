@@ -22,7 +22,14 @@ RIM = 392.0                                     # the mesa's top, where the hous
 HOUSES = [(96, 150, 352), (150, 196, 366), (238, 300, 340), (300, 344, 358), (352, 412, 332), (412, 452, 350),
           (616, 664, 344), (664, 712, 362)]
 TOWER = dict(x=540.0, tank_top=262.0, tank_bot=318.0, half=44.0, stilt_foot=RIM)
-DERRICK = dict(x=214.0, top=246.0, half_foot=22.0)
+DERRICK = dict(x=214.0, top=250.0, half_foot=40.0)
+# the Milky Way's arch over the town (a circle in board units); the layout's arc of bricks rides its crest
+MILKY = dict(cx=400.0, cy=430.0, R=330.0)
+# the two switchback roads up the mesa's cliff, west and east: two legs and a hairpin each (the layout's bricks ride the
+# legs; the hairpins stay open, and the road ends where its lower leg does, so no lit stub reads as a piece)
+ROAD_W = [(84, 410), (236, 452), (268, 466), (290, 474), (296, 478), (180, 506)]
+ROAD_E = [(800 - x, y) for (x, y) in ROAD_W]
+CAMPFIRES = [(352, 502), (448, 502), (400, 510)]
 STRINGS = [((150, 352), (238, 340)), ((452, 350), (496, 318)), ((584, 318), (616, 344))]
 CLIFF = [(0, 410), (90, 404), (170, 418), (260, 412), (360, 424), (460, 416), (560, 426), (660, 414), (800, 420)]
 
@@ -32,7 +39,7 @@ def roofline():
     pts = [(80, RIM - 30)]
     for (x0, x1, y) in HOUSES[:2]:
         pts += [(x0 + 4, y), (x1 - 4, y)]
-    pts += [(DERRICK["x"] - 16, 300), (DERRICK["x"], DERRICK["top"]), (DERRICK["x"] + 16, 300)]
+    pts += [(DERRICK["x"] - 26, 300), (DERRICK["x"], DERRICK["top"]), (DERRICK["x"] + 26, 300)]
     for (x0, x1, y) in HOUSES[2:6]:
         pts += [(x0 + 4, y), (x1 - 4, y)]
     t = TOWER
@@ -48,7 +55,21 @@ FEATURES = {
     "derrick": [[DERRICK["x"], DERRICK["top"]]],
     "strings": [[list(a), list(b)] for (a, b) in STRINGS],
     "cliff": {"points": [list(p) for p in CLIFF]},
+    "milky way": {"circle": [MILKY["cx"], MILKY["cy"], MILKY["R"]], "from": 196, "sweep": 148},
+    "road west": {"points": [list(p) for p in ROAD_W]},
+    "road east": {"points": [list(p) for p in ROAD_E]},
+    "campfires": [list(p) for p in CAMPFIRES],
 }
+
+
+def _dist_poly(X, Y, pts):
+    """Distance (board units) from every pixel to a polyline."""
+    d = np.full(X.shape, 1e9, np.float32)
+    for (ax, ay), (bx, by) in zip(pts[:-1], pts[1:]):
+        vx, vy = bx - ax, by - ay
+        t = np.clip(((X - ax) * vx + (Y - ay) * vy) / (vx * vx + vy * vy), 0, 1)
+        d = np.minimum(d, np.hypot(X - ax - t * vx, Y - ay - t * vy))
+    return d
 
 
 def _poly(W, H, S, pts, ss=3):
@@ -68,6 +89,18 @@ def paint(S=1):
                   length=(10, 20), width=(1.6, 3.0), jitter=0.02, hue_jitter=0.004, seed=18)
     px = RL.stars(sky, S, 900, 71, (0, 0, W, (RIM - 40) * S),
                   avoid=lambda x, y: float(np.clip((math.hypot(x / S + 70, y / S + 80) - 200) / 300, 0.3, 1)), bright=0.5)
+    # ---- the Milky Way: a soft arch of light over the town, mottled with dust, a dark lane along its crest, and crowded
+    # with small stars
+    m = MILKY
+    d_c = np.hypot(X - m["cx"], Y - m["cy"]) - m["R"]
+    dust = fbm(H, W, 38 * S, 4, 41)
+    band = np.exp(-(d_c / 34) ** 2) * (0.55 + 0.9 * dust) * np.clip((RIM - 60 - Y) / 80, 0, 1)
+    lane = np.exp(-((d_c + 10) / 7) ** 2) * (0.4 + 0.6 * fbm(H, W, 24 * S, 3, 43))
+    glow = ramp(np.clip(dust, 0, 1), [(0, "#4C4498"), (1, "#9490DC")])
+    px = screen(px, glow * (np.clip(band * (1 - 0.55 * lane), 0, 1) * 0.17)[..., None])
+    px = RL.stars(px, S, 900, 73, (0, 0, W, (RIM - 60) * S),
+                  avoid=lambda x, y: float(np.exp(-((math.hypot(x / S - m["cx"], y / S - m["cy"]) - m["R"]) / 32) ** 2)),
+                  bright=0.4)
     # ---- the mesa: the cliff face below the rim, ledges lit toward the moon; the dark desert floor beyond
     xs = np.array([p[0] for p in CLIFF], np.float32)
     edge = np.interp(X[0], xs, np.array([p[1] for p in CLIFF], np.float32)) + (fbm(1, W, 14 * S, 3, 5)[0] - 0.5) * 6
@@ -81,6 +114,30 @@ def paint(S=1):
     rock = strokes(rock, mesa, S, lambda x, y: 0.05 * math.sin(x / 50), int(3000 * S * S), length=(8, 16),
                    width=(1.2, 2.2), jitter=0.06, seed=31)
     px = px * (1 - mesa[..., None]) + rock * mesa[..., None]
+    # ---- the switchback roads cut into the cliff: a moonlit dusty track with a dark retaining wall under its outer edge,
+    # wheel ruts, and a lantern on a post at each hairpin
+    for road in (ROAD_W, ROAD_E):
+        d_r = _dist_poly(X, Y, road)
+        d_w = _dist_poly(X, Y - 8, road)
+        track = np.clip(6.5 - d_r, 0, 1) * mesa
+        wall = np.clip(4.5 - d_w, 0, 1) * (1 - track) * mesa
+        ruts = np.exp(-((d_r - 3.0) / 0.8) ** 2) * track * 0.5
+        dusty = ramp(np.clip(fbm(H, W, 10 * S, 3, 47), 0, 1), [(0, "#4A4078"), (1, "#7468A8")])
+        px = px * (1 - track[..., None]) + (dusty * (1 - ruts)[..., None]) * track[..., None]
+        px = px * (1 - 0.55 * wall)[..., None]
+        hx, hy = road[3]
+        hx += 10 if road is ROAD_W else -10
+        px = screen(px, hexc("#FFC27A") * (np.exp(-(((X - hx) / 2.2) ** 2 + ((Y - hy + 10) / 2.6) ** 2)) * 0.8
+                                           + np.exp(-(((X - hx) / 14) ** 2 + ((Y - hy + 6) / 12) ** 2)) * 0.10)[..., None])
+        px = px * (1 - 0.7 * np.clip((1.2 - np.abs(X - hx)) * S, 0, 1) * (Y > hy - 8) * (Y < hy + 6))[..., None]
+    # ---- the caravan camped at the cliff's foot: tents and their fires
+    for (fx, fy) in CAMPFIRES:
+        for tx in (fx - 22, fx + 22):
+            tent = _poly(W, H, S, [(tx - 10, fy + 6), (tx, fy - 9), (tx + 10, fy + 6)])
+            lit = np.clip(1 - np.abs(X - fx) / 26, 0, 1)
+            px = px * (1 - tent[..., None]) + (hexc("#120E26") * (1 - lit[..., None]) + hexc("#5A3A30") * lit[..., None]) * tent[..., None]
+        px = screen(px, hexc("#FF9A48") * (np.exp(-(((X - fx) / 2.4) ** 2 + ((Y - fy) / 3.2) ** 2)) * 0.9
+                                           + np.exp(-(((X - fx) / 22) ** 2 + ((Y - fy) / 16) ** 2)) * 0.16)[..., None])
     # ---- the town in silhouette: houses with parapets, the water tower on stilts, the derrick's timber frame
     town = np.zeros((H, W), np.float32)
     for (x0, x1, y) in HOUSES:

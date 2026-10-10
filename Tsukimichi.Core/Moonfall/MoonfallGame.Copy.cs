@@ -51,6 +51,8 @@ public sealed partial class MoonfallGame
         shotValue = source.shotValue;
         shotPegs = source.shotPegs;
         freeBallsThisShot = source.freeBallsThisShot;
+        caughtThisShot = source.caughtThisShot;
+        missFlips = source.missFlips;
         levelScore = source.levelScore;
         clearWait = source.clearWait;
         clearCursor = source.clearCursor;
@@ -118,7 +120,11 @@ public sealed partial class MoonfallGame
         styleBonus = source.styleBonus;
         styleAwarded = source.styleAwarded;
         shotOranges = source.shotOranges;
-        orangesAtShotStart = source.orangesAtShotStart;
+        orangesDealt = source.orangesDealt;
+        longState = source.longState;
+        longX = source.longX;
+        longY = source.longY;
+        longBlueTick = source.longBlueTick;
 
         // The duel.
         Array.Copy(source.sidePowerShots, sidePowerShots, sidePowerShots.Length);

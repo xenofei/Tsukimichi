@@ -48,12 +48,12 @@ public sealed class MoonfallPowerTests
 
     /// <summary>
     /// The pegs' values as they are coloured now (a purple moves every turn), at the meter's multiplier now: these boards
-    /// have three oranges or fewer, so it stays at ×10 all shot.
+    /// have three oranges or fewer, so it stays at ×10 all shot, or ×100 on a board with none [O].
     /// </summary>
     private static long Values(MoonfallGame game, params int[] pegs)
     {
-        Assert.Equal(10, game.Multiplier);
-        return pegs.Sum(i => (long)MoonfallRules.BaseValue(game.Peg(i).Colour)) * game.Multiplier;
+        Assert.Contains(game.Multiplier, (int[])[10, MoonfallRules.FeverMultiplier]);
+        return pegs.Sum(i => (long)MoonfallRules.PegScore(game.Peg(i).Colour, game.Multiplier));
     }
 
     // ---- Who carries which power [R §6 l.126] ----
@@ -341,15 +341,15 @@ public sealed class MoonfallPowerTests
     [Fact]
     public void Lunar_Burst_lights_every_peg_within_its_radius_nearest_first()
     {
-        // Surfaces 60, 30 and 79 px from the green's centre are in; 81 and 120 are out.
+        // [O] 100 px (it was 80): surfaces 60, 30 and 99 px from the green's centre are in; 101 and 120 are out.
         var game = WithGreen(
             MoonfallPower.Burst,
             400,
             300,
             Blue(400 + 70, 300),
             Blue(400, 300 + 40),
-            Blue(400 - 89, 300),
-            Blue(400, 300 - 91),
+            Blue(400 - 109, 300),
+            Blue(400, 300 - 111),
             Blue(400 + 130, 300));
         var events = HitGreenThisShot(game);
         var lit = events.Where(e => e.Event.Kind == MoonfallEventKind.PegHit).Select(e => e.Event.Peg).ToList();

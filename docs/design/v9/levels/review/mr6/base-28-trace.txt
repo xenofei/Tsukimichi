@@ -1,0 +1,10 @@
+  skipped ((298, 361), 'ley limsa', '0.5 from the peg at (311, 354)')
+  skipped ((332, 298), 'ley ishgard', '4.3 from the peg at (346, 310)')
+  skipped ((393, 329), 'ley ala mhigo', '5.7 from the peg at (374, 324)')
+  skipped ((229, 288), 'ley west', '10.0 from the peg at (214, 306)')
+  skipped ((368, 233), 'ley north', '13.2 from the peg at (387, 253)')
+  skipped ((503, 309), 'ley south-east', '8.9 from the peg at (524, 299)')
+  skipped ((377, 421), 'ley south-east', '14.0 from the peg at (398, 402)')
+  skipped ((289, 447), 'ley south', '8.0 from the peg at (311, 447)')
+  pieces 73 (pegs 69, bricks 4, movers 0); candidates 30; green-only 23; skipped while tracing 8
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-20\docs\design\v9\levels\build\trace\base-28.png

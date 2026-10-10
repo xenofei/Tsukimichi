@@ -22,9 +22,9 @@ public sealed record MoonfallPlayabilityReport(string LevelId, IReadOnlyList<Moo
 
 /// <summary>
 /// The playability gate (plan v9 decision 21): "every level must play at least as well as the weakest shipped level in
-/// the greedy-player test (5 of 48 wins)". The greedy player is the designer's (<c>docs/design/v9/rich/tools/mfcheck</c>,
+/// the greedy-player test (5 of 48 wins; 2 of 48 since the owner's decision of 9 October 2026)". The greedy player is the designer's (<c>docs/design/v9/rich/tools/mfcheck</c>,
 /// <c>play</c>), ported here so the rule can run over every shipped level in the tests, move for move the same: before
-/// each shot it tries every angle 2° apart from −84° to 84° on a copy of the game, takes the one that lights the most
+/// each shot it tries every angle 2° apart from −96° to 96° (the 2° steps inside the launcher's ±97° [O]) on a copy of the game, takes the one that lights the most
 /// (an orange worth 6 pegs more, a bucket catch 5, each stuck-ball fire −0.5), then misses its aim by up to 1.5°.
 /// Game <c>k</c> (from 0) is dealt with seed <c>(k + 1) × 7919</c> and misses its aim with
 /// <see cref="Random"/>(<c>k × 31 + 7</c>), as the tool's: the threshold was set on the tool's numbers, so the port
@@ -37,8 +37,8 @@ public static class MoonfallPlayability
     /// <summary>Games a level is played (decision 21).</summary>
     public const int Games = 48;
 
-    /// <summary>Wins a level needs (decision 21).</summary>
-    public const int WinsNeeded = 5;
+    /// <summary>Wins a level needs: 2 of 48 (the owner's decision, 9 October 2026, "Follow Peggle, lower the floor"; 5 before it, decision 21).</summary>
+    public const int WinsNeeded = 2;
 
     /// <summary>The level number the games are played at: the tool's default, with greens and no power.</summary>
     public const int LevelNumber = 5;
@@ -46,11 +46,14 @@ public static class MoonfallPlayability
     /// <summary>The tool's limit: a game still going after this many shots is a loss.</summary>
     public const int MaxShots = 40;
 
-    /// <summary>The tool's trial angles: every 2° from −84° to 84°.</summary>
-    public const double TrialFrom = -84.0;
+    /// <summary>
+    /// The tool's trial angles: every 2° from −96° to 96°, the widest 2° steps inside the launcher's limit
+    /// (<see cref="MoonfallRules.AimLimitDegrees"/>, 97° [O]; it was −84° to 84° inside the old 85°).
+    /// </summary>
+    public const double TrialFrom = -96.0;
 
     /// <inheritdoc cref="TrialFrom"/>
-    public const double TrialTo = 84.0;
+    public const double TrialTo = 96.0;
 
     /// <inheritdoc cref="TrialFrom"/>
     public const double TrialStep = 2.0;
@@ -133,7 +136,7 @@ public static class MoonfallPlayability
                         pegs++;
                         break;
                     case MoonfallEventKind.StuckClear:
-                        stuck++;
+                        stuck += (int)e.Value;
                         break;
                     case MoonfallEventKind.BucketCatch:
                         caught = true;
