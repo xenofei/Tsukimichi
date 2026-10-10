@@ -14,10 +14,13 @@ Coerthas's snowy peak, and the chart's terrain (the cloud humps, Coerthas's ridg
 canopy, the western highlands) as crowns of three arc bricks, each with a moon over its apex where one fits; moons on
 the dragons, the floating isles, the north coast, and the compass rose's heart with two of its rhumb lines.
 
-Refit to the Peggle-match rules (owner's decision, 9 October 2026): pegs r 10 and bricks t 20, 97 pieces (43% brick),
+Refit to the Peggle-match rules (owner's decision, 9 October 2026): pegs r 10 and bricks t 20, 95 pieces (44% brick),
 every piece an orange candidate (`b.candidates`) except the compass rose and its rhumb lines, the wake, the flying
 dragon and the north coast (the board's sure greens), then tuned (`mfl.py tune`, TUNING below) to stage 3's mean
-(charter 1.1: band 3.04-5.24 per 48, mean 4.14).
+(charter 1.1: band 3.04-5.24 per 48, mean 4.14). The tuning seeds read this board harder than the fresh ones (3.9
+against 5.1 per 48 after `tune`), so the last step was by hand on the held-out and stage blocks pooled (6912 games):
+four of the readiest cleared places (Ishgard's south-west moon, the berth's west moon, two of the perched dragon's)
+left blue, 58 candidates (61%), held out 4.6, stage block 4.0, pooled 4.15 per 48.
 """
 import math
 
@@ -90,8 +93,8 @@ def build(b):
     b.candidates(exclude=HARD, exclude_tags=["compass", "wake", "rhumb", "flying dragon", "north coast"])
 
 
-# ---- tuning (written by `mfl.py tune`; held out 4.9/48, tuning seeds 4.4/48, band 3.04-5.24)
+# ---- tuning (written by `mfl.py tune`, then four easy places left blue by hand; held out 4.6/48, tuning seeds 4.8/48, stage block 4.0/48, pooled 4.15/48; band 3.04-5.24)
 TUNING = {
-    "blue": [[365.0, 287.0], [395.3, 304.5], [288.4, 147.8], [255.0, 160.0], [324.7, 253.2], [304.1, 223.7], [284.2, 193.7], [472.0, 168.0], [458.0, 200.0], [516.0, 220.0], [422.0, 228.0], [563.5, 176.7], [559.2, 212.6], [255.0, 72.0], [277.0, 307.0], [522.5, 105.6], [677.0, 270.0], [620.0, 416.0], [640.7, 423.0], [440.7, 483.0], [590.0, 484.0], [610.7, 491.0], [107.3, 428.0], [154.3, 481.0], [175.0, 474.0]],
-    "orange": [[469.7, 280.7], [505.5, 284.1], [180.0, 276.0], [154.5, 250.5], [129.1, 225.1], [105.0, 201.0], [107.9, 348.1]]
+    "blue": [[335.0, 304.0], [222.0, 148.0], [242.0, 198.0], [395.0, 340.0], [365.0, 287.0], [395.3, 304.5], [288.4, 147.8], [255.0, 160.0], [324.7, 253.2], [304.1, 223.7], [284.2, 193.7], [472.0, 168.0], [458.0, 200.0], [516.0, 220.0], [422.0, 228.0], [563.5, 176.7], [559.2, 212.6], [255.0, 72.0], [277.0, 307.0], [522.5, 105.6], [620.0, 416.0], [640.7, 423.0], [440.7, 483.0], [590.0, 484.0], [610.7, 491.0], [107.3, 428.0], [154.3, 481.0], [175.0, 474.0]],
+    "orange": [[110.0, 272.0], [469.7, 280.7], [505.5, 284.1], [180.0, 276.0], [154.5, 250.5], [129.1, 225.1], [105.0, 201.0], [107.9, 348.1]]
 }

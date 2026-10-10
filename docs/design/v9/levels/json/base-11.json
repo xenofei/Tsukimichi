@@ -60,7 +60,7 @@
     {
       "x": 395.3,
       "y": 339.5,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -78,7 +78,7 @@
     {
       "x": 334.7,
       "y": 304.5,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -132,7 +132,7 @@
     {
       "x": 221.6,
       "y": 147.8,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -216,7 +216,7 @@
     {
       "x": 242.0,
       "y": 198.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -234,7 +234,7 @@
     {
       "x": 110.0,
       "y": 272.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -552,7 +552,7 @@
     },
     {
       "kind": "arc",
-      "x": 676.0,
+      "x": 670.0,
       "y": 300.0,
       "r": 30.0,
       "start": 215.0,
@@ -563,18 +563,18 @@
     },
     {
       "kind": "arc",
-      "x": 676.0,
+      "x": 670.0,
       "y": 300.0,
       "r": 30.0,
       "start": 252.6,
       "sweep": 34.8,
       "thickness": 20.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "kind": "arc",
-      "x": 676.0,
+      "x": 670.0,
       "y": 300.0,
       "r": 30.0,
       "start": 290.2,

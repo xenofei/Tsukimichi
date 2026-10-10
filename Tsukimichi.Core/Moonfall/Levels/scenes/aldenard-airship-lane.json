@@ -75,24 +75,21 @@
   }
  ],
  "palette": {
-  "bands": [[0, "#5964DB"], [300, "#505AC8"], [600, "#3E45A3"]],
-  "chroma": 1.6,
-  "floor": 0.04,
+  "bands": [[0, "#2A68C8"], [600, "#2262B8"]],
+  "chroma": 1.8,
+  "floor": 0.05,
   "keep": 0.3,
   "keepHigh": 0.75,
   "mix": 0.5,
-  "valueHues": [[0.08, "#24286E"], [0.45, "#B8C6FF"]],
+  "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9DCFF"]],
   "regions": [
    {
-    "hue": "#D35182",
-    "chroma": 0.1,
+    "hue": "#48B07E",
+    "chroma": 0.3,
     "where": [
      {
-      "y": [330, 190]
-     },
-     {
-      "lum": [0.2, 0.36],
-      "blur": 4
+      "land": [0.45, 3],
+      "blur": 5.0
      },
      {
       "x": [75, 135]
@@ -101,17 +98,17 @@
       "x": [725, 665]
      },
      {
-      "near": [24, 10],
+      "near": [54, 20],
       "blur": 40.0,
       "invert": true,
-      "scale": 0.6
+      "scale": 0.7
      }
     ]
    }
   ],
   "where": [
    {
-    "near": [24, 10],
+    "near": [54, 20],
     "blur": 40.0,
     "invert": true,
     "scale": 0.5
