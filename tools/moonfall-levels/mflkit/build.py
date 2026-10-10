@@ -8,13 +8,16 @@ reported; if any fails, nothing is written to json/ or composites/ (the build re
 import hashlib
 import importlib.util
 import json
+import os
+import threading
 import time
 
 import numpy as np
 from PIL import Image
 
 from . import author, engine, frames, readability, scene
-from .composite import render
+from . import memo  # noqa: F401
+from .composite import render, render_async
 from .paths import ASSETS, BUILD, COMPOSITES, JSON_OUT, LAYOUTS, REPORT
 import rich_lib as RL
 
@@ -38,6 +41,13 @@ def make_board(level_id):
     return meta, recipe, b
 
 
+def save_atomic(px, path, **kw):
+    """RL.save_rgb through a temporary name, so two builds that share a scene (--jobs) never meet on a half-written file."""
+    tmp = path.with_name(f"{path.stem}.{os.getpid()}.{threading.get_ident()}.tmp{path.suffix}")
+    RL.save_rgb(px, tmp, **kw)
+    os.replace(tmp, path)
+
+
 def _scene_cached(recipe, S):
     """The graded scene, cached in build/ by the recipe's source and overlays."""
     painter_src = ""
@@ -51,7 +61,7 @@ def _scene_cached(recipe, S):
     if p.exists():
         return RL.load_rgb(p)
     px = scene.graded(recipe, S)
-    RL.save_rgb(px, p)
+    save_atomic(px, p)
     return RL.load_rgb(p)
 
 
@@ -72,9 +82,10 @@ def colours_for(path, level, number, seed=1):
 
 
 
-def orange_views(level, recipe, scene2, cols, stage, number):
+def orange_views_start(level, recipe, scene2, cols, stage, number, pool=None):
     """Composites with every orange candidate dealt orange, at moments of the movers' cycle (at t = 0 only when the
-    level has no movers), with each candidate's place at that moment: what F9 measures."""
+    level has no movers), with each candidate's place at that moment: what F9 measures. Returns [(handle, places)]; a
+    handle's .result() is the composite (the renders run in the pool, when there is one)."""
     from board import mover_pos, pieces as all_pieces
     allp = all_pieces(level)
     movers = [d for k, d in allp if k == "peg" and d.get("move")]
@@ -83,15 +94,47 @@ def orange_views(level, recipe, scene2, cols, stage, number):
     oc = [("orange" if d.get("canBeOrange", True) else c) for (k, d), c in zip(allp, cols)]
     views = []
     for t in times:
-        img = render(level, recipe, scene2, oc, S=2, stage=stage, number=number, t=t)
+        h = render_async(pool, level, recipe, scene2, oc, S=2, stage=stage, number=number, t=t)
         places = [(*mover_pos(d, t), d.get("r", 10)) for k, d in allp if k == "peg" and d.get("canBeOrange", True)]
         places += [("brick", d) for k, d in allp if k == "brick" and d.get("canBeOrange", False)]
-        views.append((img, places))
+        views.append((h, places))
     return views
 
 
-def build(level_id, keep2x=False, log=print):
+def orange_views(level, recipe, scene2, cols, stage, number):
+    return [(h.result(), places) for (h, places) in orange_views_start(level, recipe, scene2, cols, stage, number)]
+
+
+def start_games(path, number):
+    """The greedy-player runs of a build (the rule's 48 games and the 1,728 held-out ones) as two background jobs: they
+    are mfcheck processes, so they overlap the Python phases. Returns (executor, rule future, held-out future)."""
+    from concurrent.futures import ThreadPoolExecutor
+    ex = ThreadPoolExecutor(2)
+    return (ex, ex.submit(engine.play, path, number, engine.GREEDY_GAMES),
+            ex.submit(engine.play, path, number, engine.HELD_GAMES, engine.RAMP_GAMES))
+
+
+def build(level_id, keep2x=False, log=print, pool=None):
+    """Builds one level. `pool` (composite.start_pool()) renders the composites in worker processes, and the games
+    always run in the background; without a pool the composites render here, one after another. The report and every
+    picture are the same either way."""
+    bg = []                                  # executors to wait for if the build ends early
+    try:
+        return _build(level_id, keep2x, log, pool, bg)
+    finally:
+        for ex in bg:
+            ex.shutdown(wait=True, cancel_futures=True)
+
+
+def _build(level_id, keep2x, log, pool, bg):
     t0 = time.time()
+    from concurrent.futures import ThreadPoolExecutor
+    saver = ThreadPoolExecutor(4)             # PNG encoding releases the GIL: the pictures are written side by side
+    bg.append(saver)
+    saves = []
+
+    def put(px, path, **kw):
+        saves.append(saver.submit(save_atomic, px, path, **kw))
     meta, recipe, b = make_board(level_id)
     number, stage = meta["number"], meta["stage"]
     level = b.level_json(meta["id"], meta["name"], meta["scene"])
@@ -117,15 +160,19 @@ def build(level_id, keep2x=False, log=print):
     fails += [f"preflight: {p}" for p in probs]
     log(f"[{level_id}] preflight: {n} pieces, {len(probs)} problems" + "".join(f"; warning: {w}" for w in b.warnings))
 
-    # 2. the shipped loader; the sweep (stuck balls, dead first shots); the pocket rule; the greedy player
+    # 2. the shipped loader; the sweep (stuck balls, dead first shots); the pocket rule; the greedy player (started
+    #    here and read back below, once the scene work is done)
     cand = BUILD / "json" / f"{level_id}.json"
     author.write_json(level, cand)
     ok, out = engine.validate(cand)
     rep["checks"]["loader"] = {"ok": ok, "output": out.splitlines()}
+    games = play_at = None
     if not ok:
         fails.append("loader: " + " | ".join(out.splitlines()[1:4]))
         log(f"[{level_id}] loader FAIL")
     else:
+        games = start_games(cand, number)
+        bg.append(games[0])
         sw = engine.sweep(cand, number)
         rep["checks"]["sweep"] = sw
         if sw["stuck_share"] >= engine.STUCK_MAX_SHARE:
@@ -136,25 +183,26 @@ def build(level_id, keep2x=False, log=print):
         rep["checks"]["reach"] = rc
         if rc["never"]:
             fails.append(f"reach: pieces {rc['never']} are never reached, even once everything before them clears")
-        rule = engine.play(cand, number, games=engine.GREEDY_GAMES)
-        pl = engine.play(cand, number, games=engine.HELD_GAMES, first=engine.RAMP_GAMES)
-        pl.update(greedy_won=rule["greedy_won"], games=rule["games"], oranges_left_when_lost=rule["oranges_left_when_lost"],
-                  random_won=rule["random_won"], random_oranges_mean=rule["random_oranges_mean"], ramp_first_seed=engine.RAMP_GAMES + 1)
-        rep["checks"]["play"] = pl
-        if pl["greedy_won"] < engine.GREEDY_MIN_WINS:
-            fails.append(f"play: the greedy player won {pl['greedy_won']} of 48 (at least {engine.GREEDY_MIN_WINS})")
-        fails += [f"play: cheap difficulty: {c}" for c in engine.cheap(pl, engine.piece_homes(cand))]
-        log(f"[{level_id}] loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, dead {sw['no_hit']}, never reached "
-            f"{len(rc['never'])}; greedy {pl['greedy_won']}/48, ramp {pl['ramp_per_48']}/48 over {pl['ramp_games']} held-out games")
+        rep["checks"]["play"] = None                 # keeps its place in the report; filled in when the games are done
+        play_at = len(fails)
 
     # 3. the scene: graded, its ceiling, the dress and the framing rules
     g1, g2 = _scene_cached(recipe, 1), _scene_cached(recipe, 2)
+    if ok:                                           # the renders that need only the graded scene start now
+        seed, cols = colours_for(cand, level, number)
+        everything = set(range(len(level["pegs"]) + len(level["bricks"])))
+        h_base2 = render_async(pool, level, recipe, g2, cols, S=2, stage=stage, number=number)
+        h_bd_old = render_async(pool, level, recipe, g2, cols, S=2, gone=everything, stage=stage, number=number)
     ceil = scene.ceiling(g1, recipe.get("ceilingExempt", ()))
     rep["checks"]["ceiling"] = {"p99_luma": round(ceil, 3), "limit": CEILING}
     if ceil > CEILING:
         fails.append(f"ceiling: the graded scene's 99th-percentile luma is {ceil:.3f} (limit {CEILING})")
     from .dress import dress
     d2, ctx = dress(recipe, g2, level, 2)
+    if ok:
+        h_comp2 = render_async(pool, level, recipe, d2, cols, S=2, stage=stage, number=number)
+        h_bd_new = render_async(pool, level, recipe, d2, cols, S=2, gone=everything, stage=stage, number=number)
+        h_views = orange_views_start(level, recipe, d2, cols, stage, number, pool)
     frep, ffails = frames.check(level, ctx.cover, ctx.rim, ctx.lights, S=2)
     near, nbad = frames.darkened_near_pieces(level, g2, d2)
     frep["darkened_min_clearance"] = None if near is None else round(near, 2)
@@ -164,35 +212,49 @@ def build(level_id, keep2x=False, log=print):
     rep["checks"]["framecheck"] = {"report": frep, "fails": ffails}
     fails += [f"framecheck: {f}" for f in ffails]
     d1 = np.asarray(Image.fromarray(RL.to_u8(d2)).resize((800, 600), Image.LANCZOS), np.float32) / 255
-    RL.save_rgb(d2, BUILD / "dressed" / f"{level_id}@2x.png")
-    RL.save_rgb(d1, BUILD / "dressed" / f"{level_id}.png")
+    put(d2, BUILD / "dressed" / f"{level_id}@2x.png")
+    put(d1, BUILD / "dressed" / f"{level_id}.png")
     log(f"[{level_id}] scene: ceiling {ceil:.3f}; framing {frep['cover_pct']}%, fails {ffails or 'none'}")
 
     # 4. colours (the engine's own deal), composites and readability
     if ok:
-        seed, cols = colours_for(cand, level, number)
         rep["checks"]["colours"] = {"seed": seed, "counts": {c: cols.count(c) for c in sorted(set(cols))}}
-        everything = set(range(len(level["pegs"]) + len(level["bricks"])))
-        comp2 = render(level, recipe, d2, cols, S=2, stage=stage, number=number)
+        comp2 = h_comp2.result()
         comp1 = np.asarray(Image.fromarray(RL.to_u8(comp2)).resize((800, 600), Image.LANCZOS), np.float32) / 255
-        base2 = render(level, recipe, g2, cols, S=2, stage=stage, number=number)
+        base2 = h_base2.result()
         base1 = np.asarray(Image.fromarray(RL.to_u8(base2)).resize((800, 600), Image.LANCZOS), np.float32) / 255
-        bd_new = render(level, recipe, d2, cols, S=2, gone=everything, stage=stage, number=number)
-        bd_old = render(level, recipe, g2, cols, S=2, gone=everything, stage=stage, number=number)
-        views = orange_views(level, recipe, d2, cols, stage, number)
+        bd_new, bd_old = h_bd_new.result(), h_bd_old.result()
+        views = [(h.result(), places) for (h, places) in h_views]
         rrep, rfails = readability.measure(level, cols, comp2, base2, bd_new, bd_old, d2, views, undressed2=g2)
         rep["checks"]["readcheck"] = {"report": rrep, "fails": rfails}
         fails += [f"readcheck: {f}" for f in rfails]
-        RL.save_rgb(comp2, BUILD / "composites" / f"{level_id}@2x.png")
-        RL.save_rgb(comp1, BUILD / "composites" / f"{level_id}.png")
-        RL.save_rgb(base1, BUILD / "composites" / f"{level_id}-undressed.png")
+        put(comp2, BUILD / "composites" / f"{level_id}@2x.png")
+        put(comp1, BUILD / "composites" / f"{level_id}.png")
+        put(base1, BUILD / "composites" / f"{level_id}-undressed.png")
         bd1 = np.asarray(Image.fromarray(RL.to_u8(bd_new)).resize((800, 600), Image.LANCZOS), np.float32) / 255
-        RL.save_rgb(bd1, BUILD / "composites" / f"{level_id}-cleared.png")
+        put(bd1, BUILD / "composites" / f"{level_id}-cleared.png")
         jw = rrep["jewels"]
         log(f"[{level_id}] readcheck: worst margin {rrep['worst_margin']}, largest drop {rrep['largest_drop']}, "
             f"jewels {jw['first_jewel_hue']}/{jw['second_jewel_hue']} ({jw['apart_deg']} apart, {jw['second_share']}), "
             f"protan {rrep['protan_orange_p10']}, ghost {rrep['ghost_median']}; fails {rfails or 'none'}")
 
+    # the games, read back now (they ran while the pictures were made); their failures go where they always stood
+    if games:
+        rule, pl = games[1].result(), games[2].result()
+        pl.update(greedy_won=rule["greedy_won"], games=rule["games"], oranges_left_when_lost=rule["oranges_left_when_lost"],
+                  random_won=rule["random_won"], random_oranges_mean=rule["random_oranges_mean"], ramp_first_seed=engine.RAMP_GAMES + 1)
+        rep["checks"]["play"] = pl
+        pfails = []
+        if pl["greedy_won"] < engine.GREEDY_MIN_WINS:
+            pfails.append(f"play: the greedy player won {pl['greedy_won']} of 48 (at least {engine.GREEDY_MIN_WINS})")
+        pfails += [f"play: cheap difficulty: {c}" for c in engine.cheap(pl, engine.piece_homes(cand))]
+        fails[play_at:play_at] = pfails
+        log(f"[{level_id}] loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, dead {sw['no_hit']}, never reached "
+            f"{len(rc['never'])}; greedy {pl['greedy_won']}/48, ramp {pl['ramp_per_48']}/48 over {pl['ramp_games']} held-out games")
+
+    for f in saves:
+        f.result()
+    saves.clear()
     rep["seconds"] = round(time.time() - t0, 1)
     rep["verdict"] = "PASS" if not fails else "REFUSED"
     REPORT.mkdir(parents=True, exist_ok=True)
@@ -201,11 +263,13 @@ def build(level_id, keep2x=False, log=print):
         log(f"[{level_id}] REFUSED:\n  " + "\n  ".join(fails))
         return rep
     author.write_json(level, JSON_OUT / f"{level_id}.json")
-    RL.save_rgb(comp1, COMPOSITES / f"{level_id}.png")
+    put(comp1, COMPOSITES / f"{level_id}.png")
     if keep2x:
-        RL.save_rgb(comp2, COMPOSITES / f"{level_id}@2x.png")
+        put(comp2, COMPOSITES / f"{level_id}@2x.png")
     if recipe["source"]["kind"] == "painting":
-        RL.save_rgb(g1, ASSETS / f"{recipe['name']}.jpg", quality=88)
-        RL.save_rgb(g2, ASSETS / f"{recipe['name']}@2x.jpg", quality=88)
+        put(g1, ASSETS / f"{recipe['name']}.jpg", quality=88)
+        put(g2, ASSETS / f"{recipe['name']}@2x.jpg", quality=88)
+    for f in saves:
+        f.result()
     log(f"[{level_id}] PASS in {rep['seconds']} s")
     return rep

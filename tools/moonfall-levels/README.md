@@ -26,7 +26,7 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py fetch` | Dumps every game texture the recipes name, plus the chrome's UI art, the cards and the fonts, into `docs/design/v9/rich/.cache` (gitignored) |
 | `py -3 tools/moonfall-levels/mfl.py selftest` | Runs every checker against its known-bad and known-good cases |
 | `py -3 tools/moonfall-levels/mfl.py trace <scene or level-id>` | The tracing sheet (`docs/design/v9/levels/build/trace/`): the graded scene at 2x, a 50-unit grid, the opening, the launcher's swing, the bucket's lane, the recipe's features, and for a level its pieces (oranges ringed orange, never-green pegs barred, skipped points as red crosses) plus the pre-flight |
-| `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force` |
+| `py -3 tools/moonfall-levels/mfl.py build <id>... \| --all [--keep2x id,...] [--force] [--jobs N]` | The full pipeline (below); exit 1 if any level is refused. A level unchanged since its last PASS is skipped (see Result caches) unless `--force` |
 | `py -3 tools/moonfall-levels/mfl.py stage <key>` | `<key>` is `mr1`-`mr11` (The Moon Road) or `fs1`-`fs12` (The Far Shore); a bare `1`-`11` still means the Moon Road. A stage is a campaign and a number (level ids `base-NN` and `expansion-NN` say which), because the Far Shore numbers its stages from 1 again. The mean bands for every stage are `stagecheck.MEAN_BANDS`: Peggle's own stage means measured on the new engine (2026-10-09, charter section 1.1) plus or minus 1.1 per 48, the lower edge never below the 2-of-48 floor (owner's decision, 9 October 2026, "Follow Peggle, lower the floor"; only Moon Road 9-11 and Far Shore 10-12 reach it: 2.0 to mean + 1.1). The jewel check compares a stage's first level with the previous stage's last level in the same campaign; Far Shore stage 1 has nothing before it. The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp, jewels; faults (`mflkit/stagecheck.py`) neighbours (the previous stage's last level too) whose jewel pairs are within 30 degrees in both hues either way round, a stage whose mean per 48 is outside its band (by more than one standard error of a mean, 0.3), and a finale that is not resolvably harder than the stage's average (owner's decision, 9 October 2026, "Harder than the stage's average": it wins fewer games per 48 than the mean of the stage's other four levels, the gap less one standard error on the pooled games at least 0; it need not be the single hardest). There is no rule between the other levels' order (the old step of 0.5 per level is gone). |
 | `py -3 tools/moonfall-levels/mfl.py challenge <ch-id>` or `challenge <level-id> <oranges>` | The challenge carrier check (`mflkit/challenge.py`): the greedy player on the carrier level(s) at the challenge's orange count (`mfcheck play ... <oranges>`); at least 5 of the rule's 48 games must win, and the level must have at least that many candidates. Recorded carriers (charter 1.6): ch-03 35 oranges on `base-27`, ch-04 45 on `base-37`, and ch-06, ch-08, ch-09, ch-11, ch-12 at the standard 25 on the levels the charter lists. More than 35 oranges are allowed only for the entries of `challenge.EXCEPTIONS` (today `base-37` at 45, with the reason recorded there). The pre-flight needs a carrier to have at least as many candidates as its challenge's oranges (`challenge.candidate_range`: 60-90% of the pieces, never fewer than 35 on `base-27` or 45 on `base-37`). A recorded carrier not built yet is reported, not failed |
 | `py -3 tools/moonfall-levels/mfl.py precheck <id>... \| --all [--rev <git rev>] [--only legibility,axis,repeats,patches,play,margins] [--strict]` | The recurring review findings, measured before review (below). Reads each level's committed file, recipe, composite and report, so it needs no build and no game install; `--rev` reads a past commit. Report only: exit 0 unless `--strict` and a check FAILs. `stage` prints it after its table |
@@ -35,7 +35,8 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py ease <id> [tags] [--pick N] [--skip tags]` | A scratch copy with every (tagged) peg a candidate, 864 games: each place ranked by how often it is the orange left behind; `--pick` proposes the N most readily cleared places that keep the spread rule and stay above y 430 (a way to choose which places to exclude from `b.candidates`) |
 | `py -3 tools/moonfall-levels/mfl.py sources` | Writes `docs/design/v9/levels/sources.json`: every game file a scene reads, and which level uses it |
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all` | The converter (`mflkit/convert.py`): each level's runtime recipe (`Tsukimichi.Core/Moonfall/Levels/scenes/<scene>.json`), our painting undressed at 2x and the dress's plates (`Tsukimichi/assets/moonfall/scenes/`) |
-| `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all --check` | The converter's gate: the game's bare scene (MoonfallRender `--scene-only`) against this pipeline's dressed scene; diffs in `build/convert/` |
+| `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all --check [--force] [--jobs N]` | The converter's gate: the game's bare scene (MoonfallRender `--scene-only`) against this pipeline's dressed scene; diffs in `build/convert/`. Incremental and parallel (see Speed) |
+| `py -3 tools/moonfall-levels/mfl.py level <id> [--force]` | One level end to end: `build`, `convert`, `convert --check` and the engine render (`build/render/<id>-engine-1280.png`), then one verdict line: `[base-26] PASS in 95 s (build 40 s, convert 3 s, check 20 s, render 12 s); render <path>` (exit 0 on PASS, 1 on REFUSED or FAIL). `--json` follows once the other tools have it |
 
 ## Review tools
 
@@ -132,6 +133,34 @@ Nothing is redone on unchanged inputs; no check's rule or threshold changes. Cac
   See `docs/team/agent-brief-common.md`.
 
 The raw commands stay as they were: without a cache hit (or with `--force`) every step runs.
+
+## Speed
+
+Measured on this machine (9 October 2026, other agents running); outputs are byte-identical to the slow ways (the reports
+differ only in `seconds`).
+
+- **`build`** does the layout-only work once: the readability veil's layout mask and `framecheck.piece_distance` are
+  memoised per process (`mflkit/memo.py`, wrapping the design kit's two functions without editing it). The five
+  composites render in a process pool (`composite.start_pool`; the two that need only the graded scene start before the
+  dress is done). The greedy-player runs (48 rule games and 1,728 held-out) start in two background threads as soon as
+  the loader accepts the file and are read back after the pictures; their failures stay where they stood in the report.
+  PNGs are encoded in threads. `--jobs N` builds N levels at once, one process each (no render pool inside), the log of
+  each level printed whole in the order asked; a level writes only its own files, and the files two levels can share
+  (a graded scene, a painting's JPEG) are written through a temporary name.
+- **`convert --check`** builds MoonfallRender only when its sources changed (a signature of the file names, sizes and
+  modified times of `Tsukimichi.Core`, `Tsukimichi` and the tool, without `bin`/`obj`; `convert` writes a file only when
+  its bytes changed, so it does not move the signature for nothing). Each level has a stamp
+  (`build/cache/check-<id>.json`) on its level file, scene recipe, runtime recipe, painter or texture, chrome art, the
+  pipeline code and that signature; a level unchanged since its last PASS replays its stored figures
+  (`[unchanged since last PASS]`). Only passes are stamped. The 2x reference is computed once and serves both tiers.
+  Levels are checked in parallel (`--jobs N`, default 4); `--force` or `MFL_NO_CACHE=1` rechecks.
+- **`stage`**: the games are cached per level file already (above), so a warm stage costs only its table and the
+  precheck report (about 5 s for five levels, mostly the precheck's crop PNGs); a cold one plays 6,912 games per level
+  on all cores.
+- The self-test has a `speed-ups` section (`incremental.selftest`): the memo equals the original and cannot be spoiled
+  by a caller, a pool render equals the serial one byte for byte, `save_atomic` writes the bytes `save_rgb` does, the
+  signature and stamps move when an input does. Serial and `--jobs` builds were also compared by hashing the
+  composites, the dressed scene, the level file and the report of base-01 to base-05 (identical).
 
 ## Aces
 

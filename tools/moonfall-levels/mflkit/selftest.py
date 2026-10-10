@@ -126,11 +126,12 @@ def engine_cases(verbose=True):
 
 
 def run(verbose=True):
-    from . import convert
+    from . import convert, incremental
     results = {"preflight": author.selftest(verbose), "framecheck": frames.selftest(verbose),
                "readcheck": readability.selftest(verbose), "stage": stagecheck.selftest(verbose), "challenge": challenge.selftest(verbose),
                "precheck": precheck.selftest(verbose), "review": reviewcmds.selftest(verbose),
-               "engine": engine_cases(verbose), "convert": convert.selftest(verbose)}
+               "engine": engine_cases(verbose), "convert": convert.selftest(verbose),
+               "speed-ups": incremental.selftest(verbose)}
     if verbose:
         print("self-test:", ", ".join(f"{k} {'ok' if v else 'FAILED'}" for k, v in results.items()))
     return all(results.values())
