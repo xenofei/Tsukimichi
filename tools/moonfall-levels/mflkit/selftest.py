@@ -126,8 +126,8 @@ def engine_cases(verbose=True):
 
 
 def run(verbose=True):
-    from . import convert
-    results = {"preflight": author.selftest(verbose), "framecheck": frames.selftest(verbose),
+    from . import convert, generate, tune
+    results = {"generate": generate.selftest(verbose), "tune": tune.selftest(verbose),"preflight": author.selftest(verbose), "framecheck": frames.selftest(verbose),
                "readcheck": readability.selftest(verbose), "stage": stagecheck.selftest(verbose), "challenge": challenge.selftest(verbose),
                "engine": engine_cases(verbose), "convert": convert.selftest(verbose)}
     if verbose:

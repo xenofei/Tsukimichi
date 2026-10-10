@@ -21,21 +21,28 @@ import rich_lib as RL
 CEILING = 0.465               # method section 5: the scene's 99th-percentile luma about 0.46 or less
 
 
-def load_layout(level_id):
-    spec = importlib.util.spec_from_file_location(f"layout_{level_id.replace('-', '_')}", LAYOUTS / f"{level_id}.py")
+def load_layout(level_id, path=None):
+    """A layout module: layouts/<level_id>.py, or the file at `path` (a generated variant, a tuner's scratch copy)."""
+    path = path or LAYOUTS / f"{level_id}.py"
+    spec = importlib.util.spec_from_file_location(f"layout_{str(level_id).replace('-', '_')}", path)
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
 
 
-def make_board(level_id):
-    mod = load_layout(level_id)
+def board_of(mod, tuning=None):
+    """A layout module's board: build(b), then its TUNING (the tuner's layout-preserving moves), or `tuning` instead."""
     meta = dict(mod.LEVEL)
     recipe = scene.load_recipe(meta["scene"])
     b = author.Board(recipe)
-    b.level_id = level_id
+    b.level_id = meta["id"]
     mod.build(b)
+    b.apply_tuning(getattr(mod, "TUNING", None) if tuning is None else tuning)
     return meta, recipe, b
+
+
+def make_board(level_id, path=None):
+    return board_of(load_layout(level_id, path))
 
 
 def _scene_cached(recipe, S):

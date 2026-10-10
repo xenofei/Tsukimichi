@@ -99,6 +99,25 @@ def sweep(path, number, seed=1, step=SWEEP_STEP):
             "unreached": [int(v) for v in (u.group(3) or "").split(",") if v.strip()], "pieces": int(u.group(2))}
 
 
+def sweep_angles(path, number, seed=1, step=SWEEP_STEP):
+    """The sweep's aims (degrees) that touch nothing and those the stuck rule fires on, as `mfl.py dead` and `stuck`
+    read them: (dead, stuck)."""
+    code, out = _run("sweep", path, number, seed, step)
+    if code != 0:
+        raise RuntimeError(out)
+    dead = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs\s+0 ", out, re.M)]
+    stuck = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs.*STUCK", out, re.M)]
+    return dead, stuck
+
+
+def trace(path, angle, number, ms=3000):
+    """One first shot's flight at `angle` degrees: the ball's centre every step, for `ms` milliseconds at most."""
+    code, out = _run("trace", path, angle, number, 1, ms)
+    if code != 0:
+        raise RuntimeError(out)
+    return json.loads(out)["points"]
+
+
 def play(path, number, games=RAMP_GAMES, first=0, oranges=None):
     """mfcheck's greedy player (one-shot lookahead, aim error +-1.5 deg) over `games` seeded games from seed block
     `first` + 1, and the random player over 40. With first 0 the rule's verdict is the first 48 seeds. Tuning plays the
