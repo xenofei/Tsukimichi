@@ -36,12 +36,13 @@ FIELD = [(134, 93), (177, 95), (111, 130), (102, 168), (99, 243), (180, 310), (3
          (599, 463)]
 # never orange (green-able, blue). The finale's difficulty comes from the whole board: the places the greedy player
 # clears most readily stay blue (the crystal's top star and its two upper edges, the upper ends of the call's brick
-# rings by the launcher, the inner ring's moons beside it), and so do a few sky stars beside the crystal
+# rings by the launcher, the inner ring's moons beside it), and so do a few sky stars beside the crystal, and the core column (thin protan separation)
 EXCLUDE = [(440, 186), (398, 219), (482, 219),                                      # the top star and upper edges
            (303, 153), (278, 116), (243, 148), (270, 185), (207, 120), (191, 227),  # the rings' west arcs, upper
            (518, 121), (563, 143), (543, 184),                                      # the rings' east arcs, upper
            (321, 196), (297, 223), (477, 156), (512, 167),                          # the inner ring by the launcher
-           (308, 314), (563, 311), (327, 353), (559, 387)]                          # sky stars beside the crystal
+           (308, 314), (563, 311), (327, 353), (559, 387),                          # sky stars beside the crystal
+           (440, 244), (440, 305), (440, 329), (440, 351)]                          # the core column (protan separation)
 DUNES = [(320, 548, 60), (545, 540, 56), (655, 546, 58)]     # the dunes' crests: crown centres and radii
 
 
@@ -85,3 +86,7 @@ def build(b):
         b.place(x, y, r=10, tag="field star")
     b.greens_in_reach()
     b.candidates(exclude=EXCLUDE, exclude_tags=("line",))
+
+
+# ---- tuning (written by `mfl.py tune`; held out 5.3/48, tuning seeds 5.9/48, band 5.20-6.40)
+TUNING = {}
