@@ -24,21 +24,26 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Charter for the 105 levels:** `docs/design/v9/levels/charter.md`, with the owner's answers of 7 October.
 - **Gate wrapper and caches:** `pwsh tools/gate.ps1` (skips an unchanged tree) and the caches for `mfl.py build`/`stage` and MoonfallRender `--cache`.
 
-## In flight (2026-10-09, night)
-**The refit of MR 1–6 on `moonfall-peggle`** (run `wf_f24443a9-c85`; resume with Workflow `resumeFromRunId` and the script in `workflows/scripts/moonfall-peggle-refit-wf_f24443a9-c85.js`).
-- **Per stage:**
-  1. one refit author per level (own worktree; it merges `moonfall-peggle` first);
-  2. an integrator, which merges into the `moonfall-peggle` worktree, runs the stage check, convert and Aces, the gates and the pack in `review/<stage>-refit/`;
-  3. fresh reviews, with records in `supervisor/*-<stage>-refit-round-N.md`;
-  4. one fixer per level, then a stage fixer, then round 2.
-- **Gate exception:** until a stage is refitted, the gates may fail only the greedy-player and Ace tests of later stages' levels (named in each brief).
+## In flight (2026-10-09, late)
+- **The owner chose "Pause the refit, build first" for the faster level tools.** The refit run `wf_f24443a9-c85` was stopped on 2026-10-09 after stage 1's refit authors finished.
+  - **Stage 1:** its five refitted levels are merged on `moonfall-peggle` (b061b1fc to 6414a39d). Held-out wins: 8.4, 9.0, 8.8, 8.3, and 5.8 for the finale; 95–105 pieces. Still to do: `stage mr1`, convert, Aces, gates and the pack, then reviews.
+  - **Stage 2:** its refit authors were cut off; their worktrees `wf_f24443a9-c85-6..10` hold partial work. Redo stage 2 with the generator; delete those worktrees once the new run starts.
+- **Speed-ups agreed** (the owner asked what else could speed the workflow):
+  - Sonnet for integrators and fixers; Opus stays for authors and reviewers;
+  - no round 2 when round 1 finds only Minors (the fixer folds them in, the checks confirm);
+  - parallel per-level fixers;
+  - after the two tool builds land: a shared game-texture cache for every worktree, prebuilt mfcheck and Core per stage, a gate that skips themes and unaffected parts (a full gate before any merge to main), and pack renders for changed levels only.
+- **Tools being built** (each in its own worktree, merging `moonfall-peggle` first):
+  - **(A, Opus)** `mfl.py generate`, a layout generator from the scene's feature geometry, and `mfl.py tune`, an automatic difficulty tuner;
+  - **(B, Sonnet)** `mfl.py precheck`, checks for the findings reviewers keep raising: legibility at 640, the moon at the launcher, near-repeats, empty patches.
+- **Coordinator:** the workflow script gets parallel per-level fixers, one worktree each, merged afterwards.
+- **Then:** resume the refit with the tools (stage 1 from its kept branches), and pilot Sonnet authors on one stage.
 - **Already on `moonfall-peggle`:**
-  - the engine's Peggle rules (69566a4c);
-  - the pipeline rules;
-  - the bands from Peggle's curve (d40c8c91);
-  - the owner's answers (167b8afb): floor 2 of 48, finale below the mean of the other four, every Ace at the top 40% of wins;
-  - MR 6 merged (011278be). Its round-2 critic Major is in `level-critic-mr6-round-2.md`; the MR 6 refit reviews it again.
-- **Main** stays at 25 approved levels and green until the refit passes, then `moonfall-peggle` merges into main.
+  - the engine's Peggle rules;
+  - the pipeline rules and Peggle bands;
+  - the owner's floor, finale and Ace answers;
+  - MR 6.
+- **Main** stays at 25 approved levels and green.
 
 ## Next
 1. **Merge `moonfall-peggle` into main** when the refit's gates pass, and run the full check.
