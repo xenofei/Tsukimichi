@@ -14,6 +14,7 @@ from .paths import CACHE, MFCHECK, PAINTERS, REPO, RICH, RICH2, SCENES, SHARED, 
 
 DIR = SHARED / "levels"
 _MEMO = {}
+TEXT_SUFFIXES = {".py", ".cs", ".csproj", ".props", ".json", ".txt", ".md"}
 
 
 def disabled():
@@ -21,11 +22,20 @@ def disabled():
 
 
 def file_hash(path):
-    """Content hash of one file (memoised per process); '-' when it does not exist."""
+    """Content hash of one file (memoised per process); '-' when it does not exist. Text files hash with LF line ends, so a
+    checkout with CRLF (git's autocrlf) and one without give the same key in every worktree."""
     p = pathlib.Path(path)
     k = (str(p), p.stat().st_mtime_ns, p.stat().st_size) if p.exists() else (str(p), None, None)
     if k not in _MEMO:
-        _MEMO[k] = hashlib.sha1(p.read_bytes()).hexdigest() if p.exists() else "-"
+        if not p.exists():
+            _MEMO[k] = "-"
+        else:
+            data = p.read_bytes()
+            if p.suffix.lower() in TEXT_SUFFIXES:
+                data = data.replace(b"
+", b"
+")
+            _MEMO[k] = hashlib.sha1(data).hexdigest()
     return _MEMO[k]
 
 
