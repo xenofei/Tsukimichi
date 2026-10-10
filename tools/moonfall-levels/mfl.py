@@ -165,7 +165,7 @@ def cmd_stage(args):
     """The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp (1728 games, about +-0.55 per 48), the
     random player, the jewels; then every level pooled over 6912 games; it faults neighbours with the same jewels, a
     finale that is not the stage's hardest by the gap (resolved by one standard error), and a stage whose mean is
-    outside its band (placeholder bands: see stagecheck.py)."""
+    outside its band (Peggle's measured stage means, raised to the 5-of-48 floor: see stagecheck.py)."""
     if "--force" in args:
         os.environ["MFL_NO_CACHE"] = "1"
         args = [a for a in args if a != "--force"]
@@ -216,7 +216,7 @@ def cmd_stage(args):
     if len(ramps_) == len(rows) and len(rows) >= 2:
         lo, hi = stagecheck.MEAN_BANDS[key]
         nxt = min(ramps_[:-1])
-        print(f"  pooled mean {sum(ramps_) / len(ramps_):.2f} (band {lo:.2f} to {hi:.2f}, placeholder); finale gap "
+        print(f"  pooled mean {sum(ramps_) / len(ramps_):.2f} (band {lo:.2f} to {hi:.2f}); finale gap "
               f"{nxt - ramps_[-1]:.2f} +- {stagecheck.step_se(nxt, ramps_[-1], total, total):.2f} below the next hardest")
     # the level the player meets just before this stage's first: the previous stage's last, in the same campaign (the Far
     # Shore's stage 1 has nothing before it)
