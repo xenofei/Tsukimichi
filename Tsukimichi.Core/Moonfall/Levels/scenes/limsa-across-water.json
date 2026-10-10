@@ -42,7 +42,7 @@
  ],
  "palette": {
   "bands": [[0, "#3C42C8"], [600, "#2E34A0"]],
-  "chroma": 1.1,
+  "chroma": 1.25,
   "floor": 0.04,
   "keep": 0.3,
   "keepHigh": 0.75,
@@ -51,7 +51,7 @@
   "regions": [
    {
     "hue": "#56AE6C",
-    "chroma": 0.14,
+    "chroma": 0.08,
     "where": [
      {
       "y": [400, 480]

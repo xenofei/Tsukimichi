@@ -71,12 +71,12 @@
   "jewel": {
    "bands": [[0, "#3C42C8"], [600, "#2E34A0"]],
    "valueHues": [[0.08, "#1E2A8A"], [0.45, "#D0D8FF"]],
-   "chroma": 1.1,
+   "chroma": 1.25,
    "floor": 0.04,
    "regions": [
     {
      "hex": "#56AE6C",
-     "chroma": 0.14,
+     "chroma": 0.08,
      "mask": [["y", 400, 480]]
     }
    ],
