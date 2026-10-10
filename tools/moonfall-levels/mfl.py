@@ -24,6 +24,14 @@
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
+  generate <level-id> [--seed N] [--variants K] [--scene NAME] [--out DIR] [--no-engine] [--no-jewels]
+                                K candidate layouts from the scene's features, the technique and charter section 1
+                                (build/generate/<id>/v<k>.py, previews and contact.png); each passes the pre-flight
+  tune <level-id | layout.py> [--band LO,HI] [--finale-vs MEAN] [--max-plays N] [--out PATH]
+                                layout-preserving moves until the held-out figure is in the band (default: the stage's
+                                band); writes the layout's TUNING block (in place, or to --out)
+        [--hold [--lock X]]     difficulty-neutral: back to the level's locked held-out figure after a fix
+  tune --stage <key> [--out DIR] the stage's five levels together: mean band and finale rule, validated on fresh seeds
   sources                       write docs/design/v9/levels/sources.json from the recipes
   diff <level-id> --rev <rev>   one PNG: the composite at that revision beside now, changed pieces ringed, with a summary
   sheet <level-id>... | --stage <key>   a contact sheet of composites (--engine adds the plugin's renders) with each level's figures
@@ -550,7 +558,66 @@ def cmd_convert(args):
     return 0 if ok else 1
 
 
-COMMANDS = {"check": cmd_check, "level": cmd_level, "precheck": cmd_precheck, "convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
+def _opt(args, name, default=None, cast=str):
+    """Pops `--name value` from args: (value, the args left)."""
+    if name in args:
+        i = args.index(name)
+        return cast(args[i + 1]), args[:i] + args[i + 2:]
+    return default, args
+
+
+def cmd_generate(args):
+    """generate <level-id> [--seed N] [--variants K] [--scene NAME] [--out DIR] [--no-engine] [--no-jewels]: K candidate layouts
+    (mflkit/generate.py) in build/generate/<id>/, each passing the pre-flight, with a preview and a contact sheet."""
+    import pathlib
+    from mflkit import generate
+    seed, args = _opt(args, "--seed", 1, int)
+    k, args = _opt(args, "--variants", 4, int)
+    scene_name, args = _opt(args, "--scene")
+    out, args = _opt(args, "--out", None, pathlib.Path)
+    use_engine = "--no-engine" not in args
+    tries = 0 if "--no-jewels" in args else 6
+    args = [a for a in args if a not in ("--no-engine", "--no-jewels")]
+    if len(args) != 1:
+        print(cmd_generate.__doc__)
+        return 2
+    t0 = time.time()
+    if use_engine:
+        engine.ensure_built()
+    res = generate.generate(args[0], seed=seed, variants=k, scene_name=scene_name, out_dir=out, use_engine=use_engine,
+                            jewel_tries=tries)
+    where = res[0][0].parent if res else out
+    print(f"{len(res)} variants in {time.time() - t0:.0f} s, in {where}" + ("; contact sheet contact.png" if use_engine else ""))
+    print(f"pick one: copy {where / 'v<k>.py'} to {LAYOUTS / (args[0] + '.py')}, polish the subject, then `mfl.py tune {args[0]}`")
+    return 1 if any(p for (_path, p, _r) in res) else 0
+
+
+def cmd_tune(args):
+    """tune <level-id | layout.py> [--band LO,HI] [--finale-vs MEAN] [--max-plays N] [--out PATH]: layout-preserving
+    moves (mflkit/tune.py) until the held-out figure is in the band; writes the layout's TUNING block.
+    tune <level-id> --hold [--lock X]: back to the level's locked held-out figure (its report's) after a fix.
+    tune --stage <key> [--out DIR]: the stage's five levels together, against its mean band and the finale rule."""
+    import pathlib
+    from mflkit import tune
+    band, args = _opt(args, "--band", None, lambda s: tuple(float(v) for v in s.split(",")))
+    fin, args = _opt(args, "--finale-vs", None, float)
+    mp, args = _opt(args, "--max-plays", 40, int)
+    out, args = _opt(args, "--out", None, pathlib.Path)
+    stage, args = _opt(args, "--stage")
+    lock, args = _opt(args, "--lock", None, float)
+    hold = "--hold" in args
+    args = [a for a in args if a != "--hold"]
+    engine.ensure_built()
+    if stage:
+        return 0 if tune.tune_stage(stage, max_plays=mp, out_dir=out)["ok"] else 1
+    if len(args) != 1:
+        print(cmd_tune.__doc__)
+        return 2
+    res = tune.tune_layout(args[0], band=band, finale_vs=fin, max_plays=mp, out=out, hold=hold, lock=lock)
+    return 0 if res["ok"] else 1
+
+
+COMMANDS = {"check": cmd_check, "level": cmd_level, "generate": cmd_generate, "tune": cmd_tune, "precheck": cmd_precheck, "convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "challenge": cmd_challenge, "sources": cmd_sources}
 
 from mflkit import reviewcmds  # noqa: E402  (diff, sheet, status, pack: mflkit/reviewcmds.py)

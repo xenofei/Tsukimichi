@@ -57,6 +57,7 @@ BRICK_SHARE = (0.30, 0.45)             # brick share of the pieces, where the su
 SPREAD_SHARE, SPREAD_MIN = 0.35, 10    # candidates in any 200 x 200 square: at most 35% of all of them, never fewer than 10 allowed
                                        # (it was a flat 10 for 28-35 candidates, which is about the same third)
 DOTTED_GAP = 14.0             # pegs on a dotted line: 14 or more between surfaces (34 centre to centre at r 10)
+_REACH = {}                   # piece_in_reach's memo, keyed on a piece's geometry
 
 
 def spread_limit(n_candidates):
@@ -154,9 +155,13 @@ class Board(Layout):
         return self.f(src) if isinstance(src, str) else [tuple(p) for p in src]
 
     # ---- pieces (the rich pass's Layout with canBeGreen added)
-    def peg(self, x, y, orange=False, r=PEG_R, move=None, tag="", green=True):
+    def peg(self, x, y, orange=False, r=PEG_R, move=None, tag="", green=True, inside=False):
+        """A peg, unchecked. inside=True marks a feature placed inside a declared silhouette (an eye, a mouth), as
+        place(..., inside=True) does."""
         p = super().peg(x, y, orange=orange, r=r, move=move, tag=tag)
         p["canBeGreen"] = bool(green)
+        if inside:
+            p["_inside"] = True
         return p
 
     def line(self, x1, y1, x2, y2, t=BRICK_T, orange=False, tag="", green=True):
@@ -235,10 +240,7 @@ class Board(Layout):
         if why:
             self.skipped.append(((round(x), round(y)), kw.get("tag", ""), why))
             return None
-        p = self.peg(x, y, r=r, **kw)
-        if inside:
-            p["_inside"] = True
-        return p
+        return self.peg(x, y, r=r, inside=inside, **kw)
 
     def subject(self, src):
         """Declares a closed feature as the subject's silhouette: traces and placements keep out of its interior and
@@ -327,6 +329,85 @@ class Board(Layout):
                 return None
         move = {"kind": "slide", "x": _r1(x + dx), "y": _r1(y + dy), "period": period}
         return self.peg(x, y, r=r, move=move, **kw)
+
+    def brick_why_not(self, brick, peg_gap=16.0, brick_gap=NOTCH_MAX + 1.0, touching=()):
+        """None when a brick (a dict as line() or arc() makes it, not yet laid) keeps every rule the pre-flight holds
+        against what is already laid; otherwise the reason. Stricter than the pre-flight on purpose, so a generator
+        never builds into a fault: 16 or more from every peg (the cradle and the wedge band, either side), 18 or more
+        from every other brick (no notch) but the ones in `touching` (its own run, 2.5 apart), never a level deck
+        (a line under 10 degrees of 20 or more) and never an arc hanging below its centre."""
+        t2 = brick["thickness"] / 2
+        smp = brick_samples(brick, 1.0)
+        for (x, y) in smp:
+            if not in_bounds(x, y, t2):
+                return "off the board (walls, launcher's swing or bucket)"
+            g = min(x - t2 - LEFT, RIGHT - x - t2)
+            if 0.5 < g < 12.5:
+                return f"wall pinch {g:.1f}"
+        if brick["kind"] == "line":
+            ln = math.hypot(brick["x2"] - brick["x1"], brick["y2"] - brick["y1"])
+            if self._slope_deg(brick) < DECK_DEG and ln >= 20.0:
+                return "a level deck"
+        elif any(y > brick["y"] + 0.2 * brick["r"] for (_x, y) in smp):
+            return "an arc hanging below its centre (a bowl)"
+        S = np.asarray(smp[::2] + [smp[-1]], np.float64)
+        for p in self.pegs:
+            r = p.get("r", 10.0)
+            for (px, py) in (self.mover_points(p, 36) if "move" in p else [(p["x"], p["y"])]):
+                d = float(np.min(np.hypot(S[:, 0] - px, S[:, 1] - py))) - r - t2
+                if d < (12.0 if "move" in p else peg_gap):
+                    return f"{d:.1f} from the peg at ({p['x']:.0f}, {p['y']:.0f})"
+        ids = {id(c) for c in touching}
+        for c in self.bricks:
+            if id(c) in ids:
+                continue
+            C = np.asarray(brick_samples(c, 1.0), np.float64)
+            d = min(float(np.min(np.hypot(C[:, 0] - x, C[:, 1] - y))) for (x, y) in S) - t2 - c["thickness"] / 2
+            if d < brick_gap:
+                return f"{d:.1f} from a brick"
+        return None
+
+    @staticmethod
+    def home(piece):
+        """A piece's home: a peg's centre (a mover's start), a brick's middle sample (as candidates() reads it)."""
+        if "kind" not in piece:
+            return piece["x"], piece["y"]
+        s = brick_samples(piece)
+        return s[len(s) // 2]
+
+    def nearest(self, x, y, within=6.0, pegs_only=False):
+        """The piece whose home is nearest (x, y), within `within` units; ValueError if none."""
+        best, bd = None, within
+        for p in self.pegs + ([] if pegs_only else self.bricks):
+            hx, hy = self.home(p)
+            d = math.hypot(hx - x, hy - y)
+            if d < bd:
+                best, bd = p, d
+        if best is None:
+            raise ValueError(f"no piece within {within} of ({x}, {y})")
+        return best
+
+    def apply_tuning(self, tuning):
+        """Applies the layout-preserving moves `mfl.py tune` writes (a layout's module-level TUNING, applied by the
+        build after build(b)): "blue" and "orange" are homes whose piece leaves or joins the orange candidates,
+        "nudge" is [x, y, dx, dy] (a peg moved; a mover's path moves with it), "period" is [x, y, factor] (every mover
+        drifting with the one at that home gets its period scaled). Homes are the layout's own, before any nudge."""
+        if not tuning:
+            return
+        moved = [(self.nearest(x, y, pegs_only=True), dx, dy) for (x, y, dx, dy) in tuning.get("nudge", ())]
+        groups = [(self._drift(self.nearest(x, y, pegs_only=True)), f) for (x, y, f) in tuning.get("period", ())]
+        for (x, y) in tuning.get("blue", ()):
+            self.nearest(x, y)["canBeOrange"] = False
+        for (x, y) in tuning.get("orange", ()):
+            self.nearest(x, y)["canBeOrange"] = True
+        for p, dx, dy in moved:
+            p["x"], p["y"] = _r1(p["x"] + dx), _r1(p["y"] + dy)
+            if "move" in p and p["move"]["kind"] == "slide":
+                p["move"]["x"], p["move"]["y"] = _r1(p["move"]["x"] + dx), _r1(p["move"]["y"] + dy)
+        for g, f in groups:
+            for p in self.pegs:
+                if "move" in p and self._drift(p) == g:
+                    p["move"]["period"] = round(p["move"]["period"] * f, 2)
 
     def greens_in_reach(self):
         """Pieces no first free flight touches (high in a corner) may never be green: a green should be a direct shot
@@ -440,10 +521,14 @@ class Board(Layout):
 
     def piece_in_reach(self, piece):
         """Whether some first free flight touches the piece: a still peg, any point of a mover's path, any point of a
-        brick."""
-        if "kind" in piece:
-            return any(direct_reach(x, y, piece["thickness"] / 2) for (x, y) in brick_samples(piece, 6.0))
-        return any(direct_reach(x, y, piece.get("r", 10.0)) for (x, y) in self.mover_points(piece, 24))
+        brick. Memoised on the piece's geometry (the generator and the tuner ask it of the same pieces many times)."""
+        key = json.dumps({k: v for k, v in piece.items() if k not in ("canBeOrange", "canBeGreen", "_inside")}, sort_keys=True)
+        if key not in _REACH:
+            if "kind" in piece:
+                _REACH[key] = any(direct_reach(x, y, piece["thickness"] / 2) for (x, y) in brick_samples(piece, 6.0))
+            else:
+                _REACH[key] = any(direct_reach(x, y, piece.get("r", 10.0)) for (x, y) in self.mover_points(piece, 24))
+        return _REACH[key]
 
     @staticmethod
     def _slope_deg(b):

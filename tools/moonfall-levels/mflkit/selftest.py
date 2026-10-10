@@ -243,8 +243,8 @@ CONVERT_LEVELS = ("base-01", "base-06", "base-08", "base-09", "base-25")   # con
 def _sections():
     """The self-test's independent sections: name -> callable(verbose). None shares state with another, so they run in
     separate processes. The converter's levels are separate sections (convert.selftest(levels=..., masks=...) in pieces)."""
-    from . import convert, incremental
-    secs = {"preflight": author.selftest, "framecheck": frames.selftest, "readcheck": readability.selftest,
+    from . import convert, generate, incremental, jewels, tune
+    secs = {"generate": generate.selftest, "tune": tune.selftest, "jewels": jewels.selftest, "preflight": author.selftest, "framecheck": frames.selftest, "readcheck": readability.selftest,
             "stage": stagecheck.selftest, "challenge": challenge.selftest, "precheck": precheck.selftest,
             "review": reviewcmds.selftest, "engine": engine_cases}
     for lid in CONVERT_LEVELS:

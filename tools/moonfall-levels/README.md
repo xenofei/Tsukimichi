@@ -307,6 +307,44 @@ differ only in `seconds`).
 10. If everything passed: `docs/design/v9/levels/json/<id>.json`, `composites/<id>.png` (and `@2x` if asked), our
     paintings as JPEG in `scenes/assets/`. The report, pass or fail, goes to `report/<id>.json`, with the ramp.
 
+## Author workflow: generate → pick → hand-polish the subject → tune → build
+
+| Command | What it does |
+|---|---|
+| `py -3 tools/moonfall-levels/mfl.py generate <id> [--seed N] [--variants K] [--scene NAME] [--out DIR] [--no-engine] [--no-jewels]` | K candidate layouts (`mflkit/generate.py`) in `build/generate/<id>/`: `v<k>.py` (an ordinary layout file), `v<k>.json`, a preview `v<k>.png`, `v<k>.dress.json` (a jewel pair) and `contact.png`, `summary.json`. A level not started takes its LEVEL from its charter row and needs `--scene` |
+| `py -3 tools/moonfall-levels/mfl.py tune <id \| layout.py> [--band LO,HI] [--finale-vs MEAN] [--max-plays N] [--out PATH]` | Layout-preserving moves (`mflkit/tune.py`) until the held-out figure is in the band (default: the stage's mean band); writes the layout's `TUNING` block, in place or to `--out` |
+| `py -3 tools/moonfall-levels/mfl.py tune <id> --hold [--lock X]` | Difficulty-neutral, for fixers: back to the level's locked held-out figure (its report's `locked`, else `--lock`) within 0.6 per 48 after a layout fix, without touching its neighbours |
+| `py -3 tools/moonfall-levels/mfl.py tune --stage <key> [--out DIR]` | The stage's five levels together: a plan of targets (the least common shift that puts the stage's mean at its band's centre, the finale one standard error plus 0.5 below the others' mean; a level within 0.6 of its target is left alone), each level tuned to its target, then the stage validated on the stage check's fresh 5184 games a level that no tuning step used, pooled with the held-out block as `stage` judges it; up to two plans. Each level's lock is recorded in its report |
+
+1. **Generate.** `generate` reads the level's features as shapes (circles, closed silhouettes, polylines, point sets,
+   segment sets; closed shapes named sky, sea, field and so on are regions the fill prefers). A feature sharing a word
+   with the subject, the level's name or the technique's own words (a constellation's stars and lines, a trail's road)
+   is the subject. It lays the subject by technique (charter 1.5): crowns of curved brick on circles (odd counts, a
+   moon over the apex); for CR and LM an even ring of moons 20 outside the silhouette with brick on its steep edges
+   (all round for a creature, the upper part for a landmark) and the face's points inside; ring stops on TR, SP and PR
+   points; dotted moons on routes and a constellation's lines; convex crests as fitted crowns whose flat top is dotted
+   (a wide crown's top holds balls); steep straight stretches in brick for TE, SB, LM, LA and CR; orbits (OR), drifting
+   slides (DR) and mirrored slides below a waterline (RF). Then the painting's secondary lines, then a fill pattern
+   (concentric rings of brick and moon, a dashed brick lattice, staggered rows with zigzag brick, or separate
+   structures), mirrored when the variant is symmetric, until the target count; moons on any dead first flight; sure
+   greens; candidates by exclusion (the spread cap enforced while choosing them, the lower third kept to a few
+   percent so cheap difficulty holds). Every placement goes through the pre-flight's own rules (`Board.why_not`,
+   `Board.brick_why_not`). With the engine it repairs dead aims, stuck rests and unreached pieces among the fill and
+   reports the rule's 48 games and the tuning figure. Priors for the count, brick share and symmetry are the Peggle
+   corpus's stage means (statistics only). Deterministic: the same arguments write the same files.
+2. **Jewels.** For each variant `generate` tries jewel pairs (`mflkit/jewels.py`; first hue 240-345, second outside
+   30-110, 70 or more apart, 40 or more from the neighbours' pairs) and measures F6, F7 and F9 on the dressed variant
+   exactly as the build does, keeping the first that passes; the runtime limits, read from the runtime's loader
+   (`MoonfallSceneRecipeLoader.cs`: 8 mask terms with the quiet, 16 in `motion.starWhere`, a shaft's `near` from -180 to
+   1000, region chroma 0.3 at most) are checked on the dress it writes. Merge `v<k>.dress.json`'s palette
+   and jewel into the recipe.
+3. **Pick** a variant from `contact.png`, copy `v<k>.py` to `layouts/<id>.py`, and **hand-polish the subject**: the
+   pieces are explicit `b.peg`/`b.line`/`b.arc` calls tagged with what they trace (`fill ...` and `lane` are the fill).
+4. **Tune** (`tune <id>`): accepts on the tuning seeds, confirms on the held-out block; a miss shifts the target by the
+   measured offset. At every step: the pre-flight, at least 2 of the rule's 48 games, no cheap difficulty, and after a
+   geometric move the sweep and reach.
+5. **Build** as before.
+
 ## Authoring a level
 
 1. **Pick the subject and source** (method section 1). For a game painting, find it with texdump (`loading` lists
