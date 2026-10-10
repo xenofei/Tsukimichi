@@ -1,0 +1,70 @@
+{
+ "name": "armillary",
+ "about": "Our own painting: a great armillary sphere on a dark terrace under a violet night, its brass frame (the fixed meridian seen face on, the broad horizon ring at its waist) holding a cage of rings of pale silver light about the tilted polar axis (the equator, tropics, polar circles, colures and the ticked ecliptic band), a small golden globe at its heart throwing ten soft spokes out through the rings to the moons at their tips; the Milky Way, a violet nebula, the last amber of the dusk behind low banks of cloud, the full moon (with its seas) at the upper left and two planets at the right (painters/armillary.py; shipped as a JPEG). The first jewel is the night's violet; the second the brass and the dusk's gold (MR 6 round 1, game designer M1: the round-1 teal cage, 284/214, was 6-5's Moon Gate twice). Two regions carry it: one over the sphere (a disc of 205 at 1x) taken only where the painting is light (a luma ramp, so it follows the brass frame and the rings at the painting's own scale, not the pegs'), and one on the dusk band over the far hills, faded at the walls. Gold sits on the yellow side of a protanope's axis with the oranges, so the cage's light is painted silver, not gold, and the regions take most of the quiet (regionQuiet 0.75) so their gold stays off the ground round the pieces: protan p10 0.131, against 0.017 with the cage painted gold and 0.102 with silver light under a lightly quietened region. Neighbours: 5-5 246/168 and 6-2 261/327 stay clear in the second jewel.",
+ "source": {
+  "kind": "painting",
+  "painter": "armillary",
+  "params": {}
+ },
+ "veil": 0.22,
+ "ceilingExempt": [[138, 104, 64]],
+ "features": {},
+ "dress": {
+  "palette": {
+   "name": "Violet night, the armillary's brass and the dusk's gold",
+   "sky": "#140C3C",
+   "deep": "#070418",
+   "jewel1": "#5A40C8",
+   "jewel2": "#C89A3C",
+   "warm": "#FFB45E",
+   "rim": "#D4C8FF"
+  },
+  "jewel": {
+   "bands": [[0, "#5A40C8"], [300, "#5C42CA"], [600, "#4C38B0"]],
+   "valueHues": [[0.08, "#24166A"], [0.45, "#D8CCFF"]],
+   "keep": 0.2,
+   "chroma": 1.1,
+   "floor": 0.04,
+   "regions": [
+    {
+     "hex": "#C89A3C",
+     "chroma": 0.3,
+     "mask": [["disc", 400, 330, 205, 50], ["luma", 0.22, 0.34, 3], ["x", 75, 135], ["x", 725, 665]]
+    },
+    {
+     "hex": "#D09A48",
+     "chroma": 0.3,
+     "mask": [["y", 420, 480], ["y", 600, 540], ["x", 75, 175], ["x", 725, 625]]
+    }
+   ],
+   "quiet": [60, 25],
+   "regionQuiet": 0.75
+  },
+  "shafts": [
+   {
+    "origin": [130, -60],
+    "angles": [58, 66, 74],
+    "widths": [26, 34, 22],
+    "k": 0.035,
+    "col": "#D8D0FF",
+    "reach": 900,
+    "near": 60
+   }
+  ],
+  "framing": [],
+  "silhouette": {
+   "body": "#08061A",
+   "inner": "#161040",
+   "rim": "#C8C0FF",
+   "rimK": 0.3,
+   "seed": 26
+  }
+ },
+ "runtime": {
+  "motion": {
+   "dust": 12,
+   "stars": 30,
+   "starWhere": [["poly", "star sky", 8], ["not-poly", "sphere", 12], ["not-poly", "moon disc", 8]]
+  }
+ }
+}

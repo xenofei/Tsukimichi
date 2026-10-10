@@ -10,10 +10,10 @@ public static partial class MoonfallRules
     // ---- The duel [R §6 l.127–128, §2 l.47, §3 l.74–92] ----
 
     /// <summary>
-    /// [J] Balls each side has in a duel: "5 or 6 each depending on platform" [R §6 l.127]. Five, so a duel is ten shots
-    /// on one board, as long as a level of the campaign.
+    /// Balls each side has in a duel: six [O; R §6 l.127 "5 or 6 each depending on platform"]. (Before the owner's Peggle
+    /// decision of 9 October 2026 it was five, set by judgement.)
     /// </summary>
-    public const int DuelBallsPerSide = 5;
+    public const int DuelBallsPerSide = 6;
 
     /// <summary>
     /// "Failing to hit any orange loses 25% of score" [R §3 l.92, §6 l.128]. [J] The shot's score, not the running
@@ -23,13 +23,13 @@ public static partial class MoonfallRules
     public const int DuelNoOrangeKeepPercent = 75;
 
     /// <summary>
-    /// [J] The duel's Fever buckets, left to right: "reduced bucket values" [R §6 l.128] with no number given; a quarter of
-    /// the campaign's (rounded to 2,500), within the research's "about 1/5 to 1/2" for the duel's style values.
+    /// The duel's Fever buckets, left to right: half the campaign's [O; R §6 l.128 "reduced bucket values"]. (Before the
+    /// owner's Peggle decision of 9 October 2026 they were a quarter, set by judgement.)
     /// </summary>
-    public static ReadOnlySpan<int> DuelFeverBucketValues => [2_500, 12_500, 25_000, 12_500, 2_500];
+    public static ReadOnlySpan<int> DuelFeverBucketValues => [5_000, 25_000, 50_000, 25_000, 5_000];
 
-    /// <summary>[J] A perfect clear in a duel: every bucket pays the duel's best, 25,000 (a quarter of the campaign's).</summary>
-    public const int DuelPerfectFeverBucketValue = 25_000;
+    /// <summary>[J] A perfect clear in a duel: every bucket pays half the campaign's 100,000, halved as the buckets are [O].</summary>
+    public const int DuelPerfectFeverBucketValue = 50_000;
 
     /// <summary>The duel's One Peg Catch [R §3 l.75: 5,000 (2,500)].</summary>
     public const int DuelOnePegCatchBonus = 2_500;
@@ -40,8 +40,8 @@ public static partial class MoonfallRules
     /// <summary>The duel's Super Long Shot [R §3 l.77: 50,000 (10,000)].</summary>
     public const int DuelSuperLongShotBonus = 10_000;
 
-    /// <summary>The duel's Double Long Shot [R §3 l.78: 25,000 (10,000), "as quoted"].</summary>
-    public const int DuelDoubleLongShotBonus = 10_000;
+    /// <summary>The duel's Double Long Shot: 5,000 [O; R §3 l.78 quoted 10,000].</summary>
+    public const int DuelDoubleLongShotBonus = 5_000;
 
     /// <summary>The duel's Off the Wall [R §3 l.79: 25,000 (5,000)].</summary>
     public const int DuelOffTheWallBonus = 5_000;
@@ -49,8 +49,8 @@ public static partial class MoonfallRules
     /// <summary>The duel's Rim Shot [R §3 l.80: 25,000 (5,000)].</summary>
     public const int DuelRimShotBonus = 5_000;
 
-    /// <summary>[J] The duel's Lucky Bounce: the sources give 2,500 or 5,000 [R §3 l.81]; 5,000, the same as its peers at 25,000.</summary>
-    public const int DuelLuckyBounceBonus = 5_000;
+    /// <summary>The duel's Lucky Bounce: 2,500 [O; R §3 l.81 gave 2,500 or 5,000].</summary>
+    public const int DuelLuckyBounceBonus = 2_500;
 
     /// <summary>The duel's Orange Sweep [R §3 l.82: 50,000 (5,000)].</summary>
     public const int DuelOrangeSweepBonus = 5_000;
@@ -58,8 +58,8 @@ public static partial class MoonfallRules
     /// <summary>The duel's Long Slide [R §3 l.83: 50,000 (5,000)].</summary>
     public const int DuelLongSlideBonus = 5_000;
 
-    /// <summary>[J] The duel's Clear Night: none is given [R §3 l.84]; 10,000, a fifth of its 50,000 as the Super Long Shot's.</summary>
-    public const int DuelClearNightBonus = 10_000;
+    /// <summary>The duel's Clear Night: 5,000 [O] (the research gave none [R §3 l.84]).</summary>
+    public const int DuelClearNightBonus = 5_000;
 
     /// <summary>The duel's Live Wire [R §3 l.85: 25,000 (5,000)].</summary>
     public const int DuelLiveWireBonus = 5_000;

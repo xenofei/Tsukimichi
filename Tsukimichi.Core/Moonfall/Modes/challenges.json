@@ -28,7 +28,7 @@
       "name": "Thirty-Five Moons",
       "text": "Win with 35 orange pegs.",
       "kind": "win",
-      "levels": [ "base-04" ],
+      "levels": [ "base-27" ],
       "oranges": 35
     },
     {
