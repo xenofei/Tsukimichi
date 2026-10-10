@@ -1,6 +1,6 @@
 # Handoff
 
-Updated 2026-10-10 (08:00). To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
+Updated 2026-10-10 (paused). To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
 
 ## Goal
 Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimichi.
@@ -24,21 +24,35 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Charter for the 105 levels:** `docs/design/v9/levels/charter.md`, with the owner's answers of 7 October.
 - **Gate wrapper and caches:** `pwsh tools/gate.ps1` (skips an unchanged tree) and the caches for `mfl.py build`/`stage` and MoonfallRender `--cache`.
 
-## In flight (2026-10-10, early)
+## Paused (2026-10-10, owner's request: resources diverted to another project)
+Nothing is running: the refit workflow and keep-awake are stopped, and every in-progress piece of work is committed on a named branch.
+
 **Owner's blanket approval for Moonfall decisions** (memory `moonfall-blanket-approval`): take the recommended option and report it. A public release still gets one confirmation line.
 
-**Refit workflow running:** `moonfall-refit-v2`, run `wf_2f5573bb-347`, relaunched 2026-10-10 08:00 (script: `~/.claude/projects/C--Users-devon-Desktop-Tsukimichi--Main-Repo---claude-worktrees-moonfall-peggle-docs-design-v9-levels/60059d08-…/workflows/scripts/moonfall-refit-v2-wf_2f5573bb-347.js`). It refits MR 1–6 on `moonfall-peggle`, stage by stage: authors (generate, tune, check, level), integrator, three reviewers from the pack, parallel per-level fixers, round 2 after a Blocker or Major, and one targeted round 3 (only the reviewers still at REVISE) when round 2 leaves Majors but no Blocker. It stops at the first stage that fails.
-- **State:** MR 1 is in round 3 (the level critic's M1: base-03 stuck rule about 110 per 1728 against 100). MR 2's five levels are authored, passed in as `given` on branches `author-mr2-base-06..10` (base-08 at 11.6 and the finale base-10 need `tune --stage mr2`). MR 3's authors continue from `salvage-mr3-base-11..15` (WIP of authors cut off when the run stopped).
-- **Resume:** the args of the last launch are the stage list with `round3` on MR 1, `given` on MR 2 and `salvage` on MR 3. Resume replays only an unchanged *prefix* of agent calls, so after any edit pass finished authors' branches as `given`.
-- **Lessons:** keep branches a workflow must reuse out of the `worktree-wf_*` names (a later run reuses those names and resets or deletes them); avoid git commands in the main checkout while a run creates worktrees (an author failed to start with "git metadata could not be resolved" right after a commit on main); `keep-awake.ps1 -WhileDir` on the run folder, not the journal.
+**Where the refit stands** (branch `moonfall-peggle`, worktree `.claude/worktrees/moonfall-peggle`, head aba2e666, clean):
+- **MR 1 (base-01..05): approved.** Round 3 (level critic only) APPROVE with 7 Minors; game designer and UX approved in round 2. Records in `docs/design/v9/levels/supervisor/*-mr1-refit-round-{1,2,3}.md`.
+- **MR 2 (base-06..10): authored and merged** on moonfall-peggle (a18e332a..aba2e666), Sonnet authors as a pilot. Integration was stopped right after the merges: still to do `mfl.py sources`, `tune --stage mr2` (base-08 is too easy at 11.6/48; the finale base-10 at 6.6/48 is not yet harder than the other four), `stage mr2`, convert and `--check`, Aces, selftest, gate, pack, then reviews.
+- **MR 3 (base-11..15): partial authoring** on `salvage-mr3-base-11..15` (WIP, unchecked; new authors merge and continue).
+- **MR 4–6:** not started. MR 6's old round-2 M3 (0.5 step) is obsolete under the Peggle rules.
+- **Main** has 25 approved levels and is green; nothing from the refit is on main yet.
 
-**Speed-up tools, all merged on `moonfall-peggle`** (e7c4a1c7): `generate`, `tune` (`--stage`, `--hold`), jewels search, `check` (about 3 s), self-test stamp, shared caches in `%LOCALAPPDATA%/tsukimichi-moonfall-cache`, `--json`, `trace-many`, faster build with a render pool, incremental `convert --check`, `--jobs`, `level`, `diff`, `sheet`, `status`, `pack`, `precheck`. Build outputs are byte-identical to before (checked on base-01..03). The generator's dress limits follow the runtime loader (8 mask terms, shaft `near` -180..1000).
+**To resume:** launch the saved workflow `docs/team/workflows/moonfall-refit-v2.js` with the args in `docs/team/workflows/moonfall-refit-v2.resume-args.json` (MR 2 integration onward, MR 3 from salvage, MR 4–6). The run id `wf_2f5573bb-347` cannot be resumed from a new session. Start `pwsh tools/claude-usage/keep-awake.ps1 -WhileDir <the run's subagents/workflows/wf_* folder>` alongside.
+- The script uses explicit models (Sonnet/medium integrator and fixers, Haiku/low recorder); a new session can switch to `agentType: 'mf-integrator' | 'mf-fixer' | 'mf-recorder'`.
+- It has: parallel per-level fixers, no round 2 after a Minor-only round 1, a targeted round 3 for the reviewers still at REVISE, `given` (finished branches), `salvage` (WIP branches), and one retry when an author's worktree fails to start.
 
-**Also running:** a debugger on `MoonfallSceneStartTests.The_menus_thumbnail_is_the_levels_own_scene_scaled_down`, which fails "never settled" under machine load and passes alone. Until it lands, the workflow lets that test pass only when it passes alone.
+**Speed-up tools, all merged on `moonfall-peggle`:** `generate`, `tune` (`--stage`, `--hold`), jewels search, `check` (about 3 s), self-test stamp, shared caches in `%LOCALAPPDATA%/tsukimichi-moonfall-cache`, `--json`, `trace-many`, faster build with a render pool, incremental `convert --check`, `--jobs`, `level`, `diff`, `sheet`, `status`, `pack`, `precheck`. Also merged there: the art-wait fix (tests and MoonfallRender wait on `MoonfallGameArt.Running`, 10-minute hang cap) and `convert` writing the shipped level copy (b37496f0).
 
-**Branches kept, worktrees removed:** `worktree-agent-a82a44151d5bd65d3`, `worktree-agent-a733a0357a0fa4ec7`, `worktree-agent-af6cf5375db3db43e` (all merged), the stage-2 partial `worktree-wf_f24443a9-c85-7..11` (discarded work), and the unmerged MR 6 authoring branch `worktree-wf_2529e0f6-97c-17` (left alone).
+**Measured pace:** an author takes 2–3.5 h (five in parallel); a stage's integrate → review → fix → review chain takes 6–8 h and is the bottleneck. Estimate at pause: about 1–1.5 days to finish MR 2–6, then about 4–5 days for MR 7–11 and FS 1–12, plus half a day for the release. Running two stage chains side by side could save 1.5–2 days.
 
-**Main** has 25 approved levels and is green.
+**Lessons (workflows):**
+- Resume replays only an unchanged *prefix* of agent calls; after any edit, pass finished work as `given`/`salvage` branches.
+- Keep branches a run must reuse out of the `worktree-wf_*` names: a later run reuses those names and resets or deletes them.
+- Avoid git commands in the main checkout while a run creates worktrees (one author failed to start with "git metadata could not be resolved").
+- `keep-awake.ps1 -WhileDir` on the run folder, not the journal (written only when an agent finishes).
+
+**Open with the owner:** whether `CatalogLoaderTests.Maps_every_named_quest` should time the mapping thread's CPU time instead of wall time (it failed once at 13.1 s against 10 s under load). Unchanged until answered.
+
+**Other branches kept:** `worktree-wf_2529e0f6-97c-17` (an older unmerged MR 6 authoring branch, left alone); the earlier tool branches `worktree-agent-a82a44151d5bd65d3`, `-a733a0357a0fa4ec7`, `-af6cf5375db3db43e` (merged) and the stage-2 partial `worktree-wf_f24443a9-c85-7..11` (discarded work), all deletable.
 
 ## Next
 1. **Merge `moonfall-peggle` into main** when the refit's gates pass, and run the full check.

@@ -1,0 +1,12 @@
+{"worktree": "C:/Users/devon/Desktop/Tsukimichi (Main Repo)/.claude/worktrees/moonfall-peggle",
+ "stages": [
+  {"key": "mr2", "levels": ["base-06", "base-07", "base-08", "base-09", "base-10"], "codes": ["2-1", "2-2", "2-3", "2-4", "2-5"], "authored": true,
+   "mergedNote": "The five refit branches are already merged on moonfall-peggle (a18e332a..aba2e666); nothing to merge. base-08 is too easy (11.6/48) and the finale base-10 (6.6/48) is not yet harder than the stage's other four: run `mfl.py tune --stage mr2`."},
+  {"key": "mr3", "levels": ["base-11", "base-12", "base-13", "base-14", "base-15"], "codes": ["3-1", "3-2", "3-3", "3-4", "3-5"],
+   "salvage": {"base-11": "salvage-mr3-base-11", "base-12": "salvage-mr3-base-12", "base-13": "salvage-mr3-base-13", "base-14": "salvage-mr3-base-14", "base-15": "salvage-mr3-base-15"}},
+  {"key": "mr4", "levels": ["base-16", "base-17", "base-18", "base-19", "base-20"], "codes": ["4-1", "4-2", "4-3", "4-4", "4-5"]},
+  {"key": "mr5", "levels": ["base-21", "base-22", "base-23", "base-24", "base-25"], "codes": ["5-1", "5-2", "5-3", "5-4", "5-5"]},
+  {"key": "mr6", "levels": ["base-26", "base-27", "base-28", "base-29", "base-30"], "codes": ["6-1", "6-2", "6-3", "6-4", "6-5"],
+   "extra": ["", "6-2 is challenge ch-03's level (challenges.json): keep at least 35 orange candidates.", "", "", ""],
+   "reviewNote": "The round-2 Major M3 of the pre-refit review (a 0.5 step between 6-3 and 6-4) is obsolete: the Peggle rules removed the step rule."}
+ ]}
