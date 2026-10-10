@@ -1,6 +1,6 @@
 {
  "name": "aldenard-airship-lane",
- "about": "The north-west of the game's own world painting The Three Great Continents at its high-resolution size (Aldenard: Gridania, Coerthas and Ishgard, the cloud sea's western shore, the chart's airship and dragons over the Northern Sea), read as a chart under the moon: lapis sea and silver clouds, the land's forests in sea-green, the airship's lane engraved over it in gilt from Gridania to Ishgard and on past the airship, with a branch west and the lane in from the south. Crop [0, 555, 1280, 960]: under 25% of its own area over 2-3's crop, 3-5's charter crop and 5-2's charter crop (5-2's parked recipe merlthor-strait, [0, 1200, 960, 720], is 24.6% of this crop). MR 3 round 1: a faint grey-green lift over the whole board (a glow of radius 2000) keeps the chart's black land off sRGB 0-1, where one rounding step reads 0.067 in OKLab and the converter's gate failed (critic B1); four broad tones (x 0.85, radius 110-130) quieten the bright banners and the pale cloud shore round Ishgard, Gridania, the western hold and the cloud humps, lifting F6 from 0.222 to 0.267 (UX m3).",
+ "about": "The north-west of the game's own world painting The Three Great Continents at its high-resolution size (Aldenard: Gridania, Coerthas and Ishgard, the cloud sea's western shore, the chart's airship and dragons over the Northern Sea), read as a chart under the moon: lapis sea and silver clouds, the land's forests in sea-green, the airship's lane engraved over it in gilt from Gridania to Ishgard and on past the airship, with a branch west and the lane in from the south. Crop [0, 555, 1280, 960]: under 25% of its own area over 2-3's crop, 3-5's charter crop and 5-2's charter crop (5-2's parked recipe merlthor-strait, [0, 1200, 960, 720], is 24.6% of this crop). MR 3 round 1: a faint grey-green lift over the whole board (a glow of radius 2000) keeps the chart's black land off sRGB 0-1, where one rounding step reads 0.067 in OKLab and the converter's gate failed (critic B1); four broad tones (x 0.85, radius 110-130) quieten the bright banners and the pale cloud shore round Ishgard, Gridania, the western hold and the cloud humps, lifting F6 from 0.222 to 0.267 (UX m3). Peggle-match refit (9 October 2026): the dress is lapis and rose, a chart at dusk (the sea-green land read too close to orange for a protanope on the denser board, F9 0.091): the rose lies over the land and the lower clouds (falling away above y 200 and east of x 600), the jewel's quiet narrowed to [24, 10] so the lapis stays round the pieces, a fifth tone (x 0.8, radius 140) dims the bright cloud tops round the cloud humps, and the grade keeps less of the chart's warm parchment (warm_keep 0.12). Features added for the refit: two more cloud humps, the airship's wake, two rhumb lines off the compass rose, Gyr Abania's ridge, the Black Shroud's canopy and the western highlands.",
  "source": {
   "kind": "game",
   "texture": "ui/loadingimage/-nowloading_base05_hr1.tex",
@@ -10,7 +10,7 @@
    "gamma": 1.2,
    "exposure": 0.72,
    "ceiling": 0.35,
-   "warm_keep": 0.25,
+   "warm_keep": 0.12,
    "chroma_mid": 0.45
   }
  },
@@ -55,13 +55,26 @@
    "points": [[400, 276], [440, 281], [480, 281], [520, 287], [552, 298]],
    "smooth": 6
   },
-  "isles": [[472, 168], [458, 200], [528, 216], [422, 228]],
-  "dragon": [[207, 222], [214, 256], [276, 252]],
+  "isles": [[472, 168], [458, 200], [516, 220], [422, 228]],
+  "dragon": [[207, 222], [242, 198], [214, 256], [276, 252]],
   "flying dragon": [[110, 272], [100, 304]],
   "compass": [[180, 276]],
-  "peak": [[285, 310]],
-  "ridges": [[470, 348], [532, 338]],
-  "cloud humps": [[646, 232], [676, 284]],
+  "peak": [[277, 309]],
+  "ridges": [[540, 345]],
+  "cloud humps": [[540, 100], [632, 150], [660, 215], [676, 270]],
+  "shroud": [[420, 480], [590, 488]],
+  "highlands": [[128, 425], [175, 478]],
+  "rhumb nw": {
+   "points": [[180, 276], [95, 191]]
+  },
+  "rhumb sw": {
+   "points": [[180, 276], [95, 361]]
+  },
+  "gyr ridges": [[620, 420]],
+  "wake": {
+   "points": [[214, 128], [178, 114], [140, 104], [104, 98]],
+   "smooth": 6
+  },
   "west coast": {
    "points": [[206, 404], [228, 432], [246, 462], [258, 494]],
    "smooth": 6
@@ -70,28 +83,27 @@
  },
  "dress": {
   "palette": {
-   "name": "Lapis and sea-green (the northern chart)",
-   "sky": "#10204E",
-   "deep": "#050A1C",
-   "jewel1": "#2A48C0",
-   "jewel2": "#1E9E7E",
+   "name": "Lapis and rose (the northern chart at dusk)",
+   "sky": "#14154D",
+   "deep": "#04031F",
+   "jewel1": "#3E42B6",
+   "jewel2": "#DC7095",
    "warm": "#FFB45E",
-   "rim": "#A9E6D8"
+   "rim": "#FEBCCF"
   },
   "jewel": {
-   "bands": [[0, "#2A68C8"], [600, "#2262B8"]],
-   "valueHues": [[0.08, "#1A2A8A"], [0.45, "#C9DCFF"]],
-   "chroma": 1.8,
-   "floor": 0.05,
+   "bands": [[0, "#5964DB"], [300, "#505AC8"], [600, "#3E45A3"]],
+   "valueHues": [[0.08, "#24286E"], [0.45, "#B8C6FF"]],
+   "chroma": 1.6,
+   "floor": 0.04,
    "regions": [
     {
-     "hex": "#48B07E",
-     "chroma": 0.3,
-     "mask": [["mask", "land", 10], ["x", 75, 135], ["x", 725, 665]]
+     "hex": "#D35182",
+     "chroma": 0.1,
+     "mask": [["y", 330, 190], ["luma", 0.2, 0.36, 4], ["x", 75, 135], ["x", 725, 665]]
     }
    ],
-   "quiet": [54, 20],
-   "regionQuiet": 0.7
+   "quiet": [24, 10]
   },
   "shafts": [
    {
@@ -178,6 +190,10 @@
   {
    "mask": [["disc", 660, 320, 130, 60]],
    "mul": 0.85
+  },
+  {
+   "mask": [["disc", 620, 180, 140, 70]],
+   "mul": 0.8
   },
   {
    "mask": [["disc", 192, 355, 110, 60]],
