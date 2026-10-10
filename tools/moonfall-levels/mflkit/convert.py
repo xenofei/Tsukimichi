@@ -444,12 +444,18 @@ def _route_parts(recipe, S):
 
 
 def write(level_id, S=2):
-    """Writes the level's runtime recipe and its pictures; returns (recipe name, {file: bytes})."""
+    """Writes the level's runtime copy, its runtime recipe and its pictures; returns (recipe name, {file: bytes})."""
     level = _level(level_id)
     from .scene import load_recipe
     recipe = load_recipe(level["scene"])
     rt = runtime_recipe(recipe, level)
     sizes = {}
+    RUNTIME_LEVELS.mkdir(parents=True, exist_ok=True)
+    shipped = RUNTIME_LEVELS / f"{level_id}.json"     # the plugin ships the level file byte for byte
+    tmp = shipped.with_name(shipped.name + ".tmp")
+    tmp.write_bytes((JSON_OUT / f"{level_id}.json").read_bytes())
+    _keep_if_same(tmp, shipped)
+    sizes[shipped.name] = shipped.stat().st_size
     RUNTIME_SCENES.mkdir(parents=True, exist_ok=True)
     from .scene import dump_recipe
     path = RUNTIME_SCENES / f"{recipe['name']}.json"
