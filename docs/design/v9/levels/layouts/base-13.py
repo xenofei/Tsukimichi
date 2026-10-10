@@ -22,7 +22,8 @@ and the billows and the roof are cut into bricks of the crest's length. Candidat
 of 113 (lower third 24%): the fog's piers and the lower town stay blue (the greens' pool), and so do the crest's and
 the deck's bricks, the board's easiest targets, and the moons in the open sky. The hardest places are the shadowed
 ones: under the billows, under the crest, under the deck and in the rose window. Tuned (`mfl.py tune --band 3.6,4.7`,
-near the stage mean 4.14) to held out 4.6 per 48 (stage band 3.04-5.24).
+near the stage mean 4.14) to held out 3.8 per 48 (stage band 3.04-5.24); the deck stops at x 452, short of the
+bright fog by the cathedral, where a purple brick did not read in the runtime art test.
 """
 
 import math
@@ -50,6 +51,7 @@ EAST_BILLOW_CUT = 10.0
 RIDGE_SLOT = 4.0                 # opens the summit's notch past the limit
 PINNACLES = ((549, 160), (600, 178), (530, 192), (612, 228), (520, 250), (600, 268))   # the cathedral's inner spires
 LEFT_FLANK_TRIM = 40.0           # the flank ends clear of the east billow
+DECK_END = 452.0                 # the deck stops short of the bright fog at the cathedral's foot (a purple brick read there)
 SPIRE_ROOF = (((537, 82), (519, 136)), ((557, 82), (580, 146)))   # brick down both sides of the great spire
 
 
@@ -82,7 +84,7 @@ def build(b):
         b.place(x, y, tag="under a billow")
     b.trace([(104, 408), (224, 402)], spacing=36, tag="cloud sea")
     # ---- the bridge: its deck in brick, the lamps above, a moon in each painted arch (never green)
-    b.bricks_along([(318, deck_y(318) + 8), (470, deck_y(470) + 8)], length=34, gap=2.5, green=False, tag="deck")
+    b.bricks_along([(318, deck_y(318) + 8), (DECK_END, deck_y(DECK_END) + 8)], length=34, gap=2.5, green=False, tag="deck")
     for x in (304, 344, 384, 424):
         b.place(x, deck_y(x) - 32, tag="bridge lamp")
     for x in (374, 428):
@@ -122,8 +124,8 @@ def build(b):
     b.candidates(exclude_tags=EXCLUDE_TAGS)
 
 
-# ---- tuning (written by `mfl.py tune`; held out 4.6/48, tuning seeds 3.3/48, band 3.60-4.70)
+# ---- tuning (written by `mfl.py tune`; held out 3.8/48, tuning seeds 3.3/48, band 3.60-4.70)
 TUNING = {
-    "blue": [[256.0, 144.0]],
+    "blue": [[256.0, 144.0], [341.0, 194.0], [300.0, 124.0], [484.0, 150.0], [475.1, 212.2], [467.1, 250.7]],
     "orange": [[115.0, 171.2], [147.2, 156.2]]
 }
