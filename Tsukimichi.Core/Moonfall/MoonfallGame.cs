@@ -96,6 +96,12 @@ public sealed partial class MoonfallGame
     private int freeBallsThisShot;
     private long levelScore;
 
+    /// <summary>A ball of this shot landed in the bucket (it came back, so a miss is not flipped for).</summary>
+    private bool caughtThisShot;
+
+    /// <summary>The coin flips for a shot that lit no peg so far this level (<see cref="MoonfallRules.MissReturnFirstMax"/>).</summary>
+    private int missFlips;
+
     private int clearWait;
     private int clearCursor;
     private int clearedThisTurn;
@@ -197,10 +203,13 @@ public sealed partial class MoonfallGame
     public int ShotPegs => shotPegs;
 
     /// <summary>
-    /// This shot's score: <see cref="ShotValue"/> × <see cref="ShotPegs"/> [M correction], times 3 under a triple score
-    /// (<see cref="MoonfallPower.Draw"/>), plus its style bonuses (<see cref="StyleBonus"/>, never multiplied).
+    /// This shot's peg score: <see cref="ShotValue"/> × <see cref="ShotPegs"/> [M correction, O], times 3 under a triple
+    /// score (<see cref="MoonfallPower.Draw"/>). Only this counts towards the free balls [O].
     /// </summary>
-    public long ShotScore => (shotValue * shotPegs * (tripleThisShot ? MoonfallRules.TripleScoreFactor : 1)) + styleBonus;
+    public long PegScore => shotValue * shotPegs * (tripleThisShot ? MoonfallRules.TripleScoreFactor : 1);
+
+    /// <summary>This shot's score: its <see cref="PegScore"/> plus its style bonuses (<see cref="StyleBonus"/>, never multiplied).</summary>
+    public long ShotScore => PegScore + styleBonus;
 
     /// <summary>Free balls this shot's score has earned (0–3).</summary>
     public int FreeBallsThisShot => freeBallsThisShot;
@@ -338,6 +347,7 @@ public sealed partial class MoonfallGame
         shotValue = 0;
         shotPegs = 0;
         freeBallsThisShot = 0;
+        caughtThisShot = false;
         hitCount = 0;
         clearedThisTurn = 0;
         StartShotPowers();
@@ -517,11 +527,7 @@ public sealed partial class MoonfallGame
                 StepBalls();
                 if (Phase == MoonfallPhase.Flying)
                 {
-                    for (var k = 0; k < ballCount; k++)
-                    {
-                        WatchStuck(ref balls[k]);
-                    }
-
+                    WatchStuck();
                     WatchApproach();
                 }
 
@@ -552,6 +558,11 @@ public sealed partial class MoonfallGame
             }
         }
 
+        if (count > 1)
+        {
+            MeetBalls(count);
+        }
+
         var kept = 0;
         for (var k = 0; k < ballCount; k++)
         {
@@ -575,9 +586,71 @@ public sealed partial class MoonfallGame
         }
     }
 
+    /// <summary>
+    /// Balls in play that overlap after the tick meet as equal masses [O]: the parts of their velocities along the line
+    /// between their centres are exchanged (<see cref="MoonfallRules.BallExchange"/>), and they are pushed apart evenly.
+    /// </summary>
+    private void MeetBalls(int count)
+    {
+        const double reach = 2 * MoonfallRules.BallRadius;
+        for (var i = 0; i < count; i++)
+        {
+            for (var j = i + 1; j < count; j++)
+            {
+                ref var a = ref balls[i];
+                ref var c = ref balls[j];
+                if (a.Gone || c.Gone)
+                {
+                    continue;
+                }
+
+                var dx = c.X - a.X;
+                var dy = c.Y - a.Y;
+                var d2 = (dx * dx) + (dy * dy);
+                if (d2 >= reach * reach || d2 < 1e-18)
+                {
+                    continue;
+                }
+
+                var d = Math.Sqrt(d2);
+                var nx = dx / d;
+                var ny = dy / d;
+                var half = (reach - d) * 0.5;
+                a.X -= nx * half;
+                a.Y -= ny * half;
+                c.X += nx * half;
+                c.Y += ny * half;
+                var closing = ((a.Vx - c.Vx) * nx) + ((a.Vy - c.Vy) * ny);
+                if (closing <= 0)
+                {
+                    continue;
+                }
+
+                var impulse = closing * MoonfallRules.BallExchange;
+                a.Vx -= impulse * nx;
+                a.Vy -= impulse * ny;
+                c.Vx += impulse * nx;
+                c.Vy += impulse * ny;
+            }
+        }
+    }
+
+    /// <summary>Holds a ball to <see cref="MoonfallRules.MaxBallSpeed"/> [O], at the start of each game tick.</summary>
+    private static void CapSpeed(ref Ball b)
+    {
+        var speed2 = (b.Vx * b.Vx) + (b.Vy * b.Vy);
+        if (speed2 > MoonfallRules.MaxBallSpeed * MoonfallRules.MaxBallSpeed)
+        {
+            var scale = MoonfallRules.MaxBallSpeed / Math.Sqrt(speed2);
+            b.Vx *= scale;
+            b.Vy *= scale;
+        }
+    }
+
     private void StepBall(int k)
     {
         ref var b = ref balls[k];
+        CapSpeed(ref b);
         var speed = MoonfallGeometry.Hypot(b.Vx, b.Vy) + (MoonfallRules.Gravity * MoonfallRules.TickSeconds);
         var steps = Math.Clamp((int)Math.Ceiling(speed * MoonfallRules.TickSeconds / MoonfallRules.MaxSubStep), 1, MaxSubSteps);
         var h = MoonfallRules.TickSeconds / steps;
@@ -773,16 +846,16 @@ public sealed partial class MoonfallGame
             b.X += nx * push;
             b.Y += ny * push;
             var peg = main.Kind == ContactKind.Peg;
-            var (en, et) = main.Kind switch
+            var material = main.Kind switch
             {
-                ContactKind.Peg => (MoonfallRules.PegNormalRestitution, MoonfallRules.PegTangentRestitution),
-                ContactKind.Flipper => (MoonfallRules.FlipperRestitution, MoonfallRules.PegTangentRestitution),
-                _ => (MoonfallRules.WallRestitution, MoonfallRules.WallRestitution),
+                ContactKind.Peg => bodies[main.Index].Shape == PegShape.Round ? Material.Peg : Material.Brick,
+                ContactKind.Flipper => Material.Flipper,
+                _ => Material.Wall,
             };
             var inX = b.Vx;
             var approach = -(((b.Vx - main.Vx) * nx) + ((b.Vy - main.Vy) * ny));
             var inY = b.Vy;
-            var bounced = Bounce(ref b, nx, ny, main.Vx, main.Vy, en, et);
+            var bounced = Bounce(ref b, nx, ny, main.Vx, main.Vy, material);
             if (!live)
             {
                 continue;
@@ -913,12 +986,38 @@ public sealed partial class MoonfallGame
         AddContact(ContactKind.Rim, -1, reach - d, cnx, cny, vx, 0);
     }
 
+    /// <summary>What a surface is made of, for its bounce (<see cref="Bounce"/>).</summary>
+    private enum Material : byte
+    {
+        /// <summary>A round peg [O]: 0.80 off a firm contact, rolls on a soft one, its run along it whole.</summary>
+        Peg,
+
+        /// <summary>A straight or curved brick [O]: 0.82 of the whole velocity, or a slide on a soft contact.</summary>
+        Brick,
+
+        /// <summary>A wall, the ceiling or a rim [M 4, O]: 0.75 of the whole velocity.</summary>
+        Wall,
+
+        /// <summary>A flipper [J]: a soft bounce, its swing gives the kick.</summary>
+        Flipper,
+    }
+
     /// <summary>
-    /// Reflects the ball's velocity, relative to the surface's own, about the normal: the normal part times
-    /// <paramref name="en"/>, the rest times <paramref name="et"/>. Below <see cref="MoonfallRules.RestingSpeed"/> the
-    /// approach is only cancelled (a resting contact). True for a real bounce.
+    /// Bounces the ball off a surface of <paramref name="material"/> with normal (<paramref name="nx"/>,
+    /// <paramref name="ny"/>), relative to the surface's own velocity. True for a real bounce; false for a contact that
+    /// only rolls, slides or rests.
+    /// <list type="bullet">
+    /// <item>A round peg [O]: an approach over <see cref="MoonfallRules.PegRollSpeed"/> leaves at
+    /// <see cref="MoonfallRules.PegNormalRestitution"/> of it; a slower one keeps a tenth of it towards the peg (the
+    /// ball rolls). The run along the peg is kept whole.</item>
+    /// <item>A brick [O]: an approach over <see cref="MoonfallRules.BrickSlideSpeed"/> (a fifth of it on a level or
+    /// upright face) is reflected and the whole velocity kept at <see cref="MoonfallRules.BrickRestitution"/>; a slower
+    /// one is taken away and the ball slides on.</item>
+    /// <item>A wall, rim or flipper: the normal part times its restitution, the rest times the wall's (a flipper keeps
+    /// it whole); under <see cref="MoonfallRules.RestingSpeed"/> the approach is only cancelled.</item>
+    /// </list>
     /// </summary>
-    private static bool Bounce(ref Ball b, double nx, double ny, double ovx, double ovy, double en, double et)
+    private static bool Bounce(ref Ball b, double nx, double ny, double ovx, double ovy, Material material)
     {
         var rvx = b.Vx - ovx;
         var rvy = b.Vy - ovy;
@@ -930,16 +1029,57 @@ public sealed partial class MoonfallGame
 
         var tx = rvx - (vn * nx);
         var ty = rvy - (vn * ny);
-        if (-vn < MoonfallRules.RestingSpeed)
+        double keepNormal, keepAlong;
+        var bounced = true;
+        switch (material)
         {
-            b.Vx = tx + ovx;
-            b.Vy = ty + ovy;
-            return false;
+            case Material.Peg:
+                keepAlong = MoonfallRules.PegTangentRestitution;
+                if (-vn > MoonfallRules.PegRollSpeed)
+                {
+                    keepNormal = MoonfallRules.PegNormalRestitution;
+                }
+                else
+                {
+                    // The peg takes only its bounciness's share of the approach away: the ball keeps the rest towards it.
+                    keepNormal = MoonfallRules.PegBounciness - 1;
+                    bounced = false;
+                }
+
+                break;
+
+            case Material.Brick:
+                var axis = Math.Max(Math.Abs(nx), Math.Abs(ny)) > MoonfallRules.BrickAxisNormal;
+                if (-vn * (axis ? MoonfallRules.BrickAxisSlideFactor : 1) <= MoonfallRules.BrickSlideSpeed)
+                {
+                    keepNormal = 0;
+                    keepAlong = 1;
+                    bounced = false;
+                }
+                else
+                {
+                    keepNormal = MoonfallRules.BrickRestitution;
+                    keepAlong = MoonfallRules.BrickRestitution;
+                }
+
+                break;
+
+            default:
+                keepNormal = material == Material.Flipper ? MoonfallRules.FlipperRestitution : MoonfallRules.WallRestitution;
+                keepAlong = material == Material.Flipper ? MoonfallRules.FlipperTangentRestitution : MoonfallRules.WallRestitution;
+                if (-vn < MoonfallRules.RestingSpeed)
+                {
+                    keepNormal = 0;
+                    keepAlong = 1;
+                    bounced = false;
+                }
+
+                break;
         }
 
-        b.Vx = (tx * et) - (vn * en * nx) + ovx;
-        b.Vy = (ty * et) - (vn * en * ny) + ovy;
-        return true;
+        b.Vx = (tx * keepAlong) - (vn * keepNormal * nx) + ovx;
+        b.Vy = (ty * keepAlong) - (vn * keepNormal * ny) + ovy;
+        return bounced;
     }
 
     // ---- Hits and scoring ----
@@ -954,7 +1094,7 @@ public sealed partial class MoonfallGame
         }
 
         // The multiplier in force when the peg is touched, before this touch counts (MoonfallRules.Multiplier).
-        var value = (long)MoonfallRules.BaseValue(b.Colour) * MoonfallRules.Multiplier(OrangesLeft);
+        var value = (long)MoonfallRules.PegScore(b.Colour, MoonfallRules.Multiplier(OrangesLeft));
         b.Lit = true;
         b.HitIndex = hitCount;
         hitOrder[hitCount++] = index;
@@ -987,10 +1127,11 @@ public sealed partial class MoonfallGame
         return true;
     }
 
+    /// <summary>The free balls the shot's peg score has reached [O]: style bonuses never count (<see cref="MoonfallRules.FreeBallThresholds"/>).</summary>
     private void AwardShotFreeBalls()
     {
         var thresholds = MoonfallRules.FreeBallThresholds;
-        var score = ShotScore;
+        var score = PegScore;
         while (freeBallsThisShot < thresholds.Length && score >= thresholds[freeBallsThisShot])
         {
             BallsLeft++;
@@ -1001,65 +1142,90 @@ public sealed partial class MoonfallGame
 
     // ---- The stuck ball ----
 
-    private void WatchStuck(ref Ball ball)
+    /// <summary>
+    /// The stuck-ball watch [O] (<see cref="MoonfallRules.StuckTicks"/>), after every ball has moved this game tick: each
+    /// ball counts up, and starts again when it is <see cref="MoonfallRules.StuckRadius"/> or more from any of its noted
+    /// places; every <see cref="MoonfallRules.StuckSampleTicks"/> it notes where it is. When every ball in play is stuck
+    /// (or, by Moonfall's own second watch, has stopped sinking: <see cref="MoonfallRules.StuckSinkTicks"/>), the shot's
+    /// lit pegs clear at once and every ball's watch starts again.
+    /// </summary>
+    private void WatchStuck()
     {
-        // Sinking: a new low point (by StuckRadius) restarts the hollow watch.
-        if (ball.Y > ball.LowestY + MoonfallRules.StuckRadius)
+        var all = ballCount > 0;
+        for (var k = 0; k < ballCount; k++)
         {
-            ball.LowestY = ball.Y;
-            ball.SinkTicks = 0;
-        }
-        else if (MoonfallGeometry.Hypot(ball.Vx, ball.Vy) < MoonfallRules.StuckSinkSpeed)
-        {
-            ball.SinkTicks++;
-        }
+            ref var ball = ref balls[k];
 
-        if (MoonfallGeometry.Hypot(ball.X - ball.StuckX, ball.Y - ball.StuckY) > MoonfallRules.StuckRadius)
-        {
-            ball.StuckX = ball.X;
-            ball.StuckY = ball.Y;
-            ball.StuckTicks = 0;
-        }
-        else
-        {
+            // Sinking: a new low point (by StuckSinkDepth) restarts the hollow watch.
+            if (ball.Y > ball.LowestY + MoonfallRules.StuckSinkDepth)
+            {
+                ball.LowestY = ball.Y;
+                ball.SinkTicks = 0;
+            }
+            else if (MoonfallGeometry.Hypot(ball.Vx, ball.Vy) < MoonfallRules.StuckSinkSpeed)
+            {
+                ball.SinkTicks++;
+            }
+
             ball.StuckTicks++;
+            const double far = MoonfallRules.StuckRadius * MoonfallRules.StuckRadius;
+            for (var n = 0; n < ball.SampleCount; n++)
+            {
+                var (sx, sy) = ball.Sample(n);
+                var dx = ball.X - sx;
+                var dy = ball.Y - sy;
+                if ((dx * dx) + (dy * dy) >= far)
+                {
+                    ball.StuckTicks = 0;
+                    break;
+                }
+            }
+
+            if (++ball.SampleClock >= MoonfallRules.StuckSampleTicks)
+            {
+                ball.SampleClock = 0;
+                ball.NoteSample(ball.SampleNext);
+                ball.SampleNext = (ball.SampleNext + 1) % MoonfallRules.StuckSamples;
+                ball.SampleCount = Math.Min(ball.SampleCount + 1, MoonfallRules.StuckSamples);
+            }
+
+            all &= ball.StuckTicks >= MoonfallRules.StuckTicks || ball.SinkTicks >= MoonfallRules.StuckSinkTicks;
         }
 
-        if ((ball.StuckTicks >= MoonfallRules.StuckTicks || ball.SinkTicks >= MoonfallRules.StuckSinkTicks) && ClearStuckPeg(in ball))
+        if (!all)
         {
-            ball.ResetWatch();
+            return;
+        }
+
+        ClearStuckPegs();
+        for (var k = 0; k < ballCount; k++)
+        {
+            balls[k].ResetWatch();
         }
     }
 
-    /// <summary>Clears early the lit peg the ball touches that was hit last; false when it touches none (it is in the air).</summary>
-    private bool ClearStuckPeg(in Ball ball)
+    /// <summary>
+    /// Clears at once every peg lit this shot and still standing, in the order they were hit [O]; they still count for
+    /// the shot. Each raises <see cref="MoonfallEventKind.StuckClear"/>, the first with <see cref="MoonfallEvent.Value"/>
+    /// 1 (so counting the values counts the rule's fires). Nothing happens when none is lit.
+    /// </summary>
+    private void ClearStuckPegs()
     {
-        var pick = -1;
-        var pickOrder = -1;
-        for (var i = 0; i < bodies.Length; i++)
+        var first = true;
+        for (var h = 0; h < hitCount; h++)
         {
-            ref readonly var b = ref bodies[i];
-            if (!b.Lit || b.Cleared || !b.Near(ball.X, ball.Y, MoonfallRules.StuckTouchSlack))
+            var i = hitOrder[h];
+            ref var b = ref bodies[i];
+            if (b.Cleared)
             {
                 continue;
             }
 
-            if (b.Gap(ball.X, ball.Y) <= MoonfallRules.StuckTouchSlack && b.HitIndex > pickOrder)
-            {
-                pick = i;
-                pickOrder = b.HitIndex;
-            }
+            b.Cleared = true;
+            clearedThisTurn++;
+            Post(MoonfallEventKind.StuckClear, i, first ? 1 : 0, clearedThisTurn, b.BoundX, b.BoundY);
+            first = false;
         }
-
-        if (pick < 0)
-        {
-            return false;
-        }
-
-        bodies[pick].Cleared = true;
-        clearedThisTurn++;
-        Post(MoonfallEventKind.StuckClear, pick, 0, clearedThisTurn, bodies[pick].BoundX, bodies[pick].BoundY);
-        return true;
     }
 
     // ---- Fever ----
@@ -1128,6 +1294,7 @@ public sealed partial class MoonfallGame
         var bucketV = MoonfallBucket.VelocityAt(gameTick);
         for (var t = 0; t < ticks; t++)
         {
+            CapSpeed(ref b);
             var speed = MoonfallGeometry.Hypot(b.Vx, b.Vy) + (MoonfallRules.Gravity * MoonfallRules.TickSeconds);
             var steps = Math.Clamp((int)Math.Ceiling(speed * MoonfallRules.TickSeconds / MoonfallRules.MaxSubStep), 1, MaxSubSteps);
             var h = MoonfallRules.TickSeconds / steps;
@@ -1196,6 +1363,7 @@ public sealed partial class MoonfallGame
     {
         BallsLeft++;
         b.Gone = true;
+        caughtThisShot = true;
         Post(MoonfallEventKind.BucketCatch, -1, 0, 0, b.X, b.Y);
         Post(MoonfallEventKind.FreeBall, -1, 0, freeBallsThisShot, b.X, b.Y);
         NoteCatch(in b);
@@ -1221,7 +1389,31 @@ public sealed partial class MoonfallGame
         nextBallWait = 0;
         turnScored = false;
         lostThisTurn = false;
+        FlipForMiss();
         EndShotPowers();
+    }
+
+    /// <summary>
+    /// A shot that lit no peg may give its ball back on a coin flip [O] (<see cref="MoonfallRules.MissReturnFirstMax"/>):
+    /// drawn from the level's seeded random numbers, so the same calls give the same flips. Not in a duel, not in the
+    /// Full Moon, nor when the bucket already returned a ball this shot.
+    /// </summary>
+    private void FlipForMiss()
+    {
+        if (shotPegs > 0 || caughtThisShot || feverHit || Duel)
+        {
+            return;
+        }
+
+        var limit = missFlips == 0 ? MoonfallRules.MissReturnFirstMax : MoonfallRules.MissReturnLaterMax;
+        missFlips++;
+        var won = random.Next(100) <= limit;
+        Post(MoonfallEventKind.MissFlipped, -1, won ? 1 : 0, missFlips, MoonfallRules.LauncherX, MoonfallRules.LauncherY);
+        if (won)
+        {
+            BallsLeft++;
+            Post(MoonfallEventKind.FreeBall, -1, 0, freeBallsThisShot, MoonfallRules.LauncherX, MoonfallRules.LauncherY);
+        }
     }
 
     private void StepClearing()
@@ -1329,14 +1521,16 @@ public sealed partial class MoonfallGame
         }
 
         OrangesLeft = oranges;
+        orangesDealt = oranges;
         if (LevelNumber < MoonfallRules.FirstGreenLevel)
         {
             return;
         }
 
         // Greens from the blue pegs that may be green (format version 2's canBeGreen; every peg of a version 1 level
-        // may), in file order, so a level whose pegs all may be green deals exactly as it did before the flag. A duel
-        // deals one now and the next once it is gone (DealDuelGreen).
+        // may) [O]: those above GreenHighY first, then the rest, each part shuffled; the second green is the first in
+        // that deal at least GreenSpacing from the first (or, if none is, the next in it). A duel deals one now and the
+        // next once it is gone (DealDuelGreen).
         n = 0;
         for (var i = 0; i < bodies.Length; i++)
         {
@@ -1346,13 +1540,53 @@ public sealed partial class MoonfallGame
             }
         }
 
+        var high = 0;
+        for (var k = 0; k < n; k++)
+        {
+            if (bodies[pool[k]].BoundY < MoonfallRules.GreenHighY)
+            {
+                (pool[high], pool[k]) = (pool[k], pool[high]);
+                high++;
+            }
+        }
+
+        Shuffle(pool[..high]);
+        Shuffle(pool[high..n]);
         var greens = Math.Min(Duel ? 1 : MoonfallRules.GreenCount, n);
         duelGreensLeft = Duel ? MoonfallRules.GreenCount - greens : 0;
-        for (var k = 0; k < greens; k++)
+        if (greens == 0)
         {
-            var pick = k + random.Next(n - k);
-            (pool[k], pool[pick]) = (pool[pick], pool[k]);
-            bodies[pool[k]].Colour = PegColour.Green;
+            return;
+        }
+
+        bodies[pool[0]].Colour = PegColour.Green;
+        if (greens < 2)
+        {
+            return;
+        }
+
+        var second = 1;
+        for (var k = 1; k < n; k++)
+        {
+            var dx = bodies[pool[k]].BoundX - bodies[pool[0]].BoundX;
+            var dy = bodies[pool[k]].BoundY - bodies[pool[0]].BoundY;
+            if ((dx * dx) + (dy * dy) >= MoonfallRules.GreenSpacing * MoonfallRules.GreenSpacing)
+            {
+                second = k;
+                break;
+            }
+        }
+
+        bodies[pool[second]].Colour = PegColour.Green;
+    }
+
+    /// <summary>Shuffles <paramref name="items"/> in place from the level's seeded random numbers (Fisher–Yates).</summary>
+    private void Shuffle(Span<int> items)
+    {
+        for (var k = 0; k < items.Length - 1; k++)
+        {
+            var pick = k + random.Next(items.Length - k);
+            (items[k], items[pick]) = (items[pick], items[k]);
         }
     }
 
@@ -1365,6 +1599,13 @@ public sealed partial class MoonfallGame
         }
 
         DealDuelGreen();
+
+        // The purple peg comes in at the fourth level [O].
+        if (LevelNumber < MoonfallRules.FirstPurpleLevel)
+        {
+            purple = -1;
+            return;
+        }
 
         var candidates = 0;
         for (var i = 0; i < bodies.Length; i++)
@@ -1479,6 +1720,12 @@ public sealed partial class MoonfallGame
         BeginFlight(x, y, vx, vy);
     }
 
+    /// <summary>Adds a ball in play at (x, y) with velocity (vx, vy), as a twin would (the tests of balls meeting).</summary>
+    internal bool AddBallForTest(double x, double y, double vx, double vy) => AddBall(x, y, vx, vy);
+
+    /// <summary>Ball <paramref name="index"/>'s velocity (below <see cref="BallsInPlay"/>).</summary>
+    internal (double Vx, double Vy) BallVelocityForTest(int index) => (balls[index].Vx, balls[index].Vy);
+
     /// <summary>Lights peg <paramref name="index"/> as a touch would (scoring tests).</summary>
     internal void LightForTest(int index) => Light(index);
 
@@ -1547,6 +1794,8 @@ public sealed partial class MoonfallGame
         hash.Add(shotValue);
         hash.Add(shotPegs);
         hash.Add(freeBallsThisShot);
+        hash.Add(caughtThisShot ? 1 : 0);
+        hash.Add(missFlips);
         hash.Add(hitCount);
         hash.Add(clearWait);
         hash.Add(clearCursor);
@@ -1630,10 +1879,23 @@ public sealed partial class MoonfallGame
         /// <summary>Caught or lost this tick: dropped once every ball has moved.</summary>
         public bool Gone;
 
-        // The stuck watch (MoonfallRules.StuckTicks, StuckSinkTicks).
-        public double StuckX;
-        public double StuckY;
+        // The stuck watch (MoonfallRules.StuckTicks, StuckSinkTicks): the count, the noted places, the hollow watch.
         public int StuckTicks;
+        public double S0X;
+        public double S0Y;
+        public double S1X;
+        public double S1Y;
+        public double S2X;
+        public double S2Y;
+        public double S3X;
+        public double S3Y;
+        public double S4X;
+        public double S4Y;
+        public double S5X;
+        public double S5Y;
+        public int SampleCount;
+        public int SampleNext;
+        public int SampleClock;
         public double LowestY;
         public int SinkTicks;
 
@@ -1654,12 +1916,38 @@ public sealed partial class MoonfallGame
         public long LastPegContact;
         public int SlideRun;
 
+        /// <summary>Noted place <paramref name="n"/> (0 to <see cref="MoonfallRules.StuckSamples"/> − 1) of the stuck watch.</summary>
+        public readonly (double X, double Y) Sample(int n) => n switch
+        {
+            0 => (S0X, S0Y),
+            1 => (S1X, S1Y),
+            2 => (S2X, S2Y),
+            3 => (S3X, S3Y),
+            4 => (S4X, S4Y),
+            _ => (S5X, S5Y),
+        };
+
+        /// <summary>Notes where the ball is as place <paramref name="n"/> of the stuck watch.</summary>
+        public void NoteSample(int n)
+        {
+            switch (n)
+            {
+                case 0: (S0X, S0Y) = (X, Y); break;
+                case 1: (S1X, S1Y) = (X, Y); break;
+                case 2: (S2X, S2Y) = (X, Y); break;
+                case 3: (S3X, S3Y) = (X, Y); break;
+                case 4: (S4X, S4Y) = (X, Y); break;
+                default: (S5X, S5Y) = (X, Y); break;
+            }
+        }
+
         /// <summary>Starts the stuck watch afresh from where the ball is.</summary>
         public void ResetWatch()
         {
-            StuckX = X;
-            StuckY = Y;
             StuckTicks = 0;
+            SampleCount = 0;
+            SampleNext = 0;
+            SampleClock = 0;
             LowestY = Y;
             SinkTicks = 0;
         }
@@ -1693,9 +1981,17 @@ public sealed partial class MoonfallGame
             hash.Add(PrevX);
             hash.Add(PrevY);
             hash.Add(Gone ? 1 : 0);
-            hash.Add(StuckX);
-            hash.Add(StuckY);
             hash.Add(StuckTicks);
+            for (var n = 0; n < MoonfallRules.StuckSamples; n++)
+            {
+                var (sx, sy) = Sample(n);
+                hash.Add(sx);
+                hash.Add(sy);
+            }
+
+            hash.Add(SampleCount);
+            hash.Add(SampleNext);
+            hash.Add(SampleClock);
             hash.Add(LowestY);
             hash.Add(SinkTicks);
             hash.Add(LegPeg);

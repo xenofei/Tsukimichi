@@ -11,7 +11,20 @@ public sealed partial class MoonfallGame
     private long styleBonus;
     private int styleAwarded;
     private int shotOranges;
-    private int orangesAtShotStart;
+
+    /// <summary>The oranges the level dealt (Orange Sweep's need is set by them [O]).</summary>
+    private int orangesDealt;
+
+    // The Long Shot watch [O], per shot: waiting for the shot's first peg, holding a non-blue first peg, or settled.
+    private const int LongWaiting = 0;
+    private const int LongHolding = 1;
+    private const int LongSettled = 2;
+    private int longState;
+    private double longX;
+    private double longY;
+
+    /// <summary>The game tick a blue peg was grazed after the first, or −1.</summary>
+    private long longBlueTick;
 
     /// <summary>This shot's style bonuses so far (part of <see cref="ShotScore"/>).</summary>
     public long StyleBonus => styleBonus;
@@ -36,19 +49,21 @@ public sealed partial class MoonfallGame
         _ => 0,
     };
 
-    /// <summary>The oranges a shot must light for an Orange Sweep, given the oranges left when it was fired.</summary>
-    public static int OrangeSweepNeeds(int orangesAtStart) =>
-        Math.Max(MoonfallRules.OrangeSweepMinimum, (orangesAtStart + MoonfallRules.OrangeSweepShare - 1) / MoonfallRules.OrangeSweepShare);
+    /// <summary>The oranges one shot must light for an Orange Sweep on this level (<see cref="MoonfallRules.OrangeSweepNeeds"/>).</summary>
+    public int OrangeSweepNeeds => MoonfallRules.OrangeSweepNeeds(orangesDealt);
 
     private void StartShotStyle()
     {
         styleBonus = 0;
         styleAwarded = 0;
         shotOranges = 0;
-        orangesAtShotStart = OrangesLeft;
+        longState = LongWaiting;
+        longX = 0;
+        longY = 0;
+        longBlueTick = -1;
     }
 
-    /// <summary>Pays <paramref name="kind"/> once this shot, and raises it for the window.</summary>
+    /// <summary>Pays <paramref name="kind"/> once this shot, and raises it for the window. It never counts towards a free ball [O].</summary>
     private void Award(MoonfallStyleShot kind, int peg, double x, double y)
     {
         var bit = 1 << (int)kind;
@@ -61,12 +76,12 @@ public sealed partial class MoonfallGame
         var bonus = Duel ? DuelStyleShotBonus(kind) : StyleShotBonus(kind);
         styleBonus += bonus;
         Post(MoonfallEventKind.StyleShot, peg, bonus, (int)kind, x, y);
-        AwardShotFreeBalls();
     }
 
     /// <summary>
     /// Ball <paramref name="b"/> touches peg <paramref name="index"/>: the peg lights (once), and the touch moves the
-    /// ball's watch on: its long legs, Off the Wall and Rim Shot after a bounce, its slide, and Storm Post's bolt.
+    /// watches on: the shot's Long Shot, the ball's long legs, Off the Wall and Rim Shot after a bounce, its slide, and
+    /// Storm Post's bolt.
     /// </summary>
     private void Touch(ref Ball b, int index)
     {
@@ -105,7 +120,10 @@ public sealed partial class MoonfallGame
         // Lucky Bounce [R §3 l.81] counts from the first rim bounce since the ball last lit a peg.
         b.RimArmed = false;
 
-        // Long legs [R §3 l.76–78]: non-blue to non-blue, far apart, with at most one blue between.
+        WatchLongShot(index, coloured, x, y);
+
+        // Long legs for Double Long Shot [R §3 l.76–78]: non-blue to non-blue, far apart, with at most one blue between;
+        // two in a row pay it.
         if (!coloured)
         {
             if (b.LegPeg >= 0)
@@ -116,23 +134,15 @@ public sealed partial class MoonfallGame
         else
         {
             var longLeg = false;
-            if (b.LegPeg >= 0 && b.LegBlues <= MoonfallRules.LongShotBluesAllowed)
+            if (b.LegPeg >= 0 && b.LegBlues <= MoonfallRules.DoubleLongShotBluesAllowed)
             {
                 var distance = MoonfallGeometry.Hypot(x - b.LegX, y - b.LegY);
-                if (distance >= MoonfallRules.LongShotDistance)
+                if (distance >= MoonfallRules.DoubleLongShotLegDistance)
                 {
                     longLeg = true;
-                    if (b.LegWasLong && !StyleShotThisShot(MoonfallStyleShot.DoubleLongShot))
+                    if (b.LegWasLong)
                     {
                         Award(MoonfallStyleShot.DoubleLongShot, index, x, y);
-                    }
-                    else if (distance >= MoonfallRules.SuperLongShotDistance && !StyleShotThisShot(MoonfallStyleShot.SuperLongShot))
-                    {
-                        Award(MoonfallStyleShot.SuperLongShot, index, x, y);
-                    }
-                    else
-                    {
-                        Award(MoonfallStyleShot.LongShot, index, x, y);
                     }
                 }
             }
@@ -158,6 +168,58 @@ public sealed partial class MoonfallGame
         if (PowerActive(MoonfallPower.Bolt) && !boltFired)
         {
             FireBolt(index);
+        }
+    }
+
+    /// <summary>
+    /// Long Shot and Super Long Shot [O]: the shot's first two pegs touched are both non-blue and more than
+    /// <see cref="MoonfallRules.LongShotDistance"/> (or <see cref="MoonfallRules.SuperLongShotDistance"/>) apart; one blue
+    /// grazed between them is forgiven when the second comes within <see cref="MoonfallRules.LongShotBlueGraceTicks"/>.
+    /// Settled at the second peg either way, so it is paid at most once a shot, and only one of the two.
+    /// </summary>
+    private void WatchLongShot(int index, bool coloured, double x, double y)
+    {
+        switch (longState)
+        {
+            case LongWaiting:
+                longState = coloured ? LongHolding : LongSettled;
+                longX = x;
+                longY = y;
+                return;
+
+            case LongHolding when !coloured:
+                // One blue grazed on the way is forgiven if the second non-blue follows soon; a second blue settles it.
+                if (longBlueTick >= 0)
+                {
+                    longState = LongSettled;
+                }
+                else
+                {
+                    longBlueTick = gameTick;
+                }
+
+                return;
+
+            case LongHolding:
+                longState = LongSettled;
+                if (longBlueTick >= 0 && gameTick - longBlueTick >= MoonfallRules.LongShotBlueGraceTicks)
+                {
+                    return;
+                }
+
+                var dx = x - longX;
+                var dy = y - longY;
+                var d2 = (dx * dx) + (dy * dy);
+                if (d2 > MoonfallRules.SuperLongShotDistance * MoonfallRules.SuperLongShotDistance)
+                {
+                    Award(MoonfallStyleShot.SuperLongShot, index, x, y);
+                }
+                else if (d2 > MoonfallRules.LongShotDistance * MoonfallRules.LongShotDistance)
+                {
+                    Award(MoonfallStyleShot.LongShot, index, x, y);
+                }
+
+                return;
         }
     }
 
@@ -219,12 +281,11 @@ public sealed partial class MoonfallGame
         }
     }
 
-    /// <summary>An orange lit by any means this shot counts towards an Orange Sweep [R §3 l.82].</summary>
+    /// <summary>An orange lit by any means this shot counts towards an Orange Sweep [R §3 l.82, O: the level's dealt oranges set the need].</summary>
     private void NoteOrangeLit(int index)
     {
         shotOranges++;
-        var needs = OrangeSweepNeeds(orangesAtShotStart);
-        if (orangesAtShotStart >= needs && shotOranges >= needs)
+        if (shotOranges >= OrangeSweepNeeds)
         {
             Award(MoonfallStyleShot.OrangeSweep, index, bodies[index].BoundX, bodies[index].BoundY);
         }
@@ -254,6 +315,10 @@ public sealed partial class MoonfallGame
         hash.Add(styleBonus);
         hash.Add(styleAwarded);
         hash.Add(shotOranges);
-        hash.Add(orangesAtShotStart);
+        hash.Add(orangesDealt);
+        hash.Add(longState);
+        hash.Add(longX);
+        hash.Add(longY);
+        hash.Add(longBlueTick);
     }
 }

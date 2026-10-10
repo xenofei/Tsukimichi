@@ -105,15 +105,17 @@ public sealed class MoonfallPhysicsTests
     }
 
     [Fact]
-    public void Peg_bounces_fit_the_measured_restitution_and_contact_distance()
+    public void Peg_bounces_fit_the_originals_restitution_and_the_measured_contact_distance()
     {
-        // [M 4]: e_n = 0.80 ± 0.02 and e_t = 0.95 ± 0.05 from |v_out|² = e_n²(v·n)² + e_t²(v·t)² fitted over the bounces;
-        // the overall speed ratio's median 0.82 (IQR 0.80–0.85); [M 3]: centre distance at contact 16.7 ± 1.0.
-        // The ball comes in at 250–450 px/s with impact parameters spread evenly across the peg, as in play.
+        // [O]: e_n = 0.80 (the footage's 0.80 ± 0.02 [M 4]) and e_t = 1.0, the run along the peg kept whole (the footage
+        // read 0.95 ± 0.05; owner decision, 9 October 2026), from |v_out|² = e_n²(v·n)² + e_t²(v·t)² fitted over the
+        // bounces; [M 3]: centre distance at contact 16.7 ± 1.0. The ball comes in at 250–450 px/s with impact parameters
+        // spread evenly across the middle 80% of the peg, every one a firm contact (over 111 px/s along the normal; the
+        // grazing ones roll, A_soft_contact_on_a_peg_rolls_instead_of_bouncing).
         var bounces = new List<MoonfallBounce>();
         for (var k = 0; k < 41; k++)
         {
-            var b = -0.95 + (k * 1.9 / 40);
+            var b = -0.8 + (k * 1.6 / 40);
             var speed = 250 + (k % 5 * 50);
             var game = new MoonfallGame(Board(Blue(400, 300)), 1, 1);
             game.PlaceBall(400 + (b * 16), 230, 0, speed);
@@ -147,9 +149,33 @@ public sealed class MoonfallPhysicsTests
         var en = Math.Sqrt(((sny * stt) - (sty * snt)) / det);
         var et = Math.Sqrt(((sty * snn) - (sny * snt)) / det);
         Assert.InRange(en, 0.80 - 0.02, 0.80 + 0.02);
-        Assert.InRange(et, 0.95 - 0.05, 0.95 + 0.05);
+        Assert.InRange(et, 1.0 - 0.02, 1.0 + 0.02);
+
+        // The speed ratio of a bounce at impact parameter b is √(0.64 + 0.36 b²): over b spread evenly in ±0.8 the median
+        // (|b| = 0.4) is 0.835, a little more as gravity bends the path in.
         ratios.Sort();
-        Assert.InRange(ratios[ratios.Count / 2], 0.80, 0.85);
+        Assert.InRange(ratios[ratios.Count / 2], 0.82, 0.86);
+    }
+
+    [Fact]
+    public void A_soft_contact_on_a_peg_rolls_instead_of_bouncing()
+    {
+        // [O] At 111 px/s or less along the normal the peg takes away only 0.9 of the approach: no bounce, the ball
+        // keeps a tenth of its approach towards the peg and its run along it, so it rolls round and off.
+        var game = new MoonfallGame(Board(Blue(400, 300)), 1, 1);
+        game.PlaceBall(404, 300 - 16.5, 0, 90);
+        var events = RunUntil(game, static g => g.Phase != MoonfallPhase.Flying || g.BallY > 310, 200);
+        Assert.Null(game.LastBounce);
+        Assert.True(game.Peg(0).Lit);
+        Assert.True(game.BallX > 410, "the ball rolled off the peg's side");
+        Assert.Contains(events, static e => e.Event.Kind == MoonfallEventKind.PegHit);
+
+        // Faster than that it bounces.
+        var firm = new MoonfallGame(Board(Blue(400, 300)), 1, 1);
+        firm.PlaceBall(400, 300 - 16.5, 0, 130);
+        RunUntil(firm, static g => g.LastBounce is not null, 20);
+        var bounce = Assert.NotNull(firm.LastBounce);
+        Assert.Equal(0.80, -bounce.OutY / bounce.InY, 0.01);
     }
 
     [Fact]
@@ -170,14 +196,17 @@ public sealed class MoonfallPhysicsTests
     }
 
     [Fact]
-    public void Bricks_bounce_the_ball_like_pegs()
+    public void Bricks_keep_082_of_the_whole_velocity()
     {
-        // A straight brick under a falling ball sends it back up at e_n, and a curved one bounces it off its curve.
+        // [O] A straight brick under a falling ball reflects it and keeps 0.82 of its whole velocity (it bounced like a
+        // peg, 0.80 normal and 0.95 along, before the owner's decision of 9 October 2026), and a curved one bounces it
+        // off its curve.
         var line = new MoonfallGame(Board(MoonfallPeg.Line(350, 300, 450, 300, canBeOrange: false)), 1, 1);
-        line.PlaceBall(400, 230, 0, 300);
+        line.PlaceBall(400, 230, 60, 300);
         RunUntil(line, static g => g.LastBounce is not null, 100);
         var straight = Assert.NotNull(line.LastBounce);
-        Assert.Equal(0.80, -straight.OutY / straight.InY, 0.01);
+        Assert.Equal(0.82, -straight.OutY / straight.InY, 0.01);
+        Assert.Equal(0.82, straight.OutX / straight.InX, 0.01);
         Assert.Equal(300 - 10 - 6, straight.Y, 0.5);
 
         var arc = new MoonfallGame(Board(MoonfallPeg.Arc(400, 400, 100, 200, 140, canBeOrange: false)), 1, 1);
@@ -185,6 +214,61 @@ public sealed class MoonfallPhysicsTests
         RunUntil(arc, static g => g.LastBounce is not null, 100);
         Assert.Equal(400 - 100 - 10 - 6, Assert.NotNull(arc.LastBounce).Y, 0.5);
         Assert.True(arc.Peg(0).Lit);
+    }
+
+    [Fact]
+    public void A_slow_contact_on_a_brick_slides_and_a_level_face_needs_a_fifth_of_the_speed()
+    {
+        // [O] A brick takes away an approach of 140 px/s or less and the ball slides on along it, its run kept whole.
+        // On a sloping brick a ball set down above it lands at about 100 px/s and slides off without a bounce.
+        var slope = new MoonfallGame(Board(MoonfallPeg.Line(300, 300, 500, 360, canBeOrange: false)), 1, 1);
+        slope.PlaceBall(320, 290 - 10, 0, 0);
+        var events = RunUntil(slope, static g => g.Phase != MoonfallPhase.Flying || g.BallX > 480, 400);
+        Assert.Null(slope.LastBounce);
+        Assert.True(slope.Peg(0).Lit);
+        Assert.True(slope.BallX > 480, "the ball slid down the brick");
+        Assert.Contains(events, static e => e.Event.Kind == MoonfallEventKind.PegHit);
+
+        // On a level face the approach counts five times over: a ball meeting it at 20 px/s slides (100), at 45 bounces (225).
+        static MoonfallBounce? Drop(double speed)
+        {
+            var flat = new MoonfallGame(Board(MoonfallPeg.Line(300, 300, 500, 300, canBeOrange: false)), 1, 1);
+            flat.PlaceBall(400, 300 - 16 - 0.2, 0, speed);
+            RunUntil(flat, static g => g.Peg(0).Lit, 20);
+            RunUntil(flat, static g => false, 2);
+            return flat.LastBounce;
+        }
+
+        Assert.Null(Drop(15));
+        Assert.Equal(0.82, -Assert.NotNull(Drop(40)).OutY / Assert.NotNull(Drop(40)).InY, 0.01);
+    }
+
+    [Fact]
+    public void A_ball_never_flies_faster_than_1500_px_a_second()
+    {
+        // [O] 15 px a tick: a ball given 3,000 px/s is held to 1,500 on its next tick, in its direction.
+        var game = new MoonfallGame(Board(), 1, 1);
+        game.PlaceBall(400, 100, 1800, -2400);
+        game.Tick();
+        var speed = Math.Sqrt((game.BallVelocityX * game.BallVelocityX) + (game.BallVelocityY * game.BallVelocityY));
+        Assert.InRange(speed, 1495, 1505);
+        Assert.Equal(-0.75, game.BallVelocityX / game.BallVelocityY, 0.01);
+    }
+
+    [Fact]
+    public void Two_balls_in_play_meet_and_exchange_their_speed_along_the_line_between_them()
+    {
+        // [O] Equal masses, the exchange taken at 0.95: a ball moving at 300 px/s into one at rest gives it 0.95 of its
+        // speed along the line and keeps 0.05; together they keep their momentum. (They passed through each other.)
+        var game = new MoonfallGame(Board(), 1, 1);
+        game.PlaceBall(300, 100, 300, 0);
+        Assert.True(game.AddBallForTest(320, 100, 0, 0));
+        RunUntil(game, static g => g.BallVelocityForTest(1).Vx > 1, 20);
+        var (ax, _) = game.BallVelocityForTest(0);
+        var (bx, _) = game.BallVelocityForTest(1);
+        Assert.Equal(300 * 0.05, ax, 0.5);
+        Assert.Equal(300 * 0.95, bx, 0.5);
+        Assert.True(game.BallAt(1, 1).X - game.BallAt(0, 1).X >= (2 * MoonfallRules.BallRadius) - 1e-6, "the balls were pushed apart");
     }
 
     [Fact]

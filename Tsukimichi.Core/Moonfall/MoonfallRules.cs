@@ -6,7 +6,9 @@ namespace Tsukimichi.Core.Moonfall;
 /// <c>[M n]</c> is row n of the summary table in <c>docs/research/plan-v9/peg-measurements.md</c> (measured from 60 fps
 /// footage), <c>[R §n]</c> is section n of <c>peg-mechanics.md</c> (public sources and PopCap's patents), and
 /// <c>[J]</c> is a value the footage could not pin down, set by judgement (plan v9 "Your answers", G10: no tuning build),
-/// with the reasoning beside it.
+/// with the reasoning beside it. <c>[O]</c> is the original game's own value, from the reference study the owner's
+/// decision of 9 October 2026 adopted ("Moonfall plays by Peggle's real values"; <c>docs/design/v9/spec-moonfall.md</c>,
+/// "The original's values"): where it differs from a measured or judged value, it wins.
 /// </summary>
 public static partial class MoonfallRules
 {
@@ -65,11 +67,25 @@ public static partial class MoonfallRules
     public const double BarrelLength = 73;
 
     /// <summary>
-    /// [J] The aim limit either side of straight down. Play reached ±81° and never the stop [M 2]. 85° keeps every angle
-    /// the footage shows, leaves room to graze the side walls, and stops short of a level shot, which a barrel that hangs
-    /// from the top of the board could not fire.
+    /// The aim limit either side of straight down: 97° [O: the launcher refuses only the upward cone within 83° of
+    /// straight up, so it fires anywhere from 7° above level on one side, through straight down, to 7° above level on the
+    /// other]. A flat or slightly rising shot reaches the high side pegs and the top corners. (Before the owner's Peggle
+    /// decision of 9 October 2026 it was 85°, set by judgement from footage that reached ±81°.)
     /// </summary>
-    public const double AimLimitDegrees = 85;
+    public const double AimLimitDegrees = 97;
+
+    /// <summary>
+    /// The ball's speed limit: 15 px a tick, 1,500 px/s [O]. Gravity and the launcher never come near it; a flipper's
+    /// kick can, and is held to it.
+    /// </summary>
+    public const double MaxBallSpeed = 1500;
+
+    /// <summary>
+    /// Two balls in play (a twin) meet as equal masses: the part of their velocities along the line between their
+    /// centres is exchanged with a factor of 0.95 [O]. [J] Read as the exchange's impulse scaled by 0.95, so the pair
+    /// keeps its momentum and loses a little of the swap.
+    /// </summary>
+    public const double BallExchange = 0.95;
 
     // ---- Pegs and bounces ----
 
@@ -83,21 +99,58 @@ public static partial class MoonfallRules
     /// <summary>A brick's thickness: about 20 px [M 3, R §2 "a width of 20"].</summary>
     public const double BrickThickness = 20;
 
-    /// <summary>The normal restitution off a peg or brick: 0.80 ± 0.02 [M 4].</summary>
-    public const double PegNormalRestitution = 0.80;
+    /// <summary>
+    /// A round peg's bounciness, 0.9 [O]: a firm contact takes twice this share of the approach away, so the ball leaves
+    /// at 2 × 0.9 − 1 = 0.80 of it (<see cref="PegNormalRestitution"/>), as the footage measured (0.80 ± 0.02 [M 4]).
+    /// </summary>
+    public const double PegBounciness = 0.9;
 
-    /// <summary>The tangential ratio off a peg or brick: 0.95 ± 0.05, so little or no friction [M 4]. No spin [M 4].</summary>
-    public const double PegTangentRestitution = 0.95;
+    /// <summary>The normal restitution off a round peg: 0.80 [O, M 4] (<see cref="PegBounciness"/>).</summary>
+    public const double PegNormalRestitution = (2 * PegBounciness) - 1;
 
-    /// <summary>A wall scales the whole velocity by 0.75 ± 0.02, both components [M 4].</summary>
+    /// <summary>
+    /// A round peg keeps the ball's speed along its surface whole [O] (the footage read 0.95 ± 0.05 [M 4], within its
+    /// error). No spin [M 4].
+    /// </summary>
+    public const double PegTangentRestitution = 1.0;
+
+    /// <summary>
+    /// A soft contact on a round peg rolls rather than bounces [O]: when the bounciness times the approach is at most
+    /// 1 px a tick (100 px/s), the peg takes only that share away, so the ball keeps a tenth of its approach, stays on
+    /// the peg and rolls round it. In approach speed that is up to 100 / 0.9 ≈ 111 px/s.
+    /// </summary>
+    public const double PegRollSpeed = 100 / PegBounciness;
+
+    /// <summary>
+    /// A brick (straight or curved) bounces the ball by reflecting it and then keeping 0.82 of the whole velocity [O],
+    /// so a ball loses 18% of its run along a brick at each bounce.
+    /// </summary>
+    public const double BrickRestitution = 0.82;
+
+    /// <summary>
+    /// A contact with a brick slower than this (px/s, along the normal) does not bounce: the approach is taken away and
+    /// the ball slides on along the brick with its speed along it whole [O: 1.4 px a tick].
+    /// </summary>
+    public const double BrickSlideSpeed = 140;
+
+    /// <summary>
+    /// On a brick face within about 8° of level or upright (a normal component over 0.99) the approach counts five times
+    /// over for the slide test [O], so the ball slides only under 140 / 5 = 28 px/s and otherwise bounces.
+    /// </summary>
+    public const double BrickAxisSlideFactor = 5;
+
+    /// <summary>The normal component over which a brick face counts as level or upright (<see cref="BrickAxisSlideFactor"/>) [O].</summary>
+    public const double BrickAxisNormal = 0.99;
+
+    /// <summary>A wall scales the whole velocity by 0.75 ± 0.02, both components [M 4; O the same, 0.75].</summary>
     public const double WallRestitution = 0.75;
 
     /// <summary>
-    /// [J] Below this approach speed (px/s, along the contact normal) a contact is resting, not a bounce: the approach is
-    /// cancelled with no rebound and no tangential loss. Gravity adds 5 px/s a tick, so a ball lying on a peg would
-    /// otherwise chatter with ever smaller bounces and lose 5% of its slide every tick, and could never roll off a curve
-    /// (the original's balls slide the length of a brick arc). Twenty px/s is four ticks of gravity: well under any
-    /// bounce the footage measured, well over a resting ball's chatter.
+    /// [J] Below this approach speed (px/s, along the contact normal) a contact with a wall, the ceiling, a rim or a
+    /// flipper is resting, not a bounce: the approach is cancelled with no rebound and no loss along the surface.
+    /// Gravity adds 5 px/s a tick, so a ball lying against one would otherwise chatter with ever smaller bounces. Twenty
+    /// px/s is four ticks of gravity: well under any bounce the footage measured, well over a resting ball's chatter.
+    /// (Pegs and bricks have the original's own rules: <see cref="PegRollSpeed"/>, <see cref="BrickSlideSpeed"/>.)
     /// </summary>
     public const double RestingSpeed = 20;
 
@@ -125,31 +178,40 @@ public static partial class MoonfallRules
     /// </summary>
     public const int CountUpHoldTicks = 120;
 
-    // ---- Stuck ball [R §1, M 6: not measured] ----
+    // ---- Stuck ball [O; R §1] ----
 
     /// <summary>
-    /// [J] The stuck-ball rule. The original "may remove a peg before the end of the turn to keep the ball in play" [R §1]
-    /// and the footage never shows it [M 6]. Moonfall calls the ball stuck when its centre has stayed within
-    /// <see cref="StuckRadius"/> of one spot for <see cref="StuckTicks"/>: it then clears early the lit peg or brick it is
-    /// touching that was hit last (the one holding it up most recently), and starts watching again, so a ball wedged
-    /// between several pegs loses one every 1.5 s until it falls free. The peg still counts for the shot.
-    /// 1.5 s of game time is three times the longest pause a free ball shows at the top of a bounce, so no moving ball is
-    /// ever called stuck, and short enough that a wedge never feels like a hang. A ball rocking in a hollow is caught by
-    /// the rule's second half, <see cref="StuckSinkTicks"/>.
+    /// The stuck-ball rule [O]. Every game tick each ball's stuck count goes up by one; every
+    /// <see cref="StuckSampleTicks"/> its place is noted, the last <see cref="StuckSamples"/> notes kept (10 to 60 ticks
+    /// back). A ball <see cref="StuckRadius"/> or more from any of them is moving, and its count starts again. When every
+    /// ball in play has counted <see cref="StuckTicks"/> (0.5 s of game time), every peg lit this shot and still standing
+    /// clears at once (they still count for the shot), and the counts start again. A free ball is never called stuck:
+    /// even at the top of a bounce it moves 2.5 px in 0.1 s. (Before the owner's Peggle decision of 9 October 2026 the
+    /// rule waited 1.5 s within 15 px and cleared one touching peg at a time.)
     /// </summary>
-    public const int StuckTicks = 150;
+    public const int StuckTicks = 50;
 
-    /// <summary>[J] How far (px) the ball may wander and still count as staying put: under one ball diameter plus the chatter of a resting contact.</summary>
-    public const double StuckRadius = 15;
+    /// <summary>How far (px) from a noted place counts as moving [O].</summary>
+    public const double StuckRadius = 2;
+
+    /// <summary>A ball's place is noted every this many game ticks [O].</summary>
+    public const int StuckSampleTicks = 10;
+
+    /// <summary>The noted places kept, so the watch looks back 10 to 60 ticks [O].</summary>
+    public const int StuckSamples = 6;
 
     /// <summary>
-    /// [J] The second half of the stuck rule: a ball that rocks to and fro in a hollow (a bowl of bricks, a pocket wider
-    /// than <see cref="StuckRadius"/>) never stays in one spot, yet never gets lower either. When the ball has not come
-    /// <see cref="StuckRadius"/> lower than its lowest point for 3 s of game time, the lit peg or brick it is touching
-    /// (the last hit) clears early in the same way. A free ball always gains depth within that: the highest bounce the
-    /// launch speed allows rises and falls back in about 1.6 s.
+    /// [J] A second watch, Moonfall's own: a ball that rocks to and fro in a hollow (a bowl of curved bricks, along which
+    /// a ball slides with its speed whole) never stays within <see cref="StuckRadius"/>, yet never gets lower either. When
+    /// every ball in play has gone 3 s of game time without coming <see cref="StuckSinkDepth"/> lower than its lowest
+    /// point (or is stuck by the first watch), the shot's lit pegs clear in the same way. A free ball always gains depth
+    /// within that: the highest bounce the launch speed allows rises and falls back in about 1.6 s. The original's
+    /// fallback for this case was not decoded, so the watch stays.
     /// </summary>
     public const int StuckSinkTicks = 300;
+
+    /// <summary>[J] How much lower (px) counts as sinking for <see cref="StuckSinkTicks"/>: under one ball diameter plus a resting contact's chatter.</summary>
+    public const double StuckSinkDepth = 15;
 
     /// <summary>
     /// [J] Only a slow ball counts towards <see cref="StuckSinkTicks"/>: below 120 px/s. A ball running fast along a long
@@ -157,9 +219,6 @@ public static partial class MoonfallRules
     /// turning points, well under this, so it is still caught.
     /// </summary>
     public const double StuckSinkSpeed = 120;
-
-    /// <summary>[J] A peg within this distance (px) of contact counts as touching the stuck ball.</summary>
-    public const double StuckTouchSlack = 2;
 
     // ---- Bucket [M 5] ----
 
@@ -275,23 +334,60 @@ public static partial class MoonfallRules
     /// <summary>Two green pegs a level from the third level on [R §2, P].</summary>
     public const int GreenCount = 2;
 
-    /// <summary>The first level (1-based) with green pegs [R §2].</summary>
+    /// <summary>The first level (1-based) with green pegs [R §2, O].</summary>
     public const int FirstGreenLevel = 3;
+
+    /// <summary>
+    /// The first level (1-based) with a purple peg: the fourth [O, the original's tutorial brings it in there]. (Before
+    /// the owner's Peggle decision of 9 October 2026 every level had one.)
+    /// </summary>
+    public const int FirstPurpleLevel = 4;
+
+    /// <summary>
+    /// The greens are dealt from the blue pegs that may be green above this height first [O: 410 on screen]; only when
+    /// those run out do lower ones take a green.
+    /// </summary>
+    public const double GreenHighY = 410;
+
+    /// <summary>
+    /// The two greens stand at least this far apart, centre to centre [O]. [J] If no peg that may be green is that far
+    /// from the first, the second is the next in the deal all the same, so a level always gets its two.
+    /// </summary>
+    public const double GreenSpacing = 150;
 
     /// <summary>10 balls a level [R §6, P].</summary>
     public const int BallsPerLevel = 10;
 
-    /// <summary>A shot's score reaching each of these gives a free ball [R §3, P].</summary>
+    /// <summary>
+    /// A shot's peg score reaching each of these gives a free ball [R §3, P, O]. Only the peg score counts (the pegs'
+    /// values × their count, times a triple score): style bonuses add to the shot's score but never towards a free ball
+    /// [O: "style points don't factor into getting a free ball"]. (Before the owner's Peggle decision of 9 October 2026
+    /// they did.)
+    /// </summary>
     public static ReadOnlySpan<int> FreeBallThresholds => [25_000, 75_000, 125_000];
+
+    /// <summary>
+    /// A shot that lights no peg may still give its ball back, on a coin flip [O]: the first such shot of a level wins
+    /// it when a draw of 0–99 from the level's seeded random numbers is at most 80 (81 in 100), every later one when it is
+    /// at most 60 (61 in 100). Not in a duel [O], nor for a ball the bucket already returned. [J] "Later" counts the
+    /// level's earlier flips, won or lost (the original's counter was read, not traced). The original also always wins
+    /// the flip early in its adventure (a profile flag not decoded); Moonfall does not.
+    /// </summary>
+    public const int MissReturnFirstMax = 80;
+
+    /// <summary>The coin flip's limit after a level's first flip (<see cref="MissReturnFirstMax"/>): 61 in 100 [O].</summary>
+    public const int MissReturnLaterMax = 60;
 
     /// <summary>[R §3, CB, unverified] Each ball left at the end of a won level is worth 10,000.</summary>
     public const int UnusedBallBonus = 10_000;
 
     /// <summary>
-    /// The Fever meter's multiplier by the orange pegs still unlit [R §3]: ×2 at 15 left, ×3 at 10, ×5 at 6, ×10 at 3.
-    /// [J] A peg scores the multiplier in force when it is touched, before that touch counts: the 10th orange hit on a
-    /// fresh level (16 left before it) scores ×1 and lifts the meter to ×2 for the pegs after it. The research gives the
-    /// steps, not the instant; this reading means the meter never pays for the hit that moves it.
+    /// The Fever meter's multiplier by the orange pegs still unlit [R §3, O]: ×2 at 15 left, ×3 at 10, ×5 at 6, ×10 at 3,
+    /// and ×100 once none is left [O], so every peg the Full Moon ball lights after the last orange is worth a hundred
+    /// times its value (<see cref="FeverMultiplier"/>). A peg scores the multiplier in force when it is touched, before
+    /// that touch counts [O]: the 10th orange hit on a fresh level (16 left before it) scores ×1 and lifts the meter to
+    /// ×2 for the pegs after it, and the last orange scores ×10. (Before the owner's Peggle decision of 9 October 2026 the
+    /// meter stopped at ×10.)
     /// </summary>
     public static int Multiplier(int orangesLeft) => orangesLeft switch
     {
@@ -299,8 +395,19 @@ public static partial class MoonfallRules
         > 10 => 2,
         > 6 => 3,
         > 3 => 5,
-        _ => 10,
+        > 0 => 10,
+        _ => FeverMultiplier,
     };
+
+    /// <summary>The multiplier once no orange is left [O].</summary>
+    public const int FeverMultiplier = 100;
+
+    /// <summary>At ×100 a purple peg's 500 counts as 100, so it scores 10,000 like an orange [O].</summary>
+    public const int FeverValueCap = 100;
+
+    /// <summary>A peg's value as it scores at <paramref name="multiplier"/>: its base value (<see cref="BaseValue"/>), capped at ×100 (<see cref="FeverValueCap"/>), times the multiplier.</summary>
+    public static int PegScore(PegColour colour, int multiplier) =>
+        (multiplier >= FeverMultiplier ? Math.Min(BaseValue(colour), FeverValueCap) : BaseValue(colour)) * multiplier;
 
     /// <summary>A peg's base value by its colour [R §3].</summary>
     public static int BaseValue(PegColour colour) => colour switch

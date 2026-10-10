@@ -84,7 +84,7 @@ public sealed class MoonfallDuel : IMoonfallShooter
         balls[OpponentSide] = ballsPerSide;
         Game = new MoonfallGame(
             level,
-            Math.Max(levelNumber, MoonfallRules.FirstGreenLevel),
+            Math.Max(levelNumber, MoonfallRules.FirstPurpleLevel),
             seed,
             2 * ballsPerSide,
             PowerOf(player),
