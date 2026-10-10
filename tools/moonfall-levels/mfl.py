@@ -18,6 +18,10 @@
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
   sources                       write docs/design/v9/levels/sources.json from the recipes
+  diff <level-id> --rev <rev>   one PNG: the composite at that revision beside now, changed pieces ringed, with a summary
+  sheet <level-id>... | --stage <key>   a contact sheet of composites (--engine adds the plugin's renders) with each level's figures
+  status --stage <key> | --all [--json]  per level: build stamp, verdict, wins against the band, convert, precheck, changes since review
+  pack --stage <key> [--changed-since <rev>]   the review pack in docs/design/v9/levels/review/<key>/ (no build; --no-engine skips renders)
   convert <level-id>... | --all the runtime recipe and pictures for each level (Tsukimichi.Core scenes, plugin assets)
         [--check]               only the converter's gate: the game's bare scene against the pipeline's (MoonfallRender)
 
@@ -450,6 +454,9 @@ def cmd_convert(args):
 
 COMMANDS = {"precheck": cmd_precheck, "convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "challenge": cmd_challenge, "sources": cmd_sources}
+
+from mflkit import reviewcmds  # noqa: E402  (diff, sheet, status, pack: mflkit/reviewcmds.py)
+COMMANDS.update(reviewcmds.COMMANDS)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:

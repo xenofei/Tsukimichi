@@ -37,6 +37,43 @@ Run from the repo root (`py -3`; needs numpy and Pillow, .NET 10, and the game i
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all` | The converter (`mflkit/convert.py`): each level's runtime recipe (`Tsukimichi.Core/Moonfall/Levels/scenes/<scene>.json`), our painting undressed at 2x and the dress's plates (`Tsukimichi/assets/moonfall/scenes/`) |
 | `py -3 tools/moonfall-levels/mfl.py convert <id>... \| --all --check` | The converter's gate: the game's bare scene (MoonfallRender `--scene-only`) against this pipeline's dressed scene; diffs in `build/convert/` |
 
+## Review tools
+
+Four commands for judging a level or a stage without running a build (`mflkit/review.py`, `reviewimg.py`, `reviewcmds.py`).
+They read the committed level files, reports and composites (and the working tree), so they need no build and no game
+install, except `--engine` and `pack`'s engine renders, which run MoonfallRender against the install.
+
+| Command | What it does |
+|---|---|
+| `mfl.py diff <id> --rev <git rev> [--out f.png]` | One PNG (at most 1568 px wide, default `docs/design/v9/levels/build/diff/<id>-<rev>.png`): the composite's playfield at that revision beside now, the changed pieces marked, and a text summary (also printed): pieces added, removed, moved or reshaped, unchanged; candidates gained and lost; lower-third share; held-out wins per 48 and the rule's games before and after; verdicts; the stage band margin. A revision with no composite for the level is regenerated from its level file in scratch, and failing that shown as a dark board with the rings |
+| `mfl.py sheet <ids...> \| --stage <key> [--engine] [--cols N] [--out f.png] [--no-precheck]` | A contact sheet (`build/sheets/<key>.png`): each level's composite, with `--engine` the plugin's render under it, and under that the code, id, name, pieces, candidates, lower-third share, held-out wins/48 and the rule's games, the band margin and the build and precheck verdicts |
+| `mfl.py status --stage <key> \| --all [--json] [--no-precheck]` | Per level: build state, last verdict, pieces, candidates, lower-third share, wins/48 against the band, convert state, precheck verdict, the files changed since the last review |
+| `mfl.py pack --stage <key> [--changed-since <rev>] [--out dir] [--no-engine] [--force]` | The review pack in `docs/design/v9/levels/review/<key>/`: `sheet.png`, each level's composite and report, its engine renders (1280 and 640 wide, `--moment start`), with `--changed-since` a diff for every level whose sources or outputs differ from that revision, `status.json` and `index.md` (the status table and the diffs' summaries). Only changed levels are re-rendered: a render whose runtime files and engine DLLs are unchanged is not started, and the renderer's own `--cache` (`build/cache/render`) backs it. A hand-written `index.md` is never overwritten (`index-generated.md` is written; `--force` replaces it) |
+
+**Diff colours.** A ring round a piece (a band just outside it; the piece stays visible): red = removed (drawn on the old
+panel), green = added (new panel), yellow = moved or reshaped, on both panels with an arrow from the old place to the new
+one. A pair is matched by kind and nearest place: the same kind of piece within 0.6 units with the same shape is unchanged;
+the rest pair by nearest distance within 60 units (yellow); what remains is removed or added. A dot on a piece: cyan = it is
+a candidate now and was not, magenta = it was a candidate and is not now.
+
+**Status columns.** `build`: `fresh` when the stamp (`build/cache`, written by a PASS) matches the inputs now, `stale` when
+it does not; with no stamp (a fresh checkout) the committed report is compared with the commits of the layout, recipe and
+painter (the note in `--json` says which). `margin`: the held-out wins per 48 less the stage band's lower edge or the band's
+upper edge less the wins, whichever is smaller; negative means outside. The band judges the stage's mean (not each level),
+so read it as a pointer. `convert`: `fresh` when the runtime scene recipe (`Tsukimichi.Core/Moonfall/Levels/scenes`) is not
+older than its pipeline recipe, painter and level file (commit order; convert writes no stamp), `stale` otherwise, `missing`
+when there is none. The engine renders show the runtime files, so a `stale` convert means the render is of an older board.
+`changed since review`: the level's layout, recipe, painter, level file and composite that differ between the newest commit
+of a `supervisor/*-<key>-round-*.md` record and the working tree.
+
+### For reviewers
+
+Use the pack and nothing else: open `docs/design/v9/levels/review/<key>/index.md`, `sheet.png` first, then the
+composites and engine renders, and for a round 2 only the `base-NN-diff.png` of the levels the status table shows as changed.
+Never run `mfl.py build`, `convert`, `stage` or `selftest`, or `dotnet build`, to look at a level (one UX reviewer spent 29
+minutes running convert). `mfl.py status --stage <key>` and `mfl.py diff <id> --rev <rev>` are read-only and need no build; if
+something you need is not in the pack, say so in the report and the coordinator regenerates it.
+
 ## Precheck
 
 `mfl.py precheck <id>...` flags before review the findings that the supervisors raised round after round (the records in
