@@ -218,14 +218,35 @@ public sealed class MoonfallGameArt<T> : IDisposable
     /// </summary>
     public int Running => Volatile.Read(ref running);
 
-    /// <summary>Runs <paramref name="work"/> on the thread pool, counted in <see cref="Running"/> until its task has completed.</summary>
-    private Task<TResult> Background<TResult>(Func<Task<TResult>> work)
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> runningWork = new();
+    private long workIds;
+
+    /// <summary>What <see cref="Running"/> counts, by name ("chrome", "scene &lt;recipe&gt;@&lt;tier&gt;", "thumbnail &lt;level&gt;", ...), sorted: for a wait that gives up to say what never finished.</summary>
+    public IReadOnlyList<string> RunningWork()
     {
+        var names = runningWork.Values.ToList();
+        names.Sort(StringComparer.Ordinal);
+        return names;
+    }
+
+    /// <summary>Runs <paramref name="work"/> on the thread pool, counted in <see cref="Running"/> (as <paramref name="name"/>) until its task has completed.</summary>
+    private Task<TResult> Background<TResult>(string name, Func<Task<TResult>> work)
+    {
+        var id = Interlocked.Increment(ref workIds);
+        runningWork[id] = name;
         Interlocked.Increment(ref running);
         var task = Task.Run(work);
 
         // A continuation runs once the task is complete, so Running never reaches zero while one is still to finish.
-        _ = task.ContinueWith(_ => Interlocked.Decrement(ref running), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        _ = task.ContinueWith(
+            finished =>
+            {
+                runningWork.TryRemove(id, out _);
+                Interlocked.Decrement(ref running);
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
         return task;
     }
 
@@ -426,7 +447,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
         // A scene already built this session (for play, or ahead of it) is scaled down rather than built again.
         var cached = CachedScene($"{recipe.Name}@1") ?? CachedScene($"{recipe.Name}@2");
-        return Background(async () =>
+        return Background("thumbnail " + level.Id, async () =>
         {
             var layers = cached?.Layers ?? await BuildScene(recipe, level, 1, false).ConfigureAwait(false);
             if (layers is null)
@@ -474,7 +495,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         backdropBuilds.TryGetValue(which, out var build) && build.IsCompleted && (!build.IsCompletedSuccessfully || build.Result is null);
 
     /// <summary>Reads and grades a backdrop off the framework thread (its own method: the asking path captures nothing, so a frame allocates nothing).</summary>
-    private Task<MoonfallRgba?> BuildBackdrop(MoonfallBackdrop which) => Background(async () =>
+    private Task<MoonfallRgba?> BuildBackdrop(MoonfallBackdrop which) => Background("backdrop " + which, async () =>
     {
         var painting = await host.ReadGameTexture(MoonfallBackdrops.PathOf(which)).ConfigureAwait(false);
         return painting is null ? null : MoonfallBackdrops.Build(which, painting);
@@ -766,7 +787,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         return null;
     }
 
-    private Task<MoonfallRgba?> BuildCard(MoonfallCard companion) => Background(async () =>
+    private Task<MoonfallRgba?> BuildCard(MoonfallCard companion) => Background("card " + companion.CardPath, async () =>
     {
         var card = await host.ReadGameTexture(companion.CardPath).ConfigureAwait(false);
         if (card is null || card.Width != MoonfallCards.CardWidth || card.Height != MoonfallCards.CardHeight || card.A is null)
@@ -825,7 +846,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
     private void Chromes()
     {
-        chromeBuild ??= Background(async () =>
+        chromeBuild ??= Background("chrome", async () =>
         {
             var textures = new Dictionary<string, MoonfallImage>(StringComparer.Ordinal);
             foreach (var (path, _, _) in MoonfallChromeArt.Textures)
@@ -1064,7 +1085,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
     }
 
     /// <summary>Reads the painting (the game's, else the fallback picture) and builds the scene, off the framework thread.</summary>
-    private Task<MoonfallSceneLayers?> BuildScene(MoonfallSceneRecipe recipe, MoonfallLevel level, int tier, bool check) => Background(async () =>
+    private Task<MoonfallSceneLayers?> BuildScene(MoonfallSceneRecipe recipe, MoonfallLevel level, int tier, bool check) => Background($"scene {recipe.Name}@{tier}", async () =>
     {
         MoonfallImage? painting;
         var fallback = false;

@@ -222,6 +222,24 @@ public sealed class MoonfallSceneStartTests(ITestOutputHelper output)
         Assert.InRange(idleFrames, 1, MoonfallArtWait.LandingFrames + 2);
     }
 
+    [Fact]
+    public void A_hung_build_fails_at_the_safety_cap_naming_what_is_still_running()
+    {
+        // The painting is never read (a deadlock, say): the wait gives up at its cap and names the work that never
+        // finished, rather than holding the test run forever. The real cap is ten minutes; this test sets a short one.
+        var gate = new TaskCompletionSource();
+        var host = new Host { Gate = gate.Task, Texture = Sentinel };
+        using var art = new MoonfallGameArt<Tex>(host, MoonfallSceneKit.Recipes());
+        var (level, _) = AScene();
+        var failure = Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => MoonfallArtWait.Until(
+            art, () => art.Thumb(level, out _) is not null, () => { host.Frame++; art.Menu(); }, hangCap: TimeSpan.FromMilliseconds(300)));
+
+        Assert.StartsWith("hung:", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("chrome", failure.Message, StringComparison.Ordinal);
+        Assert.Contains("thumbnail " + level.Id, failure.Message, StringComparison.Ordinal);
+        gate.SetResult();
+    }
+
     /// <summary>The pixels' hash of <paramref name="level"/>'s thumbnail built over the sentinel with its scene <paramref name="hide"/>.</summary>
     private static string SentinelThumb(MoonfallLevel level, MoonfallSceneHide hide)
     {

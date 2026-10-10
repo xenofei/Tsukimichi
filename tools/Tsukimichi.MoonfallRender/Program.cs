@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Reflection;
@@ -17,6 +18,7 @@ using LuminaGameData = Lumina.GameData;
 //                              [--cache <dir>] [--marks] [--hint] [--reduce-motion] [--decoration full|simple|off] [--no-game-art] [--seconds N]
 //   Tsukimichi.MoonfallRender <out.png> --level base-01 --scene-only 1|2 [--no-grain] [--upto paint|palette]   (the level's bare scene)
 // The board is the plugin's own window, drawn by its own code under a headless ImGui, rasterized to the PNG.
+// Exit codes: 0 rendered, 2 bad arguments or setup, 3 --text-check found a leak, 4 the art never settled (nothing written).
 var dalamud = Environment.GetEnvironmentVariable("DALAMUD_HOME") is { Length: > 0 } home ? home
     : typeof(Raster).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>().FirstOrDefault(static a => a.Key == "DalamudLibPath")?.Value;
 if (dalamud is null || !File.Exists(Path.Combine(dalamud, "Dalamud.dll")))
@@ -40,6 +42,15 @@ return Render.Run(args);
 
 internal static class Render
 {
+    /// <summary>
+    /// How long the art may take to settle before the render gives up: a safety cap for a hang, far beyond any build on a
+    /// loaded machine (the slowest seen took under a minute), so a slow build is waited out and never drawn half loaded.
+    /// </summary>
+    private static readonly TimeSpan SettleCap = TimeSpan.FromMinutes(10);
+
+    /// <summary>The exit code when the art never settled within <see cref="SettleCap"/> (nothing is written).</summary>
+    private const int ArtNeverSettled = 4;
+
     public static int Run(string[] args)
     {
         // The output path comes first; a first argument that is an option (e.g. --help) would otherwise become a PNG of
@@ -250,23 +261,38 @@ internal static class Render
             }
         }
 
-        // Let the art load (manifest, sheets, the game's UI art, the scene's build and its uploads): frames until it has.
-        void Settle()
+        // Let the art load (manifest, sheets, the game's UI art, the scene's build and its uploads): frames until it has
+        // settled and none of the game art's reads or builds still runs, however long a busy machine makes that. A picture
+        // is never drawn over art half loaded: past the safety cap (a hang, not a slow build) the render stops instead.
+        bool Settle()
         {
             // The board's clock is held while the art loads, so a staged moment is the same however long that takes.
             window.HoldBoardForRender = true;
             using var release = new HoldRelease(window);
-            for (var i = 0; i < 12 || (!window.ArtSettledForRender && i < 3000); i++)
+            var clock = Stopwatch.StartNew();
+            for (var i = 0; i < 12 || !window.ArtSettledForRender || window.ArtRunningForRender > 0; i++)
             {
+                if (clock.Elapsed > SettleCap)
+                {
+                    Console.Error.WriteLine($"the art never settled in {SettleCap.TotalMinutes:0} minutes; nothing rendered. Still waiting on: {window.ArtPendingForRender()}");
+                    return false;
+                }
+
                 Frame(1f / 60f);
-                if (!window.ArtSettledForRender)
+                if (!window.ArtSettledForRender || window.ArtRunningForRender > 0)
                 {
                     Thread.Sleep(10);
                 }
             }
+
+            return true;
         }
 
-        Settle();
+        if (!Settle())
+        {
+            return ArtNeverSettled;
+        }
+
         var board = screen is "play" or "pause" or "tally" or "duelhud";
         if (!window.ShowForRender(screen is "pause" or "tally" ? "play" : screen))
         {
@@ -280,7 +306,11 @@ internal static class Render
             window.MapStageForRender = int.Parse(stageArg, CultureInfo.InvariantCulture) - 1;
         }
 
-        Settle();
+        if (!Settle())
+        {
+            return ArtNeverSettled;
+        }
+
         if (board)
         {
             var g = window.GameForRender ?? throw new InvalidOperationException("no game");
@@ -300,9 +330,9 @@ internal static class Render
             }
 
             // The duel is caught mid-thought: settling would run the opponent's thought out (its art settled before it was staged).
-            if (screen != "duelhud")
+            if (screen != "duelhud" && !Settle())
             {
-                Settle();
+                return ArtNeverSettled;
             }
         }
         else
