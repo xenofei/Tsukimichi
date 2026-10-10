@@ -26,7 +26,11 @@ LEVEL = dict(id="base-02", name="Horizon by Night", stage=1, number=2, scene="ho
 BAND = [(100, 334), (134, 334), (270, 322), (304, 330), (338, 340), (372, 314), (406, 314), (440, 332),
         (626, 326), (660, 326), (694, 344)]
 # stars over the arch (toward the top corners) and under it (above the town)
-STARS_OVER = [(100, 200), (120, 140), (160, 90), (215, 55), (110, 70), (255, 92)]
+STARS_OVER = [(100, 200), (120, 140), (160, 90), (215, 55), (255, 92), (104, 104)]
+# left corner only: their mirrors would hang under the Ace chip (top right)
+STARS_LEFT = []
+# beside the tower and over the arch's shoulders
+STARS_EXTRA = [(205, 110), (595, 110), (540, 300), (578, 304)]
 STARS_UNDER = [(170, 262), (256, 256), (260, 200), (300, 170), (340, 200), (300, 245), (150, 300), (400, 215),
                (460, 200), (500, 170), (466, 236), (612, 240), (650, 290), (340, 280), (400, 268), (440, 282)]
 # the sure greens (never orange): the stars straight under the launcher and the middle of the roofline, the moons a
@@ -34,7 +38,7 @@ STARS_UNDER = [(170, 262), (256, 256), (260, 200), (300, 170), (340, 200), (300,
 # difficulty lever, measured with `ease`)
 SURE_GREENS = [(300, 170), (340, 200), (400, 215), (460, 200), (500, 170), (300, 245), (466, 236),
                (338, 340), (372, 314), (406, 314), (340, 280), (400, 268), (440, 282), (440, 332), (304, 330),
-               (650, 290), (260, 200),
+               (650, 290),
                (273, 125), (225, 150), (182, 182), (527, 125), (575, 150), (618, 182)]  # the arch nearest the launcher
 # lit windows and lanterns in the town
 WINDOWS = [(110, 378), (288, 378), (330, 380), (382, 362), (420, 380), (652, 380), (690, 378)]
@@ -64,12 +68,12 @@ def build(b):
     # the water tower: its domed crown (never green), down the tank's sides and the outer stilts
     tx, ty, tR, t0, tsw = b.circle("tank")
     b.arc_bricks(tx, ty, tR, t0, tsw, n=2, tag="tank crown", green=False)
-    for side in ([(491, 272), (494, 318), (500, 388)], [(589, 272), (586, 318), (580, 388)]):
+    for side in ([(496, 340), (500, 388)], [(584, 340), (580, 388)]):
         b.bricks_along(side, length=36, tag="tower stilts")
     # the switchback roads up the cliff, brick along both legs of each, open at the hairpins
     for road in ("road west", "road east"):
         pts = b.f(road)
-        b.bricks_along([pts[0], pts[1]], length=36, trim0=16, tag="switchback road")
+        b.bricks_along([pts[0], pts[1]], length=36, trim0=16, trim1=45, tag="switchback road")
         b.bricks_along([pts[4], pts[5]], length=36, trim1=4, tag="switchback road")
     # ---- moons
     b.place(tx, ty - tR - 40, orange=True, green=False, tag="tank finial")
@@ -90,7 +94,15 @@ def build(b):
         b.place(349 + 34 * k, 462, tag="cliff ledge")
     for (x, y) in b.f("campfires"):
         b.place(x, min(y, 504), tag="campfire")
-    for (x, y) in STARS_OVER + mirror(STARS_OVER) + STARS_UNDER:
+    for (x, y) in STARS_OVER + mirror(STARS_OVER) + STARS_LEFT + STARS_EXTRA + STARS_UNDER:
         b.place(x, y, tag="star")
     b.greens_in_reach()
     b.candidates(exclude=SURE_GREENS)
+
+
+# ---- tuning (written by `mfl.py tune`; held out 8.7/48, tuning seeds 8.7/48, band 8.40-9.60)
+TUNING = {
+    "blue": [[616.0, 372.0], [349.0, 462.0], [417.0, 462.0], [451.0, 462.0], [255.0, 92.0], [700.0, 200.0], [513.5, 253.6], [568.3, 254.4], [170.9, 434.0]],
+    "orange": [[304.0, 330.0], [372.0, 314.0], [406.0, 314.0], [440.0, 332.0], [205.0, 110.0], [650.0, 290.0], [400.0, 268.0], [440.0, 282.0], [618.9, 183.0]],
+    "nudge": [[205.0, 110.0, 0, 10]]
+}
