@@ -6,6 +6,8 @@
   build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check;
         [--force]               a level unchanged since its last PASS is skipped unless --force
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
+        [--jobs N]              N levels at once, one process each (default 1: one level, its renders in a pool)
+  level <level-id> [--force]    build, convert, convert --check and the engine render of one level; one verdict line
   stage <key> [--force]         key: mr1-mr11 (The Moon Road; a bare 1-11 means the same) or fs1-fs12 (The Far Shore)
                                 (games already played on an unchanged level file are re-used unless --force)
                                 the stage's table: the held-out ramp, jewels of neighbours, game paintings against ours
@@ -19,7 +21,8 @@
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
   sources                       write docs/design/v9/levels/sources.json from the recipes
   convert <level-id>... | --all the runtime recipe and pictures for each level (Tsukimichi.Core scenes, plugin assets)
-        [--check]               only the converter's gate: the game's bare scene against the pipeline's (MoonfallRender)
+        [--check] [--jobs N]    only the converter's gate: the game's bare scene against the pipeline's (MoonfallRender);
+        [--force]               a level unchanged since its last PASS is not re-checked; levels checked N at a time (4)
 
 See README.md next to this file.
 """
@@ -123,6 +126,10 @@ def cmd_build(args):
         i = args.index("--keep2x")
         keep2x = set(args[i + 1].split(","))
         args = args[:i] + args[i + 2:]
+    jobs = 1
+    if "--jobs" in args:
+        i = args.index("--jobs")
+        jobs, args = int(args[i + 1]), args[:i] + args[i + 2:]
     force = "--force" in args
     args = [a for a in args if a != "--force"]
     if force:
@@ -148,17 +155,13 @@ def cmd_build(args):
         print("a checker failed its own self-test: nothing is built")
         return 2
     print("self-test: every checker passes its known-bad and known-good cases")
-    from mflkit.build import build
-    bad = []
+    from mflkit import incremental
     t0 = time.time()
+    keys = {}
     for lid in ids:
         meta = load_layout(lid).LEVEL
-        key = cache.build_key(lid, meta, load_recipe(meta["scene"]))
-        rep = build(lid, keep2x=lid in keep2x)
-        if rep["verdict"] != "PASS":
-            bad.append(lid)
-        else:
-            cache.write_stamp(f"build-{lid}", key)
+        keys[lid] = cache.build_key(lid, meta, load_recipe(meta["scene"]))
+    bad = incremental.build_many(ids, keep2x, jobs, keys)
     print(f"built {len(ids) - len(bad)} of {len(ids)} in {time.time() - t0:.0f} s" + (f"; refused: {', '.join(bad)}" if bad else "")
           + (f"; {len(ids_all) - len(ids)} unchanged, skipped" if len(ids_all) > len(ids) else ""))
     return 1 if bad else 0
@@ -423,9 +426,23 @@ def cmd_ease(args):
     return 0
 
 
+def cmd_level(args):
+    """level <level-id> [--force]: build -> convert -> convert --check -> the engine render, and one verdict line."""
+    from mflkit import incremental
+    ids = [a for a in args if not a.startswith("--")]
+    if len(ids) != 1:
+        print("level <level-id> [--force]")
+        return 2
+    return incremental.level(ids[0], cmd_build, force="--force" in args)
+
+
 def cmd_convert(args):
     import subprocess
     from mflkit import convert
+    jobs = 4
+    if "--jobs" in args:
+        i = args.index("--jobs")
+        jobs, args = int(args[i + 1]), args[:i] + args[i + 2:]
     ids = level_ids() if "--all" in args else [a for a in args if not a.startswith("--")]
     if not ids:
         print("convert <level-id>... | --all [--check]")
@@ -439,16 +456,16 @@ def cmd_convert(args):
             print(f"{lid}: {name}, pictures {pngs / 1024:.0f} KB ({', '.join(k for k in sizes if k.endswith('.png')) or 'none'})")
         print(f"pictures written: {total / 1024:.0f} KB")
         return 0
-    subprocess.run(["dotnet", "build", str(convert.RENDER), "-c", "Release", "--nologo", "-v", "q"], check=True)
+    from mflkit import incremental
     scratch = paths.BUILD / "convert"
     scratch.mkdir(parents=True, exist_ok=True)
-    ok, rows = convert.gate(ids, scratch)
+    ok, rows = incremental.gate(ids, scratch, jobs=jobs, force="--force" in args)
     print(f"converter gate: {'PASS' if ok else 'FAIL'} ({sum(1 for r in rows if r[4])} of {len(rows)}: 2x max <= "
           f"{convert.GATE_MAX} and p99.9 <= {convert.GATE}, 1x p99 <= {convert.GATE_1X}, nothing dropped); diffs in {scratch}")
     return 0 if ok else 1
 
 
-COMMANDS = {"precheck": cmd_precheck, "convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
+COMMANDS = {"level": cmd_level, "precheck": cmd_precheck, "convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "challenge": cmd_challenge, "sources": cmd_sources}
 
 if __name__ == "__main__":

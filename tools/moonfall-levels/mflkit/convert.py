@@ -25,7 +25,9 @@ opening, max and 99.9th percentile.
 """
 import contextlib
 import copy
+import hashlib
 import json
+import os
 import subprocess
 
 import numpy as np
@@ -401,10 +403,21 @@ def picture(recipe, S=2):
         return np.clip(painter(src["painter"]).paint(S, **src.get("params", {})), 0, 1)
 
 
+def _keep_if_same(tmp, path):
+    """Moves tmp over path only when the bytes differ, so a file the converter writes again unchanged keeps its modified
+    time (and MoonfallRender is not rebuilt for nothing)."""
+    if path.exists() and path.read_bytes() == tmp.read_bytes():
+        tmp.unlink()
+    else:
+        os.replace(tmp, path)
+
+
 def _png(arr, path, grey=False):
     u8 = RL.to_u8(np.repeat(arr[..., None], 3, -1) if arr.ndim == 2 else arr)
     im = Image.fromarray(u8[..., 0], "L") if grey else Image.fromarray(u8, "RGB")
-    im.save(path, optimize=True)
+    tmp = path.with_name(path.name + ".tmp")
+    im.save(tmp, format="PNG", optimize=True)
+    _keep_if_same(tmp, path)
     return path.stat().st_size
 
 
@@ -440,7 +453,9 @@ def write(level_id, S=2):
     RUNTIME_SCENES.mkdir(parents=True, exist_ok=True)
     from .scene import dump_recipe
     path = RUNTIME_SCENES / f"{recipe['name']}.json"
-    dump_recipe(rt, path)
+    tmp = path.with_name(path.name + ".tmp")
+    dump_recipe(rt, tmp)
+    _keep_if_same(tmp, path)
     sizes[path.name] = path.stat().st_size
     if recipe["source"]["kind"] == "painting":
         sizes[f"{recipe['name']}@2x.png"] = _png(picture(recipe, S), PICTURES / f"{recipe['name']}@2x.png")
@@ -460,7 +475,19 @@ def write(level_id, S=2):
 
 
 # ------------------------------------------------------------------------------------------------ the gate
+_REFERENCES = {}
+
+
 def reference(level_id, S=2):
+    """Memoised for the process by the level file's bytes: the 2x reference serves both tiers of the gate."""
+    k = (level_id, S, hashlib.sha1((JSON_OUT / f"{level_id}.json").read_bytes()).hexdigest())
+    if k not in _REFERENCES:
+        _REFERENCES.clear()
+        _REFERENCES[k] = _reference(level_id, S)
+    return _REFERENCES[k]
+
+
+def _reference(level_id, S=2):
     """The pipeline's dressed scene for the level, grain off, its jewel drawn as the game draws it (lightness kept:
     dress.runtime_gamut) (float RGB at S)."""
     from .dress import dress, runtime_gamut
