@@ -114,8 +114,8 @@ def build(b):
     # the dunes: crowns of curved brick on the crests, opened at the summit
     mid_w = crown(b, [(60, 400), (140, 380), (220, 372), (300, 384), (380, 410)], 100, 345, 70, "mid dune")
     far_w = crown(b, [(60, 330), (160, 312), (250, 318), (330, 336)], 112, 292, 70, "far dune")
-    crown(b, [(560, 420), (620, 396), (680, 384), (740, 392)], 625, 700, 0, "mid dune")
-    crown(b, [(520, 344), (640, 322), (720, 316), (800, 324)], 624, 696, 0, "far dune")
+    mid_e = crown(b, [(560, 420), (620, 396), (680, 384), (740, 392)], 625, 700, 44, "mid dune")
+    far_e = crown(b, [(520, 344), (640, 322), (720, 316), (800, 324)], 624, 696, 44, "far dune")
     # the near dune's two slopes (13 to 19 degrees), its flat floor dotted below
     b.bricks_along([(104, 464), (150, 480), (198, 491)], length=34, tag="near dune")
     b.bricks_along([(594, 494), (700, 469)], length=34, tag="near dune")
@@ -131,7 +131,7 @@ def build(b):
             b.key(x, y, green=False, within=40)
 
     # ---- the dunes' summit moons, the near dune dotted, the cactuar's track in the trough behind it
-    for (x, y) in (mid_w, far_w):
+    for (x, y) in (mid_w, far_w, mid_e, far_e):
         b.place(x, y, tag="summit")
     b.trace([(232, 497), (320, 499)], spacing=36, tag="near dune")
     for x in range(112, 340, 36):              # its track: left and right footprints, staggered
@@ -152,3 +152,9 @@ def build(b):
                  exclude=[(p["x"], p["y"]) for p in b.pegs if p["y"] > 480] + EASY)
     for (x, y) in b.f("feet"):                  # the feet stand at the bucket's approach: blue, never green
         b.key(x, y, orange=False, green=False, within=40)
+
+
+# ---- tuning (written by `mfl.py tune`; held out 9.1/48, tuning seeds 7.5/48, band 7.90-9.10)
+TUNING = {
+    "orange": [[566.0, 105.5], [310.0, 186.0], [332.0, 214.0], [332.0, 156.0], [536.0, 192.0]]
+}
