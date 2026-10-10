@@ -22,8 +22,11 @@ keeps its subject and densifies it at full size.
 The brick share is about 19%: the subject is a ring of moons and a sea of dotted crests, so the bricks go where the
 painting has steep edges (the vortex's walls, the chevron's wings, the arm's crown); crowns over the crests were tried
 and made the board easier (fewer pieces, more hits a shot). The finale's difficulty comes from the whole board's
-density (111 pieces, most of them candidates, so the 25 oranges are spread thin): every reachable piece is a candidate
-but the sure greens and the cloud sea's low crests (the lower third held under 30%, no cheap difficulty).
+density (111 pieces) and from where its oranges fall: every reachable piece is a candidate but the sure greens and the
+cloud sea's low crests, and the tuning (below) takes the candidates a player clears most readily out of the deal (the
+open middle under the vortex and the high bank's crest), so the 25 oranges land more often on the whale's ring, the
+east bank's wall and the corners. Held out 3.6 per 48, in the lower part of MR 3's band (3.04-5.24), below the
+stage's centre (4.14) as a finale must be; the lower third holds 29% of the 68 candidates and no cheap difficulty.
 """
 import math
 
@@ -220,5 +223,7 @@ ARM_CROWN = (168, 409.6, 161.6, 245.3, 49.7, 3)        # through the west arm's 
 LOW_CRESTS = {"crest south", "crest low west", "crest low middle", "crest low south", "crest east lobe"}
 
 
-# ---- tuning (written by `mfl.py tune`; held out None/48, tuning seeds 7.8/48, band 3.10-3.80; NOT in band: stuck)
-TUNING = {}
+# ---- tuning (written by `mfl.py tune`; held out 3.6/48, tuning seeds 3.5/48, band 3.04-3.90)
+TUNING = {
+    "blue": [[305.1, 354.0], [289.2, 422.7], [241.2, 422.5], [498.5, 406.4], [497.6, 278.8], [452.6, 274.4], [409.9, 266.2], [370.7, 254.4], [564.0, 232.7], [525.0, 234.9], [486.0, 232.7], [525.0, 116.0], [495.6, 167.0], [339.0, 327.1], [442.1, 333.2], [236.0, 300.0], [270.9, 296.8], [305.7, 293.7], [340.6, 290.8], [375.4, 291.8], [596.9, 444.0], [279.9, 190.5], [265.7, 149.5], [277.6, 109.6], [215.2, 255.1]]
+}
