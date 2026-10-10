@@ -34,12 +34,16 @@ TOWERS = []
 # the billows' silver-lined crests, the left half and the axis (the right mirrors x < 400): (cx, cy, R, start, sweep)
 CRESTS = [(350, 372, 22, 230, 80), (400, 420, 26, 230, 80), (286, 434, 26, 230, 80), (354, 462, 28, 230, 80),
           (400, 504, 26, 230, 80), (290, 500, 28, 230, 80)]
-# the crests that carry a moon on their silver lining, 36 above the apex
-GLINTS = [(400, 420), (354, 462)]
+# the crests that carry a moon on their silver lining, above the apex (the lower one a little aside, clear of the crest
+# above it): (apex x, apex y, dx, dy)
+GLINTS = [(400, 420, 0, -36), (354, 462, -8, -38)]
 # moonlit tops of the billows under the near strings, the left half: pegs
 TOPS = [(205, 500), (245, 478)]
-# the moon at the lane's end wears a ring of moons: (radius, count)
-MOON_RING = (50, 8)
+# the moon at the lane's end wears a halo of moons 58 from its centre, so every piece keeps 18 from the painted disc
+# (r 30), as the runtime needs to keep the Fever moon (MoonfallSceneBuilder.MoonKeep). The halo opens where the
+# launcher swings above and where the far beams' first moons and lanterns stand beside and below: (angle in degrees,
+# clockwise from 3 o'clock), the left half mirrored
+MOON_HALO = (58, [-135, -170, 90])
 # stars above the beams' tips, the left half
 STARS = [(130, 136), (190, 110), (250, 96), (300, 150), (160, 70), (230, 150), (100, 90), (290, 60), (215, 60)]
 
@@ -70,25 +74,23 @@ def build(b):
     for (cx, cy, R, a0, sw) in CRESTS:
         for xx in {cx, mirror(cx)}:
             b.arc(xx, cy + R, R, a0, sw, tag="crest")
-    for (cx, cy) in GLINTS:
-        for xx in {cx, mirror(cx)}:
-            b.place(xx, cy - 36, tag="glint")
+    for (cx, cy, dx, dy) in GLINTS:
+        for xx in {cx + dx, mirror(cx + dx)}:
+            b.place(xx, cy + dy, tag="glint" if cy + dy < 400 else "low glint")
     for (x, y) in TOPS:
         b.place(x, y, tag="billow")
         b.place(mirror(x), y, tag="billow")
     (mx, my, _mr) = b.features["moon"]
-    b.stop(mx, my, R=MOON_RING[0], n=MOON_RING[1], oranges=(), green=True, tag="moon")
+    (R, angles) = MOON_HALO
+    for a in angles:
+        (x, y) = (mx + R * math.cos(math.radians(a)), my + R * math.sin(math.radians(a)))
+        for xx in {round(x, 1), round(mirror(x), 1)}:
+            b.place(xx, y, green=True, tag="halo" if y < my - 30 else "moon")
     for (x, y) in STARS:
         b.place(x, y, tag="star")
         b.place(mirror(x), y, tag="star")
     b.greens_in_reach()
-    # never orange: the billow tops low by the near lanterns and the moon's ring (the sure greens on the lane)
-    b.candidates(exclude_tags=["billow", "moon"])
+    # never orange: the billow tops low by the near lanterns, the low glints and the moon's halo beside and below it
+    # (the sure greens on the lane); the halo's upper pair may be
+    b.candidates(exclude_tags=["billow", "moon", "low glint"])
 
-
-# ---- tuning (written by `mfl.py tune`; held out 4.6/48, tuning seeds 4.4/48, band 3.60-4.70)
-TUNING = {
-    "blue": [[262.7, 231.0], [310.3, 230.3], [537.3, 231.0], [551.0, 198.8], [489.7, 230.3], [250.0, 96.0], [300.0, 150.0], [500.0, 150.0], [230.0, 150.0], [600.9, 230.3], [518.2, 382.4], [451.0, 372.0], [351.0, 372.0], [400.0, 420.0], [514.0, 434.0], [286.0, 434.0], [355.0, 462.0]],
-    "orange": [[450.0, 220.0], [435.4, 255.4], [400.0, 270.0], [364.6, 255.4]],
-    "nudge": [[670.0, 136.0, 10, 0], [190.0, 110.0, 10, 0], [215.0, 60.0, -10, 0]]
-}
