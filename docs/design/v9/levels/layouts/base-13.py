@@ -2,45 +2,27 @@
 
 Subject: Ishgard's walls over the sea of clouds, in the game's own Coerthas loading-screen painting (read from the
 install, never shipped), mirrored so its light comes from the upper left: the approved pilot base-p2's crop and its
-runtime recipe holy-see, brought to the shipped levels' rules.
+runtime recipe holy-see.
 
-Technique (the pilot's): the layout rides the terrain. Moonstone bricks lie along the mountain range's crest, in two
-runs that meet at the high summit (so no brick lies level across it), with a moon over each summit 17 units clear of
-the crest; three scalloped bricks follow the billows of the cloud sea, a heart in the trough under each; three arch
-bricks sit in the bridge's painted arches with its lamps dotted along the deck above; the cathedral is drawn by moons on
-its spire tips, its two flanks and a ring round its rose window, and the fog below holds the piers and the lower town.
-The crest, the arches, the spire tips and the rose window are the subject's own shapes: never green.
+Technique (the pilot's): the layout rides the terrain. Moonstone bricks lie along the mountain range's crest in two
+runs that meet at the high summit (a slot past the notch limit between them), with a moon over each summit; a dotted
+snow line follows the crest lower down the mountain's face, and a row of moons marks the mountain's foot in the cloud.
+The billows of the cloud sea are crowns of brick, a moon in the shadow under each and a heart in the troughs between
+them, a dotted row of cloud below. The bridge's deck is a run of brick with its lamps dotted above and a moon in two
+of its painted arches. The cathedral is drawn by brick down both its flanks, moons on its spire tips and inner
+pinnacles, and its rose window as an arch of brick over three moons round a heart; the fog below holds the piers, the
+cathedral's foot and the lower town. The crest, the deck, the flanks, the spire tips, the arches and the rose window
+are the subject's own shapes: never green.
 
-What changed from the pilot (the shipped rules): the crest's bricks are 28 long, not 24 (24 left 16-unit notches
-between every other brick); the summit moons, the bridge lamps and one flank moon stand clear of the wedge band; the
-fog's lowest row of piers lost a peg and the lower town rose 4 units, so 3 pieces reach into the bucket's lane; a fourth
-blue moon in the high cloud (402, 222; removed at stage integration, below), a blue moon on a mid spire (566, 222) and one on the cloud sea under the slope
-(276, 256) were added.
-
-Candidates (30, the charter's count): the summits, the billow hearts, the bridge lamps, the gate spire, two spire tips,
-the rose window, the flanks, two moons in the cloud beyond the cathedral, and only five low (y 430 or lower). The pilot's
-two oranges on the piers and the third on the cathedral's foot moved up to the flanks and the cloud beyond: low
-oranges were 41% of the oranges left in lost games against 27% of the candidates (the cheap-difficulty gate's 1.5
-times). The east spire tip (624, 134) stays blue: as a candidate it was left in 36% of lost games. Tuned on seeds
-1-864 and 20001-23456 (23.9 and 23.8 per 48) toward the charter's 24.
-
-Stage integration (mr3): the bridge's arches went from 8 to 10 thick (the runtime's mark test, below), which made the
-board 0.7 per 48 harder and left the step to 3-4 unresolved (0.73 +- 0.41 pooled); the fourth high-cloud blue moon
-(402, 222) came out to give it back (tuning 22.7, second block 23.8; pooled 23.73, step to 3-4 1.03).
-
-MR 3 round 1 (game designer m3 and m4, critic m1 and m2):
-- The two candidates in the right wall strip, (702, 228) and (714, 292), each decided about a quarter of lost games and
-  traced nothing; their candidates moved onto the cathedral (the left flank's (472, 232) and the mid spire (566, 222)),
-  and the whole set was rebalanced on the tuning seeds: the right flank's (668, 248), the rose window's lower-right moon
-  (577, 364) and the cloud sea's (140, 404) and (232, 394) are candidates; the lower town's (150, 448) and (192, 470) and
-  the east bridge lamp are not. Only three candidates are low (y 430 or lower): low oranges are 9% of those left in lost
-  games against 10% of the candidates (the gate's limit is 1.5 times; it read 1.40). No holdout passes 18%.
-- The stuck rule: the east billow's crown sat under the ridge's low end, and a slow ball came to rest on its flat apex
-  (`mfl.py stuck`: four of the fourteen stuck first shots). The crown is opened at its keystone (a slot the ball passes,
-  past the notch band), and the ridge's last brick, which hung over it and left a 23-unit cradle against the left flank's
-  moon, is gone. The sweep's stuck share fell from 2.1% to 1.9% and the play's stuck fires from 120 to 97 per 1728 games.
-- A blue moon in the high cloud over the west billow (140, 240) gives back the difficulty the wall candidates carried:
-  tuning 23.8, second block 23.9; held out 23.8.
+Peggle refit (owner's rules of 9 October 2026): densified from the shipped layout (88 pieces, 30 candidates), which
+traced the subject better than the three generated variants (they scattered pieces over the cathedral and the
+mountain); pegs r 10 and bricks t 20, 111 pieces (28 bricks, 25%: the subject has few more steep or crested lines
+that take brick without notches against its neighbours). Candidates by exclusion (`b.candidates`), 68 of 111: the
+fog's piers and the lower town stay blue (the greens' pool), and so do the crest's and the deck's bricks, the boards'
+easiest targets (blue, they took the held-out figure from 6.9 to 5.6 per 48); blue moons in the open sky by the
+launcher and the high spires harden it. The hardest places are the shadowed ones: under the billows, under the
+crest, under the deck and in the rose window. Tuned (`mfl.py tune`) on seeds 1-864 to 4.0 per 48; held out 4.9 (band
+3.04-5.24, stage mean 4.14).
 """
 
 import math
@@ -49,72 +31,94 @@ LEVEL = dict(id="base-13", name="The Holy See", stage=3, number=13, scene="holy-
              subject="Ishgard's walls over the cloud sea: bricks on the crests, moons on the spires",
              technique="terrain emphasis (brick runs on crests, moons on summits)")
 
-SUMMIT_ORANGE = {(256, 150), (341, 200)}
-SPIRE_ORANGE = {(514, 100), (484, 150), (566, 222)}        # the two highest tips are left to the art
-FLANK_ORANGE = {(462, 270), (472, 232), (642, 176), (654, 212), (668, 248), (678, 320)}
-BEYOND_ORANGE = set()                     # (MR 3 round 1: the two wall-strip candidates moved onto the cathedral)
-TOWN_ORANGE = set()
-RIDGE_ORANGE = set()                     # bricks of the east run, from the high summit
-
 
 def deck_y(x):
     return 441.0 - (x - 312.0) * 0.346          # the bridge deck's top edge in the scene
 
 
+def below(pts, d):
+    """The polyline `pts` moved `d` units straight down (a line down the mountain's face, parallel to its crest)."""
+    return [(x, y + d) for (x, y) in pts]
+
+
+# never orange: the fog and the lower town (green-able, the greens' pool), the crest's and the deck's bricks (the
+# easiest targets on the board) and the moons in the open sky
+EXCLUDE_TAGS = ("pier in the fog", "lower town", "ridge", "deck", "open sky")
+SUMMITS = ((162, 110), (256, 144), (341, 194))     # 16 or more above the crest's brick
+HEARTS = ((100, 352), (209, 340), (330, 340))
+EAST_BILLOW_CUT = 10.0
+RIDGE_SLOT = 4.0                 # opens the summit's notch past the limit
+PINNACLES = ((548, 140), (592, 172), (530, 192), (612, 228), (520, 250), (600, 268))   # the cathedral's inner spires
+LEFT_FLANK_TRIM = 40.0           # the flank ends clear of the east billow
+
+
 def build(b):
-    # ---- the mountain range: the crest in two monotone runs of brick from the high summit, a moon over each summit
+    # ---- the mountain range: the crest in two monotone runs of brick from the high summit (a slot past the notch
+    # limit at the summit itself), a moon over each summit
     ridge = b.f("ridge")
     top = ridge.index((162, 149))
-    b.bricks_along(ridge[:top + 1], length=28, gap=2.5, t=12, green=False, tag="ridge")
-    for k, br in enumerate(b.bricks_along(ridge[top:-1], length=28, gap=2.5, t=12, green=False, tag="ridge")):
-        br["canBeOrange"] = k in RIDGE_ORANGE
-    for (x, y) in b.f("summits"):
-        b.place(x, y, orange=(x, y) in SUMMIT_ORANGE, green=False, tag="moon over a summit")
-    for (x, y) in ((228, 118), (292, 132), (330, 166), (140, 240)):
-        b.place(x, y, orange=(x, y) == (292, 132), tag="high cloud")
-    # ---- the sea of clouds: three billow tops as gentle humps of brick, a heart in the trough under each, a dotted
-    # row lower and one moon under the slope
+    b.bricks_along(ridge[:top + 1], length=30, gap=2.5, green=False, tag="ridge")
+    b.bricks_along(ridge[top:-1], length=32, gap=2.5, trim0=RIDGE_SLOT, green=False, tag="ridge")
+    for (x, y) in SUMMITS:
+        b.place(x, y, green=False, tag="moon over a summit")
+    # the snow line down the mountain's face, parallel to the crest (it stops short of the middle billow)
+    b.trace(below(ridge[1:9], 48), spacing=36, tag="snow line")
+    for (x, y) in ((228, 104), (300, 124), (110, 120), (170, 66), (250, 60)):
+        b.place(x, y, tag="high cloud")
+    for (x, y) in ((400, 214), (436, 214), (330, 160), (344, 278), (120, 70), (520, 60), (580, 66), (660, 128)):
+        b.place(x, y, tag="open sky")
+    for (x, y) in ((100, 262), (150, 262), (200, 270)):
+        b.place(x, y, tag="mountain's foot")
+    # ---- the sea of clouds: three billow crowns of brick, a heart in the trough under each, a dotted row lower
     for name in ("billow west", "billow middle", "billow east"):
         cx, cy, R, a0, sw = b.circle(name)
         if name == "billow east":
-            # opened at its keystone, an 18-unit slot between the bricks' rounded ends (MR 3 round 1, m3: a slow ball came to rest on the crown's flat
-            # apex under the ridge's low end, the board's most frequent stuck shot)
-            b.arc_bricks(cx, cy, R, a0, sw, n=2, gap_deg=math.degrees(28.5 / R), t=10, tag="billow")
-        else:
-            b.arc(cx, cy, R, a0, sw, t=10, tag="billow")
-    for (x, y) in b.f("billow hearts"):
-        b.place(x, y, orange=True, tag="billow heart")
-    for (x, y) in ((100, 392), (140, 404), (190, 398), (232, 394), (276, 256)):
-        b.place(x, y, orange=(x, y) in ((140, 404), (190, 398), (232, 394)), tag="cloud sea")
-    # ---- the bridge: three arches as bricks in the painted arches (never green), its lamps dotted along the deck
-    # (10 thick, as every shipped brick: at 8 the runtime's one-unit clearance field put the middle arch's mark off its
-    # middle line, MoonfallRuntimeArtTests.Peg_marks_sit_on_every_brick_inside_its_face; stage integration, mr3)
-    for x in (374, 428, 482):
-        b.arc(x, deck_y(x) + 37, 20, 220, 100, t=10, green=False, tag="arch")
-    for x in (300, 340, 380, 420):
-        b.place(x, deck_y(x) - 18, orange=x != 420, tag="bridge lamp")
-    b.place(250, 362, orange=True, green=False, tag="gate spire")
-    # ---- the cathedral: moons on the spire tips, its two flanks, a ring round the rose window
+            sw -= EAST_BILLOW_CUT        # its east end stops short of the cathedral's left flank (a notch)
+        b.arc(cx, cy, R, a0, sw, tag="billow")
+    for (x, y) in HEARTS:
+        b.place(x, y, tag="billow heart")
+    for (x, y) in ((150, 338), (268, 328), (392, 344)):
+        b.place(x, y, tag="under a billow")
+    b.trace([(104, 408), (224, 402)], spacing=36, tag="cloud sea")
+    # ---- the bridge: its deck in brick, the lamps above, a moon in each painted arch (never green)
+    b.bricks_along([(318, deck_y(318) + 8), (470, deck_y(470) + 8)], length=34, gap=2.5, green=False, tag="deck")
+    for x in (304, 344, 384, 424):
+        b.place(x, deck_y(x) - 32, tag="bridge lamp")
+    for x in (374, 428):
+        b.place(x, deck_y(x) + 46, green=False, tag="arch")
+    b.place(250, 362, green=False, tag="gate spire")
+    b.place(280, 440, tag="gate tower")
+    # ---- the cathedral: brick down both flanks, moons on the spire tips, the rose window's arch in brick over a
+    # ring of moons
+    b.bricks_along(b.f("left flank"), length=34, gap=2.5, trim1=LEFT_FLANK_TRIM, green=False, tag="left flank")
+    b.bricks_along(b.f("right flank"), length=34, gap=2.5, green=False, tag="right flank")
     for (x, y) in b.f("spire tips"):
-        b.place(x, y, orange=(x, y) in SPIRE_ORANGE, green=False, tag="spire tip")
-    for (x, y) in b.f("left flank"):
-        b.place(x, y, orange=(x, y) in FLANK_ORANGE, tag="left flank")
-    for (x, y) in b.f("right flank"):
-        b.place(x, y, orange=(x, y) in FLANK_ORANGE, tag="right flank")
+        b.place(x, y, green=False, tag="spire tip")
     cx, cy, R, _, _ = b.circle("rose window")
-    for k, p in enumerate(b.ring(cx, cy, R, 8, start_deg=-90, tag="rose window")):
-        p["canBeOrange"] = (k % 2 == 0) or k == 3
-        p["canBeGreen"] = False
-    b.place(cx, cy, r=12, orange=True, green=False, tag="rose window heart")
-    for (x, y) in ((700, 186), (702, 228), (714, 292), (700, 384)):
-        b.place(x, y, orange=(x, y) in BEYOND_ORANGE, tag="cloud beyond")
-    # ---- below: a far peak at the right, the cathedral's foot, the piers in the fog and the lower town
-    for (x, y) in ((688, 452), (700, 420)):
-        b.place(x, y, tag="far peak")
+    b.arc_bricks(cx, cy, R, 195, 150, n=3, green=False, tag="rose window arch")
+    for a in (30, 90, 150):
+        t = math.radians(a)
+        b.place(cx + R * math.cos(t), cy + R * math.sin(t), green=False, tag="rose window")
+    b.place(cx, cy, r=12, green=False, tag="rose window heart")
+    for (x, y) in PINNACLES:
+        b.place(x, y, tag="pinnacle")
+    for (x, y) in ((628, 318), (620, 400), (500, 420), (560, 430), (600, 440)):
+        b.place(x, y, tag="cathedral body")
+    for (x, y) in ((690, 112), (700, 420), (650, 80), (690, 62)):
+        b.place(x, y, tag="cloud beyond")
+    # ---- below: the cathedral's foot, the piers in the fog and the lower town
     for (x, y) in b.f("cathedral foot"):
-        b.place(x, y, orange=x in (480, 552), tag="cathedral foot")
+        b.place(x, y, tag="cathedral foot")
     for (x, y) in b.f("piers"):
         b.place(x, y, tag="pier in the fog")
     for (x, y) in b.f("lower town"):
-        b.place(x, y, orange=(x, y) in TOWN_ORANGE, tag="lower town")
+        b.place(x, y, tag="lower town")
     b.greens_in_reach()
+    b.candidates(exclude_tags=EXCLUDE_TAGS)
+
+
+# ---- tuning (written by `mfl.py tune`; held out 5.1/48, tuning seeds 4.0/48, band 3.60-4.70; NOT in band: stuck)
+TUNING = {
+    "blue": [[256.0, 144.0], [228.0, 104.0], [514.0, 100.0], [484.0, 150.0], [588.0, 506.0], [268.0, 290.0], [387.6, 306.2], [475.1, 212.2], [467.1, 250.7], [459.2, 289.2]],
+    "orange": [[400.0, 214.0], [436.0, 214.0], [344.0, 278.0], [115.0, 171.2], [147.2, 156.2], [215.5, 173.2]]
+}
