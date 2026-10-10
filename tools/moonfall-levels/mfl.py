@@ -1,22 +1,45 @@
 """Moonfall's level-production pipeline. Run from anywhere with `py -3 tools/moonfall-levels/mfl.py <command>`.
 
-  selftest                      every checker against its known-bad and known-good cases
+  selftest [--force-selftest]   every checker against its known-bad and known-good cases (skipped when unchanged)
   fetch                         dump every game texture the scene recipes and the chrome read into the cache
   trace <scene|level-id>        the tracing sheet: graded scene, grid, features and (for a level) its pieces
+  check <level-id>...           the fast inner loop (about 3 s): pre-flight, loader, sweep, reach and the 48 rule games;
+        [--json]                prints PASS or the exact problems (tag, x, y, hint); writes nothing
   build <level-id>... | --all   the full pipeline for each level; refuses (exit 1) any level that fails a check;
         [--force]               a level unchanged since its last PASS is skipped unless --force
         [--keep2x <id,...>]     also write these levels' 2x composites to composites/
-  stage <key> [--force]         key: mr1-mr11 (The Moon Road; a bare 1-11 means the same) or fs1-fs12 (The Far Shore)
+        [--jobs N]              N levels at once, one process each (default 1: one level, its renders in a pool)
+        [--keep-going]          do not stop after the cheap phase (the check's) when it finds a fault
+        [--force-selftest]      rerun the self-test (otherwise skipped when nothing it reads changed since its last PASS)
+        [--json]                the verdict, the faults ({rule, piece, x, y, hint}) and the figures as JSON on stdout
+  level <level-id> [--force]    build, convert, convert --check and the engine render of one level; one verdict line
+  stage <key> [--force] [--json] key: mr1-mr11 (The Moon Road; a bare 1-11 means the same) or fs1-fs12 (The Far Shore)
                                 (games already played on an unchanged level file are re-used unless --force)
                                 the stage's table: the held-out ramp, jewels of neighbours, game paintings against ours
+  precheck <level-id>... | --all  the findings the supervisors raised round after round, measured before review: subject
+        [--rev <git rev>] [--only a,b] legibility at 640, a bright disc behind the aim guide, near-repeats, empty and crowded
+        [--strict]                    patches, stuck and holdout hot spots, thin margins (report only; --strict exits 1 on a FAIL)
   challenge <ch-id> | <level-id> <oranges>   the greedy player at a challenge's orange count on its carrier level(s):
                                 at least 5 of 48 wins (ch-03 35 oranges on base-27; ch-04 45 on base-37, the one exception)
   stuck <level-id>              where balls come to rest on the first shots the stuck rule fires on
   dead <level-id>               where the first shots that touch nothing fly (to put a piece in their lane)
   ease <level-id> [tags]        each place of the subject ranked by how often it is the orange left behind
+  generate <level-id> [--seed N] [--variants K] [--scene NAME] [--out DIR] [--no-engine] [--no-jewels]
+                                K candidate layouts from the scene's features, the technique and charter section 1
+                                (build/generate/<id>/v<k>.py, previews and contact.png); each passes the pre-flight
+  tune <level-id | layout.py> [--band LO,HI] [--finale-vs MEAN] [--max-plays N] [--out PATH]
+                                layout-preserving moves until the held-out figure is in the band (default: the stage's
+                                band); writes the layout's TUNING block (in place, or to --out)
+        [--hold [--lock X]]     difficulty-neutral: back to the level's locked held-out figure after a fix
+  tune --stage <key> [--out DIR] the stage's five levels together: mean band and finale rule, validated on fresh seeds
   sources                       write docs/design/v9/levels/sources.json from the recipes
+  diff <level-id> --rev <rev>   one PNG: the composite at that revision beside now, changed pieces ringed, with a summary
+  sheet <level-id>... | --stage <key>   a contact sheet of composites (--engine adds the plugin's renders) with each level's figures
+  status --stage <key> | --all [--json]  per level: build stamp, verdict, wins against the band, convert, precheck, changes since review
+  pack --stage <key> [--changed-since <rev>]   the review pack in docs/design/v9/levels/review/<key>/ (no build; --no-engine skips renders)
   convert <level-id>... | --all the runtime recipe and pictures for each level (Tsukimichi.Core scenes, plugin assets)
-        [--check]               only the converter's gate: the game's bare scene against the pipeline's (MoonfallRender)
+        [--check] [--jobs N]    only the converter's gate: the game's bare scene against the pipeline's (MoonfallRender);
+        [--force]               a level unchanged since its last PASS is not re-checked; levels checked N at a time (4)
 
 See README.md next to this file.
 """
@@ -35,39 +58,16 @@ def level_ids():
     return sorted(p.stem for p in LAYOUTS.glob("*.py"))
 
 
-def cmd_selftest(_args):
-    return 0 if st.run() else 1
+def cmd_selftest(args):
+    """selftest [--force-selftest]: skipped (one line) when a previous run passed on the same code, tools and fixtures."""
+    engine.ensure_ready()
+    return 0 if st.run_cached(verbose=True, force="--force-selftest" in args or "--force" in args) else 1
 
 
 def cmd_fetch(_args):
-    engine.ensure_built()
-    from mflkit.scene import load_recipe
-    want = set()
-    for p in SCENES.glob("*.json"):
-        r = load_recipe(p.stem)
-        if r["source"]["kind"] == "game":
-            want.add(r["source"]["texture"])
-    paths.CACHE.mkdir(parents=True, exist_ok=True)
-    todo = [t for t in sorted(want) if not (paths.CACHE / paths.cache_name(t)).exists()]
-    if todo:
-        code, out = engine.texdump("dump", paths.CACHE, *todo)
-        print(out)
-    # the chrome's UI art, the cards and the fonts (spec-rich2.md, "Rebuild")
-    uld = ["JobHudSCH0", "Journal_Detail", "Journal_Frame", "LovmPalette", "PVPRankEmblem3", "TabButtonA",
-           "TripleTriadBattle", "TripleTriadCardSelect", "TripleTriadResultCrown", "LovmMiniMapFrame", "EMJIntroParts03",
-           "WindowA_BgSelected_Corner", "ButtonA", "Parameter_Gauge"]
-    lst = paths.CACHE / "uld.txt"
-    lst.write_text("\n".join(f"ui/uld/{u}_hr1.tex" for u in uld) + "\n")
-    if not all((paths.CACHE / "uld" / f"ui_uld_{u}_hr1.png").exists() for u in uld):
-        print(engine.texdump("dumplist", paths.CACHE / "uld", lst)[1])
-    cards = [87019, 87020, 87049, 87050, 87056, 87058, 87059, 87060, 87065, 87066, 87067]
-    if not all((paths.CACHE / "portraits" / f"icon_{c:06d}.png").exists() for c in cards):
-        print(engine.texdump("icon", paths.CACHE / "portraits", *cards)[1])
-    font = paths.CACHE / "font"
-    if not (font / "common_font_font7.png").exists():
-        print(engine.texdump("raw", font, *[f"common/font/{f}.fdt" for f in ("AXIS_36", "Jupiter_46", "Jupiter_23",
-                                                                           "MiedingerMid_36", "TrumpGothic_184", "TrumpGothic_68")])[1])
-        print(engine.texdump("dump", font, *[f"common/font/font{i}.tex" for i in range(1, 8)])[1])
+    from mflkit import shared
+    shared.fetch_all()
+    shared.sync(paths.CACHE, shared.MIRROR)
     print("cache ready:", paths.CACHE)
     return 0
 
@@ -98,8 +98,8 @@ def unchanged(lid, want2x, load_layout, load_recipe, cache):
         key = cache.build_key(lid, meta, load_recipe(meta["scene"]))
     except (OSError, SystemExit):
         return None
-    st_ = cache.read_stamp(f"build-{lid}")
-    if not st_ or st_["key"] != key:
+    st_ = cache.read_stamp(f"build-{lid}", key)
+    if not st_:
         return None
     outs = [paths.JSON_OUT / f"{lid}.json", paths.COMPOSITES / f"{lid}.png", REPORT / f"{lid}.json"]
     if want2x:
@@ -114,18 +114,108 @@ def unchanged(lid, want2x, load_layout, load_recipe, cache):
     return st_["time"]
 
 
+def _problem_rows(level_id, rep):
+    """A report's faults as the --json rows: {level, rule, piece, x, y, hint, message}."""
+    rows = [dict(r, level=level_id) for r in rep.get("problems", [])]
+    if not rows:                                            # a report from before "problems" existed: the text only
+        rows = [{"level": level_id, "rule": f.split(":", 1)[0], "piece": "", "x": None, "y": None, "hint": "", "message": f}
+                for f in rep.get("fails", [])]
+    return rows
+
+
+def _figures(rep):
+    c = rep.get("checks", {})
+    pf, sw, pl, rc = c.get("preflight", {}), c.get("sweep", {}), c.get("play", {}), c.get("reach", {})
+    fig = {"pieces": pf.get("pieces"), "candidates": pf.get("orange_candidates"), "lower_third_share": pf.get("lower_third_share"),
+           "stuck": sw.get("stuck"), "angles": sw.get("angles"), "dead": sw.get("no_hit"), "never_reached": len(rc.get("never", [])),
+           "greedy_won_of_48": pl.get("greedy_won"), "ramp_per_48": pl.get("ramp_per_48"), "seconds": rep.get("seconds")}
+    if "readcheck" in c:
+        r = c["readcheck"]["report"]
+        fig.update(worst_margin=r.get("worst_margin"), jewels=[r["jewels"].get("first_jewel_hue"), r["jewels"].get("second_jewel_hue")])
+    if "ceiling" in c:
+        fig["ceiling_p99_luma"] = c["ceiling"].get("p99_luma")
+    return fig
+
+
+def _emit_json(command, reps, extra=None, stream=None):
+    """The --json document: {command, verdict, fails: [...], figures: {level: {...}}}; the verdict is PASS only if every level passed."""
+    fails = [row for lid, r in reps.items() for row in _problem_rows(lid, r)]
+    out = {"command": command, "verdict": "PASS" if reps and all(r["verdict"] == "PASS" for r in reps.values()) and not (extra or {}).get("fails") else "REFUSED",
+           "fails": fails + list((extra or {}).get("fails", [])), "figures": {lid: _figures(r) for lid, r in reps.items()}}
+    out.update({k: v for k, v in (extra or {}).items() if k != "fails"})
+    (stream or sys.__stdout__).write(json.dumps(out, indent=1) + "\n")
+
+
+class _Quiet:
+    """With --json the human lines go to stderr, so stdout carries the JSON alone."""
+
+    def __init__(self, on):
+        self.on = on
+
+    def __enter__(self):
+        if self.on:
+            self.old, sys.stdout = sys.stdout, sys.stderr
+
+    def __exit__(self, *exc):
+        if self.on:
+            sys.stdout = self.old
+
+
+def cmd_check(args):
+    """check <level-id>... [--json]: the fast inner loop. The pre-flight, the shipped loader, the first-shot sweep, the pocket
+    rule and the rule's 48 greedy games on the level's layout file (about 3 s): PASS, or every problem with the piece's
+    layout tag, x, y and a hint. Writes nothing (no report, no json, no composites). Exit 1 when a level has a problem.
+    A PASS here is necessary, not sufficient: `build` also grades the scene, dresses it and checks the framing and
+    readability."""
+    js = "--json" in args
+    ids = [a for a in args if not a.startswith("--")]
+    if not ids:
+        print("check <level-id>... [--json]")
+        return 2
+    engine.ensure_built()
+    from mflkit.build import build
+    reps = {}
+    with _Quiet(js):
+        for lid in ids:
+            rep = build(lid, cheap_only=True, log=lambda *_: None)
+            reps[lid] = rep
+            if rep["verdict"] == "PASS":
+                print(f"[{lid}] PASS ({rep['seconds']} s): pre-flight, loader, sweep, reach, 48 rule games")
+            else:
+                print(f"[{lid}] FAIL ({rep['seconds']} s):")
+                for r in _problem_rows(lid, rep):
+                    print(f"  ! {r['rule']}: {r['message']}" + (f"\n      fix: {r['hint']}" if r["hint"] else ""))
+    if js:
+        _emit_json("check", reps)
+    return 0 if all(r["verdict"] == "PASS" for r in reps.values()) else 1
+
+
 def cmd_build(args):
+    js = "--json" in args
+    with _Quiet(js):
+        code, reps = _build(args)
+    if js:
+        _emit_json("build", reps)
+    return code
+
+
+def _build(args):
     keep2x = set()
     if "--keep2x" in args:
         i = args.index("--keep2x")
         keep2x = set(args[i + 1].split(","))
         args = args[:i] + args[i + 2:]
+    jobs = 1
+    if "--jobs" in args:
+        i = args.index("--jobs")
+        jobs, args = int(args[i + 1]), args[:i] + args[i + 2:]
     force = "--force" in args
-    args = [a for a in args if a != "--force"]
+    keep_going, force_selftest = "--keep-going" in args, "--force-selftest" in args
+    args = [a for a in args if a not in ("--force", "--keep-going", "--force-selftest", "--json")]
     if force:
         os.environ["MFL_NO_CACHE"] = "1"
     ids = level_ids() if args == ["--all"] or not args else args
-    engine.ensure_built()
+    engine.ensure_ready()
     from mflkit import cache
     from mflkit.build import load_layout
     from mflkit.scene import load_recipe
@@ -138,34 +228,41 @@ def cmd_build(args):
             todo.append(lid)
     if not todo:
         print(f"built 0 of {len(ids)}: all unchanged since their last PASS")
-        return 0
+        return 0, {lid: json.loads((REPORT / f"{lid}.json").read_text(encoding="utf-8")) for lid in ids if (REPORT / f"{lid}.json").exists()}
     ids_all, ids = ids, todo
-    if not st.run(verbose=False):
-        st.run(verbose=True)
+    if not st.run_cached(verbose=False, force=force_selftest):
         print("a checker failed its own self-test: nothing is built")
-        return 2
-    print("self-test: every checker passes its known-bad and known-good cases")
-    from mflkit.build import build
-    bad = []
+        return 2, {}
+    from mflkit import incremental
     t0 = time.time()
+    keys = {}
     for lid in ids:
         meta = load_layout(lid).LEVEL
-        key = cache.build_key(lid, meta, load_recipe(meta["scene"]))
-        rep = build(lid, keep2x=lid in keep2x)
-        if rep["verdict"] != "PASS":
-            bad.append(lid)
-        else:
-            cache.write_stamp(f"build-{lid}", key)
+        keys[lid] = cache.build_key(lid, meta, load_recipe(meta["scene"]))
+    bad, reps = incremental.build_many(ids, keep2x, jobs, keys, keep_going=keep_going)
     print(f"built {len(ids) - len(bad)} of {len(ids)} in {time.time() - t0:.0f} s" + (f"; refused: {', '.join(bad)}" if bad else "")
           + (f"; {len(ids_all) - len(ids)} unchanged, skipped" if len(ids_all) > len(ids) else ""))
-    return 1 if bad else 0
+    return (1 if bad else 0), reps
 
 
 def cmd_stage(args):
+    js = "--json" in args
+    args = [a for a in args if a != "--json"]
+    collect = {}
+    with _Quiet(js):
+        code = _stage(args, collect)
+    if js:
+        rows = [{"level": None, "rule": "stage", "piece": "", "x": None, "y": None, "hint": "", "message": f} for f in collect.get("fails", [])]
+        sys.__stdout__.write(json.dumps({"command": "stage", "verdict": "REFUSED" if rows or code else "PASS", "fails": rows,
+                                         "figures": collect.get("figures", {})}, indent=1) + "\n")
+    return code
+
+
+def _stage(args, collect):
     """The stage's table from the reports: pieces, the rule's 48 games, the held-out ramp (1728 games, about +-0.55 per 48), the
     random player, the jewels; then every level pooled over 6912 games; it faults neighbours with the same jewels, a
     finale that is not the stage's hardest by the gap (resolved by one standard error), and a stage whose mean is
-    outside its band (placeholder bands: see stagecheck.py)."""
+    outside its band (Peggle's measured stage means, raised to the 5-of-48 floor: see stagecheck.py)."""
     if "--force" in args:
         os.environ["MFL_NO_CACHE"] = "1"
         args = [a for a in args if a != "--force"]
@@ -215,9 +312,9 @@ def cmd_stage(args):
     ramps_ = [r for (_l, r, _p) in rows if r is not None]
     if len(ramps_) == len(rows) and len(rows) >= 2:
         lo, hi = stagecheck.MEAN_BANDS[key]
-        nxt = min(ramps_[:-1])
-        print(f"  pooled mean {sum(ramps_) / len(ramps_):.2f} (band {lo:.2f} to {hi:.2f}, placeholder); finale gap "
-              f"{nxt - ramps_[-1]:.2f} +- {stagecheck.step_se(nxt, ramps_[-1], total, total):.2f} below the next hardest")
+        mo = sum(ramps_[:-1]) / (len(ramps_) - 1)
+        print(f"  pooled mean {sum(ramps_) / len(ramps_):.2f} (band {lo:.2f} to {hi:.2f}); finale "
+              f"{mo - ramps_[-1]:.2f} below the other levels' mean {mo:.2f}")
     # the level the player meets just before this stage's first: the previous stage's last, in the same campaign (the Far
     # Shore's stage 1 has nothing before it)
     prev = stagecheck.previous_stage(key)
@@ -228,11 +325,45 @@ def cmd_stage(args):
         jw = r["checks"].get("readcheck", {}).get("report", {}).get("jewels", {})
         before = (r["id"], r["checks"].get("play", {}).get("ramp_per_48"), (jw.get("first_jewel_hue"), jw.get("second_jewel_hue")))
     fails += stagecheck.faults(key, rows, before, games)
+    collect["fails"] = list(fails)
+    collect["figures"] = {lid: {"ramp_per_48": ramp, "jewels": list(pair), "pooled_per_48": pooled.get(lid), "games": games.get(lid)}
+                          for (lid, ramp, pair) in rows}
     game = sum(1 for r in reps if not r["source"].startswith("our painting"))
     print(f"game paintings {game} of {len(reps)}; verdicts: " + ", ".join(f"{r['id']} {r['verdict']}" for r in reps))
     for f in fails:
         print("  !", f)
+    print("precheck (report only, not a gate; `mfl.py precheck <ids>` runs it alone):")
+    try:
+        from mflkit import precheck
+        precheck.precheck([r["id"] for r in reps], print_=lambda t: print("  " + t.replace("\n", "\n  ")))
+    except Exception as e:                           # a report must never break the stage table
+        print(f"  precheck failed to run: {type(e).__name__}: {e}")
     return 1 if fails else 0
+
+
+def cmd_precheck(args):
+    """precheck <level-id>... | --all [--rev <git rev>] [--only legibility,axis,repeats,patches,play,margins] [--strict]:
+    mflkit/precheck.py. Reads the committed level file, scene recipe, composite and build report (no build, no game install),
+    from the working tree or from a past commit with --rev. Report only: the exit code is 0 unless --strict and a check FAILs."""
+    from mflkit import precheck
+    rev, only, strict = None, None, "--strict" in args
+    args = [a for a in args if a != "--strict"]
+    if "--rev" in args:
+        i = args.index("--rev")
+        rev, args = args[i + 1], args[:i] + args[i + 2:]
+    if "--only" in args:
+        i = args.index("--only")
+        only, args = args[i + 1].split(","), args[:i] + args[i + 2:]
+        bad = [o for o in only if o not in precheck.CHECKS]
+        if bad:
+            print(f"unknown check {bad}: use {', '.join(precheck.CHECKS)}")
+            return 2
+    ids = precheck.Source(rev).ids() if args == ["--all"] else args
+    if not ids:
+        print("precheck <level-id>... | --all [--rev <git rev>] [--only a,b] [--strict]")
+        return 2
+    _res, worst = precheck.precheck(ids, rev=rev, only=only)
+    return 1 if strict and worst == precheck.FAIL else 0
 
 
 def cmd_challenge(args):
@@ -294,6 +425,7 @@ def cmd_stuck(args):
     import re
     import subprocess
     from collections import Counter
+    engine.ensure_built()
     lid = args[0]
     path = paths.JSON_OUT / f"{lid}.json"            # the shipped file (critic N24)
     meta = __import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL
@@ -301,10 +433,8 @@ def cmd_stuck(args):
     out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n, "1", str(engine.SWEEP_STEP)], capture_output=True, text=True).stdout
     angles = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs.*STUCK", out, re.M)]
     cells = Counter()
-    for a in angles:
-        tr = subprocess.run(["dotnet", str(paths.MFCHECK), "trace", str(path), str(a), n, "1", "3000"],
-                            capture_output=True, text=True).stdout
-        pts = json.loads(tr)["points"]
+    for a, tr in zip(angles, engine.trace_many(path, n, angles, 3000)):
+        pts = tr["points"]
         c = Counter((round(x / 5) * 5, round(y / 5) * 5) for x, y in pts)
         cells[c.most_common(1)[0][0]] += 1
     print(f"{len(angles)} stuck first shots; where they rest (x, y): count")
@@ -318,15 +448,15 @@ def cmd_dead(args):
     so a piece that means something can be put in its lane."""
     import re
     import subprocess
+    engine.ensure_built()
     lid = args[0]
     path = paths.JSON_OUT / f"{lid}.json"            # the shipped file (critic N24)
     n = str(__import__("mflkit.build", fromlist=["load_layout"]).load_layout(lid).LEVEL["number"])
     out = subprocess.run(["dotnet", str(paths.MFCHECK), "sweep", str(path), n, "1", str(engine.SWEEP_STEP)],
                          capture_output=True, text=True).stdout
     angles = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs\s+0 ", out, re.M)]
-    for a in angles:
-        pts = json.loads(subprocess.run(["dotnet", str(paths.MFCHECK), "trace", str(path), str(a), n, "1", "600"],
-                                        capture_output=True, text=True).stdout)["points"]
+    for a, tr in zip(angles, engine.trace_many(path, n, angles, 600)):
+        pts = tr["points"]
         keep, last = [], None
         for (x, y) in pts:
             if 150 <= y <= 520 and (last is None or (x - last[0]) ** 2 + (y - last[1]) ** 2 >= 1600):
@@ -389,9 +519,23 @@ def cmd_ease(args):
     return 0
 
 
+def cmd_level(args):
+    """level <level-id> [--force]: build -> convert -> convert --check -> the engine render, and one verdict line."""
+    from mflkit import incremental
+    ids = [a for a in args if not a.startswith("--")]
+    if len(ids) != 1:
+        print("level <level-id> [--force]")
+        return 2
+    return incremental.level(ids[0], cmd_build, force="--force" in args)
+
+
 def cmd_convert(args):
     import subprocess
     from mflkit import convert
+    jobs = 4
+    if "--jobs" in args:
+        i = args.index("--jobs")
+        jobs, args = int(args[i + 1]), args[:i] + args[i + 2:]
     ids = level_ids() if "--all" in args else [a for a in args if not a.startswith("--")]
     if not ids:
         print("convert <level-id>... | --all [--check]")
@@ -405,17 +549,79 @@ def cmd_convert(args):
             print(f"{lid}: {name}, pictures {pngs / 1024:.0f} KB ({', '.join(k for k in sizes if k.endswith('.png')) or 'none'})")
         print(f"pictures written: {total / 1024:.0f} KB")
         return 0
-    subprocess.run(["dotnet", "build", str(convert.RENDER), "-c", "Release", "--nologo", "-v", "q"], check=True)
+    from mflkit import incremental
     scratch = paths.BUILD / "convert"
     scratch.mkdir(parents=True, exist_ok=True)
-    ok, rows = convert.gate(ids, scratch)
+    ok, rows = incremental.gate(ids, scratch, jobs=jobs, force="--force" in args)
     print(f"converter gate: {'PASS' if ok else 'FAIL'} ({sum(1 for r in rows if r[4])} of {len(rows)}: 2x max <= "
           f"{convert.GATE_MAX} and p99.9 <= {convert.GATE}, 1x p99 <= {convert.GATE_1X}, nothing dropped); diffs in {scratch}")
     return 0 if ok else 1
 
 
-COMMANDS = {"convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
+def _opt(args, name, default=None, cast=str):
+    """Pops `--name value` from args: (value, the args left)."""
+    if name in args:
+        i = args.index(name)
+        return cast(args[i + 1]), args[:i] + args[i + 2:]
+    return default, args
+
+
+def cmd_generate(args):
+    """generate <level-id> [--seed N] [--variants K] [--scene NAME] [--out DIR] [--no-engine] [--no-jewels]: K candidate layouts
+    (mflkit/generate.py) in build/generate/<id>/, each passing the pre-flight, with a preview and a contact sheet."""
+    import pathlib
+    from mflkit import generate
+    seed, args = _opt(args, "--seed", 1, int)
+    k, args = _opt(args, "--variants", 4, int)
+    scene_name, args = _opt(args, "--scene")
+    out, args = _opt(args, "--out", None, pathlib.Path)
+    use_engine = "--no-engine" not in args
+    tries = 0 if "--no-jewels" in args else 6
+    args = [a for a in args if a not in ("--no-engine", "--no-jewels")]
+    if len(args) != 1:
+        print(cmd_generate.__doc__)
+        return 2
+    t0 = time.time()
+    if use_engine:
+        engine.ensure_built()
+    res = generate.generate(args[0], seed=seed, variants=k, scene_name=scene_name, out_dir=out, use_engine=use_engine,
+                            jewel_tries=tries)
+    where = res[0][0].parent if res else out
+    print(f"{len(res)} variants in {time.time() - t0:.0f} s, in {where}" + ("; contact sheet contact.png" if use_engine else ""))
+    print(f"pick one: copy {where / 'v<k>.py'} to {LAYOUTS / (args[0] + '.py')}, polish the subject, then `mfl.py tune {args[0]}`")
+    return 1 if any(p for (_path, p, _r) in res) else 0
+
+
+def cmd_tune(args):
+    """tune <level-id | layout.py> [--band LO,HI] [--finale-vs MEAN] [--max-plays N] [--out PATH]: layout-preserving
+    moves (mflkit/tune.py) until the held-out figure is in the band; writes the layout's TUNING block.
+    tune <level-id> --hold [--lock X]: back to the level's locked held-out figure (its report's) after a fix.
+    tune --stage <key> [--out DIR]: the stage's five levels together, against its mean band and the finale rule."""
+    import pathlib
+    from mflkit import tune
+    band, args = _opt(args, "--band", None, lambda s: tuple(float(v) for v in s.split(",")))
+    fin, args = _opt(args, "--finale-vs", None, float)
+    mp, args = _opt(args, "--max-plays", 40, int)
+    out, args = _opt(args, "--out", None, pathlib.Path)
+    stage, args = _opt(args, "--stage")
+    lock, args = _opt(args, "--lock", None, float)
+    hold = "--hold" in args
+    args = [a for a in args if a != "--hold"]
+    engine.ensure_built()
+    if stage:
+        return 0 if tune.tune_stage(stage, max_plays=mp, out_dir=out)["ok"] else 1
+    if len(args) != 1:
+        print(cmd_tune.__doc__)
+        return 2
+    res = tune.tune_layout(args[0], band=band, finale_vs=fin, max_plays=mp, out=out, hold=hold, lock=lock)
+    return 0 if res["ok"] else 1
+
+
+COMMANDS = {"check": cmd_check, "level": cmd_level, "generate": cmd_generate, "tune": cmd_tune, "precheck": cmd_precheck, "convert": cmd_convert, "selftest": cmd_selftest, "stuck": cmd_stuck, "dead": cmd_dead, "ease": cmd_ease, "fetch": cmd_fetch, "trace": cmd_trace, "build": cmd_build, "stage": cmd_stage,
             "challenge": cmd_challenge, "sources": cmd_sources}
+
+from mflkit import reviewcmds  # noqa: E402  (diff, sheet, status, pack: mflkit/reviewcmds.py)
+COMMANDS.update(reviewcmds.COMMANDS)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2 or sys.argv[1] not in COMMANDS:

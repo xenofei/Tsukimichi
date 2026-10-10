@@ -27,21 +27,15 @@ public sealed class MoonfallStyleShotTests
         Styles(events.Select(e => e.Event));
 
     /// <summary>
-    /// A ball in play high in the middle, out of everything's way, to touch pegs with. A spare blue in the corner takes
-    /// the purple (the seed is picked for it), so the test's own blues stay blue.
+    /// A ball in play high in the middle, out of everything's way, to touch pegs with. The first level has no purple peg
+    /// (<see cref="MoonfallRules.FirstPurpleLevel"/>) and no greens, so the test's own blues stay blue.
     /// </summary>
     private static MoonfallGame InPlay(params MoonfallPeg[] pegs)
     {
-        MoonfallPeg[] all = [.. pegs, Blue(700, 120)];
-        for (ulong seed = 1; ; seed++)
-        {
-            var game = new MoonfallGame(Board(all), 1, seed);
-            if (game.PurplePeg == all.Length - 1)
-            {
-                game.PlaceBall(400, 30, 0, 0);
-                return game;
-            }
-        }
+        var game = new MoonfallGame(Board(pegs), 1, 1);
+        Assert.Equal(-1, game.PurplePeg);
+        game.PlaceBall(400, 30, 0, 0);
+        return game;
     }
 
     /// <summary>Oranges far down the board that no test touches, so a few lit ones are not an Orange Sweep.</summary>
@@ -65,18 +59,19 @@ public sealed class MoonfallStyleShotTests
         Assert.Equal(bonus, MoonfallGame.StyleShotBonus(kind));
     }
 
-    // ---- Long legs [R §3 l.76–78] ----
+    // ---- Long Shot [O] and long legs [R §3 l.76–78] ----
 
     [Fact]
-    public void A_long_shot_is_two_coloured_pegs_a_third_of_the_screen_apart()
+    public void A_long_shot_is_the_shots_first_two_pegs_both_coloured_more_than_200_px_apart()
     {
-        // Oranges 270 px apart (more than 800 / 3); a pair 260 apart is not.
-        var game = InPlay(Orange(100, 200), Orange(370, 200), Orange(100, 400), Orange(360, 400));
-        game.TouchForTest(0, 2);
-        game.TouchForTest(0, 3);
-        Assert.Empty(Styles(Drain(game)));
+        // The original's rule (owner decision, 9 October 2026; it was any coloured leg of 267 px anywhere in a shot):
+        // oranges 201 px apart are a Long Shot, 200 apart are not.
+        var exact = InPlay(Orange(100, 200), Orange(300, 200));
+        exact.TouchForTest(0, 0);
+        exact.TouchForTest(0, 1);
+        Assert.Empty(Styles(Drain(exact)));
 
-        game = InPlay(Orange(100, 200), Orange(370, 200), Orange(100, 400), Orange(360, 400));
+        var game = InPlay(Orange(100, 200), Orange(301, 200));
         var before = game.ShotScore;
         game.TouchForTest(0, 0);
         game.TouchForTest(0, 1);
@@ -90,6 +85,55 @@ public sealed class MoonfallStyleShotTests
         Assert.Equal(MoonfallRules.LongShotBonus, game.StyleBonus);
         Assert.Equal((game.ShotValue * game.ShotPegs) + MoonfallRules.LongShotBonus, game.ShotScore);
         Assert.True(game.ShotScore > before);
+    }
+
+    [Fact]
+    public void A_long_shot_is_only_the_opening_of_a_shot()
+    {
+        // Two close oranges first: the shot's first two pegs are settled, so a far pair after them pays nothing.
+        var late = InPlay(Orange(100, 200), Orange(150, 200), Orange(100, 400), Orange(640, 400));
+        late.TouchForTest(0, 0);
+        late.TouchForTest(0, 1);
+        late.TouchForTest(0, 2);
+        late.TouchForTest(0, 3);
+        var lateStyles = Styles(Drain(late)).ToList();
+        Assert.DoesNotContain(MoonfallStyleShot.LongShot, lateStyles);
+        Assert.DoesNotContain(MoonfallStyleShot.SuperLongShot, lateStyles);
+
+        // A blue first peg: no Long Shot that shot, however far apart the coloured pegs after it are.
+        var blueFirst = InPlay(Blue(400, 300), Orange(100, 200), Orange(640, 200));
+        blueFirst.TouchForTest(0, 0);
+        blueFirst.TouchForTest(0, 1);
+        blueFirst.TouchForTest(0, 2);
+        Assert.Empty(Styles(Drain(blueFirst)));
+    }
+
+    [Fact]
+    public void A_blue_grazed_just_before_the_second_coloured_peg_is_forgiven()
+    {
+        // Within 10 game ticks of the blue: still a Long Shot [O].
+        var soon = InPlay(Orange(100, 200), Blue(200, 300), Orange(400, 200));
+        soon.TouchForTest(0, 0);
+        soon.TouchForTest(0, 1);
+        for (var t = 0; t < MoonfallRules.LongShotBlueGraceTicks - 1; t++)
+        {
+            soon.Tick();
+        }
+
+        soon.TouchForTest(0, 2);
+        Assert.Equal([MoonfallStyleShot.LongShot], Styles(Drain(soon)));
+
+        // Ten ticks or more after it: the blue was the shot's second peg.
+        var late = InPlay(Orange(100, 200), Blue(200, 300), Orange(400, 200));
+        late.TouchForTest(0, 0);
+        late.TouchForTest(0, 1);
+        for (var t = 0; t < MoonfallRules.LongShotBlueGraceTicks; t++)
+        {
+            late.Tick();
+        }
+
+        late.TouchForTest(0, 2);
+        Assert.Empty(Styles(Drain(late)));
     }
 
     [Fact]
@@ -110,13 +154,38 @@ public sealed class MoonfallStyleShotTests
     }
 
     [Fact]
-    public void A_super_long_shot_is_two_thirds_of_the_screen_and_pays_instead_of_a_long_shot()
+    public void A_super_long_shot_is_more_than_450_px_and_pays_instead_of_a_long_shot()
     {
-        var game = InPlay(Orange(100, 200), Orange(640, 200));
+        // 451 px [O] (it was two thirds of the screen, 533 px).
+        var game = InPlay(Orange(100, 200), Orange(551, 200));
         game.TouchForTest(0, 0);
         game.TouchForTest(0, 1);
         Assert.Equal([MoonfallStyleShot.SuperLongShot], Styles(Drain(game)));
         Assert.Equal(MoonfallRules.SuperLongShotBonus, game.StyleBonus);
+
+        // 450 px exactly is a Long Shot.
+        var exact = InPlay(Orange(100, 200), Orange(550, 200));
+        exact.TouchForTest(0, 0);
+        exact.TouchForTest(0, 1);
+        Assert.Equal([MoonfallStyleShot.LongShot], Styles(Drain(exact)));
+    }
+
+    [Fact]
+    public void A_style_bonus_is_never_a_free_ball()
+    {
+        // A Long Shot's 25,000 takes the shot's score past the first free ball's 25,000, but only the peg score counts
+        // [O] (owner decision, 9 October 2026; style bonuses used to count).
+        var game = InPlay(Orange(100, 200), Orange(400, 200));
+        var balls = game.BallsLeft;
+        game.TouchForTest(0, 0);
+        game.TouchForTest(0, 1);
+        var events = Drain(game);
+        Assert.Contains(MoonfallStyleShot.LongShot, Styles(events));
+        Assert.True(game.ShotScore >= MoonfallRules.FreeBallThresholds[0]);
+        Assert.True(game.PegScore < MoonfallRules.FreeBallThresholds[0]);
+        Assert.DoesNotContain(events, static e => e.Kind == MoonfallEventKind.FreeBall);
+        Assert.Equal(0, game.FreeBallsThisShot);
+        Assert.Equal(balls, game.BallsLeft);
     }
 
     [Fact]
@@ -318,16 +387,34 @@ public sealed class MoonfallStyleShotTests
         Assert.True(plain > 0, "no plain catch in the sweep");
     }
 
-    // ---- Orange Sweep [R §3 l.82] ----
+    // ---- Orange Sweep [R §3 l.82, O] ----
 
     [Theory]
-    [InlineData(25, 9)]
-    [InlineData(10, 4)]
-    [InlineData(6, 3)]
-    [InlineData(3, 3)]
-    public void An_orange_sweep_lights_a_third_of_the_oranges_left_and_at_least_three(int oranges, int needs)
+    [InlineData(35, 15)]
+    [InlineData(31, 15)]
+    [InlineData(30, 10)]
+    [InlineData(25, 10)]
+    [InlineData(21, 10)]
+    [InlineData(20, 9)]
+    [InlineData(16, 9)]
+    [InlineData(15, 8)]
+    [InlineData(11, 8)]
+    [InlineData(10, 8)]
+    [InlineData(7, 5)]
+    [InlineData(6, 5)]
+    [InlineData(5, 4)]
+    public void An_orange_sweep_needs_the_originals_count_for_the_oranges_dealt(int oranges, int needs)
     {
-        Assert.Equal(needs, MoonfallGame.OrangeSweepNeeds(oranges));
+        // The original's table [O] (it was a third of the oranges left, at least three).
+        Assert.Equal(needs, MoonfallRules.OrangeSweepNeeds(oranges));
+    }
+
+    [Theory]
+    [InlineData(25, 10)]
+    [InlineData(10, 8)]
+    [InlineData(6, 5)]
+    public void An_orange_sweep_pays_when_one_shot_lights_that_many(int oranges, int needs)
+    {
         var pegs = new MoonfallPeg[oranges + 5];
         for (var k = 0; k < pegs.Length; k++)
         {
@@ -343,6 +430,34 @@ public sealed class MoonfallStyleShotTests
         Assert.DoesNotContain(MoonfallStyleShot.OrangeSweep, Styles(Drain(game)));
         game.LightForTest(needs - 1);
         Assert.Contains(MoonfallStyleShot.OrangeSweep, Styles(Drain(game)));
+    }
+
+    [Fact]
+    public void A_late_shot_needs_the_full_count_however_few_oranges_are_left()
+    {
+        // 25 dealt: 18 lit in one shot (a sweep at the 10th), then the next shot lights 6 of the 7 left: no sweep, where
+        // the old rule (a third of those left) paid one at 3.
+        var pegs = new MoonfallPeg[30];
+        for (var k = 0; k < pegs.Length; k++)
+        {
+            pegs[k] = k < 25 ? Orange(100 + ((k % 10) * 60), 150 + ((k / 10) * 60)) : Blue(100 + ((k % 10) * 60), 400);
+        }
+
+        var game = InPlay(pegs);
+        Assert.Equal(10, game.OrangeSweepNeeds);
+        for (var k = 0; k < 18; k++)
+        {
+            game.LightForTest(k);
+        }
+
+        Assert.Contains(MoonfallStyleShot.OrangeSweep, Styles(Drain(game)));
+        game.PlaceBall(400, 30, 0, 0);
+        for (var k = 18; k < 24; k++)
+        {
+            game.LightForTest(k);
+        }
+
+        Assert.DoesNotContain(MoonfallStyleShot.OrangeSweep, Styles(Drain(game)));
     }
 
     [Fact]

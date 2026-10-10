@@ -1,6 +1,6 @@
 {
  "name": "horizon-by-night",
- "about": "Our own painting: Horizon, the Western Thanalan town on its mesa, its roofline against the stars (painters/horizon.py; shipped as a JPEG).",
+ "about": "Our own painting: Horizon, the Western Thanalan town on its mesa, its roofline against the stars under the Milky Way's arch, two switchback roads cut into its cliff and a caravan camped at the foot (painters/horizon.py; shipped as a JPEG).",
  "source": {
   "kind": "painting",
   "painter": "horizon",
@@ -28,7 +28,7 @@
    "regions": [
     {
      "hex": "#6AAC5D",
-     "chroma": 0.252,
+     "chroma": 0.275,
      "mask": [["y", 388, 406], ["x", 75, 135], ["x", 725, 665]]
     }
    ],

@@ -4,6 +4,7 @@ The pipeline renders with the approved Moonfall design kit (docs/design/v9/src, 
 night grade, the pegs and bricks, the chrome from FFXIV's UI art and the fuller-board dress primitives. It does not copy
 them; it imports them, so a level built here looks exactly like the approved pilots.
 """
+import os
 import pathlib
 import sys
 
@@ -24,6 +25,16 @@ REPORT = LEVELS / "report"             # <id>.json: every check's figures, writt
 BUILD = LEVELS / "build"               # gitignored: graded and dressed scenes, trace sheets
 SOURCES = LEVELS / "sources.json"      # every game file the scenes read
 
+def _shared():
+    """The content-keyed caches shared by every worktree: MOONFALL_CACHE, else %LOCALAPPDATA%/tsukimichi-moonfall-cache."""
+    env = os.environ.get("MOONFALL_CACHE")
+    if env:
+        return pathlib.Path(env)
+    base = os.environ.get("LOCALAPPDATA") or str(pathlib.Path.home() / ".cache")
+    return pathlib.Path(base) / "tsukimichi-moonfall-cache"
+
+
+SHARED = _shared()                     # stamps, play results, graded scenes, the texture mirror (mflkit/shared.py)
 CACHE = RICH / ".cache"                # game textures dumped by texdump (gitignored), shared with the design kit
 DOTNET = TOOL / "dotnet"
 MFCHECK = DOTNET / "mfcheck" / "bin" / "Release" / "net10.0" / "mfcheck.dll"
