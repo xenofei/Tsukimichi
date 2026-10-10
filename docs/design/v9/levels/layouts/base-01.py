@@ -155,3 +155,10 @@ def build(b):
         road(b, name, bricks=False)
     b.greens_in_reach()
     b.candidates(exclude=HARD, exclude_tags=["compass", "ship's light", "sea lane"])
+
+
+# ---- tuning (written by `mfl.py tune`; held out 7.9/48, tuning seeds 8.4/48, band 7.80-9.00)
+TUNING = {
+    "blue": [[150.0, 150.0], [534.3, 399.5], [504.0, 417.0], [550.0, 437.0], [263.6, 329.3], [217.5, 295.7]],
+    "orange": [[628.0, 178.0], [150.0, 220.0], [114.5, 264.9], [250.0, 398.0], [130.9, 319.6], [151.3, 387.5]]
+}
