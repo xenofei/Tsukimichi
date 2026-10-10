@@ -25,7 +25,14 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Gate wrapper and caches:** `pwsh tools/gate.ps1` (skips an unchanged tree) and the caches for `mfl.py build`/`stage` and MoonfallRender `--cache`.
 
 ## In flight (2026-10-09, late)
-- **The owner chose "Pause the refit, build first" for the faster level tools.** The refit run `wf_f24443a9-c85` gets stopped once stage 1's five refit authors finish; a background watcher signals it. Do not let stage 2's refit authors run long. Stage 1's refit branches are kept for the rework later.
+- **The owner chose "Pause the refit, build first" for the faster level tools.** The refit run `wf_f24443a9-c85` was stopped on 2026-10-09 after stage 1's refit authors finished.
+  - **Stage 1:** its five refitted levels are merged on `moonfall-peggle` (b061b1fc to 6414a39d). Held-out wins: 8.4, 9.0, 8.8, 8.3, and 5.8 for the finale; 95–105 pieces. Still to do: `stage mr1`, convert, Aces, gates and the pack, then reviews.
+  - **Stage 2:** its refit authors were cut off; their worktrees `wf_f24443a9-c85-6..10` hold partial work. Redo stage 2 with the generator; delete those worktrees once the new run starts.
+- **Speed-ups agreed** (the owner asked what else could speed the workflow):
+  - Sonnet for integrators and fixers; Opus stays for authors and reviewers;
+  - no round 2 when round 1 finds only Minors (the fixer folds them in, the checks confirm);
+  - parallel per-level fixers;
+  - after the two tool builds land: a shared game-texture cache for every worktree, prebuilt mfcheck and Core per stage, a gate that skips themes and unaffected parts (a full gate before any merge to main), and pack renders for changed levels only.
 - **Tools being built** (each in its own worktree, merging `moonfall-peggle` first):
   - **(A, Opus)** `mfl.py generate`, a layout generator from the scene's feature geometry, and `mfl.py tune`, an automatic difficulty tuner;
   - **(B, Sonnet)** `mfl.py precheck`, checks for the findings reviewers keep raising: legibility at 640, the moon at the launcher, near-repeats, empty patches.
