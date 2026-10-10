@@ -36,8 +36,8 @@ def render_signature():
 def ensure_render(log=print):
     """`dotnet build` of MoonfallRender, only when its sources changed since the last build this tool made (and the dll is there)."""
     sig = render_signature()
-    st = cache.read_stamp("render-build")
-    if st and st["key"] == sig and convert.RENDER_DLL.exists() and not cache.disabled():
+    st = cache.read_stamp("render-build", sig)
+    if st and convert.RENDER_DLL.exists() and not cache.disabled():
         return False
     t = time.time()
     subprocess.run(["dotnet", "build", str(convert.RENDER), "-c", "Release", "--nologo", "-v", "q"], check=True)
@@ -72,16 +72,24 @@ def check_key(lid, rsig):
     return cache.digest(*parts)
 
 
-def _read_check(lid):
+def _check_file(lid, key):
+    """A level's converter-gate stamp in the shared cache folder; its name carries its key, as cache.write_stamp's do,
+    so worktrees that share the folder never overwrite each other's."""
+    return cache.DIR / f"check-{lid}-{key[:24]}.json"
+
+
+def _read_check(lid, key):
+    """The stored figures of the last PASS on exactly this key, or None."""
     try:
-        return json.loads((cache.DIR / f"check-{lid}.json").read_text(encoding="utf-8"))
+        d = json.loads(_check_file(lid, key).read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+    return d if d.get("key") == key else None
 
 
 def _write_check(lid, key, tiers):
     cache.DIR.mkdir(parents=True, exist_ok=True)
-    cache._atomic(cache.DIR / f"check-{lid}.json", json.dumps({"key": key, "time": time.strftime("%Y-%m-%d %H:%M:%S"), "tiers": tiers}))
+    cache._atomic(_check_file(lid, key), json.dumps({"key": key, "time": time.strftime("%Y-%m-%d %H:%M:%S"), "tiers": tiers}))
 
 
 def check_one(lid, scratch):
@@ -121,8 +129,8 @@ def gate(ids, scratch, jobs=None, force=False, log=print):
     keys = {lid: check_key(lid, rsig) for lid in ids}
     results, todo = {}, []
     for lid in ids:
-        st = None if force else _read_check(lid)
-        if st and st["key"] == keys[lid]:
+        st = None if force else _read_check(lid, keys[lid])
+        if st:
             results[lid] = (st["tiers"], st["time"])
         else:
             todo.append(lid)
@@ -164,37 +172,39 @@ def gate(ids, scratch, jobs=None, force=False, log=print):
 
 
 # ------------------------------------------------------------------------------------------ build --jobs
-def _build_one(lid, keep2x):
+def _build_one(lid, keep2x, keep_going):
     """One level's build in a worker process; returns (report, its log lines)."""
     from .build import build
     lines = []
-    rep = build(lid, keep2x=keep2x, log=lines.append, pool=None)
+    rep = build(lid, keep2x=keep2x, log=lines.append, pool=None, keep_going=keep_going)
     return rep, lines
 
 
-def build_many(ids, keep2x, jobs, keys, log=print):
-    """Builds the levels, `jobs` at a time (each level writes its own files, so they do not meet). Returns (refused ids).
-    The log of each level is printed whole when it finishes. A PASS writes the level's stamp (`keys[lid]`)."""
-    bad = []
+def build_many(ids, keep2x, jobs, keys, keep_going=False, log=print):
+    """Builds the levels, `jobs` at a time (each level writes its own files, so they do not meet). Returns (refused ids,
+    {id: report}). A level stops after its cheap phase on a fault unless `keep_going` (build(..., keep_going)). The log of
+    each level is printed whole when it finishes. A PASS writes the level's stamp (`keys[lid]`)."""
+    bad, reps = [], {}
     if jobs <= 1 or len(ids) == 1:
         from .build import build
         from .composite import start_pool, stop_pool
         pool = start_pool()
         try:
             for lid in ids:
-                rep = build(lid, keep2x=lid in keep2x, log=log, pool=pool)
+                rep = reps[lid] = build(lid, keep2x=lid in keep2x, log=log, pool=pool, keep_going=keep_going)
                 _stamp(lid, rep, keys, bad)
         finally:
             stop_pool()
-        return bad
+        return bad, reps
     with ProcessPoolExecutor(min(jobs, len(ids))) as ex:
-        futs = {lid: ex.submit(_build_one, lid, lid in keep2x) for lid in ids}
+        futs = {lid: ex.submit(_build_one, lid, lid in keep2x, keep_going) for lid in ids}
         for lid in ids:                                  # in the order asked, so the log reads the same every time
             rep, lines = futs[lid].result()
+            reps[lid] = rep
             for ln in lines:
                 log(ln)
             _stamp(lid, rep, keys, bad)
-    return bad
+    return bad, reps
 
 
 def _stamp(lid, rep, keys, bad):
@@ -319,10 +329,11 @@ def selftest(verbose=True):
         saved_dir, cache.DIR = cache.DIR, td / "cache"
         try:
             _write_check("selftest", "k1", [[2, [0, 0, 0, 0], [0, 0], {}, []]])
-            hit = _read_check("selftest")
+            hit = _read_check("selftest", "k1")
             cases.append(("stamp: a written stamp reads back with its key and figures",
-                          hit["key"] == "k1" and hit["tiers"][0][0] == 2 and hit["key"] != "k2", True))
-            cases.append(("stamp: a missing stamp is a miss", _read_check("absent") is None, True))
+                          bool(hit) and hit["key"] == "k1" and hit["tiers"][0][0] == 2, True))
+            cases.append(("stamp: another key finds nothing", _read_check("selftest", "k2") is None, True))
+            cases.append(("stamp: a missing stamp is a miss", _read_check("absent", "k1") is None, True))
         finally:
             cache.DIR = saved_dir
     ok = True

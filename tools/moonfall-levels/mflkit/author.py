@@ -88,6 +88,41 @@ def signed_area(pts):
     return 0.5 * float(np.sum(P[:, 0] * np.roll(P[:, 1], -1) - np.roll(P[:, 0], -1) * P[:, 1]))
 
 
+class Problem(str):
+    """A pre-flight finding: the message (a str, so every old use works) plus what a machine wants: the rule, the piece's
+    layout tag, its x, y (the piece's own place, a brick's midpoint), and a hint at the fix (`mfl.py check --json`)."""
+
+    def __new__(cls, message, rule="", tag="", x=None, y=None, hint=""):
+        o = super().__new__(cls, message)
+        o.rule, o.tag, o.x, o.y, o.hint = rule, tag, x, y, hint
+        return o
+
+    def as_dict(self):
+        return {"rule": self.rule, "piece": self.tag, "x": self.x, "y": self.y, "hint": self.hint, "message": str(self)}
+
+
+HINTS = {
+    "pieces": "add or remove pieces to land in the full-board range",
+    "off-board": "move the piece inside the playfield (its whole length, with its thickness)",
+    "wall pinch": "move it to touch the wall (gap 0.5 or less) or at least 12.5 from it",
+    "overlap": "move one of the pieces apart; pegs may not overlap",
+    "saddle": "separate the pegs by 11.8 or more, or stack them steeply so a ball cannot rest between",
+    "cradle": "separate the peg from the brick by 13 or more, or overlap them",
+    "wedge": "move the peg 16 or more above the brick",
+    "notch": "close the gap to 3.5 or less or open it past the notch limit",
+    "cup": "tilt or move a brick so the joint is not a low point (or keep the arc above its centre)",
+    "level deck": "tilt the brick(s) to DECK_DEG degrees or more, or shorten them",
+    "mover": "move the mover's path or the piece so a ball (12) fits between them",
+    "subject": "move the peg out of the subject's silhouette, or mark it as a feature",
+    "candidates": "change the number of orange candidates to the range named",
+    "reach": "move the piece into some first free flight, or mark it not a candidate",
+    "spread": "move candidates out of the crowded 200 x 200 square, or unmark some",
+    "lower third": "unmark candidates at y 400 or lower",
+    "greens": "mark more pieces never-orange and green-able",
+    "bucket lane": "clear pieces from y 520 to 560",
+}
+
+
 class Board(Layout):
     """A layout under construction (pegs, then bricks, in engine order) with format v2's canBeGreen."""
 
@@ -414,17 +449,47 @@ class Board(Layout):
     def _slope_deg(b):
         return math.degrees(math.atan2(abs(b["y2"] - b["y1"]), abs(b["x2"] - b["x1"]) + 1e-9))
 
+    def _tags_of(self, kind):
+        t = [t for (k, t) in self.tags if k == kind]
+        return t if len(t) == len(self.pegs if kind == "peg" else self.bricks) else [""] * len(self.pegs if kind == "peg" else self.bricks)
+
+    def where(self, piece):
+        """(tag, x, y) of a peg or brick of this board: its layout tag ('' when unknown) and its place (a brick's midpoint)."""
+        if "kind" in piece:
+            j = next((i for i, b in enumerate(self.bricks) if b is piece), None)
+            tag = self._tags_of("brick")[j] if j is not None else ""
+            smp = brick_samples(piece)
+            x, y = smp[len(smp) // 2]
+            return tag, round(x), round(y)
+        j = next((i for i, q in enumerate(self.pegs) if q is piece), None)
+        return (self._tags_of("peg")[j] if j is not None else ""), piece["x"], piece["y"]
+
+    def label(self, piece):
+        """'peg 'tag' (x, y)' or 'brick 'tag' (x, y)': how a finding names a piece (the tag from the layout file)."""
+        tag, x, y = self.where(piece)
+        return f"{'brick' if 'kind' in piece else 'peg'}{f' {tag!r}' if tag else ''} ({x}, {y})"
+
+    def piece_by_index(self, i):
+        """The piece at file-order index i (pegs, then bricks), or None."""
+        both = self.pegs + self.bricks
+        return both[i] if 0 <= i < len(both) else None
+
     def check(self, verbose=True, number=1):
         """The pre-flight (level-method.md section 4 and section 2's line weights, format v2's greens, and the
         reviewers' round-1 cases). Every rule is geometric, so a layout cannot slip past it by how it was built."""
         P = []
         pegs, bricks = self.pegs, self.bricks
+        L = self.label
+
+        def bad(rule, msg, piece=None, hint=None):
+            tag, x, y = self.where(piece) if piece is not None else ("", None, None)
+            P.append(Problem(msg, rule, tag, x, y, hint if hint is not None else HINTS.get(rule, "")))
         still = [p for p in pegs if "move" not in p]
         movers = [p for p in pegs if "move" in p]
         n = len(pegs) + len(bricks)
         self.warnings = []
         if not PIECES_MIN <= n <= PIECES_MAX:
-            P.append(f"{n} pieces (a full board is {PIECES_MIN} to {PIECES_MAX})")
+            bad("pieces", f"{n} pieces (a full board is {PIECES_MIN} to {PIECES_MAX})")
         elif not PIECES_TARGET[0] <= n <= PIECES_TARGET[1]:
             self.warnings.append(f"{n} pieces (the target is {PIECES_TARGET[0]} to {PIECES_TARGET[1]})")
         if n and not BRICK_SHARE[0] <= len(bricks) / n <= BRICK_SHARE[1]:
@@ -435,20 +500,20 @@ class Board(Layout):
             r = p.get("r", 10.0)
             for (x, y) in self.mover_points(p, 72 if "move" in p else 1):
                 if not in_bounds(x, y, r):
-                    P.append(f"peg ({p['x']}, {p['y']}) is off the board at ({x:.0f}, {y:.0f})")
+                    bad("off-board", f"{L(p)} is off the board at ({x:.0f}, {y:.0f})", p)
                     break
             g = min(p["x"] - r - LEFT, RIGHT - p["x"] - r)
             if "move" not in p and 0.5 < g < 12.5:
-                P.append(f"wall pinch {g:.1f} at ({p['x']}, {p['y']})")
+                bad("wall pinch", f"wall pinch {g:.1f} at {L(p)}", p)
         for j, b in enumerate(bricks):
             for (x, y) in brick_samples(b):
                 if not in_bounds(x, y, b["thickness"] / 2):
-                    P.append(f"brick {j} is off the board at ({x:.0f}, {y:.0f})")
+                    bad("off-board", f"{L(b)} is off the board at ({x:.0f}, {y:.0f})", b)
                     break
             for (x, y) in brick_samples(b):
                 g = min(x - b["thickness"] / 2 - LEFT, RIGHT - x - b["thickness"] / 2)
                 if 0.5 < g < 12.5:
-                    P.append(f"wall pinch {g:.1f} at brick {j}")
+                    bad("wall pinch", f"wall pinch {g:.1f} at {L(b)}", b)
                     break
         # still pegs against each other: overlaps and saddles (touching pegs count: a ball rests on two touching level
         # pegs too), with the pegs' real radii
@@ -460,9 +525,9 @@ class Board(Layout):
             d = math.hypot(a["x"] - c["x"], a["y"] - c["y"]) - ra - rc
             slope = math.degrees(math.atan2(abs(a["y"] - c["y"]), abs(a["x"] - c["x"]) + 1e-9))
             if d < -0.5:
-                P.append(f"pegs overlap at ({a['x']}, {a['y']}) and ({c['x']}, {c['y']})")
+                bad("overlap", f"pegs overlap: {L(a)} and {L(c)}", a)
             elif d < 11.8 and slope < saddle_deg(max(d, 0.0), (ra + rc) / 2):
-                P.append(f"saddle (gap {d:.1f}, {slope:.0f} deg) between ({a['x']}, {a['y']}) and ({c['x']}, {c['y']})")
+                bad("saddle", f"saddle (gap {d:.1f}, {slope:.0f} deg) between {L(a)} and {L(c)}", a)
         # pegs against bricks: overlap, cradle (under 13), and the wedge band above a brick (13-16: a ball rolling along
         # the brick jams under the peg)
         bs = [brick_samples(b, 1.0) for b in bricks]
@@ -472,11 +537,11 @@ class Board(Layout):
                 dmin, near = min((math.hypot(p["x"] - x, p["y"] - y), (x, y)) for (x, y) in bs[j])
                 gap = dmin - r - b["thickness"] / 2
                 if gap < -0.5:
-                    P.append(f"peg ({p['x']}, {p['y']}) overlaps brick {j}")
+                    bad("overlap", f"{L(p)} overlaps {L(b)}", p)
                 elif 0.5 < gap < 13.0:
-                    P.append(f"cradle gap {gap:.1f} between peg ({p['x']}, {p['y']}) and brick {j}")
+                    bad("cradle", f"cradle gap {gap:.1f} between {L(p)} and {L(b)}", p)
                 elif 13.0 <= gap < 16.0 and p["y"] < near[1] - 2:
-                    P.append(f"wedge band: peg ({p['x']}, {p['y']}) stands {gap:.1f} above brick {j} (16 or more)")
+                    bad("wedge", f"wedge band: {L(p)} stands {gap:.1f} above {L(b)} (16 or more)", p)
         # bricks against each other: notches, and cups judged by geometry: where two bricks touch, the joint must not
         # be a low point with both bricks rising away from it; an arc must not hang below its centre
         for i in range(len(bricks)):
@@ -485,7 +550,7 @@ class Board(Layout):
                 d, pa, pc = min((math.hypot(x0 - x1, y0 - y1), (x0, y0), (x1, y1)) for (x0, y0) in bs[i] for (x1, y1) in bs[k])  # every 1-unit sample, both ends (critic round 5, N15)
                 g = d - a["thickness"] / 2 - c["thickness"] / 2
                 if 3.5 < g < NOTCH_MAX:
-                    P.append(f"notch {g:.1f} between brick {i} and brick {k}")
+                    bad("notch", f"notch {g:.1f} between {L(a)} and {L(c)}", a)
                 elif g <= 3.5:
                     jy = (pa[1] + pc[1]) / 2
                     rise = []
@@ -493,12 +558,12 @@ class Board(Layout):
                         far = [q for q in smp if 10.0 <= math.hypot(q[0] - pt[0], q[1] - pt[1]) <= 16.0]
                         rise.append(min(far, key=lambda q: q[1])[1] < jy - 1.5 if far else False)
                     if all(rise):
-                        P.append(f"cup: a V where brick {i} and brick {k} meet at ({pa[0]:.0f}, {jy:.0f}) (both rise away)")
+                        bad("cup", f"cup: a V where {L(a)} and {L(c)} meet at ({pa[0]:.0f}, {jy:.0f}) (both rise away)", a)
         for j, b in enumerate(bricks):
             if b["kind"] == "arc":
                 for (x, y) in brick_samples(b, 2.0):
                     if y > b["y"] + 0.2 * b["r"]:
-                        P.append(f"cup: arc brick {j} at ({x:.0f}, {y:.0f}) hangs below its centre (a bowl traps the ball)")
+                        bad("cup", f"cup: arc {L(b)} hangs below its centre at ({x:.0f}, {y:.0f}) (a bowl traps the ball)", b)
                         break
         # level decks: a run of line bricks under 10 degrees longer than 30 units, or one such brick of 20 or more, holds
         # a resting ball (round 2, critic G5: decks at 6.5 degrees and separate level bricks held balls)
@@ -506,7 +571,7 @@ class Board(Layout):
         for j, b in lines:
             ln = math.hypot(b["x2"] - b["x1"], b["y2"] - b["y1"])
             if ln >= 20.0:
-                P.append(f"level deck: brick {j} lies under {DECK_DEG:.0f} degrees for {ln:.0f} units (20 at most alone)")
+                bad("level deck", f"level deck: {L(b)} lies under {DECK_DEG:.0f} degrees for {ln:.0f} units (20 at most alone)", b)
         seen = set()
         for j, b in lines:
             if j in seen:
@@ -523,7 +588,9 @@ class Board(Layout):
             seen |= chain
             span = sum(math.hypot(bricks[q]["x2"] - bricks[q]["x1"], bricks[q]["y2"] - bricks[q]["y1"]) for q in chain)
             if span > 30.0 and len(chain) > 1:
-                P.append(f"level deck: bricks {sorted(chain)} lie under {DECK_DEG:.0f} degrees for {span:.0f} units (30 at most)")
+                names = ", ".join(L(bricks[q]) for q in sorted(chain))
+                bad("level deck", f"level deck: bricks [{names}] lie under {DECK_DEG:.0f} degrees for {span:.0f} units (30 at most)",
+                    bricks[min(chain)])
         # movers: a ball's width (12) from every still peg, every brick, and every mover of another drift group at
         # the same moment
         for m in movers:
@@ -532,10 +599,10 @@ class Board(Layout):
             hit = next(((x, y, p) for (x, y) in pts for p in still
                         if math.hypot(p["x"] - x, p["y"] - y) - p.get("r", 10.0) - rm < 12.0), None)
             if hit:
-                P.append(f"mover from ({m['x']}, {m['y']}) passes within a ball of the peg at ({hit[2]['x']}, {hit[2]['y']})")
+                bad("mover", f"mover {L(m)} passes within a ball of {L(hit[2])}", m)
             for j, b in enumerate(bricks):
                 if any(min(math.hypot(x - bx, y - by) for (bx, by) in bs[j][::2]) - rm - b["thickness"] / 2 < 12.0 for (x, y) in pts[::2]):
-                    P.append(f"mover from ({m['x']}, {m['y']}) passes within a ball of brick {j}")
+                    bad("mover", f"mover {L(m)} passes within a ball of {L(b)}", m)
                     break
         for i in range(len(movers)):
             for k in range(i + 1, len(movers)):
@@ -556,24 +623,24 @@ class Board(Layout):
                         pa = [p0 for p0 in qa for _ in qc]
                         pc = [p1 for _ in qa for p1 in qc]
                 if any(math.hypot(x0 - x1, y0 - y1) - a.get("r", 10.0) - c.get("r", 10.0) < 12.0 for (x0, y0), (x1, y1) in zip(pa, pc)):
-                    P.append(f"movers from ({a['x']}, {a['y']}) and ({c['x']}, {c['y']}) come within a ball of each other")
+                    bad("mover", f"movers {L(a)} and {L(c)} come within a ball of each other", a)
         # the subject's interior stays open (section 2): no peg inside a declared silhouette unless it is a feature
         for name, poly in self.subjects:
             for p in pegs:
                 if not p.get("_inside") and point_in_poly(p["x"], p["y"], poly):
-                    P.append(f"peg ({p['x']}, {p['y']}) stands inside the subject '{name}' (keep its face open)")
+                    bad("subject", f"{L(p)} stands inside the subject '{name}' (keep its face open)", p)
         # orange candidates: 60-90% of the pieces (and the oranges a challenge asks for), every one in some first free
         # flight; at most 30% in the lower third
         cands = [p for p in pegs if p["canBeOrange"]] + [b for b in bricks if b["canBeOrange"]]
         lo, hi = challenge.candidate_range(self.level_id, n)
         if not lo <= len(cands) <= hi:
-            P.append(f"{len(cands)} orange candidates ({challenge.CANDIDATE_SHARE[0]:.0%} to {challenge.CANDIDATE_SHARE[1]:.0%} "
+            bad("candidates", f"{len(cands)} orange candidates ({challenge.CANDIDATE_SHARE[0]:.0%} to {challenge.CANDIDATE_SHARE[1]:.0%} "
                      f"of {n} pieces is {lo} to {hi}"
                      + (f"; {self.level_id} carries a challenge of {challenge.required_oranges(self.level_id)} oranges"
                         if challenge.required_oranges(self.level_id) > challenge.STANDARD_ORANGES else "") + ")")
         for c in cands:
             if not self.piece_in_reach(c):
-                P.append(f"orange candidate at ({c.get('x', c.get('x1'))}, {c.get('y', c.get('y1'))}) is out of every first free flight")
+                bad("reach", f"orange candidate {L(c)} is out of every first free flight", c)
         # the spread rule, on still positions (a mover at its start) and brick midpoints
         allc = [(c["x"], c["y"]) if "kind" not in c else brick_samples(c)[len(brick_samples(c)) // 2] for c in cands]
         worst, where, limit = 0, None, spread_limit(len(cands))
@@ -583,29 +650,30 @@ class Board(Layout):
                 if k > worst:
                     worst, where = k, (sx, sy)
         if worst > limit:
-            P.append(f"spread: {worst} candidates in the 200 x 200 square at {where} (limit {limit}: a third of {len(cands)})")
+            bad("spread", f"spread: {worst} candidates in the 200 x 200 square at {where} (limit {limit}: a third of {len(cands)})")
         low = sum(1 for (_x, y) in allc if y >= engine.LOW_Y) / max(len(allc), 1)
         if low > engine.LOW_SHARE_MAX + 1e-9:
-            P.append(f"lower third: {low:.0%} of the candidates are at y {engine.LOW_Y:.0f} or lower (at most "
+            bad("lower third", f"lower third: {low:.0%} of the candidates are at y {engine.LOW_Y:.0f} or lower (at most "
                      f"{engine.LOW_SHARE_MAX:.0%}: difficulty must not come from low, hard-to-reach oranges)")
         lo_l = sum(1 for (x, y) in allc if y >= 400 and x < 400)
         lo_r = sum(1 for (x, y) in allc if y >= 400 and x >= 400)
         if lo_l == 0 or lo_r == 0:
-            P.append(f"spread: candidates below y 400: left {lo_l}, right {lo_r}")
+            bad("spread", f"spread: candidates below y 400: left {lo_l}, right {lo_r}",
+                hint="mark a candidate below y 400 on each half of the board")
         # greens (format v2: pegs, movers and bricks may all be green): 8 or more that may be green and are never
         # orange, and every piece that may be green within some first free flight
         greenable = [p for p in pegs + bricks if p.get("canBeGreen", True)]
         sure = [p for p in greenable if not p["canBeOrange"]]
         if len(sure) < 8:
-            P.append(f"only {len(sure)} pieces may be green and are never orange (8 or more)")
+            bad("greens", f"only {len(sure)} pieces may be green and are never orange (8 or more)")
         for p in greenable:
             if not self.piece_in_reach(p):
-                P.append(f"green candidate at ({p.get('x', p.get('x1'))}, {p.get('y', p.get('y1'))}) is out of every first free flight")
+                bad("reach", f"green candidate {L(p)} is out of every first free flight", p)
         # the bucket's lane: never a full row in y 520-560 (pegs at their lowest, bricks too)
         lane = sum(1 for p in pegs if max(y for (_x, y) in self.mover_points(p, 24)) + p.get("r", 10.0) > 520)
         lane += sum(1 for b in bricks if max(y for (_x, y) in brick_samples(b)) + b["thickness"] / 2 > 520)
         if lane > 5:
-            P.append(f"{lane} pieces reach into the bucket's lane (y 520-560; at most 5)")
+            bad("bucket lane", f"{lane} pieces reach into the bucket's lane (y 520-560; at most 5)")
         cover = set()
         for p in pegs:
             for (x, y) in self.mover_points(p, 24):
@@ -617,7 +685,7 @@ class Board(Layout):
                 if y + b["thickness"] / 2 > 520:
                     cover |= set(range(int(x - b["thickness"] / 2), int(x + b["thickness"] / 2) + 1))
         if len(cover) > LANE_WIDTH:
-            P.append(f"the pieces in the bucket's lane cover {len(cover)} units of its width ({LANE_WIDTH} at most)")
+            bad("bucket lane", f"the pieces in the bucket's lane cover {len(cover)} units of its width ({LANE_WIDTH} at most)")
         if verbose:
             print(f"  pieces {n} (pegs {len(pegs)}, bricks {len(bricks)}, movers {len(movers)}); candidates {len(cands)} "
                   f"({len(cands) / max(n, 1):.0%}, lower third {low:.0%}); green-only {len(sure)}; skipped while tracing "

@@ -135,21 +135,22 @@ def level_inputs(lid, scene):
 
 
 def build_state(lid, scene):
-    """('fresh'|'stale'|'none', note). The build stamp compared with the inputs now; with no stamp (a fresh checkout), the
-    committed report against the commits of the layout, recipe and painter."""
+    """('fresh'|'stale'|'none', note). A build stamp on exactly the inputs now (a PASS on them) is fresh; with none (a fresh
+    checkout, or inputs changed since), the committed report against the commits of the layout, recipe and painter.
+    (The stamps live in the shared cache folder, keyed by their inputs, so another key's stamp says nothing here.)"""
     try:
         from . import cache
         from .build import load_layout
         from .scene import load_recipe
         meta = load_layout(lid).LEVEL
         key = cache.build_key(lid, meta, load_recipe(meta["scene"]))
-        st = cache.read_stamp(f"build-{lid}")
+        st = cache.read_stamp(f"build-{lid}", key)
         if st:
-            return ("fresh" if st["key"] == key else "stale"), f"stamp {st['time']}"
+            return "fresh", f"stamp {st['time']}"
     except Exception as e:                                   # no game textures, no built mfcheck: the stamp cannot be judged
         note = f"stamp not checkable ({type(e).__name__})"
     else:
-        note = "no stamp"
+        note = "no stamp on these inputs"
     rep = paths.REPORT / f"{lid}.json"
     if not rep.exists():
         return "none", note + "; no report"

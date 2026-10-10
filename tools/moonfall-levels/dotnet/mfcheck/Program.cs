@@ -114,6 +114,40 @@ switch (args[0])
         return 0;
     }
 
+    case "trace-many":
+    {
+        // trace-many <file> <level> <seed> <maxTicks> <angle>...: `trace` for many aims in one process, one JSON line per
+        // angle: {"angle":a,"points":[[x,y],...],"hits":[...]} (the same fields as `trace`, in the order given).
+        var level = Load(args[1]);
+        var number = int.Parse(args[2], inv);
+        var seed = ulong.Parse(args[3], inv);
+        var max = int.Parse(args[4], inv);
+        foreach (var a in args.Skip(5))
+        {
+            var g = new MoonfallGame(level, number, seed);
+            g.Shoot(double.Parse(a, inv));
+            var pts = new List<string> { $"[{g.BallX.ToString("0.##", inv)},{g.BallY.ToString("0.##", inv)}]" };
+            var hits = new List<int>();
+            for (var i = 0; i < max && g.Phase == MoonfallPhase.Flying; i++)
+            {
+                g.Tick();
+                while (g.TryReadEvent(out var e))
+                {
+                    if (e.Kind == MoonfallEventKind.PegHit)
+                    {
+                        hits.Add(pts.Count);
+                    }
+                }
+
+                pts.Add($"[{g.BallX.ToString("0.##", inv)},{g.BallY.ToString("0.##", inv)}]");
+            }
+
+            Console.WriteLine("{\"angle\":" + a + ",\"points\":[" + string.Join(",", pts) + "],\"hits\":[" + string.Join(",", hits) + "]}");
+        }
+
+        return 0;
+    }
+
     case "trace":
     {
         // trace <file> <angle> [level] [seed] [maxTicks]: the ball's flight from the muzzle, one point per game tick,

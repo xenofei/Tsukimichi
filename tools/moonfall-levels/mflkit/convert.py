@@ -566,12 +566,13 @@ def recomposed(recipe, level, S=1):
     return sc, rebuild(recipe, level, P, parts, glows, small_lights(recipe, level), S), (P, parts, glows)
 
 
-def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09", "base-25")):
+def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09", "base-25"), masks=True):
     """The converter proves itself (every checker does): the dress rebuilt from the parts the converter ships equals the
     dress (OKLab max 0.002 at 2x, on a chart with routes and ticks, a game painting with cloth and lantern posts, and our
     own painting, and 5-5's map with a compass rose, whose ticks plate is then in colour), and the same rebuild with the
     framing's cover left out (the cloth laid over the scene, not in place of it) is caught (over the gate's 0.02); the
-    mask terms convert as the runtime reads them."""
+    mask terms convert as the runtime reads them. (`levels` and `masks` let the self-test run the levels in parallel
+    processes; together they cover exactly the default.)"""
     from .dress import dress
     from .scene import load_recipe
     cases = []
@@ -599,19 +600,20 @@ def selftest(verbose=True, levels=("base-01", "base-06", "base-08", "base-09", "
             bad_case("the ticks plate left out", parts=dict(parts, T=np.ones_like(parts["T"])))
         if lights:
             bad_case("one small light left out", lights=lights[1:])
-    r = {"name": "t", "features": {"f": [[0, 0], [10, 0], [10, 10]]}, "masks": {"land": {"kind": "rim-fill", "threshold": 0.7, "grow": 4}}}
-    terms = mask_terms([["disc", 1, 2, 30, -20], ["poly", "f", 10], ["not-poly", "f"], ["near", "f", 8, 30], ["luma", 0.2, 0.3],
-                        ["not-mask", "land", 12]], r)
-    want = [{"disc": [1, 2, 30, 20], "invert": True}, {"poly": [[0, 0], [10, 0], [10, 10]], "blur": 5.0},
-            {"poly": [[0, 0], [10, 0], [10, 10]], "blur": 4.0, "invert": True}, {"line": [30, 8], "points": [[0, 0], [10, 0], [10, 10]]},
-            {"lum": [0.2, 0.3], "blur": 3}, {"land": [0.7, 4], "blur": 6.0, "invert": True}]
-    cases.append(("mask terms: a negative feather, poly, not-poly, a feature's band, luma, a rim-fill", terms == want, True))
-    try:
-        mask_terms([["dist", 10, 20]], r)
-        refused = False
-    except ValueError:
-        refused = True
-    cases.append(("mask terms: a `dist` term has no runtime form", refused, True))
+    if masks:
+        r = {"name": "t", "features": {"f": [[0, 0], [10, 0], [10, 10]]}, "masks": {"land": {"kind": "rim-fill", "threshold": 0.7, "grow": 4}}}
+        terms = mask_terms([["disc", 1, 2, 30, -20], ["poly", "f", 10], ["not-poly", "f"], ["near", "f", 8, 30], ["luma", 0.2, 0.3],
+                            ["not-mask", "land", 12]], r)
+        want = [{"disc": [1, 2, 30, 20], "invert": True}, {"poly": [[0, 0], [10, 0], [10, 10]], "blur": 5.0},
+                {"poly": [[0, 0], [10, 0], [10, 10]], "blur": 4.0, "invert": True}, {"line": [30, 8], "points": [[0, 0], [10, 0], [10, 10]]},
+                {"lum": [0.2, 0.3], "blur": 3}, {"land": [0.7, 4], "blur": 6.0, "invert": True}]
+        cases.append(("mask terms: a negative feather, poly, not-poly, a feature's band, luma, a rim-fill", terms == want, True))
+        try:
+            mask_terms([["dist", 10, 20]], r)
+            refused = False
+        except ValueError:
+            refused = True
+        cases.append(("mask terms: a `dist` term has no runtime form", refused, True))
     ok = True
     for name, got, want_ in cases:
         ok &= got == want_
