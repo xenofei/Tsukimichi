@@ -42,7 +42,7 @@
     {
       "x": 304.0,
       "y": 330.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -54,19 +54,19 @@
     {
       "x": 372.0,
       "y": 314.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
       "x": 406.0,
       "y": 314.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
       "x": 440.0,
       "y": 332.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -108,7 +108,7 @@
     {
       "x": 616.0,
       "y": 372.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -198,7 +198,7 @@
     {
       "x": 349.0,
       "y": 462.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -210,7 +210,7 @@
     {
       "x": 417.0,
       "y": 462.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -264,7 +264,7 @@
     {
       "x": 255.0,
       "y": 92.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -311,8 +311,8 @@
     },
     {
       "x": 205.0,
-      "y": 120.0,
-      "canBeOrange": true,
+      "y": 110.0,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -354,13 +354,13 @@
     {
       "x": 300.0,
       "y": 170.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "x": 340.0,
       "y": 200.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -408,7 +408,7 @@
     {
       "x": 650.0,
       "y": 290.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -420,13 +420,13 @@
     {
       "x": 400.0,
       "y": 268.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
       "x": 440.0,
       "y": 282.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     }
   ],
@@ -516,7 +516,7 @@
       "start": 307.0,
       "sweep": 9.1,
       "thickness": 20.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -589,7 +589,7 @@
       "start": 222.0,
       "sweep": 46.9,
       "thickness": 20.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -600,7 +600,7 @@
       "start": 271.1,
       "sweep": 46.9,
       "thickness": 20.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -627,20 +627,30 @@
       "kind": "line",
       "x1": 99.4,
       "y1": 414.3,
-      "x2": 144.8,
-      "y2": 426.8,
+      "x2": 136.9,
+      "y2": 424.6,
       "thickness": 20.0,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "kind": "line",
-      "x1": 147.2,
-      "y1": 427.5,
-      "x2": 192.6,
-      "y2": 440.0,
+      "x1": 139.3,
+      "y1": 425.3,
+      "x2": 176.8,
+      "y2": 435.6,
       "thickness": 20.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "kind": "line",
+      "x1": 179.2,
+      "y1": 436.3,
+      "x2": 216.7,
+      "y2": 446.7,
+      "thickness": 20.0,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -650,7 +660,7 @@
       "x2": 260.2,
       "y2": 486.6,
       "thickness": 20.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -677,18 +687,28 @@
       "kind": "line",
       "x1": 700.6,
       "y1": 414.3,
-      "x2": 655.2,
-      "y2": 426.8,
+      "x2": 663.1,
+      "y2": 424.6,
       "thickness": 20.0,
       "canBeOrange": true,
       "canBeGreen": true
     },
     {
       "kind": "line",
-      "x1": 652.8,
-      "y1": 427.5,
-      "x2": 607.4,
-      "y2": 440.0,
+      "x1": 660.7,
+      "y1": 425.3,
+      "x2": 623.2,
+      "y2": 435.6,
+      "thickness": 20.0,
+      "canBeOrange": true,
+      "canBeGreen": true
+    },
+    {
+      "kind": "line",
+      "x1": 620.8,
+      "y1": 436.3,
+      "x2": 583.3,
+      "y2": 446.7,
       "thickness": 20.0,
       "canBeOrange": true,
       "canBeGreen": true
@@ -710,7 +730,7 @@
       "x2": 577.9,
       "y2": 495.8,
       "thickness": 20.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {

@@ -73,7 +73,7 @@ def build(b):
     # the switchback roads up the cliff, brick along both legs of each, open at the hairpins
     for road in ("road west", "road east"):
         pts = b.f(road)
-        b.bricks_along([pts[0], pts[1]], length=36, trim0=16, trim1=45, tag="switchback road")
+        b.bricks_along([pts[0], pts[1]], length=36, trim0=16, trim1=20, tag="switchback road")
         b.bricks_along([pts[4], pts[5]], length=36, trim1=4, tag="switchback road")
     # ---- moons
     b.place(tx, ty - tR - 40, orange=True, green=False, tag="tank finial")
@@ -97,12 +97,11 @@ def build(b):
     for (x, y) in STARS_OVER + mirror(STARS_OVER) + STARS_LEFT + STARS_EXTRA + STARS_UNDER:
         b.place(x, y, tag="star")
     b.greens_in_reach()
-    b.candidates(exclude=SURE_GREENS)
+    b.candidates(exclude=SURE_GREENS + [(542, 487)])  # (542, 487): the weakest protan brick
 
 
-# ---- tuning (written by `mfl.py tune`; held out 8.7/48, tuning seeds 8.7/48, band 8.40-9.60)
+# ---- tuning (written by `mfl.py tune`; held out 9.2/48, tuning seeds 8.6/48, band 8.10-9.30)
 TUNING = {
-    "blue": [[616.0, 372.0], [349.0, 462.0], [417.0, 462.0], [451.0, 462.0], [255.0, 92.0], [700.0, 200.0], [513.5, 253.6], [568.3, 254.4], [170.9, 434.0]],
-    "orange": [[304.0, 330.0], [372.0, 314.0], [406.0, 314.0], [440.0, 332.0], [205.0, 110.0], [650.0, 290.0], [400.0, 268.0], [440.0, 282.0], [618.9, 183.0]],
-    "nudge": [[205.0, 110.0, 0, 10]]
+    "blue": [[451.0, 462.0], [700.0, 200.0]],
+    "orange": [[300.0, 170.0], [340.0, 200.0]]
 }
