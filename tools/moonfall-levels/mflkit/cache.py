@@ -1,5 +1,6 @@
 """Result caches for the level tools: a build that passed on unchanged inputs is skipped, and a greedy-play run on an
-unchanged level file is read back instead of replayed. Both live in docs/design/v9/levels/build/cache (gitignored).
+unchanged level file is read back instead of replayed. They live outside the worktree, in a content-keyed folder every
+worktree shares (paths.SHARED: %LOCALAPPDATA%/tsukimichi-moonfall-cache, or the environment variable MOONFALL_CACHE).
 Nothing here changes what a check decides: a cache hit returns exactly what the same inputs produced before, and
 `--force` (build, stage) or the environment variable MFL_NO_CACHE=1 recomputes."""
 import hashlib
@@ -8,9 +9,9 @@ import os
 import pathlib
 import time
 
-from .paths import BUILD, CACHE, MFCHECK, PAINTERS, RICH, RICH2, SCENES, V9, LAYOUTS, TOOL, cache_name
+from .paths import CACHE, MFCHECK, PAINTERS, REPO, RICH, RICH2, SCENES, SHARED, V9, LAYOUTS, TOOL, cache_name
 
-DIR = BUILD / "cache"
+DIR = SHARED / "levels"
 _MEMO = {}
 
 
@@ -35,18 +36,36 @@ def digest(*parts):
     return h.hexdigest()
 
 
-def kit_hash():
+def kit_files():
     """The pipeline's own code: mflkit/*.py, mfl.py, and the approved design kit it imports."""
     files = sorted((TOOL / "mflkit").glob("*.py")) + [TOOL / "mfl.py"]
     for d in (V9 / "src", RICH / "src", RICH2 / "src"):
         files += sorted(d.glob("*.py"))
-    return digest(*[f"{f.name}:{file_hash(f)}" for f in files])
+    return files
+
+
+def kit_hash():
+    return digest(*[f"{f.name}:{file_hash(f)}" for f in kit_files()])
 
 
 def mfcheck_hash():
     """The built mfcheck and the engine it carries (mfcheck.dll next to Tsukimichi.Core.dll)."""
     d = MFCHECK.parent
     return digest(*[file_hash(d / n) for n in ("mfcheck.dll", "Tsukimichi.Core.dll")])
+
+
+def tools_hash():
+    """The C# the pipeline runs: mfcheck's and the renderer's sources and builds, and the engine (Tsukimichi.Core.dll)."""
+    files = [TOOL / "dotnet" / "mfcheck" / n for n in ("Program.cs", "mfcheck.csproj")]
+    render = REPO / "tools" / "Tsukimichi.MoonfallRender"
+    files += sorted(render.glob("*.cs")) + [render / "Tsukimichi.MoonfallRender.csproj"]
+    files += [render / "bin" / "Release" / "net10.0-windows" / "Tsukimichi.MoonfallRender.dll"]
+    return digest(mfcheck_hash(), *[f"{f.name}:{file_hash(f)}" for f in files])
+
+
+def selftest_key(fixtures):
+    """What the self-test reads: the kit's code, the C# tools, and its fixtures (files, by content)."""
+    return digest("selftest", kit_hash(), tools_hash(), *[f"{f.name}:{file_hash(f)}" for f in fixtures])
 
 
 def build_key(level_id, meta, recipe):
@@ -66,16 +85,19 @@ def build_key(level_id, meta, recipe):
     return digest(*parts)
 
 
-def read_stamp(name):
+def read_stamp(name, key):
+    """The stamp `write_stamp(name, key)` left (its time), or None. A stamp's file name carries its key, so worktrees
+    that share the folder never overwrite each other's stamps."""
     try:
-        return json.loads((DIR / f"{name}.json").read_text(encoding="utf-8"))
+        d = json.loads((DIR / f"{name}-{key[:24]}.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return None
+    return d if d.get("key") == key else None
 
 
 def write_stamp(name, key):
     DIR.mkdir(parents=True, exist_ok=True)
-    _atomic(DIR / f"{name}.json", json.dumps({"key": key, "time": time.strftime("%Y-%m-%d %H:%M:%S")}))
+    _atomic(DIR / f"{name}-{key[:24]}.json", json.dumps({"key": key, "time": time.strftime("%Y-%m-%d %H:%M:%S")}))
 
 
 def _atomic(path, text):

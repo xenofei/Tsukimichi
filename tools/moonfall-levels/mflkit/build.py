@@ -8,6 +8,7 @@ reported; if any fails, nothing is written to json/ or composites/ (the build re
 import hashlib
 import importlib.util
 import json
+import os
 import time
 
 import numpy as np
@@ -15,7 +16,7 @@ from PIL import Image
 
 from . import author, engine, frames, readability, scene
 from .composite import render
-from .paths import ASSETS, BUILD, COMPOSITES, JSON_OUT, LAYOUTS, REPORT
+from .paths import ASSETS, BUILD, COMPOSITES, JSON_OUT, LAYOUTS, REPORT, SHARED
 import rich_lib as RL
 
 CEILING = 0.465               # method section 5: the scene's 99th-percentile luma about 0.46 or less
@@ -39,20 +40,37 @@ def make_board(level_id):
 
 
 def _scene_cached(recipe, S):
-    """The graded scene, cached in build/ by the recipe's source and overlays."""
+    """The graded scene, cached in the shared cache folder by the recipe's source and overlays."""
     painter_src = ""
     if recipe["source"]["kind"] == "painting":
         from .paths import PAINTERS
         painter_src = (PAINTERS / f"{recipe['source']['painter']}.py").read_text(encoding="utf-8")
+    from . import cache
+    from .paths import CACHE, cache_name
+    tex = cache.file_hash(CACHE / cache_name(recipe["source"]["texture"])) if recipe["source"]["kind"] == "game" else ""
+    # the grading code (the kit) and the game texture are in the key: the folder is shared by every worktree
     key = hashlib.sha1(json.dumps([recipe["source"], recipe.get("overlays"), recipe.get("vignette"), recipe.get("seed"),
                                    recipe.get("tone"), recipe.get("masks"), recipe.get("features") if recipe.get("tone") else None,
-                                   painter_src, S], sort_keys=True).encode()).hexdigest()[:12]
-    p = BUILD / "scenes" / f"{recipe['name']}-{key}{'@2x' if S == 2 else ''}.png"
+                                   painter_src, S, tex, cache.kit_hash()], sort_keys=True).encode()).hexdigest()[:16]
+    p = SHARED / "scenes" / f"{recipe['name']}-{key}{'@2x' if S == 2 else ''}.png"
     if p.exists():
         return RL.load_rgb(p)
     px = scene.graded(recipe, S)
-    RL.save_rgb(px, p)
+    tmp = p.with_name(f"{p.stem}.{os.getpid()}.tmp.png")
+    RL.save_rgb(px, tmp)
+    os.replace(tmp, p)
     return RL.load_rgb(p)
+
+
+def _named(text, board):
+    """The loader's `pegs[7]` / `bricks[22]` (file order) as the layout's own names: `peg 'tag' (x, y)`."""
+    import re
+
+    def name(m):
+        piece = (board.pegs if m.group(1) == "pegs" else board.bricks)
+        i = int(m.group(2))
+        return board.label(piece[i]) if i < len(piece) else m.group(0)
+    return re.sub(r"\b(pegs|bricks)\[(\d+)\]", name, text)
 
 
 def green_faults(level, cols):
@@ -90,7 +108,11 @@ def orange_views(level, recipe, scene2, cols, stage, number):
     return views
 
 
-def build(level_id, keep2x=False, log=print):
+def build(level_id, keep2x=False, log=print, keep_going=True, cheap_only=False):
+    """One level end to end. The cheap phase is the pre-flight, the loader, the sweep, the pocket rule and the rule's 48
+    games (about 3 s). With keep_going False the build stops after it when it found a fault (nothing slow runs for a level
+    that will be refused); cheap_only runs just that phase and writes nothing (`mfl.py check`). The report's "problems"
+    list is the machine-readable form of "fails": {rule, piece (layout tag), x, y, hint, message}."""
     t0 = time.time()
     meta, recipe, b = make_board(level_id)
     number, stage = meta["number"], meta["stage"]
@@ -98,8 +120,31 @@ def build(level_id, keep2x=False, log=print):
     rep = {"id": meta["id"], "name": meta["name"], "stage": stage, "number": number, "scene": meta["scene"],
            "subject": meta.get("subject"), "technique": meta.get("technique"),
            "source": recipe["source"].get("texture") or f"our painting ({recipe['source'].get('painter')})",
-           "checks": {}, "fails": []}
+           "checks": {}, "fails": [], "problems": []}
     fails = rep["fails"]
+
+    def add(rule, msg, piece=None, hint="", at=None):
+        """A fault: the report's text ("rule: message", as always) and its machine-readable twin."""
+        tag, x, y = b.where(piece) if piece is not None else ("", None, None)
+        if at is not None:
+            x, y = at
+        if hasattr(msg, "as_dict"):                       # a pre-flight Problem carries its own rule, piece and hint
+            d = msg.as_dict()
+            rep["problems"].append(dict(d, rule=f"{rule}:{d['rule']}" if d["rule"] else rule))
+        else:
+            rep["problems"].append({"rule": rule, "piece": tag, "x": x, "y": y, "hint": hint, "message": str(msg)})
+        fails.append(f"{rule}: {msg}")
+
+    def finish_early(why):
+        rep["seconds"] = round(time.time() - t0, 1)
+        rep["verdict"] = "PASS" if not fails else "REFUSED"
+        rep["stopped"] = why
+        if cheap_only:
+            return rep
+        REPORT.mkdir(parents=True, exist_ok=True)
+        (REPORT / f"{level_id}.json").write_text(json.dumps(rep, indent=1) + "\n", encoding="utf-8")
+        log(f"[{level_id}] REFUSED ({why}):\n  " + "\n  ".join(fails))
+        return rep
 
     # 1. the pre-flight (layout rules, format v2's greens)
     probs = b.check(verbose=False, number=number)
@@ -114,7 +159,8 @@ def build(level_id, keep2x=False, log=print):
     pf["candidate_share"] = round(pf["orange_candidates"] / max(n, 1), 3)
     pf["lower_third_share"] = round(engine.low_share(engine.piece_homes_of(level)), 3)
     pf["warnings"] = list(b.warnings)
-    fails += [f"preflight: {p}" for p in probs]
+    for q in probs:
+        add("preflight", q)
     log(f"[{level_id}] preflight: {n} pieces, {len(probs)} problems" + "".join(f"; warning: {w}" for w in b.warnings))
 
     # 2. the shipped loader; the sweep (stuck balls, dead first shots); the pocket rule; the greedy player
@@ -123,27 +169,44 @@ def build(level_id, keep2x=False, log=print):
     ok, out = engine.validate(cand)
     rep["checks"]["loader"] = {"ok": ok, "output": out.splitlines()}
     if not ok:
-        fails.append("loader: " + " | ".join(out.splitlines()[1:4]))
+        add("loader", " | ".join(_named(l.strip(), b) for l in out.splitlines()[1:4]), hint="the shipped loader refused the file: fix what its lines name")
         log(f"[{level_id}] loader FAIL")
+        if cheap_only or not keep_going:
+            return finish_early("cheap phase" + ("" if cheap_only else "; --keep-going runs the rest"))
     else:
         sw = engine.sweep(cand, number)
         rep["checks"]["sweep"] = sw
         if sw["stuck_share"] >= engine.STUCK_MAX_SHARE:
-            fails.append(f"sweep: the stuck rule fired on {sw['stuck']} of {sw['angles']} first shots")
+            add("sweep", f"the stuck rule fired on {sw['stuck']} of {sw['angles']} first shots",
+                hint="`mfl.py stuck <id>` shows where balls rest: tilt or remove the pieces that hold them")
         if sw["no_hit"] > 0:
-            fails.append(f"sweep: {sw['no_hit']} first-shot angles hit nothing (every aim should meet a piece)")
+            add("sweep", f"{sw['no_hit']} first-shot angles hit nothing (every aim should meet a piece)",
+                hint="`mfl.py dead <id>` shows where those shots fly: put a piece in their lane")
         rc = engine.reach(cand, number)
         rep["checks"]["reach"] = rc
         if rc["never"]:
-            fails.append(f"reach: pieces {rc['never']} are never reached, even once everything before them clears")
+            pcs = [b.piece_by_index(i) for i in rc["never"]]
+            pcs = [q for q in pcs if q is not None]
+            for q in pcs:
+                add("reach", f"{b.label(q)} is never reached, even once everything before them clears", q,
+                    "move it into a first free flight, or into the lee of a piece that clears early")
+            if not pcs:
+                add("reach", f"pieces {rc['never']} are never reached, even once everything before them clears")
         rule = engine.play(cand, number, games=engine.GREEDY_GAMES)
+        if rule["greedy_won"] < engine.GREEDY_MIN_WINS:
+            add("play", f"the greedy player won {rule['greedy_won']} of 48 (at least {engine.GREEDY_MIN_WINS})",
+                hint="open the board: `mfl.py ease <id>` ranks the places that are left orange")
+        rep["checks"]["play"] = {k: rule[k] for k in ("greedy_won", "games", "oranges_left_when_lost", "random_won")}
+        log(f"[{level_id}] cheap phase: loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, dead {sw['no_hit']}, never reached "
+            f"{len(rc['never'])}; greedy {rule['greedy_won']}/48")
+        if cheap_only or (fails and not keep_going):
+            return finish_early("cheap phase" + ("" if cheap_only else "; --keep-going runs the rest"))
         pl = engine.play(cand, number, games=engine.HELD_GAMES, first=engine.RAMP_GAMES)
         pl.update(greedy_won=rule["greedy_won"], games=rule["games"], oranges_left_when_lost=rule["oranges_left_when_lost"],
                   random_won=rule["random_won"], random_oranges_mean=rule["random_oranges_mean"], ramp_first_seed=engine.RAMP_GAMES + 1)
         rep["checks"]["play"] = pl
-        if pl["greedy_won"] < engine.GREEDY_MIN_WINS:
-            fails.append(f"play: the greedy player won {pl['greedy_won']} of 48 (at least {engine.GREEDY_MIN_WINS})")
-        fails += [f"play: cheap difficulty: {c}" for c in engine.cheap(pl, engine.piece_homes(cand))]
+        for c in engine.cheap(pl, engine.piece_homes(cand)):
+            add("play", f"cheap difficulty: {c}", hint="move orange candidates out of the lower third (`mfl.py ease <id>`)")
         log(f"[{level_id}] loader ok; sweep stuck {sw['stuck']}/{sw['angles']}, dead {sw['no_hit']}, never reached "
             f"{len(rc['never'])}; greedy {pl['greedy_won']}/48, ramp {pl['ramp_per_48']}/48 over {pl['ramp_games']} held-out games")
 
@@ -152,7 +215,8 @@ def build(level_id, keep2x=False, log=print):
     ceil = scene.ceiling(g1, recipe.get("ceilingExempt", ()))
     rep["checks"]["ceiling"] = {"p99_luma": round(ceil, 3), "limit": CEILING}
     if ceil > CEILING:
-        fails.append(f"ceiling: the graded scene's 99th-percentile luma is {ceil:.3f} (limit {CEILING})")
+        add("ceiling", f"the graded scene's 99th-percentile luma is {ceil:.3f} (limit {CEILING})",
+            hint="darken the scene's grade or its brightest feature in the recipe")
     from .dress import dress
     d2, ctx = dress(recipe, g2, level, 2)
     frep, ffails = frames.check(level, ctx.cover, ctx.rim, ctx.lights, S=2)
@@ -162,7 +226,8 @@ def build(level_id, keep2x=False, log=print):
         ffails.append("F3a-pixels")
     frep["elements_dropped_for_clearance"] = ctx.dropped
     rep["checks"]["framecheck"] = {"report": frep, "fails": ffails}
-    fails += [f"framecheck: {f}" for f in ffails]
+    for f in ffails:
+        add("framecheck", f, hint="see level-method.md section 3 for this frame rule")
     d1 = np.asarray(Image.fromarray(RL.to_u8(d2)).resize((800, 600), Image.LANCZOS), np.float32) / 255
     RL.save_rgb(d2, BUILD / "dressed" / f"{level_id}@2x.png")
     RL.save_rgb(d1, BUILD / "dressed" / f"{level_id}.png")
@@ -182,7 +247,8 @@ def build(level_id, keep2x=False, log=print):
         views = orange_views(level, recipe, d2, cols, stage, number)
         rrep, rfails = readability.measure(level, cols, comp2, base2, bd_new, bd_old, d2, views, undressed2=g2)
         rep["checks"]["readcheck"] = {"report": rrep, "fails": rfails}
-        fails += [f"readcheck: {f}" for f in rfails]
+        for f in rfails:
+            add("readcheck", f, hint="see level-method.md section 5 for this readability rule")
         RL.save_rgb(comp2, BUILD / "composites" / f"{level_id}@2x.png")
         RL.save_rgb(comp1, BUILD / "composites" / f"{level_id}.png")
         RL.save_rgb(base1, BUILD / "composites" / f"{level_id}-undressed.png")

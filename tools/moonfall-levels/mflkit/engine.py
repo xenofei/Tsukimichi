@@ -66,6 +66,13 @@ def ensure_built():
             subprocess.run(["dotnet", "build", str(DOTNET / proj), "-c", "Release", "--nologo", "-v", "q"], check=True)
 
 
+def ensure_ready():
+    """The built tools, and every game texture in this worktree (from the shared mirror, else the install)."""
+    ensure_built()
+    from . import shared
+    shared.ensure_textures()
+
+
 def _run(*args, timeout=1800):
     r = subprocess.run(["dotnet", str(MFCHECK), *map(str, args)], capture_output=True, text=True, timeout=timeout)
     return r.returncode, r.stdout
@@ -97,6 +104,21 @@ def sweep(path, number, seed=1, step=SWEEP_STEP):
             "oranges_mean": float(m.group(5)), "no_hit": int(n.group(1)), "stuck": int(n.group(2)),
             "stuck_share": round(int(n.group(2)) / angles, 3), "long_flights": int(n.group(3)), "bucket": int(n.group(4)),
             "unreached": [int(v) for v in (u.group(3) or "").split(",") if v.strip()], "pieces": int(u.group(2))}
+
+
+def trace_many(path, number, angles, max_ticks=400, seed=1, chunk=150):
+    """The ball's flight for each aim angle, in order: one mfcheck process per `chunk` angles instead of one per angle.
+    Each is {"angle", "points": [[x, y], ...], "hits": [tick index, ...]} (what `mfcheck trace` prints)."""
+    out = []
+    angles = list(angles)
+    for i in range(0, len(angles), chunk):
+        code, text = _run("trace-many", path, number, seed, max_ticks, *angles[i:i + chunk])
+        if code != 0:
+            raise RuntimeError(text)
+        out += [json.loads(line) for line in text.splitlines() if line.startswith("{")]
+    if len(out) != len(angles):
+        raise RuntimeError(f"trace-many returned {len(out)} flights for {len(angles)} angles")
+    return out
 
 
 def play(path, number, games=RAMP_GAMES, first=0, oranges=None):
