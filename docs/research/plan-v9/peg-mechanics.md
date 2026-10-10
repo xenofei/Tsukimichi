@@ -67,7 +67,7 @@ Multiplier (Fever Meter) by orange pegs remaining [W-Fever via search; "x2 at 15
 
 The wiki gives only the boundary values (15, 10, 6, 3). The ranges above are my reading ("reaches the step when that many remain"); confidence medium. An Archipelago wiki confirms the multiplier tiers 2x/3x/5x/10x [AP]. In challenges with more than 25 oranges the meter stays frozen until 25 remain [W-Fever via search]. WARNING: a different threshold set (16+ x1, 11-15 x2, 8-10 x3, 4-7 x5, 1-3 x10, none left x100) appears in a university clone spec (https://github.com/BryannYeap/Peggle). It is not the original.
 
-Per-shot score: sum of (peg base x multiplier at the time of hit) plus style bonuses. The patent says the scorer "adds any style points to the shot score" [P]. The clone formula "(sum) x number of pegs hit" is NOT original.
+Per-shot score: the sum of (peg base x multiplier at the time of hit), times the number of pegs hit, plus style bonuses. The patent says the scorer "adds any style points to the shot score" [P]. CORRECTION (9 October 2026): the "(sum) x number of pegs hit" formula was first seen here in a clone and wrongly called not original; the reference study of the original's own code and in-game help shows it is the original's formula (Moonfall's footage already measured it, [M correction]). The same study found that style points never count towards the free balls, and that the meter reaches x100 with no orange left (the "university clone" values above are right on that step too).
 
 Free balls [P]: green light in the glass tubes beside the launcher fills as the SHOT score rises. 25,000 in one shot = 1 free ball; 75,000 = second; 125,000 = third. Also catching the ball in the bucket = 1 free ball. [MW] confirms 25,000 per single shot.
 

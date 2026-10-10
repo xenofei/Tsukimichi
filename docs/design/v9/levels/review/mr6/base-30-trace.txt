@@ -1,0 +1,4 @@
+  skipped ((114, 415), 'ridge left', '11.6 from the peg at (118, 387)')
+  skipped ((689, 413), 'ridge right', '9.3 from the peg at (684, 387)')
+  pieces 72 (pegs 60, bricks 12, movers 16); candidates 32; green-only 36; skipped while tracing 2
+wrote C:\Users\devon\Desktop\Tsukimichi (Main Repo)\.claude\worktrees\wf_40869448-0fa-20\docs\design\v9\levels\build\trace\base-30.png
