@@ -32,7 +32,7 @@ LEVEL = dict(id="base-11", name="The Airship Road", stage=3, number=11, scene="a
 # Left blue (never orange): the bricks whose orange a protanope reads least against the ground round them (F9, the
 # build's per-place figures): the west ends of two cloud humps on the brightest cloud, the Black Shroud's canopy over
 # the bucket's approach, and Gyr Abania's west end.
-HARD = [(613.5, 156.4), (657.5, 276.4), (420.0, 476.0), (399.1, 483.0), (660.0, 215.0), (569.5, 490.8)]
+HARD = [(613.5, 156.4), (657.5, 276.4), (420.0, 476.0), (399.1, 483.0), (660.0, 215.0), (569.5, 490.8), (599.5, 422.8)]
 # (lane, trim at its start, trim at its end)
 LANES = (("lane gridania", 46, 46), ("lane north", 46, 10), ("lane west", 46, 46), ("lane south", 10, 0))
 

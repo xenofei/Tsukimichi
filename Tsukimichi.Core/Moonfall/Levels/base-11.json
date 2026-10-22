@@ -624,7 +624,7 @@
       "start": 215.0,
       "sweep": 35.0,
       "thickness": 20.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
