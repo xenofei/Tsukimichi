@@ -10,7 +10,8 @@ export const meta = {
   ],
 }
 
-// args: { worktree, branch, key, levels[], codes[], later[], authored?, mergedNote?, salvage?{level: branch}, authorModel?, knownFails?, integrated?{commit, pack} }
+// args: { worktree, branch, key, levels[], codes[], later[], authored?, generator?, mergedNote?, salvage?{level: branch}, authorModel?, knownFails?, integrated?{commit, pack} }
+// generator: true = generator-first (owner, 22 October 2026, after the MR 1 test): `mfl.py make` builds each level, the best passing variant is adopted as is, and only finales get hand polish.
 const st = args
 const WT = st.worktree
 const BR = st.branch || 'moonfall-peggle'
@@ -41,7 +42,12 @@ let authored
 if (st.authored) {
   authored = st.levels.map(l => ({ level: l, branch: '(already merged)', commit: '', levelPassed: true, flagged: false, notes: 'authored earlier and merged' }))
 } else {
-  authored = await parallel(st.levels.map((lvl, i) => () => retryOnce(`author ${st.codes[i]}`, () => agent(`${COMMON}
+  authored = await parallel(st.levels.map((lvl, i) => () => retryOnce(`author ${st.codes[i]}`, () => agent(st.generator ? `${COMMON}
+You make Moonfall level ${lvl} (${st.codes[i]}) of stage ${st.key} with the unattended generator, in your own worktree on its own branch. The owner trusts the generator since it passed the MR 1 test (22 October 2026), so its levels ship as made; only finales get hand polish.
+- First run \`git merge --no-edit ${BR}\`. Keep the level's subject, technique, source and crop, place tag and jewels from the charter; the scene recipe must exist (write it from the charter if it does not, as earlier stages' recipes do).
+- Run \`mfl.py make ${lvl}\` (defaults: 4 variants, stage band${isFinale(st.codes[i]) ? ', finale cap' : ''}). If a variant passes, adopt the top-ranked passing one with \`mfl.py make ${lvl} --adopt K\` (it runs \`level ${lvl}\`, which must PASS).${isFinale(st.codes[i]) ? ' This is the finale: after adopting, polish it by hand (about 45 minutes) so the subject reads plainly and nothing floats without shape, keep it in the finale band, and finish with `mfl.py level ' + lvl + '` (must PASS).' : ' Do not polish it by hand.'}
+- If no variant passes, run make once more with \`--variants 8 --seed 2\`. If still none passes, adopt the best-ranked variant, fix only what its refusal names (about 30 minutes, \`mfl.py check\`, \`tune\`, \`level\`), and say so in notes. If level still will not PASS, commit what you have and set flagged=true with the exact reason.
+- Touch only this level's own files. Commit. Return branch (git branch --show-current), commit, whether level passed, held-out wins/48, piece count, flagged, and short notes naming the adopted variant and its tracing score.` : `${COMMON}
 You make Moonfall level ${lvl} (${st.codes[i]}) of stage ${st.key} under the Peggle-match rules, in your own worktree on its own branch. This is TIME-BOXED authoring (owner, 22 October 2026).
 - First run \`git merge --no-edit ${BR}\`.${st.salvage && st.salvage[lvl] ? ` Then merge the earlier partial, unchecked work on ${st.salvage[lvl]} (\`git merge --no-edit ${st.salvage[lvl]}\`; drop build outputs or stray files it committed) and continue from it if it is on track.` : ''}
 - Keep the level's subject, technique, source and crop, place tag and jewels from the charter. Run \`mfl.py generate ${lvl} --variants 3\` and pick the variant that best traces the subject (or keep the current layout if it traces better). ${isFinale(st.codes[i]) ? 'This is the finale: polish it by hand so the subject reads plainly, and tune it into the lower part of the band (it must win fewer games than the mean of the other four).' : 'Polish only where the subject does not read; aim near the stage mean.'}

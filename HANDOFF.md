@@ -1,6 +1,6 @@
 # Handoff
 
-Updated 2026-10-22 (workflow review done; nothing running). To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
+Updated 2026-10-22 (MR 1–3 done; first test drop being prepared; generator trusted from MR 4). To resume, read this file and `git log -5`, then `docs/team/agent-brief-common.md`.
 
 ## Goal
 Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimichi.
@@ -26,19 +26,15 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 - **Developer mode:** a hidden slash command in every build that unlocks every level, jumps to any level, shows its figures and lifts the spoiler shield. Remove it once all 115 have shipped.
 - **Players keep** completions, scores and Aces on refitted levels.
 
+## Done (21–22 October)
+- **Developer mode** (`/tsukimichi moonfall dev`; remove later by grepping "Developer mode") and the **test channel** (rc tags fill the testing fields; `docs/team/test-drops.md`).
+- **MR 2 and MR 3** through the new flow on `moonfall-peggle`. base-08 stays the easy outlier of MR 2 (10.5/48) for the play-through to judge; base-14 was reworked from 12.2 to 4.4/48. Minors are on `docs/design/v9/levels/minor-list.md`.
+- **Generator:** `mfl.py make`, `bench`, `overlay` (merged into `moonfall-peggle`). It passed the MR 1 test: 4 of 5 pass the checks, and the owner accepted all 5 (round 7). From MR 4 the stage script runs with `generator: true`.
+- **1.23.1** (hooks tested on game 2026.10.06): branch `hotfix-1.23.1` (885b0378, built on v1.23.0, not on local main, which holds unreleased levels). Owner-approved; the auto-mode classifier blocked the push, so the owner runs the tag and push.
+
 ## Next, in order
-1. **Developer mode:** the hidden slash command. Moonfall has none today. Levels unlock only by progress (`Tsukimichi.Core/Moonfall/MoonfallModes.cs`), and the spoiler shield is in `MoonfallShield.cs`. Commands are in `Tsukimichi/Commands/TsukimichiCommand.cs`.
-2. **Test channel:** `release.yml` treats tags containing `-` as prereleases and skips the pluginmaster refresh. Make an rc tag fill `DownloadLinkTesting` and `TestingAssemblyVersion` in `pluginmaster.json` instead. Tell the owner to turn on testing versions for Tsukimichi in `/xlplugins`.
-3. **MR 2 through the new flow** (branch `moonfall-peggle`, worktree `.claude/worktrees/moonfall-peggle`, head aba2e666):
-   - `mfl.py sources`;
-   - `tune --stage mr2`: base-08 is too easy at 11.6/48, and the finale base-10 at 6.6/48 is not yet harder than the other four;
-   - `stage mr2`, convert and `--check`, Aces, selftest, gate, pack;
-   - one combined review.
-4. **MR 3 through the new flow,** continuing from the partial authoring on `salvage-mr3-base-11..15` (WIP, unchecked).
-5. **Generator, alongside 3–4:** make `mfl.py generate` one unattended command (generate, auto-tune, check, `level` PASS) that returns ranked variants and a score for how well the pegs trace the subject. Add an overlay of the subject features in the review pack. Then run the MR 1 test: 4 of 5 pass the checks unattended, and the owner accepts 3 of 5. The test runs before MR 4 starts.
-   - What the generator lacks today: it never reads the painting, only the subject features hand-drawn in each scene recipe (`mflkit/generate.py`); it doesn't tune difficulty; nothing scores how well a layout traces its subject.
-6. **First test drop:** MR 1–MR 3 (15 levels). Merge `moonfall-peggle` into main first, and run the full check.
-7. **MR 4–MR 11, then The Far Shore's FS 1–FS 12:**
+1. **First test drop, `v1.24.0-rc1`** (MR 1–3): a branch merging main, `moonfall-peggle` and `hotfix-1.23.1`, with stages 1–3 reachable and base-16+ not, Version 1.24.0.0, changelog and What's new. Then an approval card on the brief page before the tag and push, then a play-through round (Good or Redo per level).
+2. **MR 4–MR 11, then The Far Shore's FS 1–FS 12,** generator-first:
    - FS 1 ships the two Fan Kit wallpapers with a "© SQUARE ENIX" notice in `THIRD-PARTY-NOTICES.txt`;
    - point `challenges.json` ch-04 at `base-37` when it ships.
 
@@ -49,15 +45,13 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
   3. one combined reviewer with a structured findings list;
   4. record, and append the Minors to `docs/design/v9/levels/minor-list.md`;
   5. per-level fixers only for levels with Blockers or Majors, then a stage fixer.
-- **Args:** `worktree`, `branch`, `key`, `levels`, `codes`, `later` (the not-yet-refitted levels whose tests may fail), `authored`, `mergedNote`, `salvage`, `authorModel`.
+- **Args:** `worktree`, `branch`, `key`, `levels`, `codes`, `later` (the not-yet-refitted levels whose tests may fail), `authored`, `generator` (true from MR 4: `mfl.py make`, adopt the best passing variant, hand polish on finales only), `mergedNote`, `salvage`, `authorModel`, `knownFails`, `integrated`.
 - **Retired:** `moonfall-refit-v2.js`.
 
 ## Where the refit stands
-- **MR 1 (base-01..05):** approved (refit rounds 1–3; records in `docs/design/v9/levels/supervisor/*-mr1-refit-round-*.md`).
-- **MR 2 (base-06..10):** authored and merged on `moonfall-peggle`; integration still to do.
-- **MR 3 (base-11..15):** partial authoring on `salvage-mr3-*`.
-- **MR 4–6:** not started.
-- **Main** has 25 approved levels and is green; nothing from the refit is on main yet.
+- **MR 1–MR 3 (base-01..15):** done on `moonfall-peggle` (MR 1 approved in refit rounds 1–3; MR 2 and MR 3 reviewed once, Blockers and Majors fixed).
+- **MR 4–6:** not started; generator-first from here.
+- **Main** has 25 old approved levels and is green; nothing from the refit is on main yet. Local main is 112+ commits ahead of GitHub, including unreleased Moonfall levels, so a hotfix must be built on the last release tag, not on main.
 
 ## Measured (refit runs, 7–10 October)
 - **Where the time goes:** agents spend about 90% of wall time inside tool calls.
