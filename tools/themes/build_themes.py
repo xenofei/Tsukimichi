@@ -2090,9 +2090,14 @@ def main():
 
 def _same(a, b):
     if a.endswith(".json"):
-        # JSON compares by content: git may check text files out with CRLF.
+        # JSON compares by content: git may check text files out with CRLF. A metrics.json's "chrome" is the installed
+        # Chrome's version, which auto-updates; it is a record, not a measurement (the PNGs and their SHA-256s are
+        # compared exactly), so a newer Chrome that renders the same pixels must not read as stale.
         with open(a, encoding="utf-8") as fa, open(b, encoding="utf-8") as fb:
-            return json.load(fa) == json.load(fb)
+            ja, jb = json.load(fa), json.load(fb)
+        if os.path.basename(a) == "metrics.json":
+            ja, jb = ({k: v for k, v in j.items() if k != "chrome"} for j in (ja, jb))
+        return ja == jb
     if a.endswith(".cs"):
         # Generated source compares by text: git may check it out with CRLF.
         with open(a, encoding="utf-8") as fa, open(b, encoding="utf-8") as fb:
