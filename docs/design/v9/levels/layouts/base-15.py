@@ -25,8 +25,12 @@ and made the board easier (fewer pieces, more hits a shot). The finale's difficu
 density (111 pieces) and from where its oranges fall: every reachable piece is a candidate but the sure greens and the
 cloud sea's low crests, and the tuning (below) takes the candidates a player clears most readily out of the deal (the
 open middle under the vortex and the high bank's crest), so the 25 oranges land more often on the whale's ring, the
-east bank's wall and the corners. Held out 3.6 per 48, in the lower part of MR 3's band (3.04-5.24), below the
-stage's centre (4.14) as a finale must be; the lower third holds 29% of the 68 candidates and no cheap difficulty.
+east bank's wall and the corners.
+Authoring pass of 22 October 2026: the whale's ring is as many moons as the silhouette's offset holds (14 between
+surfaces) and the fill keeps 52 units from it (`clear_moat`), so the ring stands alone and reads as the creature; the
+crests that ran close under and over the whale are gone. Held out 4.9 per 48 (MR 3's band 3.04-5.24): inside the band
+but above the stage's centre, so a stage tune must still take it lower to be the finale (adding or removing fill
+pieces only eased it; the tuner stops at the 61% candidate floor).
 """
 import math
 
@@ -63,13 +67,70 @@ def even_ring(b, name, offset, n, r, oranges, tag):
     loop = np.vstack([O, O[:1]])
     seg = np.linalg.norm(np.diff(loop, axis=0), axis=1)
     cum = np.concatenate([[0], np.cumsum(seg)])
+
+    def spots(n, phase):
+        out = []
+        for k in range(n):
+            s = (cum[-1] * (k + phase) / n) % cum[-1]
+            i = min(np.searchsorted(cum, s, side="right") - 1, len(seg) - 1)
+            out.append(loop[i] + (loop[i + 1] - loop[i]) * (s - cum[i]) / max(seg[i], 1e-9))
+        return np.asarray(out)
+
+    def closest(P):
+        d = np.linalg.norm(P[:, None, :] - P[None, :, :], axis=2) + np.eye(len(P)) * 1e9
+        return d.min()
+
+    # the most moons the loop holds with 14 between their surfaces (a chord can run shorter than the arc on a turn)
+    best = None
+    for m in range(n, 8, -1):
+        for phase in (0.0, 0.25, 0.5, 0.75):
+            P = spots(m, phase)
+            if closest(P) >= 2 * r + 14.2:
+                best = P
+                break
+        if best is not None:
+            break
     out = []
-    for k in range(n):
-        s = cum[-1] * k / n
-        i = min(np.searchsorted(cum, s, side="right") - 1, len(seg) - 1)
-        x, y = loop[i] + (loop[i + 1] - loop[i]) * (s - cum[i]) / max(seg[i], 1e-9)
+    for k, (x, y) in enumerate(best):
         out.append(b.place(x, y, r=r, orange=k in oranges, green=False, tag=tag))
     return out
+
+
+def clear_moat(b, ring, d, keep):
+    """Takes out the fill's pegs that stand nearer than `d` (centre to centre) to a ring moon, so the whale's ring
+    stands alone and reads as its outline; the pegs tagged in `keep` stay."""
+    ring = [p for p in ring if p]
+    pegs, tags, k, dropped = [], [], 0, 0
+    for kind, tag in b.tags:
+        if kind == "peg":
+            p = b.pegs[k]
+            k += 1
+            if tag not in keep and min(math.hypot(p["x"] - q["x"], p["y"] - q["y"]) for q in ring) < d:
+                dropped += 1
+                continue
+            pegs.append(p)
+        tags.append((kind, tag))
+    b.pegs[:] = pegs
+    b.tags[:] = tags
+    return dropped
+
+
+def fill_gaps(b, ring, n, tag, box=(100, 640, 250, 520), clear=50):
+    """n more moons, each in the emptiest spot of `box` (farthest from every piece, `clear` from the whale's ring)."""
+    placed = []
+    for _ in range(n):
+        best, bd = None, 0.0
+        for x in range(box[0], box[1] + 1, 6):
+            for y in range(box[2], box[3] + 1, 6):
+                if min(math.hypot(x - q["x"], y - q["y"]) for q in ring if q) < clear or not b.fits(x, y):
+                    continue
+                d = min(math.hypot(x - q["x"], y - q["y"]) for q in b.pegs)
+                if d > bd:
+                    best, bd = (x, y), d
+        if best is None:
+            break
+        placed.append(b.place(*best, tag=tag))
+    return placed
 
 
 def chord(b, x1, y1, x2, y2, tag, green=True, prev=None):
@@ -153,7 +214,7 @@ def ell_dots(b, scale, angles, tag, r=10):
 
 def build(b):
     b.subject("whale")
-    even_ring(b, "whale", 20, WHALE_N, 10, oranges=set(), tag="whale")
+    ring = even_ring(b, "whale", WHALE_OFF, WHALE_N, 10, oranges=set(), tag="whale")
     # the south flock: its lead bird a moon, its chevron's two wings in brick
     b.place(542.5, 412.3, tag="lead bird")
     for (x1, y1, x2, y2, n) in WINGS:
@@ -189,11 +250,18 @@ def build(b):
         b.trace(name, spacing=CREST_SP, start=st, nudge=CREST_NUDGE, tag="low crest" if name in LOW_CRESTS else "crest")
     # the west arm's lit crest, a crown over its lobe
     b.arc_bricks(*ARM_CROWN, tag="crest")
+    clear_moat(b, ring, MOAT, keep=("whale", "flight line"))
+    # the first shots that skim the whale's back (a lane from the vortex's west rim down past its dorsal fin) meet a moon
+    b.place(290, 258, tag="cloud lane")
+    fill_gaps(b, ring, FILL_N, tag="cloud fill")
     b.greens_in_reach()
-    b.candidates(exclude_tags=("low crest",))
+    # the whale's lowest moons stay blue too
+    b.candidates(exclude=[(p["x"], p["y"]) for p in ring if p and p["y"] >= 405], exclude_tags=("low crest", "cloud fill"))
 
 
-WHALE_N = 14
+WHALE_N, WHALE_OFF = 20, 18
+FILL_N = 0
+MOAT = 52                       # the fill keeps this far (centre to centre) from the whale's ring
 CREST_SP, CREST_NUDGE = 35.0, 4.0
 # the chevron's wings from 36 units off the lead bird: east along its lead line, west down to the third bird
 WINGS = ((542.5 + 40 * 0.864, 412.3 + 40 * 0.504, 700.0, 504.2, 3), (542.5, 412.3 + 40, 544.0, 512.0, 2))
@@ -212,18 +280,19 @@ BAND_WEST = (162, 203, 3)
 CURL = 1.30
 BAND_CURL = ((196, 218, 1),)
 EDDIES = ((186, 176, 36, 6),)
-CRESTS = (("crest high east", 0), ("crest high middle", 0), ("crest west", 0), ("crest middle", 0), ("crest south", 0),
-          ("crest under whale", 0), ("crest low west", 0), ("crest low middle", 0), ("crest mid east", 0),
+CRESTS = (("crest high east", 0), ("crest high middle", 0), ("crest middle", 0), ("crest south", 0), ("crest south-west", 0),
+          ("crest low west", 0), ("crest low middle", 0), ("crest mid east", 0),
           ("crest flock east", 0),
           ("crest flight wake", 0), ("crest low south", 0), ("crest east lobe", 0), ("crest far west", 0),
           ("crest under title", 0), ("crest high bank", 0), ("crest east bank", 0), ("crest flock lee", 0))
 CROWNS = ()
 ARM_CROWN = (168, 409.6, 161.6, 245.3, 49.7, 3)        # through the west arm's crest (100, 262), (168, 248), (236, 264)
 # never orange: the cloud sea's low crests, so the lower third holds few candidates (no cheap difficulty)
-LOW_CRESTS = {"crest south", "crest low west", "crest low middle", "crest low south", "crest east lobe"}
+LOW_CRESTS = {"crest south", "crest low west", "crest low middle", "crest low south", "crest east lobe", "crest south-west",
+              "crest far west"}
 
 
-# ---- tuning (written by `mfl.py tune`; held out 3.6/48, tuning seeds 3.5/48, band 3.04-3.90)
+# ---- tuning (written by `mfl.py tune`; held out None/48, tuning seeds 4.8/48, band 3.10-3.70; NOT in band: stuck)
 TUNING = {
-    "blue": [[305.1, 354.0], [289.2, 422.7], [241.2, 422.5], [498.5, 406.4], [497.6, 278.8], [452.6, 274.4], [409.9, 266.2], [370.7, 254.4], [564.0, 232.7], [525.0, 234.9], [486.0, 232.7], [525.0, 116.0], [495.6, 167.0], [339.0, 327.1], [442.1, 333.2], [236.0, 300.0], [270.9, 296.8], [305.7, 293.7], [340.6, 290.8], [375.4, 291.8], [596.9, 444.0], [279.9, 190.5], [265.7, 149.5], [277.6, 109.6], [215.2, 255.1]]
+    "blue": [[543.3, 279.2], [452.6, 274.4], [409.9, 266.2], [370.7, 254.4], [564.0, 232.7], [525.0, 234.9], [486.0, 232.7], [525.0, 116.0], [554.4, 167.0], [442.1, 333.2], [675.7, 400.1], [340.6, 290.8], [290.0, 258.0], [279.9, 190.5], [265.7, 149.5], [277.6, 109.6], [652.5, 204.6], [215.2, 255.1]]
 }
