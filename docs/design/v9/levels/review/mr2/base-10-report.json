@@ -1,0 +1,806 @@
+{
+ "id": "base-10",
+ "name": "Twin Lanterns",
+ "stage": 2,
+ "number": 10,
+ "scene": "vesper-twin-lanterns",
+ "subject": "a harbour gate and twin lanterns mirrored in still water",
+ "technique": "reflection (the mirror image drawn with slide movers)",
+ "source": "our painting (twin_lanterns)",
+ "checks": {
+  "preflight": {
+   "problems": [],
+   "pieces": 95,
+   "pegs": 74,
+   "bricks": 21,
+   "movers": 12,
+   "orange_candidates": 61,
+   "never_green": 4,
+   "skipped_while_tracing": [],
+   "brick_share": 0.221,
+   "candidate_share": 0.642,
+   "lower_third_share": 0.246,
+   "warnings": [
+    "brick share 22% (guidance 30% to 45% where the subject allows)"
+   ]
+  },
+  "loader": {
+   "ok": true,
+   "output": [
+    "OK   base-10.json  id=base-10 \"Twin Lanterns\"  pieces=95 (round 74, bricks 21, movers 12)  mayBeOrange=61",
+    "     still round pegs 62: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 117..495"
+   ]
+  },
+  "sweep": {
+   "angles": 777,
+   "pegs_median": 14,
+   "pegs_mean": 14.2,
+   "pegs_max": 25,
+   "oranges_mean": 2.88,
+   "no_hit": 0,
+   "stuck": 5,
+   "stuck_share": 0.006,
+   "long_flights": 0,
+   "bucket": 138,
+   "unreached": [],
+   "pieces": 95
+  },
+  "reach": {
+   "rounds": 1,
+   "never": []
+  },
+  "play": {
+   "greedy_won": 6,
+   "games": 48,
+   "oranges_left_when_lost": [
+    1,
+    3,
+    4,
+    5,
+    2,
+    3,
+    4,
+    3,
+    3,
+    6,
+    6,
+    1,
+    5,
+    8,
+    5,
+    1,
+    10,
+    3,
+    5,
+    4,
+    7,
+    3,
+    3,
+    4,
+    1,
+    4,
+    2,
+    4,
+    5,
+    6,
+    2,
+    3,
+    1,
+    2,
+    5,
+    3,
+    2,
+    5,
+    5,
+    4,
+    3,
+    1
+   ],
+   "ramp_games": 1728,
+   "ramp_won": 236,
+   "ramp_per_48": 6.6,
+   "shots_mean": 12.2,
+   "stuck_fires": 16,
+   "random_won": 0,
+   "random_oranges_mean": 19.1,
+   "low_left_share": 0.278,
+   "lost_with_low_orange": 0.624,
+   "holdouts": [
+    {
+     "piece": 46,
+     "at": [
+      694,
+      373
+     ],
+     "share_of_lost_games": 0.17
+    },
+    {
+     "piece": 65,
+     "at": [
+      660,
+      365
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 26,
+     "at": [
+      630,
+      404
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 9,
+     "at": [
+      392,
+      352
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 27,
+     "at": [
+      593,
+      404
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 50,
+     "at": [
+      650,
+      215
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 68,
+     "at": [
+      100,
+      305
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 29,
+     "at": [
+      224,
+      440
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 22,
+     "at": [
+      344,
+      400
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 64,
+     "at": [
+      430,
+      325
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 21,
+     "at": [
+      392,
+      400
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 53,
+     "at": [
+      140,
+      395
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 23,
+     "at": [
+      310,
+      400
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 17,
+     "at": [
+      610,
+      196
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 63,
+     "at": [
+      560,
+      385
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 67,
+     "at": [
+      700,
+      185
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 18,
+     "at": [
+      630,
+      348
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 20,
+     "at": [
+      452,
+      400
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 36,
+     "at": [
+      547,
+      264
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 8,
+     "at": [
+      452,
+      352
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 31,
+     "at": [
+      504,
+      450
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 1,
+     "at": [
+      604,
+      236
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 10,
+     "at": [
+      344,
+      352
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 15,
+     "at": [
+      185,
+      348
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 19,
+     "at": [
+      593,
+      348
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 34,
+     "at": [
+      526,
+      373
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 25,
+     "at": [
+      185,
+      404
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 35,
+     "at": [
+      274,
+      373
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 48,
+     "at": [
+      106,
+      227
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 91,
+     "at": [
+      116,
+      355
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 43,
+     "at": [
+      169,
+      264
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 94,
+     "at": [
+      684,
+      245
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 7,
+     "at": [
+      504,
+      336
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 58,
+     "at": [
+      260,
+      285
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 81,
+     "at": [
+      400,
+      446
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 61,
+     "at": [
+      130,
+      255
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 14,
+     "at": [
+      222,
+      348
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 24,
+     "at": [
+      222,
+      404
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 84,
+     "at": [
+      568,
+      446
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 51,
+     "at": [
+      460,
+      305
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 62,
+     "at": [
+      550,
+      345
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 11,
+     "at": [
+      310,
+      352
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 28,
+     "at": [
+      504,
+      416
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 93,
+     "at": [
+      684,
+      318
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 16,
+     "at": [
+      576,
+      196
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 52,
+     "at": [
+      340,
+      305
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 54,
+     "at": [
+      260,
+      335
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 83,
+     "at": [
+      316,
+      446
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 32,
+     "at": [
+      379,
+      264
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 89,
+     "at": [
+      170,
+      446
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 0,
+     "at": [
+      196,
+      236
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 60,
+     "at": [
+      550,
+      225
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 6,
+     "at": [
+      504,
+      226
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 42,
+     "at": [
+      547,
+      117
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 90,
+     "at": [
+      116,
+      172
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 49,
+     "at": [
+      250,
+      235
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 57,
+     "at": [
+      160,
+      155
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 12,
+     "at": [
+      168,
+      196
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 69,
+     "at": [
+      150,
+      225
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 38,
+     "at": [
+      253,
+      190
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 13,
+     "at": [
+      202,
+      196
+     ],
+     "share_of_lost_games": 0.02
+    }
+   ],
+   "ramp_first_seed": 865
+  },
+  "ceiling": {
+   "p99_luma": 0.207,
+   "limit": 0.465
+  },
+  "framecheck": {
+   "report": {
+    "cover_pct": 1.79,
+    "middle_pct": 0.0,
+    "in_swing_px": 0,
+    "min_clearance": 8.26,
+    "longest_rim_run": 11.7,
+    "longest_rim_at": [
+     82,
+     74
+    ],
+    "straight_run": null,
+    "peg_sized_discs": [],
+    "lights_too_close": [],
+    "lights_per_band_max": 1,
+    "lights_nearest": 334.0,
+    "darkened_min_clearance": 9.85,
+    "elements_dropped_for_clearance": 23
+   },
+   "fails": []
+  },
+  "colours": {
+   "seed": 1,
+   "counts": {
+    "blue": 67,
+    "green": 2,
+    "orange": 25,
+    "purple": 1
+   }
+  },
+  "readcheck": {
+   "report": {
+    "faces": {
+     "1x": {
+      "blue": 0.689,
+      "orange": 0.617,
+      "green": 0.714,
+      "purple": 0.584
+     },
+     "0.8x": {
+      "blue": 0.673,
+      "orange": 0.607,
+      "green": 0.701,
+      "purple": 0.568
+     }
+    },
+    "worst_case": {
+     "blue 1x": {
+      "worst": 0.495,
+      "at": [
+       196,
+       236
+      ],
+      "undressed": 0.497,
+      "drop": 0.002
+     },
+     "orange 1x": {
+      "worst": 0.424,
+      "at": [
+       196,
+       236
+      ],
+      "undressed": 0.426,
+      "drop": 0.002
+     },
+     "green 1x": {
+      "worst": 0.547,
+      "at": [
+       169,
+       264
+      ],
+      "undressed": 0.552,
+      "drop": 0.005
+     },
+     "purple 1x": {
+      "worst": 0.39,
+      "at": [
+       196,
+       236
+      ],
+      "undressed": 0.392,
+      "drop": 0.002
+     },
+     "blue 0.8x": {
+      "worst": 0.462,
+      "at": [
+       196,
+       236
+      ],
+      "undressed": 0.461,
+      "drop": -0.001
+     },
+     "orange 0.8x": {
+      "worst": 0.395,
+      "at": [
+       196,
+       236
+      ],
+      "undressed": 0.394,
+      "drop": -0.001
+     },
+     "green 0.8x": {
+      "worst": 0.535,
+      "at": [
+       169,
+       264
+      ],
+      "undressed": 0.538,
+      "drop": 0.003
+     },
+     "purple 0.8x": {
+      "worst": 0.357,
+      "at": [
+       196,
+       236
+      ],
+      "undressed": 0.356,
+      "drop": -0.001
+     }
+    },
+    "worst_margin": 0.357,
+    "largest_drop": 0.005,
+    "bricks_min_margin": [
+     0.428,
+     "orange"
+    ],
+    "protan_orange_p10": 0.119,
+    "protan_places": 244,
+    "protan_worst_at": [
+     310,
+     352
+    ],
+    "protan_min": 0.116,
+    "jewels": {
+     "coloured_px_pct": 99.3,
+     "mean_chroma": 0.061,
+     "second_at_walls_x": 1.07,
+     "second_at_walls_worst_window": [
+      2.47,
+      166
+     ],
+     "first_jewel_hue": 341,
+     "first_share": 0.774,
+     "second_jewel_hue": 211,
+     "second_share": 0.15,
+     "apart_deg": 130,
+     "bins_pct": [
+      18.0,
+      0.2,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      11.3,
+      2.1,
+      1.5,
+      7.4,
+      9.8,
+      49.6
+     ]
+    },
+    "ghost_median": 0.029,
+    "ghost_worst": [
+     0.03324552997946739,
+     [
+      295,
+      483
+     ]
+    ],
+    "ghost_isolated_pegs": 3,
+    "print": {
+     "median": 0.0,
+     "p90": 0.0105,
+     "worst": [
+      0.0251,
+      [
+       211,
+       117
+      ]
+     ],
+     "samples": 44,
+     "mode": "pegs",
+     "hue_median": 0.0047
+    }
+   },
+   "fails": []
+  }
+ },
+ "fails": [],
+ "problems": [],
+ "seconds": 78.5,
+ "verdict": "PASS",
+ "locked": {
+  "held_out": 6.6,
+  "band": [
+   5.13,
+   7.33
+  ],
+  "how": "stage mr2",
+  "when": "2026-10-21 20:39"
+ }
+}

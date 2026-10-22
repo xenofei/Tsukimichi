@@ -793,5 +793,14 @@
  "fails": [],
  "problems": [],
  "seconds": 78.5,
- "verdict": "PASS"
+ "verdict": "PASS",
+ "locked": {
+  "held_out": 6.6,
+  "band": [
+   5.13,
+   7.33
+  ],
+  "how": "stage mr2",
+  "when": "2026-10-21 20:39"
+ }
 }
