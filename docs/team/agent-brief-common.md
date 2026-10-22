@@ -67,5 +67,6 @@ READ FIRST: at most 5 paths
   - next, give a table of findings: id, severity, item, one-line issue, file:line or render evidence;
   - then the detail;
   - keep it under about 12 KB;
-  - no preamble, and don't restate the brief.
+  - no preamble, and don't restate the brief;
+  - a Moonfall stage gets one combined review in one round: only Blockers and Majors are fixed, and Minors go on the Minor list (charter, "Owner's answers on the workflow review"; words in `docs/design/v9/levels/GLOSSARY.md`).
 - **Researchers** (at most about 700 words): answer, actions, cited evidence, confidence.
