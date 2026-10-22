@@ -58,14 +58,14 @@ public sealed class MoonfallDevModeTests
     }
 
     [Fact]
-    public void A_win_in_developer_mode_writes_no_progress()
+    public void A_level_started_in_developer_mode_writes_no_progress_whatever_the_mode_is_when_it_ends()
     {
         // One orange straight below the shot: the first shot wins.
         var level = Board(Orange(400, 300)) with { Id = "base-01" };
-        var start = new MoonfallStart(MoonfallMode.Adventure, "base-01", level, 1, MoonfallCompanion.None, MoonfallRules.BallsPerLevel, 1);
+        var plain = new MoonfallStart(MoonfallMode.Adventure, "base-01", level, 1, MoonfallCompanion.None, MoonfallRules.BallsPerLevel, 1);
         var campaigns = Full();
 
-        MoonfallLevelResult Win(MoonfallModes modes)
+        MoonfallLevelResult Win(MoonfallModes modes, MoonfallStart start)
         {
             var game = start.Create(3);
             PlayOut(game, [0]);
@@ -73,19 +73,43 @@ public sealed class MoonfallDevModeTests
             return modes.FinishLevel(start, game);
         }
 
-        // Off, the win is recorded (the control: the test would pass vacuously if the level could not be won).
+        // Started with the mode off, the win is recorded (the control: the test would pass vacuously if the level could not be won),
+        // even when the mode is on by the time it ends.
         var recorded = new MoonfallProgress();
-        Assert.True(Win(Modes(recorded, campaigns)).Won);
+        Assert.True(Win(new MoonfallModes(campaigns, recorded, MoonfallStory.Everyone, []) { UnlockAll = true }, plain).Won);
         Assert.Equal(1, recorded.BaseCleared);
 
+        // Started in the mode (the modes stamp the start), nothing is recorded, even when the mode is off by the time it ends.
         var progress = new MoonfallProgress();
-        var result = Win(new MoonfallModes(campaigns, progress, MoonfallStory.Everyone, []) { UnlockAll = true });
+        var modes = new MoonfallModes(campaigns, progress, MoonfallStory.Everyone, []) { UnlockAll = true };
+        Assert.False(Modes(progress, campaigns).Adventure(MoonfallCampaignKind.Base, 0)!.Developer);
+        Assert.True(modes.Adventure(MoonfallCampaignKind.Base, 0)!.Developer);
+        Assert.True(modes.QuickPlay("base-01", MoonfallCompanion.None)!.Developer);
+        modes.UnlockAll = false;
+        var result = Win(modes, plain with { Developer = true });
         Assert.True(result.Won);
         Assert.True(result.Score > 0);
         Assert.Empty(progress.Levels);
         Assert.Equal(0, progress.BaseCleared);
         Assert.Equal(0, progress.Best("base-01"));
         Assert.Equal(0, progress.Reach(MoonfallCampaignKind.Base));
+    }
+
+    [Fact]
+    public void Unlock_all_opens_the_challenges_and_a_challenge_run_started_in_it_records_nothing()
+    {
+        var campaigns = MoonfallCampaigns.LoadBuiltIn();
+        var progress = new MoonfallProgress();
+        var modes = new MoonfallModes(campaigns, progress, MoonfallStory.Everyone, MoonfallChallenges.LoadBuiltIn().Challenges);
+        Assert.False(modes.ChallengesOpen);
+        Assert.DoesNotContain(modes.ChallengeList(), static c => c.State == MoonfallChallengeState.Open);
+        modes.UnlockAll = true;
+        Assert.True(modes.ChallengesOpen);
+        var playable = modes.ChallengeList().Where(static c => c.State == MoonfallChallengeState.Open).ToList();
+        Assert.NotEmpty(playable);
+        var run = modes.StartChallenge(playable[0].Challenge.Id, MoonfallCompanion.None, 1);
+        Assert.NotNull(run);
+        Assert.True(run.Developer);
     }
 
     [Fact]

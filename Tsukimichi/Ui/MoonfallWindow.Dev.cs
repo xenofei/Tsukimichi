@@ -19,6 +19,9 @@ public sealed partial class MoonfallWindow
     private string[][]? devStageNames;
 
     private bool devMode;
+
+    /// <summary>The board's level was started in developer mode: it records and saves nothing, whatever the mode is when it ends.</summary>
+    private bool levelDev;
     private int devCampaign;
     private int devStage;
     private int devLevel;
@@ -82,6 +85,12 @@ public sealed partial class MoonfallWindow
                 devLevel = at.Index % MoonfallCharacters.LevelsPerStage;
                 devId = shown.Id;
             }
+        }
+
+        if (flow.Current == MoonfallScreen.Play && game is not null && Keyboard.WindowHasKeys())
+        {
+            // R is taken from the game for as long as the window has the keys, as the arrows and Esc are (GameKeyClaim).
+            Keys?.ClaimRestart();
         }
 
         if (flow.Current == MoonfallScreen.Play && game is not null && Keyboard.RestartLevelPressed())

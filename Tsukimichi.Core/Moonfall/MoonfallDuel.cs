@@ -44,6 +44,10 @@ public sealed class MoonfallDuel : IMoonfallShooter
     private readonly ScoreCounter[] counters = new ScoreCounter[2];
     private readonly MoonfallCompanion[] companions = new MoonfallCompanion[2];
 
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>The duel was started in developer mode (<see cref="MoonfallModes.UnlockAll"/>): its end is never recorded.</summary>
+    public bool Developer { get; init; }
+
     private bool turnOpen;
     private int shooter;
     private long turnScore;

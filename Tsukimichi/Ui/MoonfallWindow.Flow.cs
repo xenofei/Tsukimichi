@@ -297,6 +297,8 @@ public sealed partial class MoonfallWindow
             levelIndex = 0;
         }
 
+        // Developer mode: remove after all 115 Moonfall levels ship. Taken now: the mode turned off or on later does not change this level.
+        levelDev = (start?.Developer ?? false) || (run?.Developer ?? false) || (newDuel?.Developer ?? false);
         finished = false;
         lastResult = null;
         wonAced = false;
@@ -427,8 +429,8 @@ public sealed partial class MoonfallWindow
         }
 
         progressEpoch++;
-        // Developer mode: remove after all 115 Moonfall levels ship. Nothing was recorded (MoonfallModes.UnlockAll), so nothing is saved.
-        if (devMode)
+        // Developer mode: remove after all 115 Moonfall levels ship. A level started in it recorded nothing (its start's Developer flag), so nothing is saved.
+        if (levelDev)
         {
             return;
         }
