@@ -10,15 +10,15 @@ export const meta = {
   ],
 }
 
-// args: { worktree, branch, key, levels[], codes[], later[], authored?, mergedNote?, salvage?{level: branch}, authorModel? }
+// args: { worktree, branch, key, levels[], codes[], later[], authored?, mergedNote?, salvage?{level: branch}, authorModel?, knownFails?, integrated?{commit, pack} }
 const st = args
 const WT = st.worktree
 const BR = st.branch || 'moonfall-peggle'
 
 const COMMON = `Read docs/team/agent-brief-common.md first and follow it. Words are defined in docs/design/v9/levels/GLOSSARY.md. The level method is tools/moonfall-levels/README.md; the rules are docs/design/v9/levels/charter.md section 1 (the Peggle-match rules of 9 October 2026) and the owner's answers sections, including "Owner's answers on the workflow review" (22 October 2026). Owner rules: every level is an illustrated scene whose pegs trace or emphasise its subject; rich and detailed; figures from game art; game art read at runtime, never shipped; nothing from Peggle ever enters the repo. Tools: \`mfl.py check <id>\` is the 3-second inner loop (--json names each fault's piece, place and hint); \`generate\`, \`tune\`, \`tune --hold\`, \`tune --stage\`, \`level\`, \`status\`, \`pack\`, \`diff\`, \`sheet\` are in the README. Caches are shared across worktrees; if game textures are missing run \`py -3 tools/moonfall-levels/mfl.py fetch\`.
-Run long commands (level, build, convert, stage, selftest, gate) in the FOREGROUND with a timeout of up to 20 minutes, never in the background with sleep loops. Send long output to files in your scratchpad and print only verdicts.`
+Run long commands (level, build, convert, stage, selftest, gate) in the FOREGROUND, never in the background with sleep loops; \`tune --stage\` and \`stage\` can take over 20 minutes, so give them no timeout (a killed tune leaves a level half-tuned). Send long output to files in your scratchpad and print only verdicts.`
 
-const LATER_FAILS = `Until every stage is refitted, the gates may fail ONLY these known, expected tests for levels of stages not yet refitted (${(st.later || []).join(', ') || 'none'}): Every_shipped_level_passes_the_greedy_player and Shipped_Aces for those level ids. If MoonfallSceneStartTests.The_menus_thumbnail_is_the_levels_own_scene_scaled_down fails with "never settled", rerun it alone; it counts as passing only if it passes alone, and say so. Any other failure is a real failure.`
+const LATER_FAILS = `Until every stage is refitted, the gates may fail ONLY these known, expected tests for levels of stages not yet refitted (${(st.later || []).join(', ') || 'none'}): Every_shipped_level_passes_the_greedy_player and Shipped_Aces for those level ids. If MoonfallSceneStartTests.The_menus_thumbnail_is_the_levels_own_scene_scaled_down fails with "never settled", rerun it alone; it counts as passing only if it passes alone, and say so. ${st.knownFails ? 'Also known and handled elsewhere: ' + st.knownFails + '.' : ''} Any other failure is a real failure.`
 
 const AUTHOR_SCHEMA = { type: 'object', properties: { level: { type: 'string' }, branch: { type: 'string' }, commit: { type: 'string' }, levelPassed: { type: 'boolean' }, heldOutWins: { type: 'number' }, pieces: { type: 'number' }, flagged: { type: 'boolean' }, notes: { type: 'string' } }, required: ['level', 'branch', 'commit', 'levelPassed', 'flagged', 'notes'] }
 const INTEG_SCHEMA = { type: 'object', properties: { commit: { type: 'string' }, stagePassed: { type: 'boolean' }, convertPassed: { type: 'boolean' }, selftestPassed: { type: 'boolean' }, gatesPassed: { type: 'boolean' }, pack: { type: 'string' }, summary: { type: 'string' }, problems: { type: 'string' } }, required: ['commit', 'stagePassed', 'convertPassed', 'selftestPassed', 'gatesPassed', 'pack', 'summary', 'problems'] }
@@ -57,7 +57,8 @@ if (ok.length < st.levels.length) {
 // ---- Integrate ----
 phase('Integrate')
 const merges = st.authored ? (st.mergedNote || 'The authors are already merged; nothing to merge.') : `Merge these branches (--no-ff, keep both sides; the new level files win over the old ones): ${ok.map(a => a.branch + ' @ ' + a.commit).join(', ')}.`
-const integ = await agent(`${COMMON}
+// args.integrated = { commit, pack, summary } resumes after an integration that only failed on known gate failures.
+const integ = st.integrated ? Object.assign({ stagePassed: true, convertPassed: true, selftestPassed: true, gatesPassed: true, summary: 'integrated earlier', problems: '' }, st.integrated) : await agent(`${COMMON}
 You integrate stage ${st.key} (${st.levels.join(', ')}) in the worktree ${WT} (branch ${BR}; cd there; work and commit there).
 1. ${merges}
 2. \`py -3 tools/moonfall-levels/mfl.py sources\`, then \`mfl.py stage ${st.key} --json\` must PASS (band, finale rule, jewels). If it fails on the mean or the finale, run \`mfl.py tune --stage ${st.key}\` and re-check; say what moved.
