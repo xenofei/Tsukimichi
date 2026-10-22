@@ -39,13 +39,17 @@ CRESTS = [(350, 372, 22, 230, 80), (400, 420, 26, 230, 80), (286, 434, 26, 230, 
 GLINTS = [(400, 420, 0, -36), (354, 462, -8, -38)]
 # moonlit tops of the billows under the near strings, the left half: pegs
 TOPS = [(205, 500), (245, 478)]
-# the moon at the lane's end wears a halo of moons 58 from its centre, so every piece keeps 18 from the painted disc
+# the moon at the lane's end wears a halo of moons 60 from its centre, so every piece keeps 18 from the painted disc
 # (r 30), as the runtime needs to keep the Fever moon (MoonfallSceneBuilder.MoonKeep). The halo opens where the
 # launcher swings above and where the far beams' first moons and lanterns stand beside and below: (angle in degrees,
 # clockwise from 3 o'clock), the left half mirrored
-MOON_HALO = (58, [-135, -170, 90])
+MOON_HALO = (60, [-135, -170, 90])
 # stars above the beams' tips, the left half
 STARS = [(130, 136), (190, 110), (250, 96), (300, 150), (160, 70), (230, 150), (100, 90), (290, 60), (215, 60)]
+# the places the ease sweep clears most readily (`mfl.py ease base-12 --pick 17`), kept off the orange so the board is as
+# hard as its stage
+EASY = [(230, 150), (249, 199), (250, 96), (263, 231), (276, 263), (310, 230), (343, 210), (359, 179),
+        (400, 278), (400, 384), (441, 179), (500, 150), (537, 231)]
 
 
 def mirror(x):
@@ -92,5 +96,12 @@ def build(b):
     b.greens_in_reach()
     # never orange: the billow tops low by the near lanterns, the low glints and the moon's halo beside and below it
     # (the sure greens on the lane); the halo's upper pair may be
-    b.candidates(exclude_tags=["billow", "moon", "low glint"])
+    b.candidates(exclude=EASY, exclude_tags=["billow", "moon", "low glint"])
 
+
+# ---- tuning (written by `mfl.py tune`; held out None/48, tuning seeds 5.0/48, band 3.04-5.24; NOT in band: plays exhausted)
+TUNING = {
+    "blue": [[551.0, 198.8], [300.0, 150.0], [570.0, 150.0], [281.8, 382.4], [518.2, 382.4], [451.0, 372.0], [351.0, 372.0], [400.0, 420.0]],
+    "orange": [[276.4, 263.2], [262.7, 231.0], [249.0, 198.8], [310.3, 230.3], [537.3, 231.0], [400.0, 384.0], [459.1, 209.6], [340.9, 209.6], [250.0, 96.0]],
+    "nudge": [[100.0, 90.0, 0, 10], [290.0, 60.0, -10, 0], [510.0, 60.0, 10, 0]]
+}
