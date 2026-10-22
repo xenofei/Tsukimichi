@@ -42,7 +42,9 @@ SCALLOPS = (
 # never orange: the sure greens' pool (pieces that may be green and are never orange), then the near bank's moons at
 # the walls, the board's hardest low places (cheap difficulty)
 GREENS = ((158, 283), (476, 242), (328, 370), (240, 396), (601, 276), (512, 230), (564, 350), (646, 405))
-EXCLUDE = GREENS + ((680, 464), (680, 406), (522, 491), (488, 481), (134, 462), (100, 450), (100, 400))
+EASY = ((493, 111), (104, 86))
+LOW = ((380, 477), (454, 473), (336, 461), (313, 443), (556, 392))
+EXCLUDE = tuple(g for g in GREENS if g not in ((158, 283), (601, 276), (564, 350), (512, 230))) + EASY + LOW + ((680, 464), (680, 406), (522, 491), (488, 481), (134, 462), (100, 450), (100, 400))
 
 # the towers' steep flanks in brick: (feature, x from, x to)
 FLANKS = (("tower left", 126, 180), ("tower left", 270, 296), ("tower right", 652, 700))
@@ -61,7 +63,10 @@ LANE_DASHES = ((290, 312), (352, 384), (424, 452))
 
 STARS = ((120, 150), (150, 120), (190, 100), (240, 104), (290, 96), (600, 200), (640, 176), (560, 226),
          (300, 150), (660, 230), (196, 60), (252, 66), (300, 50), (700, 246), (340, 246), (96, 236),
-         (700, 140), (520, 250), (104, 86), (512, 230), (476, 242), (620, 242), (104, 182), (524, 50))
+         (700, 140), (520, 250), (104, 86), (512, 230), (476, 242), (620, 242), (104, 182), (524, 50),
+         # more stars, the open sky's hard places (tried where the pre-flight allows)
+         (130, 224), (176, 246), (222, 240), (262, 236), (330, 266), (372, 262), (412, 266), (452, 262), (492, 268),
+         (606, 76), (646, 92), (680, 70), (430, 58), (474, 66), (340, 72), (600, 120), (560, 150))
 
 
 def _posts():
@@ -205,3 +210,15 @@ def build(b):
         b.place(x, y, r=10, tag="star")
     b.greens_in_reach()
     b.candidates(exclude=EXCLUDE, exclude_tags=("near beacon",))
+
+
+
+
+
+
+# ---- tuning (written by `mfl.py tune`; held out None/48, tuning seeds 10.3/48, band 3.04-5.24; NOT in band: stuck)
+TUNING = {
+    "blue": [[327.4, 181.2], [274.6, 175.8]],
+    "orange": [[556.0, 392.0], [328.2, 370.4], [240.0, 395.5], [476.0, 242.0]],
+    "period": [[100.0, 450.3, 0.64]]
+}
