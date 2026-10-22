@@ -10,11 +10,11 @@
  "checks": {
   "preflight": {
    "problems": [],
-   "pieces": 108,
-   "pegs": 74,
-   "bricks": 34,
+   "pieces": 119,
+   "pegs": 103,
+   "bricks": 16,
    "movers": 16,
-   "orange_candidates": 67,
+   "orange_candidates": 75,
    "never_green": 32,
    "skipped_while_tracing": [
     [
@@ -75,6 +75,126 @@
     ],
     [
      [
+      70,
+      289
+     ],
+     "crest 1",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      204,
+      283
+     ],
+     "crest 1",
+     "9.6 from the peg at (175, 288)"
+    ],
+    [
+     [
+      339,
+      287
+     ],
+     "crest 1",
+     "9.9 from the peg at (309, 289)"
+    ],
+    [
+     [
+      439,
+      290
+     ],
+     "crest 1",
+     "11.8 from the peg at (407, 284)"
+    ],
+    [
+     [
+      472,
+      289
+     ],
+     "crest 1",
+     "3.3 from a brick"
+    ],
+    [
+     [
+      606,
+      282
+     ],
+     "crest 1",
+     "9.9 from the peg at (576, 280)"
+    ],
+    [
+     [
+      707,
+      283
+     ],
+     "crest 1",
+     "wall pinch 7.6"
+    ],
+    [
+     [
+      70,
+      346
+     ],
+     "crest 3",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      310,
+      356
+     ],
+     "crest 3",
+     "3.2 from the peg at (328, 370)"
+    ],
+    [
+     [
+      346,
+      362
+     ],
+     "crest 3",
+     "-4.1 from the peg at (355, 349)"
+    ],
+    [
+     [
+      381,
+      356
+     ],
+     "crest 3",
+     "6.9 from the peg at (355, 349)"
+    ],
+    [
+     [
+      414,
+      342
+     ],
+     "crest 3",
+     "11.2 from the peg at (395, 318)"
+    ],
+    [
+     [
+      447,
+      355
+     ],
+     "crest 3",
+     "-12.4 from a brick"
+    ],
+    [
+     [
+      516,
+      346
+     ],
+     "crest 3",
+     "-16.0 from the peg at (519, 349)"
+    ],
+    [
+     [
+      725,
+      352
+     ],
+     "crest 3",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
       261,
       208
      ],
@@ -127,7 +247,7 @@
       296
      ],
      "star river bank",
-     "-8.4 from a brick"
+     "0.2 from the peg at (238, 287)"
     ],
     [
      [
@@ -135,7 +255,7 @@
       283
      ],
      "star river bank",
-     "-19.0 from a brick"
+     "-3.2 from the peg at (273, 288)"
     ],
     [
      [
@@ -143,15 +263,7 @@
       270
      ],
      "star river bank",
-     "1.3 from a brick"
-    ],
-    [
-     [
-      356,
-      256
-     ],
-     "star river bank",
-     "4.5 from a brick"
+     "3.9 from the peg at (309, 289)"
     ],
     [
      [
@@ -183,7 +295,7 @@
       313
      ],
      "crest 2",
-     "5.0 from a brick"
+     "4.0 from the peg at (104, 291)"
     ],
     [
      [
@@ -191,7 +303,7 @@
       314
      ],
      "crest 2",
-     "11.5 from a brick"
+     "9.2 from the peg at (139, 287)"
     ],
     [
      [
@@ -199,7 +311,7 @@
       312
      ],
      "crest 2",
-     "9.3 from a brick"
+     "6.2 from the peg at (175, 288)"
     ],
     [
      [
@@ -207,7 +319,7 @@
       301
      ],
      "crest 2",
-     "7.4 from a brick"
+     "2.1 from the peg at (238, 287)"
     ],
     [
      [
@@ -215,7 +327,7 @@
       299
      ],
      "crest 2",
-     "-7.0 from a brick"
+     "2.5 from the peg at (238, 287)"
     ],
     [
      [
@@ -223,7 +335,7 @@
       295
      ],
      "crest 2",
-     "-6.9 from a brick"
+     "0.1 from the peg at (273, 288)"
     ],
     [
      [
@@ -231,7 +343,7 @@
       309
      ],
      "crest 2",
-     "2.1 from a brick"
+     "5.0 from the peg at (309, 289)"
     ],
     [
      [
@@ -239,7 +351,7 @@
       312
      ],
      "crest 2",
-     "10.8 from a brick"
+     "6.4 from the peg at (372, 289)"
     ],
     [
      [
@@ -255,7 +367,7 @@
       307
      ],
      "crest 2",
-     "-5.5 from a brick"
+     "13.6 from the peg at (407, 284)"
     ],
     [
      [
@@ -279,7 +391,7 @@
       301
      ],
      "crest 2",
-     "4.9 from a brick"
+     "-4.8 from the peg at (541, 286)"
     ],
     [
      [
@@ -287,15 +399,7 @@
       313
      ],
      "crest 2",
-     "15.6 from a brick"
-    ],
-    [
-     [
-      607,
-      311
-     ],
-     "crest 2",
-     "10.2 from a brick"
+     "13.7 from the peg at (576, 280)"
     ],
     [
      [
@@ -303,15 +407,7 @@
       308
      ],
      "crest 2",
-     "10.0 from a brick"
-    ],
-    [
-     [
-      677,
-      316
-     ],
-     "crest 2",
-     "13.1 from a brick"
+     "9.1 from the peg at (640, 279)"
     ],
     [
      [
@@ -339,19 +435,11 @@
     ],
     [
      [
-      700,
-      246
-     ],
-     "star",
-     "10.3 from a brick"
-    ],
-    [
-     [
       340,
       246
      ],
      "star",
-     "4.7 from a brick"
+     "-1.1 from the peg at (356, 256)"
     ],
     [
      [
@@ -371,11 +459,11 @@
     ],
     [
      [
-      520,
-      250
+      512,
+      230
      ],
      "star",
-     "9.1 from a brick"
+     "1.5 from the peg at (520, 250)"
     ],
     [
      [
@@ -399,7 +487,7 @@
       266
      ],
      "star",
-     "8.3 from a brick"
+     "11.4 from the peg at (309, 289)"
     ],
     [
      [
@@ -407,7 +495,7 @@
       262
      ],
      "star",
-     "6.3 from the peg at (389, 242)"
+     "6.6 from the peg at (372, 289)"
     ],
     [
      [
@@ -415,7 +503,7 @@
       266
      ],
      "star",
-     "13.0 from the peg at (389, 242)"
+     "-1.2 from the peg at (407, 284)"
     ],
     [
      [
@@ -431,7 +519,7 @@
       268
      ],
      "star",
-     "10.5 from the peg at (476, 242)"
+     "1.5 from the peg at (506, 285)"
     ],
     [
      [
@@ -498,133 +586,189 @@
      "2.6 from the peg at (555, 172)"
     ]
    ],
-   "brick_share": 0.315,
-   "candidate_share": 0.62,
-   "lower_third_share": 0.075,
-   "warnings": []
+   "brick_share": 0.134,
+   "candidate_share": 0.63,
+   "lower_third_share": 0.147,
+   "warnings": [
+    "119 pieces (the target is 95 to 115)",
+    "brick share 13% (guidance 30% to 45% where the subject allows)"
+   ]
   },
   "loader": {
    "ok": true,
    "output": [
-    "OK   base-14.json  id=base-14 \"The Lane by Starlight\"  pieces=108 (round 74, bricks 34, movers 16)  mayBeOrange=67",
-    "     still round pegs 58: closest surfaces 14.2 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "OK   base-14.json  id=base-14 \"The Lane by Starlight\"  pieces=119 (round 103, bricks 16, movers 16)  mayBeOrange=75",
+    "     still round pegs 87: closest surfaces 14.2 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
     "     rows used y 50..495"
    ]
   },
   "sweep": {
    "angles": 777,
    "pegs_median": 15,
-   "pegs_mean": 14.5,
-   "pegs_max": 25,
-   "oranges_mean": 3.43,
+   "pegs_mean": 15.0,
+   "pegs_max": 27,
+   "oranges_mean": 2.47,
    "no_hit": 0,
-   "stuck": 4,
-   "stuck_share": 0.005,
+   "stuck": 2,
+   "stuck_share": 0.003,
    "long_flights": 0,
-   "bucket": 104,
+   "bucket": 119,
    "unreached": [],
-   "pieces": 108
+   "pieces": 119
   },
   "reach": {
    "rounds": 1,
    "never": []
   },
   "play": {
-   "greedy_won": 9,
+   "greedy_won": 4,
    "games": 48,
    "oranges_left_when_lost": [
     5,
     4,
-    2,
-    1,
-    3,
-    3,
-    1,
-    1,
-    7,
-    1,
-    4,
-    4,
-    4,
-    4,
-    2,
-    1,
-    2,
-    3,
-    2,
-    4,
-    4,
-    6,
     6,
     4,
-    1,
+    5,
+    2,
+    2,
+    6,
+    3,
+    6,
+    2,
+    3,
+    2,
+    3,
+    3,
+    2,
+    4,
     5,
     4,
+    5,
+    7,
+    6,
+    5,
+    11,
+    4,
+    6,
+    5,
     3,
-    3,
-    1,
-    1,
     2,
+    5,
+    1,
+    5,
+    3,
     1,
     3,
+    5,
     3,
+    6,
+    6,
+    4,
+    5,
+    8,
     1,
-    1,
-    3,
-    2
+    5
    ],
    "ramp_games": 1728,
-   "ramp_won": 441,
-   "ramp_per_48": 12.2,
-   "shots_mean": 12.0,
-   "stuck_fires": 40,
-   "random_won": 2,
-   "random_oranges_mean": 19.0,
-   "low_left_share": 0.125,
-   "lost_with_low_orange": 0.298,
+   "ramp_won": 157,
+   "ramp_per_48": 4.4,
+   "shots_mean": 12.1,
+   "stuck_fires": 15,
+   "random_won": 0,
+   "random_oranges_mean": 18.2,
+   "low_left_share": 0.194,
+   "lost_with_low_orange": 0.538,
    "holdouts": [
     {
-     "piece": 70,
+     "piece": 99,
      "at": [
       104,
       182
      ],
-     "share_of_lost_games": 0.21
+     "share_of_lost_games": 0.2
     },
     {
-     "piece": 38,
+     "piece": 94,
      "at": [
-      698,
-      189
+      700,
+      246
      ],
      "share_of_lost_games": 0.13
     },
     {
-     "piece": 92,
+     "piece": 31,
      "at": [
-      690,
-      274
+      675,
+      280
      ],
      "share_of_lost_games": 0.12
     },
     {
-     "piece": 15,
+     "piece": 64,
      "at": [
-      556,
-      392
+      698,
+      189
+     ],
+     "share_of_lost_games": 0.12
+    },
+    {
+     "piece": 10,
+     "at": [
+      645,
+      441
      ],
      "share_of_lost_games": 0.11
     },
     {
-     "piece": 61,
+     "piece": 43,
      "at": [
-      640,
-      176
+      692,
+      353
      ],
      "share_of_lost_games": 0.1
     },
     {
-     "piece": 45,
+     "piece": 19,
+     "at": [
+      104,
+      291
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 62,
+     "at": [
+      180,
+      143
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 1,
+     "at": [
+      248,
+      441
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 59,
+     "at": [
+      622,
+      146
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 89,
+     "at": [
+      640,
+      176
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 71,
      "at": [
       504,
       404
@@ -632,23 +776,23 @@
      "share_of_lost_games": 0.08
     },
     {
-     "piece": 33,
+     "piece": 5,
      "at": [
-      622,
-      146
+      185,
+      441
      ],
      "share_of_lost_games": 0.08
     },
     {
-     "piece": 42,
+     "piece": 106,
      "at": [
-      342,
-      402
+      131,
+      231
      ],
      "share_of_lost_games": 0.08
     },
     {
-     "piece": 40,
+     "piece": 66,
      "at": [
       134,
       401
@@ -656,20 +800,84 @@
      "share_of_lost_games": 0.08
     },
     {
-     "piece": 41,
+     "piece": 32,
      "at": [
-      240,
+      104,
+      340
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 82,
+     "at": [
+      677,
+      316
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 117,
+     "at": [
+      612,
+      108
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 0,
+     "at": [
+      216,
+      423
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 15,
+     "at": [
+      556,
+      392
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 14,
+     "at": [
+      583,
+      441
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 70,
+     "at": [
+      470,
       396
      ],
      "share_of_lost_games": 0.07
     },
     {
-     "piece": 36,
+     "piece": 68,
      "at": [
-      180,
-      143
+      342,
+      402
      ],
-     "share_of_lost_games": 0.07
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 33,
+     "at": [
+      135,
+      357
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 107,
+     "at": [
+      142,
+      204
+     ],
+     "share_of_lost_games": 0.06
     },
     {
      "piece": 6,
@@ -677,77 +885,69 @@
       301,
       392
      ],
-     "share_of_lost_games": 0.07
+     "share_of_lost_games": 0.06
     },
     {
-     "piece": 93,
+     "piece": 9,
      "at": [
-      111,
-      337
+      614,
+      423
      ],
      "share_of_lost_games": 0.06
     },
     {
-     "piece": 91,
+     "piece": 67,
      "at": [
-      663,
-      274
-     ],
-     "share_of_lost_games": 0.06
-    },
-    {
-     "piece": 106,
-     "at": [
-      612,
-      108
-     ],
-     "share_of_lost_games": 0.06
-    },
-    {
-     "piece": 43,
-     "at": [
-      376,
-      409
-     ],
-     "share_of_lost_games": 0.06
-    },
-    {
-     "piece": 44,
-     "at": [
-      470,
+      240,
       396
      ],
      "share_of_lost_games": 0.06
     },
     {
+     "piece": 21,
+     "at": [
+      175,
+      288
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 30,
+     "at": [
+      640,
+      279
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 35,
+     "at": [
+      205,
+      348
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 38,
+     "at": [
+      482,
+      356
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
+     "piece": 41,
+     "at": [
+      623,
+      352
+     ],
+     "share_of_lost_games": 0.05
+    },
+    {
      "piece": 98,
      "at": [
-      584,
-      350
-     ],
-     "share_of_lost_games": 0.05
-    },
-    {
-     "piece": 81,
-     "at": [
-      666,
-      228
-     ],
-     "share_of_lost_games": 0.05
-    },
-    {
-     "piece": 17,
-     "at": [
-      492,
-      318
-     ],
-     "share_of_lost_games": 0.05
-    },
-    {
-     "piece": 94,
-     "at": [
-      140,
-      337
+      620,
+      242
      ],
      "share_of_lost_games": 0.05
     },
@@ -760,42 +960,58 @@
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 82,
+     "piece": 36,
      "at": [
-      131,
-      283
+      240,
+      346
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 77,
+     "piece": 88,
      "at": [
-      131,
-      231
+      600,
+      200
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 7,
+     "piece": 42,
      "at": [
-      355,
+      657,
       349
      ],
-     "share_of_lost_games": 0.04
+     "share_of_lost_games": 0.05
     },
     {
-     "piece": 99,
+     "piece": 34,
      "at": [
-      642,
-      337
+      170,
+      352
      ],
      "share_of_lost_games": 0.04
     },
     {
-     "piece": 18,
+     "piece": 39,
      "at": [
-      328,
-      370
+      553,
+      352
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 63,
+     "at": [
+      214,
+      144
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 86,
+     "at": [
+      240,
+      104
      ],
      "share_of_lost_games": 0.04
     },
@@ -808,23 +1024,95 @@
      "share_of_lost_games": 0.04
     },
     {
-     "piece": 78,
+     "piece": 20,
      "at": [
-      142,
-      204
+      139,
+      287
      ],
      "share_of_lost_games": 0.04
     },
     {
-     "piece": 58,
+     "piece": 101,
      "at": [
-      240,
-      104
+      176,
+      246
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 69,
+     "at": [
+      376,
+      409
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 17,
+     "at": [
+      492,
+      318
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 22,
+     "at": [
+      238,
+      287
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 40,
+     "at": [
+      589,
+      357
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 110,
+     "at": [
+      666,
+      228
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 37,
+     "at": [
+      275,
+      351
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 102,
+     "at": [
+      262,
+      236
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 25,
+     "at": [
+      372,
+      289
      ],
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 32,
+     "piece": 81,
+     "at": [
+      607,
+      311
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 58,
      "at": [
       589,
       159
@@ -832,95 +1120,55 @@
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 76,
+     "piece": 28,
      "at": [
-      426,
-      438
+      541,
+      286
      ],
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 73,
+     "piece": 7,
      "at": [
-      262,
-      236
+      355,
+      349
      ],
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 72,
+     "piece": 27,
      "at": [
-      176,
-      246
+      506,
+      285
      ],
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 83,
+     "piece": 18,
      "at": [
-      158,
-      283
+      328,
+      370
      ],
      "share_of_lost_games": 0.03
     },
     {
-     "piece": 69,
+     "piece": 26,
      "at": [
-      620,
-      242
-     ],
-     "share_of_lost_games": 0.03
-    },
-    {
-     "piece": 60,
-     "at": [
-      600,
-      200
-     ],
-     "share_of_lost_games": 0.03
-    },
-    {
-     "piece": 90,
-     "at": [
-      601,
-      276
-     ],
-     "share_of_lost_games": 0.03
-    },
-    {
-     "piece": 67,
-     "at": [
-      512,
-      230
+      407,
+      284
      ],
      "share_of_lost_games": 0.02
     },
     {
-     "piece": 97,
+     "piece": 57,
      "at": [
-      563,
-      350
+      555,
+      172
      ],
      "share_of_lost_games": 0.02
     },
     {
-     "piece": 95,
-     "at": [
-      203,
-      342
-     ],
-     "share_of_lost_games": 0.02
-    },
-    {
-     "piece": 96,
-     "at": [
-      231,
-      342
-     ],
-     "share_of_lost_games": 0.02
-    },
-    {
-     "piece": 19,
+     "piece": 44,
      "at": [
       227,
       221
@@ -928,7 +1176,55 @@
      "share_of_lost_games": 0.02
     },
     {
-     "piece": 75,
+     "piece": 23,
+     "at": [
+      273,
+      288
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 53,
+     "at": [
+      422,
+      228
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 29,
+     "at": [
+      576,
+      280
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 95,
+     "at": [
+      520,
+      250
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 24,
+     "at": [
+      309,
+      289
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 105,
+     "at": [
+      426,
+      438
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 104,
      "at": [
       437,
       368
@@ -936,47 +1232,7 @@
      "share_of_lost_games": 0.02
     },
     {
-     "piece": 27,
-     "at": [
-      422,
-      228
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 89,
-     "at": [
-      574,
-      276
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 87,
-     "at": [
-      366,
-      280
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 84,
-     "at": [
-      217,
-      273
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 105,
-     "at": [
-      544,
-      133
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 68,
+     "piece": 97,
      "at": [
       476,
       242
@@ -984,23 +1240,7 @@
      "share_of_lost_games": 0.01
     },
     {
-     "piece": 85,
-     "at": [
-      276,
-      284
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 31,
-     "at": [
-      555,
-      172
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 26,
+     "piece": 52,
      "at": [
       389,
       242
@@ -1008,7 +1248,7 @@
      "share_of_lost_games": 0.01
     },
     {
-     "piece": 74,
+     "piece": 103,
      "at": [
       448,
       301
@@ -1016,23 +1256,7 @@
      "share_of_lost_games": 0.01
     },
     {
-     "piece": 62,
-     "at": [
-      560,
-      226
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 37,
-     "at": [
-      214,
-      144
-     ],
-     "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 22,
+     "piece": 47,
      "at": [
       526,
       97
@@ -1040,68 +1264,20 @@
      "share_of_lost_games": 0.01
     },
     {
-     "piece": 29,
+     "piece": 51,
      "at": [
-      488,
-      200
+      356,
+      256
      ],
      "share_of_lost_games": 0.01
     },
     {
-     "piece": 88,
+     "piece": 90,
      "at": [
-      511,
-      278
+      560,
+      226
      ],
      "share_of_lost_games": 0.01
-    },
-    {
-     "piece": 59,
-     "at": [
-      290,
-      96
-     ],
-     "share_of_lost_games": 0.0
-    },
-    {
-     "piece": 86,
-     "at": [
-      303,
-      284
-     ],
-     "share_of_lost_games": 0.0
-    },
-    {
-     "piece": 80,
-     "at": [
-      285,
-      204
-     ],
-     "share_of_lost_games": 0.0
-    },
-    {
-     "piece": 28,
-     "at": [
-      455,
-      214
-     ],
-     "share_of_lost_games": 0.0
-    },
-    {
-     "piece": 102,
-     "at": [
-      345,
-      217
-     ],
-     "share_of_lost_games": 0.0
-    },
-    {
-     "piece": 30,
-     "at": [
-      522,
-      186
-     ],
-     "share_of_lost_games": 0.0
     }
    ],
    "ramp_first_seed": 865
@@ -1131,7 +1307,7 @@
   "colours": {
    "seed": 1,
    "counts": {
-    "blue": 80,
+    "blue": 91,
     "green": 2,
     "orange": 25,
     "purple": 1
@@ -1142,15 +1318,15 @@
     "faces": {
      "1x": {
       "blue": 0.689,
-      "orange": 0.617,
-      "green": 0.716,
-      "purple": 0.58
+      "orange": 0.619,
+      "green": 0.724,
+      "purple": 0.589
      },
      "0.8x": {
-      "blue": 0.679,
-      "orange": 0.605,
-      "green": 0.698,
-      "purple": 0.563
+      "blue": 0.678,
+      "orange": 0.607,
+      "green": 0.713,
+      "purple": 0.59
      }
     },
     "worst_case": {
@@ -1164,77 +1340,77 @@
       "drop": 0.005
      },
      "orange 1x": {
-      "worst": 0.26,
+      "worst": 0.262,
       "at": [
        518,
        404
       ],
-      "undressed": 0.265,
+      "undressed": 0.267,
       "drop": 0.005
      },
      "green 1x": {
+      "worst": 0.366,
+      "at": [
+       518,
+       404
+      ],
+      "undressed": 0.372,
+      "drop": 0.006
+     },
+     "purple 1x": {
+      "worst": 0.232,
+      "at": [
+       518,
+       404
+      ],
+      "undressed": 0.237,
+      "drop": 0.005
+     },
+     "blue 0.8x": {
+      "worst": 0.323,
+      "at": [
+       518,
+       404
+      ],
+      "undressed": 0.326,
+      "drop": 0.003
+     },
+     "orange 0.8x": {
+      "worst": 0.252,
+      "at": [
+       518,
+       404
+      ],
+      "undressed": 0.255,
+      "drop": 0.003
+     },
+     "green 0.8x": {
       "worst": 0.358,
       "at": [
        518,
        404
       ],
-      "undressed": 0.364,
-      "drop": 0.006
-     },
-     "purple 1x": {
-      "worst": 0.223,
-      "at": [
-       518,
-       404
-      ],
-      "undressed": 0.229,
-      "drop": 0.006
-     },
-     "blue 0.8x": {
-      "worst": 0.324,
-      "at": [
-       518,
-       404
-      ],
-      "undressed": 0.328,
-      "drop": 0.004
-     },
-     "orange 0.8x": {
-      "worst": 0.25,
-      "at": [
-       518,
-       404
-      ],
-      "undressed": 0.253,
+      "undressed": 0.361,
       "drop": 0.003
      },
-     "green 0.8x": {
-      "worst": 0.343,
-      "at": [
-       518,
-       404
-      ],
-      "undressed": 0.347,
-      "drop": 0.004
-     },
      "purple 0.8x": {
-      "worst": 0.209,
+      "worst": 0.235,
       "at": [
        518,
        404
       ],
-      "undressed": 0.212,
+      "undressed": 0.238,
       "drop": 0.003
      }
     },
-    "worst_margin": 0.209,
+    "worst_margin": 0.232,
     "largest_drop": 0.006,
     "bricks_min_margin": [
-     0.232,
+     0.26,
      "orange"
     ],
-    "protan_orange_p10": 0.119,
-    "protan_places": 268,
+    "protan_orange_p10": 0.122,
+    "protan_places": 300,
     "protan_worst_at": [
      477,
      396
@@ -1270,7 +1446,7 @@
     },
     "ghost_median": 0.045,
     "ghost_worst": [
-     0.04519747197628021,
+     0.04519211873412132,
      [
       327,
       181
@@ -1287,9 +1463,9 @@
        189
       ]
      ],
-     "samples": 51,
+     "samples": 78,
      "mode": "pegs",
-     "hue_median": 0.0003
+     "hue_median": 0.0
     }
    },
    "fails": []
@@ -1297,6 +1473,15 @@
  },
  "fails": [],
  "problems": [],
- "seconds": 42.0,
+ "seconds": 39.8,
+ "locked": {
+  "held_out": 4.4,
+  "band": [
+   3.04,
+   5.24
+  ],
+  "how": "tune",
+  "when": "2026-10-22 04:15"
+ },
  "verdict": "PASS"
 }

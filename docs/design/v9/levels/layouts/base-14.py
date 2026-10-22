@@ -7,18 +7,22 @@ the sky over it (painters/cloudlane.py).
 
 Technique (DR): the two nearest banks' crests are carried by slide movers, each row drifting east and back on the
 engine's clock, the nearer one further and faster (parallax); the rows part round the beacons' posts, so they read as
-billows, not a fence. The far banks stand still: the horizon's crest and the middle bank's crest are dashed brick runs
-along their billows, parted where the lane runs through them. The two far cloud towers have brick flanks and moons on
-their crowns. The lane is dotted in perspective: the two near beacons are rings of moons round their lamps, the others a
-moon on each lamp (never green: the subject's own lights). The star river's spine is a dotted line of moons; stars
+billows, not a fence. The far banks stand still: the horizon's crest and the middle bank's crest are rows of moons along
+their billows, and the bank between them shows a few moons where it is glimpsed. The two far cloud towers have brick
+flanks and moons on their crowns. The lane is dotted in perspective: the two near beacons are rings of moons round their
+lamps, the others a moon on each lamp (never green: the subject's own lights). The star river's spine is a dotted line of moons; stars
 stand in the open sky.
 
 Peggle-match refit (9 October 2026 rules): densified from 72 to about 105 pieces at pegs r 10 and bricks t 20, with the
 far banks and the towers' flanks in brick for a brick share near a third; every piece a candidate except the lamps and
 the exclusions below (b.candidates), then tuned into the MR 3 band.
-"""
-import math
 
+Hardened for the MR 3 band (22 October 2026): the far banks' brick crowns gave the ball a run of domes to roll along
+and were the board's readiest oranges (held out 12.2 of 48 against the band's 3.04-5.24); their crests are traced in
+moons instead, so a falling ball meets single moons rather than domes, and the near beacons' upper moons may now be
+orange. Brick share falls to about an eighth; the bricks left are the towers' flanks, the near banks' steep sides, the
+lane's centre line and the star river's spine.
+"""
 import numpy as np
 
 LEVEL = dict(id="base-14", name="The Lane by Starlight", stage=3, number=14, scene="cloudlane",
@@ -32,19 +36,17 @@ ROWS = (
     ("crest 5", (96, 704), 34, 18.0, 6.5, 4.0),
 )
 
-# the far banks stand still: a scalloped run of brick crowns along each crest, one crown per billow, parted where the
-# lane's lamps stand on it: (crest, x from, x to, crown radius, sweep, lift above the crest, gap, x ranges left open)
-SCALLOPS = (
-    ("crest 1", 80, 720, 46.0, 64.0, 6.0, 20.0, ((400, 496),)),
-    ("crest 3", 80, 720, 40.0, 80.0, 4.0, 20.0, ((330, 380), (494, 544))),
-)
+# the far banks stand still: the horizon's crest and the middle bank's crest traced in moons (crest, spacing, start)
+TRACED = (("crest 1", 34, 10), ("crest 3", 36, 10))
 
 # never orange: the sure greens' pool (pieces that may be green and are never orange), then the near bank's moons at
 # the walls, the board's hardest low places (cheap difficulty)
 GREENS = ((158, 283), (476, 242), (328, 370), (240, 396), (601, 276), (512, 230), (564, 350), (646, 405))
 EASY = ((493, 111), (104, 86))
 LOW = ((380, 477), (454, 473), (336, 461), (313, 443), (556, 392))
-EXCLUDE = tuple(g for g in GREENS if g not in ((158, 283), (601, 276), (564, 350), (512, 230))) + EASY + LOW + ((680, 464), (680, 406), (522, 491), (488, 481), (134, 462), (100, 450), (100, 400))
+# the near beacons' rings: their upper moons may be orange, their lower ones never (the lowest places, cheap difficulty)
+NEAR_LOW = ((216, 495), (614, 495), (185, 477), (248, 477), (583, 477), (645, 477))
+EXCLUDE = tuple(g for g in GREENS if g not in ((158, 283), (601, 276), (564, 350), (512, 230))) + EASY + LOW + ((680, 464), (680, 406), (522, 491), (488, 481), (134, 462), (100, 450), (100, 400)) + NEAR_LOW
 
 # the towers' steep flanks in brick: (feature, x from, x to)
 FLANKS = (("tower left", 126, 180), ("tower left", 270, 296), ("tower right", 652, 700))
@@ -87,19 +89,6 @@ OFF_CREST = 8.0                 # the most a mover may sit off its crest over it
 def _y_at(pts, x):
     xs, ys = zip(*pts)
     return float(np.interp(x, xs, ys))
-
-
-def _crown(b, x, top, R, sweep=90.0, n=2, tag=""):
-    """A crown of n arc bricks over a billow whose top is (x, top), laid only when every brick keeps the pre-flight's
-    rules against what is laid already (a crown that does not fit is left out whole)."""
-    g = math.degrees(2.5 / R)
-    each = (sweep - g * (n - 1)) / n
-    start = 270.0 - sweep / 2
-    trial = [{"kind": "arc", "x": x, "y": top + R, "r": R, "start": start + k * (each + g), "sweep": each,
-              "thickness": 20.0} for k in range(n)]
-    if any(b.brick_why_not(t, touching=trial) for t in trial):
-        return []
-    return b.arc_bricks(x, top + R, R, start, sweep, n=n, tag=tag)
 
 
 def _flank(b, pts, length=30.0, tag=""):
@@ -153,24 +142,9 @@ def build(b):
     # the far towers' steep flanks in brick
     for (name, x0, x1) in FLANKS:
         _flank(b, [p for p in b.f(name) if x0 <= p[0] <= x1], tag=name + " flank")
-    # the far banks stand still: a scalloped run of brick crowns along each crest, parted round the lane's lamps
-    for (name, x0, x1, R, sweep, lift, gap, open_) in SCALLOPS:
-        pts = b.f(name)
-        x = x0
-        while x <= x1:
-            laid = None
-            # the billow's own crown where it fits, else a smaller, flatter one, else one a little higher
-            for (k, dl) in ((1.0, 0.0), (0.85, 0.0), (0.7, 0.0), (1.0, 4.0), (0.85, 4.0), (0.7, 4.0)):
-                Rk, sw = R * k, sweep * k
-                half = Rk * math.sin(math.radians(sw / 2))
-                cx = x + half
-                if cx + half > x1 or any(a - half <= cx <= c + half for (a, c) in open_):
-                    continue
-                top = min(_y_at(pts, cx + d) for d in (-half, 0.0, half)) - lift - dl
-                if _crown(b, cx, top, Rk, sweep=sw, n=2 if k >= 0.85 else 1, tag=name):
-                    laid = half
-                    break
-            x += 2 * laid + gap if laid else 4
+    # the far banks stand still: their crests traced in moons
+    for (name, sp, st) in TRACED:
+        b.trace(name, spacing=sp, r=10, start=st, end_trim=10, tag=name)
     for (name, x0, x1, lift) in SIDES:
         _flank(b, [(x, y - lift) for (x, y) in b.f(name) if x0 <= x <= x1], tag=name + " side")
     # the star river's spine, and the far towers' crowns
@@ -209,16 +183,11 @@ def build(b):
     for (x, y) in STARS:
         b.place(x, y, r=10, tag="star")
     b.greens_in_reach()
-    b.candidates(exclude=EXCLUDE, exclude_tags=("near beacon",))
+    b.candidates(exclude=EXCLUDE)
 
 
-
-
-
-
-# ---- tuning (written by `mfl.py tune`; held out None/48, tuning seeds 10.3/48, band 3.04-5.24; NOT in band: stuck)
+# ---- tuning (written by `mfl.py tune`; held out 4.4/48, tuning seeds 3.6/48, band 3.04-5.24)
 TUNING = {
-    "blue": [[327.4, 181.2], [274.6, 175.8]],
-    "orange": [[556.0, 392.0], [328.2, 370.4], [240.0, 395.5], [476.0, 242.0]],
-    "period": [[100.0, 450.3, 0.64]]
+    "blue": [[327.4, 181.2], [455.3, 213.5], [488.5, 199.5], [521.7, 185.5], [290.0, 96.0], [274.6, 175.8], [285.0, 203.6], [345.4, 217.1], [412.6, 188.4], [477.9, 160.6], [545.5, 133.0]],
+    "orange": [[556.0, 392.0], [328.2, 370.4], [240.0, 395.5], [476.0, 242.0]]
 }
