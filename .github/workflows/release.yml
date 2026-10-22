@@ -5,8 +5,14 @@ name: Release
 #
 # Guards: the tag must equal the csproj <Version> (an -rcN suffix is allowed on the tag), the csproj
 # must carry a TsukimichiTestedGameVersion (the addon kill switch's tested game version), and a
-# non-prerelease tag must have its CHANGELOG.md section. A tag containing "-" is published as a
-# prerelease and never touches pluginmaster.json.
+# non-prerelease tag must have its CHANGELOG.md section.
+#
+# A tag with a suffix (-rcN) is a test drop: a GitHub pre-release, and only the testing fields of
+# pluginmaster.json change (TestingAssemblyVersion, TestingDalamudApiLevel, DownloadLinkTesting,
+# TestingChangelog), so only players who opted into testing versions for Tsukimichi get it. Dalamud
+# offers testing only above AssemblyVersion, and picks the higher of the two versions, so the build
+# version is set from the tag: vX.Y.Z-rcN builds X.Y.Z.N, and vX.Y.Z builds X.Y.Z.(highest N + 1)
+# when rc tags for X.Y.Z exist (X.Y.Z.0 as in the csproj when none do). docs/team/test-drops.md has the steps.
 #
 # Run it by hand (workflow_dispatch) with an existing tag to publish that tag again, without a new
 # tag: pluginmaster.json is regenerated, and the release is created if it is missing. A release that
@@ -56,7 +62,18 @@ jobs:
           "RELEASE_VERSION=$base" | Out-File -FilePath $env:GITHUB_ENV -Append
           "RELEASE_SUFFIX=$suffix" | Out-File -FilePath $env:GITHUB_ENV -Append
           "RELEASE_PRERELEASE=$($prerelease.ToString().ToLowerInvariant())" | Out-File -FilePath $env:GITHUB_ENV -Append
-          Write-Host "tag $tag -> version $base, suffix '$suffix', prerelease $prerelease"
+
+          # The version the build carries when it is not the csproj's: an rc is X.Y.Z.N, and a final release after rcs is
+          # one above the highest rc so Dalamud updates testers to it. Empty: build the csproj Version as it is.
+          $build = ''
+          if ($suffix -match '^-rc([1-9]\d{0,3})$') {
+            $build = "$base.$($Matches[1])"
+          } elseif ($suffix -eq '') {
+            $rcs = @(git tag --list "v$base-rc*" | ForEach-Object { if ($_ -match '^v[0-9.]+-rc([1-9]\d{0,3})$') { [int]$Matches[1] } })
+            if ($rcs.Count -gt 0) { $build = "$base.$((($rcs | Measure-Object -Maximum).Maximum) + 1)" }
+          }
+          "BUILD_VERSION=$build" | Out-File -FilePath $env:GITHUB_ENV -Append
+          Write-Host "tag $tag -> version $base, suffix '$suffix', prerelease $prerelease, build version override '$build'"
 
       - name: Guard - csproj Version equals the tag
         shell: pwsh
@@ -70,8 +87,8 @@ jobs:
           $version = $version.Trim()
           # The csproj carries a four-part version (0.5.1.0); the tag names the first three.
           $short = $version -replace '^(\d+\.\d+\.\d+)\.0$', '$1'
-          if ($env:RELEASE_SUFFIX -ne '' -and $env:RELEASE_SUFFIX -notmatch '^-rc\d+$') {
-            Write-Host "::error::Tag suffix '$env:RELEASE_SUFFIX' is not allowed; only -rcN is."
+          if ($env:RELEASE_SUFFIX -ne '' -and $env:RELEASE_SUFFIX -notmatch '^-rc[1-9]\d{0,3}$') {
+            Write-Host "::error::Tag suffix '$env:RELEASE_SUFFIX' is not allowed; only -rcN (N from 1) is."
             exit 1
           }
           if ($short -ne $env:RELEASE_VERSION) {
@@ -153,7 +170,11 @@ jobs:
       - name: Build Release package
         # The whole solution with warnings as errors, so a tag never builds what CI would reject;
         # the plugin project's build is what packs latest.zip.
-        run: dotnet build Tsukimichi.sln -c Release -warnaserror
+        shell: pwsh
+        run: |
+          $extra = @(); if ($env:BUILD_VERSION) { $extra += "-p:Version=$env:BUILD_VERSION" }
+          dotnet build Tsukimichi.sln -c Release -warnaserror @extra
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Load check (every UI language, Dalamud's Lumina)
         # The same check as ci.yml, against the Dalamud this release is built with: the plugin loads outside the game
@@ -167,7 +188,24 @@ jobs:
       # The solution builds the plugin under bin/x64/Release; the package step and make_pluginmaster.py read
       # bin/Release, so build the plugin project on its own as the packaging step (incremental, seconds).
       - name: Build the plugin package
-        run: dotnet build Tsukimichi/Tsukimichi.csproj -c Release
+        shell: pwsh
+        run: |
+          $extra = @(); if ($env:BUILD_VERSION) { $extra += "-p:Version=$env:BUILD_VERSION" }
+          dotnet build Tsukimichi/Tsukimichi.csproj -c Release @extra
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Guard - the packaged manifest carries the expected version
+        # What Dalamud compares is the manifest's AssemblyVersion: the csproj Version, or the tag's build version.
+        shell: pwsh
+        run: |
+          $manifest = Get-Content Tsukimichi/bin/Release/Tsukimichi/Tsukimichi.json -Raw | ConvertFrom-Json
+          $csproj = [xml](Get-Content Tsukimichi/Tsukimichi.csproj -Raw)
+          $expected = if ($env:BUILD_VERSION) { $env:BUILD_VERSION } else { ($csproj.Project.PropertyGroup | ForEach-Object { $_.Version } | Where-Object { $_ } | Select-Object -First 1).Trim() }
+          if ($manifest.AssemblyVersion -ne $expected) {
+            Write-Host "::error::The packaged manifest says AssemblyVersion $($manifest.AssemblyVersion); tag $env:RELEASE_TAG should build $expected."
+            exit 1
+          }
+          Write-Host "Packaged AssemblyVersion $expected for $env:RELEASE_TAG"
 
       - name: Hash latest.zip and the Tsukimichi.dll inside it
         # Trust you can check (feature plan v7 N2): the SHA-256 of latest.zip and of the Tsukimichi.dll inside it (the
@@ -275,21 +313,29 @@ jobs:
           generate_release_notes: true
 
       - name: Refresh pluginmaster.json on main
-        if: env.RELEASE_PRERELEASE == 'false'
+        # A release regenerates the entry; a test drop (-rcN) only adds the testing fields to main's entry. Both start
+        # from the pluginmaster.json now on main, not the tagged commit's copy, which may predate a bot commit.
         shell: pwsh
         run: |
-          python tools/make_pluginmaster.py --tag "$env:RELEASE_TAG"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          Copy-Item pluginmaster.json "$env:RUNNER_TEMP\pluginmaster.json"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin main
+          $current = Join-Path $env:RUNNER_TEMP 'current-pluginmaster.json'
+          git show origin/main:pluginmaster.json | Out-File -FilePath $current -Encoding utf8NoBOM
+          if ($LASTEXITCODE -ne 0) { Remove-Item $current -ErrorAction SilentlyContinue }
+          $maker = @('--tag', $env:RELEASE_TAG, '--current', $current)
+          if ($env:RELEASE_PRERELEASE -eq 'true') { $maker += '--testing' }
+          python tools/make_pluginmaster.py @maker
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item pluginmaster.json "$env:RUNNER_TEMP\pluginmaster.json"
+          git checkout -- pluginmaster.json
           git checkout -B main origin/main
           Copy-Item "$env:RUNNER_TEMP\pluginmaster.json" pluginmaster.json
           git add pluginmaster.json
           git diff --cached --quiet
           if ($LASTEXITCODE -eq 0) { Write-Host "pluginmaster.json unchanged"; exit 0 }
-          git commit -m "chore: pluginmaster.json for $env:RELEASE_TAG"
+          $what = if ($env:RELEASE_PRERELEASE -eq 'true') { 'testing build ' } else { '' }
+          git commit -m "chore: pluginmaster.json $what$env:RELEASE_TAG"
           if ($LASTEXITCODE -ne 0) { Write-Host "::error::could not commit pluginmaster.json"; exit 1 }
 
           # Something may land on main while the build runs; fetch and rebase between tries. The regenerated
