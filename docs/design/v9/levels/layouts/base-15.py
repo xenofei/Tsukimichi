@@ -256,7 +256,7 @@ def build(b):
     fill_gaps(b, ring, FILL_N, tag="cloud fill")
     b.greens_in_reach()
     # the whale's lowest moons stay blue too
-    b.candidates(exclude=[(p["x"], p["y"]) for p in ring if p and p["y"] >= 405], exclude_tags=("low crest", "cloud fill"))
+    b.candidates(exclude=[(p["x"], p["y"]) for p in ring if p and p["y"] >= 405] + [(122, 255), (168, 248)], exclude_tags=("low crest", "cloud fill"))
 
 
 WHALE_N, WHALE_OFF = 20, 18
@@ -291,7 +291,7 @@ ARM_CROWN = (168, 409.6, 161.6, 245.3, 49.7, 3)        # through the west arm's 
 LOW_CRESTS = {"crest south", "crest low west", "crest low middle"}
 
 
-# ---- tuning (written by `mfl.py tune`; held out 3.9/48, tuning seeds 3.9/48, band 3.04-4.29)
+# ---- tuning (written by `mfl.py tune`; held out 4.2/48, tuning seeds 4.2/48, band 3.30-4.50)
 TUNING = {
     "blue": [[497.6, 278.8], [452.6, 274.4], [409.9, 266.2], [370.7, 254.4], [600.9, 226.1], [564.0, 232.7], [525.0, 234.9], [486.0, 232.7], [525.0, 116.0], [554.4, 167.0], [495.6, 167.0], [442.1, 333.2], [675.7, 400.1], [578.0, 512.0], [305.7, 293.7], [340.6, 290.8], [375.4, 291.8], [290.0, 258.0], [279.9, 190.5], [265.7, 149.5], [277.6, 109.6], [215.2, 255.1]]
 }
