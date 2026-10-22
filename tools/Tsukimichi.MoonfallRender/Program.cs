@@ -620,7 +620,7 @@ internal static class Render
     /// </summary>
     private static (MoonfallCampaigns, MoonfallProgress, Func<string?, long?>?, MoonfallStory?) MockState(string repo, string screen, string moment)
     {
-        var builtIn = MoonfallCampaigns.LoadBuiltIn();
+        var builtIn = MoonfallCampaigns.LoadBuiltIn(includeUnreleased: true);
         MoonfallLevel Pilot(string name)
         {
             var load = MoonfallLevelLoader.Parse(File.ReadAllText(Path.Combine(repo, "docs", "design", "v9", "rich", "levels", name + ".json")));
@@ -680,7 +680,7 @@ internal static class Render
 
     private static (MoonfallCampaigns Campaigns, int Index) Campaign(string repo, string name)
     {
-        var builtIn = MoonfallCampaigns.LoadBuiltIn();
+        var builtIn = MoonfallCampaigns.LoadBuiltIn(includeUnreleased: true);
         var index = builtIn.Base.Levels.ToList().FindIndex(l => l.Id == name);
         if (index >= 0)
         {
@@ -711,7 +711,7 @@ internal static class Render
     /// </summary>
     private static int SceneOnly(string repo, LuminaGameData? game, string levelId, int tier, bool noGrain, string? upto, string? hideZone, string outPath)
     {
-        var level = MoonfallCampaigns.LoadBuiltIn().Find(levelId);
+        var level = MoonfallCampaigns.LoadBuiltIn(includeUnreleased: true).Find(levelId);
         if (level is null)
         {
             Console.Error.WriteLine($"no built-in level {levelId}");

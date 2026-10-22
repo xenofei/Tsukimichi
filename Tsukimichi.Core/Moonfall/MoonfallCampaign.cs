@@ -72,8 +72,11 @@ public sealed class MoonfallCampaigns
         return Math.Clamp(progress.Cleared(kind) + 1, 1, campaign.Levels.Count);
     }
 
-    /// <summary>Reads the levels embedded in this assembly.</summary>
-    public static MoonfallCampaigns LoadBuiltIn()
+    /// <summary>
+    /// Reads the levels embedded in this assembly: the base levels up to <see cref="MoonfallStages.ShippedBaseLevels"/>, or
+    /// every level file with <paramref name="includeUnreleased"/> (the level tools, which render stages not released yet).
+    /// </summary>
+    public static MoonfallCampaigns LoadBuiltIn(bool includeUnreleased = false)
     {
         var assembly = typeof(MoonfallCampaigns).Assembly;
         var names = assembly.GetManifestResourceNames()
@@ -89,7 +92,8 @@ public sealed class MoonfallCampaigns
             var target = file.StartsWith("expansion-", StringComparison.Ordinal) ? expansionLevels
                 : file.StartsWith("base-", StringComparison.Ordinal) ? baseLevels
                 : null;
-            if (target is null)
+            if (target is null
+                || (!includeUnreleased && target == baseLevels && MoonfallStages.TryPlace(file[..^".json".Length], out var place) && place.Number > MoonfallStages.ShippedBaseLevels))
             {
                 continue;
             }

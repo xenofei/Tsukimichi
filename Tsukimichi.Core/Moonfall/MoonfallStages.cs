@@ -47,6 +47,13 @@ public static class MoonfallStages
     /// <summary>Levels in The Moon Road.</summary>
     public const int BaseLevels = 55;
 
+    /// <summary>
+    /// How many of The Moon Road's levels this build loads and plays: <c>base-01</c> up to this number, whole stages only.
+    /// Level files past it stay in the repo but are not played until their stage is refitted and released
+    /// (the 1.24.0 test drop: MR 1 to MR 3).
+    /// </summary>
+    public const int ShippedBaseLevels = 15;
+
     /// <summary>Levels in The Far Shore.</summary>
     public const int ExpansionLevels = 60;
 

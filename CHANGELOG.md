@@ -4,6 +4,18 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.24.0] - Unreleased
+
+A test build of Moonfall's first three stages, refitted.
+
+### Added
+- **Moonfall, The Moon Road stage 3:** five new levels (base-11 to base-15), each drawn over a painting of its own, with an Ace score each.
+- **Hidden developer command:** `/tsukimichi moonfall dev` toggles a developer mode for testing: every level and stage unlocked, a level picker with each level's figures, the spoiler shield lifted, and nothing recorded. It is not in help or autocomplete and goes once all of Moonfall has shipped.
+
+### Changed
+- **Moonfall, stages 1 and 2 refitted:** the ten levels have new layouts over the same paintings and new Ace targets. Your completions, best scores and Aces are kept.
+- **The Moon Road ends after stage 3 for now:** the later stages return as they are refitted.
+
 ## [1.23.1] - 2026-10-22
 
 ### Fixed
