@@ -492,7 +492,7 @@
       "start": 215.0,
       "sweep": 34.8,
       "thickness": 20.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -624,7 +624,7 @@
       "start": 215.0,
       "sweep": 35.0,
       "thickness": 20.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": true
     },
     {
@@ -657,7 +657,7 @@
       "start": 215.0,
       "sweep": 35.0,
       "thickness": 20.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
