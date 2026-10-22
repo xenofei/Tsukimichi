@@ -4,6 +4,11 @@ All notable changes to Tsukimichi are recorded here. The format follows Keep a C
 
 ## [Unreleased]
 
+## [1.23.1] - 2026-10-22
+
+### Fixed
+- **Game hooks run again on patch 2026.10.06:** the item tooltip panel, the item and NPC context-menu entries and the server info bar entry had been paused by the safety switch for everyone since the patch. They are now tested on it.
+
 ## [1.23.0] - 2026-10-06
 
 A preview: Moonfall's first two stages, to try before the rest of the road arrives.
