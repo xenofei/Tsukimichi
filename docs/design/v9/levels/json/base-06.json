@@ -126,7 +126,7 @@
     {
       "x": 136.0,
       "y": 490.4,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
