@@ -278,7 +278,7 @@ EYE_DOTS = (-76, -54, -24, 8, 40, 66)
 EYE_RING = (525, 150, 34, 6)
 BAND_WEST = (162, 203, 3)
 CURL = 1.30
-BAND_CURL = ((196, 218, 1),)
+BAND_CURL = ((196, 212.5, 1),)
 EDDIES = ((186, 176, 36, 6),)
 CRESTS = (("crest high east", 0), ("crest high middle", 0), ("crest middle", 0), ("crest south", 0), ("crest south-west", 0),
           ("crest low west", 0), ("crest low middle", 0), ("crest mid east", 0),
@@ -288,11 +288,10 @@ CRESTS = (("crest high east", 0), ("crest high middle", 0), ("crest middle", 0),
 CROWNS = ()
 ARM_CROWN = (168, 409.6, 161.6, 245.3, 49.7, 3)        # through the west arm's crest (100, 262), (168, 248), (236, 264)
 # never orange: the cloud sea's low crests, so the lower third holds few candidates (no cheap difficulty)
-LOW_CRESTS = {"crest south", "crest low west", "crest low middle", "crest low south", "crest east lobe", "crest south-west",
-              "crest far west"}
+LOW_CRESTS = {"crest south", "crest low west", "crest low middle"}
 
 
-# ---- tuning (written by `mfl.py tune`; held out None/48, tuning seeds 4.8/48, band 3.10-3.70; NOT in band: stuck)
+# ---- tuning (written by `mfl.py tune`; held out 3.9/48, tuning seeds 3.9/48, band 3.04-4.29)
 TUNING = {
-    "blue": [[543.3, 279.2], [452.6, 274.4], [409.9, 266.2], [370.7, 254.4], [564.0, 232.7], [525.0, 234.9], [486.0, 232.7], [525.0, 116.0], [554.4, 167.0], [442.1, 333.2], [675.7, 400.1], [340.6, 290.8], [290.0, 258.0], [279.9, 190.5], [265.7, 149.5], [277.6, 109.6], [652.5, 204.6], [215.2, 255.1]]
+    "blue": [[497.6, 278.8], [452.6, 274.4], [409.9, 266.2], [370.7, 254.4], [600.9, 226.1], [564.0, 232.7], [525.0, 234.9], [486.0, 232.7], [525.0, 116.0], [554.4, 167.0], [495.6, 167.0], [442.1, 333.2], [675.7, 400.1], [578.0, 512.0], [305.7, 293.7], [340.6, 290.8], [375.4, 291.8], [290.0, 258.0], [279.9, 190.5], [265.7, 149.5], [277.6, 109.6], [215.2, 255.1]]
 }

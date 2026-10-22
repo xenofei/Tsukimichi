@@ -18,7 +18,7 @@
     {
       "x": 256.0,
       "y": 144.0,
-      "canBeOrange": false,
+      "canBeOrange": true,
       "canBeGreen": false
     },
     {
@@ -258,7 +258,7 @@
     {
       "x": 624.0,
       "y": 134.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -373,7 +373,7 @@
     {
       "x": 700.0,
       "y": 420.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -397,7 +397,7 @@
     {
       "x": 588.0,
       "y": 506.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": true
     },
     {
@@ -713,7 +713,7 @@
       "x2": 666.6,
       "y2": 244.4,
       "thickness": 20.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
@@ -723,7 +723,7 @@
       "x2": 675.3,
       "y2": 281.0,
       "thickness": 20.0,
-      "canBeOrange": true,
+      "canBeOrange": false,
       "canBeGreen": false
     },
     {
