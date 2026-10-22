@@ -95,6 +95,10 @@ public static class Keyboard
     /// <summary>The gamepad's Start button went down in the window that has the keys (Moonfall pauses with it, as games do).</summary>
     public static bool StartPressed() => WindowHasKeys() && ImGui.IsKeyPressed(ImGuiKey.GamepadStart, false);
 
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>R went down in the window that has the keys (Moonfall's developer-mode restart of the board's level).</summary>
+    public static bool RestartLevelPressed() => WindowHasKeys() && LetterPressed(ImGuiKey.R);
+
     /// <summary>Ctrl and the key went down (no Alt, no Shift).</summary>
     public static bool CtrlPressed(ImGuiKey key)
     {

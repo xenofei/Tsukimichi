@@ -192,6 +192,11 @@ public static class CommandLine
     /// </summary>
     public static bool RunsMoonfall(ParsedCommand parsed) => parsed.Kind == Subcommand.Moonfall && parsed.Rest.Length == 0;
 
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>Whether the line is the hidden <c>moonfall dev</c> (Moonfall's developer mode): never in help or autocomplete.</summary>
+    public static bool RunsMoonfallDev(ParsedCommand parsed) =>
+        parsed.Kind == Subcommand.Moonfall && string.Equals(parsed.Rest, "dev", StringComparison.OrdinalIgnoreCase);
+
     /// <summary>
     /// Whether the name of a quest still in the game, as <paramref name="spoilers"/> shows it, begins with
     /// <paramref name="text"/>, case-insensitively (<see cref="RunsGuidance"/>'s question). A name the shield hides is

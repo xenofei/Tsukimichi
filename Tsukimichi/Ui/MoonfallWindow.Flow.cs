@@ -427,6 +427,12 @@ public sealed partial class MoonfallWindow
         }
 
         progressEpoch++;
+        // Developer mode: remove after all 115 Moonfall levels ship. Nothing was recorded (MoonfallModes.UnlockAll), so nothing is saved.
+        if (devMode)
+        {
+            return;
+        }
+
         unsaved = true;
         SaveInBackground();
     }
