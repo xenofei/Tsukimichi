@@ -733,13 +733,13 @@
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.388,
+      "worst": 0.389,
       "at": [
        335,
        340
       ],
       "undressed": 0.397,
-      "drop": 0.009
+      "drop": 0.008
      },
      "orange 1x": {
       "worst": 0.311,
@@ -751,13 +751,13 @@
       "drop": 0.009
      },
      "green 1x": {
-      "worst": 0.45,
+      "worst": 0.447,
       "at": [
        304,
        224
       ],
       "undressed": 0.457,
-      "drop": 0.007
+      "drop": 0.01
      },
      "purple 1x": {
       "worst": 0.291,
@@ -769,87 +769,87 @@
       "drop": 0.009
      },
      "blue 0.8x": {
-      "worst": 0.389,
+      "worst": 0.388,
       "at": [
        335,
        340
       ],
       "undressed": 0.397,
-      "drop": 0.008
+      "drop": 0.009
      },
      "orange 0.8x": {
-      "worst": 0.314,
+      "worst": 0.313,
       "at": [
        335,
        340
       ],
       "undressed": 0.322,
-      "drop": 0.008
+      "drop": 0.009
      },
      "green 0.8x": {
-      "worst": 0.433,
+      "worst": 0.429,
       "at": [
        304,
        224
       ],
       "undressed": 0.438,
-      "drop": 0.005
+      "drop": 0.009
      },
      "purple 0.8x": {
-      "worst": 0.299,
+      "worst": 0.298,
       "at": [
        335,
        340
       ],
       "undressed": 0.307,
-      "drop": 0.008
+      "drop": 0.009
      }
     },
     "worst_margin": 0.291,
-    "largest_drop": 0.009,
+    "largest_drop": 0.01,
     "bricks_min_margin": [
-     0.326,
+     0.321,
      "orange"
     ],
-    "protan_orange_p10": 0.107,
+    "protan_orange_p10": 0.102,
     "protan_places": 58,
     "protan_worst_at": [
      "brick",
-     660,
-     245
+     420,
+     510
     ],
-    "protan_min": 0.095,
+    "protan_min": 0.053,
     "jewels": {
-     "coloured_px_pct": 94.2,
-     "mean_chroma": 0.074,
+     "coloured_px_pct": 76.2,
+     "mean_chroma": 0.06,
      "second_at_walls_x": 0.11,
      "second_at_walls_worst_window": [
-      0.3,
-      216
+      0.15,
+      541
      ],
-     "first_jewel_hue": 280,
-     "first_share": 0.839,
-     "second_jewel_hue": 352,
-     "second_share": 0.16,
-     "apart_deg": 72,
+     "first_jewel_hue": 252,
+     "first_share": 0.797,
+     "second_jewel_hue": 179,
+     "second_share": 0.201,
+     "apart_deg": 73,
      "bins_pct": [
+      0.0,
+      0.0,
       0.1,
-      0.0,
       0.1,
+      0.1,
+      11.2,
+      8.8,
+      20.2,
+      53.4,
+      6.1,
       0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      0.0,
-      76.7,
-      7.2,
-      15.9
+      0.0
      ]
     },
     "ghost_median": 0.05,
     "ghost_worst": [
-     0.050134941935539246,
+     0.05007847025990486,
      [
       516,
       220
@@ -860,15 +860,15 @@
      "median": 0.0,
      "p90": 0.0,
      "worst": [
-      0.0151,
+      0.0048,
       [
-       255,
-       160
+       288,
+       148
       ]
      ],
      "samples": 49,
      "mode": "pegs",
-     "hue_median": 0.0031
+     "hue_median": 0.0054
     }
    },
    "fails": []
@@ -876,15 +876,15 @@
  },
  "fails": [],
  "problems": [],
- "seconds": 78.3,
+ "seconds": 24.6,
  "locked": {
-  "held_out": 4.9,
+  "held_out": 4.6,
   "band": [
    3.04,
    5.24
   ],
   "how": "tune",
-  "when": "2026-10-10 07:31"
+  "when": "2026-10-22 02:04"
  },
  "verdict": "PASS"
 }
