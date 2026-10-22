@@ -9,7 +9,7 @@ python tools/themes/build_themes.py --check          # rebuild into a temp folde
 python tools/themes/build_themes.py --out DIR        # contact sheets and report.txt (default: %TEMP%/tsukimichi-themes)
 ```
 
-Every run builds every kit (`kits/*.json`). Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as `gen_atlas.py`). Pixels depend on Chrome's version, which `metrics.json` records; the C# tests compare layouts and numbers, never pixels, and check that each committed PNG is the one `metrics.json` was measured from (its SHA-256).
+Every run builds every kit (`kits/*.json`). Needs Python 3 with numpy and Pillow, and Chrome (the same headless renderer as `gen_atlas.py`). Pixels depend on Chrome's version, which `metrics.json` records (`--check` ignores that one field, since Chrome auto-updates; the PNGs and their SHA-256s are still compared exactly); the C# tests compare layouts and numbers, never pixels, and check that each committed PNG is the one `metrics.json` was measured from (its SHA-256).
 
 ## Manifests (`sets/<set>.json`)
 
