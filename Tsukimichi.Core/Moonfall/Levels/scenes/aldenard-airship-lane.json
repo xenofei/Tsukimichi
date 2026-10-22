@@ -11,7 +11,7 @@
   "gamma": 1.2,
   "exposure": 0.72,
   "ceiling": 0.35,
-  "warmKeep": 0.25,
+  "warmKeep": 0.12,
   "chromaMid": 0.45
  },
  "vignette": 0.28,
@@ -44,6 +44,15 @@
     }
    ],
    "mul": 0.85
+  },
+  {
+   "kind": "tone",
+   "where": [
+    {
+     "disc": [620, 180, 140, 70]
+    }
+   ],
+   "mul": 0.8
   },
   {
    "kind": "tone",
@@ -162,9 +171,9 @@
   ]
  },
  "chrome": {
-  "sky": "#10204E",
-  "deep": "#050A1C",
-  "jewel1": "#2A48C0",
-  "jewel2": "#1E9E7E"
+  "sky": "#14154D",
+  "deep": "#04031F",
+  "jewel1": "#3E42B6",
+  "jewel2": "#DC7095"
  }
 }
