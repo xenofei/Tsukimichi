@@ -32,7 +32,7 @@ LEVEL = dict(id="base-11", name="The Airship Road", stage=3, number=11, scene="a
 # Left blue (never orange): the bricks whose orange a protanope reads least against the ground round them (F9, the
 # build's per-place figures): the west ends of two cloud humps on the brightest cloud, the Black Shroud's canopy over
 # the bucket's approach, and Gyr Abania's west end.
-HARD = [(613.5, 156.4), (657.5, 276.4), (420.0, 476.0), (569.5, 490.8), (599.5, 422.8)]
+HARD = [(613.5, 156.4), (657.5, 276.4), (420.0, 476.0), (399.1, 483.0), (660.0, 215.0), (569.5, 490.8)]
 # (lane, trim at its start, trim at its end)
 LANES = (("lane gridania", 46, 46), ("lane north", 46, 10), ("lane west", 46, 46), ("lane south", 10, 0))
 
@@ -93,8 +93,8 @@ def build(b):
     b.candidates(exclude=HARD, exclude_tags=["compass", "wake", "rhumb", "flying dragon", "north coast"])
 
 
-# ---- tuning (written by `mfl.py tune`; held out 4.6/48, tuning seeds 4.8/48, band 4.60-5.10)
+# ---- tuning (written by `mfl.py tune`; held out 4.3/48, tuning seeds 4.4/48, band 4.00-5.20)
 TUNING = {
     "blue": [[365.0, 287.0], [395.3, 304.5], [395.3, 339.5], [334.7, 304.5], [288.4, 147.8], [255.0, 160.0], [221.6, 147.8], [324.7, 253.2], [304.1, 223.7], [284.2, 193.7], [242.0, 198.0], [472.0, 168.0], [458.0, 200.0], [516.0, 220.0], [422.0, 228.0], [563.5, 176.7], [559.2, 212.6], [255.0, 72.0], [277.0, 307.0], [522.5, 105.6], [620.0, 416.0], [640.7, 423.0], [440.7, 483.0], [590.0, 484.0], [610.7, 491.0], [107.3, 428.0], [154.3, 481.0], [175.0, 474.0]],
-    "orange": [[110.0, 272.0], [469.7, 280.7], [505.5, 284.1], [180.0, 276.0], [154.5, 250.5], [129.1, 225.1], [105.0, 201.0], [107.9, 348.1]]
+    "orange": [[110.0, 272.0], [469.7, 280.7], [505.5, 284.1], [180.0, 276.0], [154.5, 250.5], [129.1, 225.1], [105.0, 201.0], [107.9, 348.1], [614.5, 155.6], [661.0, 215.0]]
 }
