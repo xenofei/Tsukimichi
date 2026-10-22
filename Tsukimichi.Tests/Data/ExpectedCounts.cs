@@ -8,7 +8,7 @@ namespace Tsukimichi.Tests.Data;
 /// </summary>
 internal static class ExpectedCounts
 {
-    public const string GameVersion = "2026.09.15.0000.0000";
+    public const string GameVersion = "2026.10.06.0000.0000";
 
     /// <summary>Named rows of the Quest sheet.</summary>
     public const int NamedQuests = 5373;
