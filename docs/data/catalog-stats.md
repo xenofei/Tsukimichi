@@ -1,6 +1,6 @@
 # Quest catalog statistics
 
-Generated from game version `2026.09.15.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
+Generated from game version `2026.10.06.0000.0000` by Tsukimichi.DataGen (see docs/data/DATA-VERSION.md for when).
 
 - Quest rows: **5533**
 - Named quests: **5373**
