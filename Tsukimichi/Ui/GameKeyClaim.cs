@@ -26,6 +26,7 @@ public sealed class GameKeyClaim
     private readonly IKeyState? keys;
     private long backAt = long.MinValue / 2;
     private long navigationAt = long.MinValue / 2;
+    private long restartAt = long.MinValue / 2;
 
     /// <param name="keys">The game's key state; null claims nothing (offline, or before the plugin has it).</param>
     public GameKeyClaim(IKeyState? keys)
@@ -41,6 +42,10 @@ public sealed class GameKeyClaim
 
     /// <summary>The window moves its focus with the arrows, Tab, Enter and Space this draw (a menu with the keys).</summary>
     public void ClaimNavigation() => navigationAt = Environment.TickCount64;
+
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>The window answers R this draw (developer mode's restart of the board's level).</summary>
+    public void ClaimRestart() => restartAt = Environment.TickCount64;
 
     /// <summary>Whether Esc is claimed now (for the tests and the window's own checks).</summary>
     public bool BackClaimed => Environment.TickCount64 - backAt <= GraceMs;
@@ -63,6 +68,12 @@ public sealed class GameKeyClaim
         if (BackClaimed && state[VirtualKey.ESCAPE])
         {
             state[VirtualKey.ESCAPE] = false;
+        }
+
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        if (Environment.TickCount64 - restartAt <= GraceMs && state[VirtualKey.R])
+        {
+            state[VirtualKey.R] = false;
         }
 
         if (!NavigationClaimed)

@@ -101,6 +101,10 @@ public readonly record struct MoonfallNext(MoonfallLevelPlace Place, bool Veiled
 /// <param name="Oranges">Oranges to pick.</param>
 public sealed record MoonfallStart(MoonfallMode Mode, string LevelId, MoonfallLevel Level, int LevelNumber, MoonfallCompanion Companion, int Balls, int Oranges)
 {
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>The level was started in developer mode (<see cref="MoonfallModes.UnlockAll"/>): its end is never recorded, whatever the mode is by then.</summary>
+    public bool Developer { get; init; }
+
     /// <summary>The power the companion carries.</summary>
     public MoonfallPower Power => MoonfallCompanions.TryGet(Companion, out var info) ? info.Power : MoonfallPower.None;
 
@@ -147,8 +151,23 @@ public sealed class MoonfallModes
     /// <summary>Each level's Ace score (the shipped table, <see cref="MoonfallAces.For"/>; the offline renderer stages its own).</summary>
     public Func<string?, long?> AceOf { get; init; } = MoonfallAces.For;
 
+    private MoonfallShield shield = MoonfallShield.Open;
+
     /// <summary>The spoiler shield for places (<see cref="MoonfallShield"/>; the plugin passes the viewed character's).</summary>
-    public MoonfallShield Shield { get; init; } = MoonfallShield.Open;
+    public MoonfallShield Shield
+    {
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        get => UnlockAll ? MoonfallShield.Open : shield;
+        init => shield = value;
+    }
+
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>
+    /// Developer mode (the hidden <c>/tsukimichi moonfall dev</c>): every level counts as reached, every stage and
+    /// campaign is open, every companion is available, the shield is open, and nothing a level, challenge or duel earns is
+    /// recorded in <see cref="Progress"/> (so the owner's real progress is untouched).
+    /// </summary>
+    public bool UnlockAll { get; set; }
 
     // ---- The spoiler shield ----
 
@@ -253,7 +272,8 @@ public sealed class MoonfallModes
     public bool StageReached(MoonfallStage stage)
     {
         ArgumentNullException.ThrowIfNull(stage);
-        return CampaignOpen(stage.Campaign) && stage.FirstLevelIndex <= Frontier(stage.Campaign);
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        return CampaignOpen(stage.Campaign) && (UnlockAll || stage.FirstLevelIndex <= Frontier(stage.Campaign));
     }
 
     /// <summary>
@@ -294,7 +314,8 @@ public sealed class MoonfallModes
 
     /// <summary>Whether the campaign can be played: The Moon Road always; The Far Shore once all 55 of The Moon Road are won.</summary>
     public bool CampaignOpen(MoonfallCampaignKind campaign) =>
-        campaign == MoonfallCampaignKind.Base || Progress.BaseCleared >= MoonfallStages.BaseLevels;
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        UnlockAll || campaign == MoonfallCampaignKind.Base || Progress.BaseCleared >= MoonfallStages.BaseLevels;
 
     /// <summary>Level <paramref name="index"/> (from 0) of <paramref name="campaign"/> as the menus show it.</summary>
     public MoonfallLevelSlot Slot(MoonfallCampaignKind campaign, int index)
@@ -304,7 +325,7 @@ public sealed class MoonfallModes
         var state = MoonfallStages.StageOf(campaign, index) is { } stage && StageVeiled(stage) ? MoonfallLevelState.Veiled
             : level is null ? MoonfallLevelState.Missing
             : Progress.IsCleared(id) ? MoonfallLevelState.Cleared
-            : CampaignOpen(campaign) && (index <= Frontier(campaign) || Opened(campaign, index) || index == Progress.Reach(campaign)) ? MoonfallLevelState.Open
+            : CampaignOpen(campaign) && (UnlockAll /* Developer mode: remove after all 115 Moonfall levels ship. */ || index <= Frontier(campaign) || Opened(campaign, index) || index == Progress.Reach(campaign)) ? MoonfallLevelState.Open
             : MoonfallLevelState.Sealed;
         return new MoonfallLevelSlot(id, new MoonfallLevelPlace(campaign, index), level, state, Progress.Best(id), Progress.IsAced(id), AceOf(id));
     }
@@ -330,7 +351,8 @@ public sealed class MoonfallModes
                 : MoonfallStageState.Sealed;
             var companion = stage.PlayerPicks ? MoonfallCompanionState.Available : CompanionState(stage.Companion);
             var here = next is { } n && n.Campaign == campaign && MoonfallCharacters.Stage(n.Index) == stage.Number;
-            var reached = open && stage.FirstLevelIndex <= frontier;
+            // Developer mode: remove after all 115 Moonfall levels ship.
+            var reached = open && (UnlockAll || stage.FirstLevelIndex <= frontier);
             views.Add(new MoonfallStageView(stage, state, companion, here, slots, state != MoonfallStageState.Sealed && (state != MoonfallStageState.Veiled || reached)));
         }
 
@@ -418,7 +440,8 @@ public sealed class MoonfallModes
             companion = picked;
         }
 
-        return new MoonfallStart(MoonfallMode.Adventure, slot.Id, slot.Level, slot.Place.Number, companion, MoonfallRules.BallsPerLevel, MoonfallRules.OrangeCount);
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        return new MoonfallStart(MoonfallMode.Adventure, slot.Id, slot.Level, slot.Place.Number, companion, MoonfallRules.BallsPerLevel, MoonfallRules.OrangeCount) { Developer = UnlockAll };
     }
 
     // ---- The companions ----
@@ -426,6 +449,12 @@ public sealed class MoonfallModes
     /// <summary>How the companion shows (<see cref="MoonfallCompanions.State"/>).</summary>
     public MoonfallCompanionState CompanionState(MoonfallCompanion companion)
     {
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        if (UnlockAll)
+        {
+            return MoonfallCompanionState.Available;
+        }
+
         if (!Story.HasMet(companion))
         {
             return MoonfallCompanionState.NotMet;
@@ -441,6 +470,12 @@ public sealed class MoonfallModes
     /// </summary>
     public bool CompanionReached(MoonfallCompanion companion)
     {
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        if (UnlockAll)
+        {
+            return true;
+        }
+
         if (!MoonfallCompanions.TryGet(companion, out var info) || !CampaignOpen(info.Campaign))
         {
             return false;
@@ -537,7 +572,8 @@ public sealed class MoonfallModes
             return null;
         }
 
-        return new MoonfallStart(MoonfallMode.QuickPlay, slot.Id, slot.Level, place.Number, companion, MoonfallRules.BallsPerLevel, MoonfallRules.OrangeCount);
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        return new MoonfallStart(MoonfallMode.QuickPlay, slot.Id, slot.Level, place.Number, companion, MoonfallRules.BallsPerLevel, MoonfallRules.OrangeCount) { Developer = UnlockAll };
     }
 
     /// <summary>
@@ -558,6 +594,12 @@ public sealed class MoonfallModes
         var score = game.Score + bonus;
         var newBest = score > Progress.Best(start.LevelId);
         var wasAced = Progress.IsAced(start.LevelId);
+        // Developer mode: remove after all 115 Moonfall levels ship. The result is worked out but nothing is recorded.
+        if (start.Developer)
+        {
+            return new MoonfallLevelResult(won, score, bonus, bonus > 0 && !wasAced, newBest, false);
+        }
+
         var before = (Progress.BaseCleared, Progress.ExpansionCleared, ChallengesOpen);
         Progress.RecordLevel(start.LevelId, won, score, AceOf(start.LevelId));
         NoteReach();
@@ -568,7 +610,8 @@ public sealed class MoonfallModes
     // ---- Challenges ----
 
     /// <summary>Whether challenges are open (<see cref="MoonfallChallenges.Open"/>).</summary>
-    public bool ChallengesOpen => MoonfallChallenges.Open(Progress);
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    public bool ChallengesOpen => UnlockAll || MoonfallChallenges.Open(Progress);
 
     /// <summary>Each challenge with where it stands.</summary>
     public IReadOnlyList<(MoonfallChallenge Challenge, MoonfallChallengeState State)> ChallengeList() =>
@@ -578,6 +621,12 @@ public sealed class MoonfallModes
     private MoonfallChallengeState ChallengeState(MoonfallChallenge challenge)
     {
         var state = MoonfallChallenges.State(challenge, Campaigns, Progress);
+        // Developer mode: remove after all 115 Moonfall levels ship. A sealed challenge is open (or unavailable, when its levels do not ship).
+        if (UnlockAll && state == MoonfallChallengeState.Sealed)
+        {
+            state = MoonfallChallenges.Playable(challenge, Campaigns) ? MoonfallChallengeState.Open : MoonfallChallengeState.Unavailable;
+        }
+
         return state is MoonfallChallengeState.Open or MoonfallChallengeState.Done && challenge.LevelIds.Any(LevelVeiled) ? MoonfallChallengeState.Veiled : state;
     }
 
@@ -598,7 +647,8 @@ public sealed class MoonfallModes
             return null;
         }
 
-        return new MoonfallChallengeRun(challenge, Campaigns, companion, seed);
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        return new MoonfallChallengeRun(challenge, Campaigns, companion, seed) { Developer = UnlockAll };
     }
 
     /// <summary>A challenge run has ended: its result is recorded.</summary>
@@ -608,6 +658,12 @@ public sealed class MoonfallModes
         if (run.Status == MoonfallChallengeStatus.Playing)
         {
             throw new InvalidOperationException("the run has not ended");
+        }
+
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        if (run.Developer)
+        {
+            return;
         }
 
         Progress.RecordChallenge(run.Challenge.Id, run.Status == MoonfallChallengeStatus.Met, run.Total);
@@ -641,7 +697,8 @@ public sealed class MoonfallModes
             return null;
         }
 
-        return new MoonfallDuel(start.Level, start.LevelNumber, seed, companion, opponent, difficulty);
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        return new MoonfallDuel(start.Level, start.LevelNumber, seed, companion, opponent, difficulty) { Developer = UnlockAll };
     }
 
     /// <summary>A duel has ended: its result is recorded against its opponent and difficulty.</summary>
@@ -651,6 +708,12 @@ public sealed class MoonfallModes
         if (duel.Outcome == MoonfallDuelOutcome.Undecided)
         {
             throw new InvalidOperationException("the duel has not ended");
+        }
+
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        if (duel.Developer)
+        {
+            return;
         }
 
         Progress.RecordDuel(duel.Companion(MoonfallDuel.OpponentSide), duel.Opponent.Difficulty, duel.Outcome);

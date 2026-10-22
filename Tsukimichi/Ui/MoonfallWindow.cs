@@ -262,6 +262,8 @@ public sealed partial class MoonfallWindow : Window
             EnteredScreen();
         }
 
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        DrawDevBar();
         switch (flow.Current)
         {
             case MoonfallScreen.Play when game is { } g:
