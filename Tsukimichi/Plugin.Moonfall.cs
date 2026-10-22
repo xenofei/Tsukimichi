@@ -85,8 +85,22 @@ public sealed partial class Plugin
         window.Audio = moonfallAudio;
         windowSystem.AddWindow(window);
         command.ToggleMoonfall = window.Toggle;
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        window.DevMode = Settings.MoonfallDevMode;
+        command.ToggleMoonfallDev = () => ToggleMoonfallDev(window);
         mainWindow.OpenMoonfall = window.Toggle;
         moonfallWindow = window;
+    }
+
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>The hidden <c>/tsukimichi moonfall dev</c>: toggles developer mode, keeps it in the settings and says which in one chat line.</summary>
+    private void ToggleMoonfallDev(MoonfallWindow window)
+    {
+        var on = !Settings.MoonfallDevMode;
+        Settings.MoonfallDevMode = on;
+        Settings.Save(PluginInterface);
+        window.DevMode = on;
+        command.Print?.Invoke(on ? "Moonfall developer mode is on." : "Moonfall developer mode is off.");
     }
 
     /// <summary>What pauses the board now: combat, a duty or a cutscene.</summary>
@@ -133,6 +147,7 @@ public sealed partial class Plugin
         if (command is not null)
         {
             command.ToggleMoonfall = null;
+            command.ToggleMoonfallDev = null;
         }
 
         if (mainWindow is not null)

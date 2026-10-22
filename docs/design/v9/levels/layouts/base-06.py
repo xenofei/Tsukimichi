@@ -1,59 +1,166 @@
-"""2-1 "Limsa Across the Water" (Vesper Bay, the twins): a landmark in outline over a procession.
+"""base-06 "Limsa Across the Water": generated layout, variant 1 of `mfl.py generate base-06 --seed 1`.
 
-Subject: Limsa Lominsa, the far end of the Vesper Bay ferry, as the ferry casts off for the bay: the great tree-grown
-tower, its round canopy over the city's spires, the lamplit bridge running east from its foot on two arches, and the sea
-mist below, in the game's own La Noscea painting (its western part; stage 5 keeps the castle and the far towers to the
-east for its own crop) at its high-resolution size.
+Subject: Limsa Lominsa's tree-grown tower and its lamplit bridge from the water
+Technique: LM (a landmark in outline over a procession)
 
-Technique: the tree's canopy is a dotted outline 18 units outside its crown, broken at the top where the spire rises
-through it (game designer M5: one Limsa landmark carries the board); every moon of it is a candidate, never green, and
-four lanterns hang inside the crown. The bridge east of the tree is a procession: its deck dotted, its lamps dotted
-above, the house at its west end with two lit windows (never green); the two arches beneath wear crowns of brick, open
-at the keystone, the slot between them wider than a ball's rest. The city's four dark spires west of the tree are dotted columns, lights glow in the mist at the
-tree's foot, and a dotted swell runs across the water at y 480-500 in three runs. The stage opens here, so the oranges sit high and
-in the open, and the sky is left to the painting's clouds (blue moons in the open sky made the board harder without
-saying anything).
+From the scene recipe's features (limsa-across-water):
+  tree lanterns: moons (2)
+  bridge deck: brick and dotted (6)
+  bridge lamps: brick and dotted (6)
+  west arch: crown of brick (2)
+  east arch: crown of brick (2)
+  house windows: moons (1)
+  trunk lights: moons (3)
+  canopy: brick and dotted (7)
+  west spire: brick and dotted (4)
+  middle spire: brick and dotted (2)
+  swell: brick and dotted (15)
+  far spire: brick and dotted (2)
+  near spire: brick and dotted (2)
+  mist lights: brick and dotted (1)
+  (open board): fill structures (49)
+
+104 pieces (31 bricks, 30%; 0 movers), 66 candidates (63%, 3% of them in the lower third).
+Hand-polish the subject, then `mfl.py tune`, then `mfl.py build` (README, "Author workflow").
 """
 import math
 
-LEVEL = dict(id="base-06", name="Limsa Across the Water", stage=2, number=6, scene="limsa-across-water",
-             subject="Limsa Lominsa's tree-grown tower and its lamplit bridge from the water",
-             technique="a landmark in outline over a procession")
+LEVEL = dict(id='base-06', name='Limsa Across the Water', stage=2, number=6, scene='limsa-across-water', subject="Limsa Lominsa's tree-grown tower and its lamplit bridge from the water", technique='a landmark in outline over a procession')
+
+GENERATED = {'seed': 1, 'variant': 1, 'technique': 'LM', 'target_pieces': 104, 'brick_share': 0.405, 'mirrored': True, 'spacing': 34.0, 'candidate_share': 0.681}
+
+# never orange: the sure greens and the fill left blue (b.candidates leaves out the unreachable and the
+# lowest too, to hold the lower third at 30%)
+EXCLUDE = [(136.0, 490.4), (487.2, 492.2), (525.2, 491.4), (562.2, 490.9), (599.2, 490.4), (656.8, 491.5), (693.7, 493.6), (210.0, 265.0), (690.0, 255.0), (440.0, 325.0), (570.0, 315.0), (270.0, 375.0), (586.6, 194.3), (390.0, 395.0), (110.0, 235.0)]
 
 
 def build(b):
-    # the tree's canopy: the landmark (never green: it is the subject's own shape)
-    b.trace("canopy", spacing=36, r=9, offset=-18, orange=True, green=False, tag="canopy")
-    for (x, y) in b.f("house windows"):
-        b.place(x, y, r=9, orange=True, green=False, tag="house window")
-    # two lanterns hung in the tree's crown, so a shot straight down meets the landmark
-    for (x, y) in b.f("tree lanterns"):
-        b.place(x, y, r=9, orange=True, green=False, tag="tree lantern")
-    # the bridge: deck and lamps (a procession); its arches' crowns of brick are open at the keystone (about 19 between
-    # the bricks, wider than the 17 a ball can still rest in: critic round 4, N11), so no ball rests on an apex
-    # (the deck's east end, 6, is a candidate and the air's (700, 320) blue: the wider keystone slot eased the board by
-    # about 1.2 per 48, and this buys it back on the tuning seeds). Round 5 (game designer G20): the deck's (506, 387)
-    # is blue and the deck's (578, 385) a candidate, easing the stage's opener about 0.6 per 48 on the tuning seeds so
-    # 2-1 -> 2-2 is a step
-    b.trace("bridge deck", spacing=36, r=9, orange={3, 4, 6}, tag="bridge deck")
-    b.trace("bridge lamps", spacing=36, r=9, orange={0, 2, 4}, tag="bridge lamp")
-    for name in ("west arch", "east arch"):
-        cx, cy, R, a0, sw = b.circle(name)
-        b.arc_bricks(cx, cy, R, a0, sw, n=2, gap_deg=math.degrees(30 / R), t=10, tag=name)
-    # the city west of the tree: its dark spires, dotted
-    b.trace("west spire", spacing=34, r=8, orange={1}, tag="west spire")
-    b.trace("middle spire", spacing=34, r=8, orange={0, 2}, tag="middle spire")
-    b.trace("far spire", spacing=34, r=8, orange={1}, tag="far spire")
-    b.trace("near spire", spacing=34, r=8, tag="near spire")
-    # the water: lights in the mist at the city's foot, and the swell
-    b.trace("mist lights", spacing=40, r=8, tag="mist light")
-    # the swell in three runs that follow the water, not one fence across it (critic L13)
-    for run in ([(96, 492), (250, 486)], [(320, 492), (440, 498)], [(520, 488), (700, 494)]):
-        b.trace(run, spacing=40, r=8, tag="swell")
-    # the air between: a few moons, the open-water ones candidates
-    LIT = ((330, 400), (296, 420), (420, 410))
-    for (x, y) in LIT + ((700, 320), (600, 300), (470, 300)):
-        b.place(x, y, r=8, orange=(x, y) in LIT, tag="air")
-    for (x, y) in ((356, 342), (446, 346)):          # two more lanterns in the crown, in the dead lanes (critic G4)
-        b.place(x, y, r=9, green=False, tag="tree lantern")
+    # ---- tree lanterns
+    b.peg(398.0, 296.0, tag='tree lanterns', green=False)
+    b.peg(322.0, 352.0, tag='tree lanterns', green=False)
+    # ---- bridge deck
+    b.peg(470.0, 388.0, tag='bridge deck')
+    b.peg(504.0, 387.1, tag='bridge deck')
+    b.peg(541.0, 386.1, tag='bridge deck')
+    b.peg(578.0, 385.1, tag='bridge deck')
+    b.peg(639.9, 383.4, tag='bridge deck')
+    b.peg(673.9, 382.4, tag='bridge deck')
+    # ---- bridge lamps
+    b.peg(486.0, 350.0, tag='bridge lamps')
+    b.peg(520.0, 349.4, tag='bridge lamps')
+    b.peg(557.0, 348.7, tag='bridge lamps')
+    b.peg(594.0, 348.0, tag='bridge lamps')
+    b.peg(656.0, 346.8, tag='bridge lamps')
+    b.peg(693.0, 346.1, tag='bridge lamps')
+    # ---- west arch
+    b.arc(548.0, 478.0, 52.0, 215.0, 34.8, t=20.0, tag='west arch')
+    b.arc(548.0, 478.0, 52.0, 252.6, 34.8, t=20.0, tag='west arch')
+    # ---- east arch
+    b.arc(662.0, 478.0, 52.0, 215.0, 34.8, t=20.0, tag='east arch')
+    b.arc(662.0, 478.0, 52.0, 252.6, 34.8, t=20.0, tag='east arch')
+    # ---- house windows
+    b.peg(500.0, 312.0, tag='house windows')
+    # ---- trunk lights
+    b.peg(262.0, 444.0, tag='trunk lights')
+    b.peg(300.0, 470.0, tag='trunk lights')
+    b.peg(356.0, 452.0, tag='trunk lights')
+    # ---- canopy: the tree's round head. Moons ring its edge (34 outside the crown's line, gaps where the launcher's
+    # swing is), and an inner crown of brick, open at the apex and in two slots, holds the dark head itself
+    for st in (188, 205.2, 243, 281, 318.8, 336):
+        b.arc(411.1, 292.0, 100.0, st, 16.0, t=20.0, tag='canopy')
+    # ---- west spire
+    b.line(168.0, 272.0, 168.0, 308.6, t=20.0, tag='west spire')
+    b.line(168.0, 311.1, 168.0, 347.8, t=20.0, tag='west spire')
+    b.line(168.0, 350.2, 168.0, 386.9, t=20.0, tag='west spire')
+    b.line(168.0, 389.4, 168.0, 426.0, t=20.0, tag='west spire')
+    # ---- middle spire
+    b.line(252.0, 216.0, 252.0, 264.8, t=20.0, tag='middle spire')
+    b.line(252.0, 267.2, 252.0, 316.0, t=20.0, tag='middle spire')
+    # ---- swell
+    b.peg(99.0, 491.9, tag='swell')
+    b.peg(136.0, 490.4, tag='swell')
+    b.peg(185.9, 488.5, tag='swell')
+    b.peg(219.9, 489.1, tag='swell')
+    b.peg(253.9, 489.7, tag='swell')
+    b.peg(345.6, 492.8, tag='swell')
+    b.peg(379.6, 495.1, tag='swell')
+    b.peg(416.5, 497.8, tag='swell')
+    b.peg(453.3, 495.1, tag='swell')
+    b.peg(487.2, 492.2, tag='swell')
+    b.peg(525.2, 491.4, tag='swell')
+    b.peg(562.2, 490.9, tag='swell')
+    b.peg(599.2, 490.4, tag='swell')
+    b.peg(656.8, 491.5, tag='swell')
+    b.peg(693.7, 493.6, tag='swell')
+    # ---- far spire
+    b.line(128.0, 340.0, 128.0, 388.8, t=20.0, tag='far spire')
+    b.line(128.0, 391.2, 128.0, 440.0, t=20.0, tag='far spire')
+    # ---- near spire
+    b.line(212.0, 310.0, 212.0, 346.8, t=20.0, tag='near spire')
+    b.line(212.0, 349.2, 212.0, 386.0, t=20.0, tag='near spire')
+    # ---- mist lights
+    b.peg(200.0, 452.0, tag='mist lights')
+    # ---- bricks in the open sky and the river-side air (sloped, never level)
+    b.line(600.0, 150.0, 625.0, 118.0, t=20.0, tag='fill brick run')
+    b.line(590.0, 255.0, 612.0, 222.0, t=20.0, tag='fill brick run')
+    # ---- the canopy ring (after the spires, whose bricks it must clear)
+    for a in range(190, 356, 15):
+        b.place(411.1 + 141 * math.cos(math.radians(a)), 292.0 + 141 * math.sin(math.radians(a)), r=10, tag='canopy ring', green=False)
+    # ---- fill lattice
+    b.line(354.1, 378.7, 319.6, 400.5, t=20.0, tag='fill lattice')
+    b.line(423.4, 414.2, 458.0, 436.0, t=20.0, tag='fill lattice')
+    b.place(564.1, 229.8, tag='fill lattice')
+    b.place(213.4, 194.3, tag='fill lattice')
+    b.place(586.6, 194.3, tag='fill lattice')
+    b.place(259.3, 115.6, tag='fill lattice')
+    b.place(540.7, 115.6, tag='fill lattice')
+    b.place(609.0, 158.8, tag='fill lattice')
+    b.place(654.9, 237.5, tag='fill lattice')
+    b.place(145.1, 237.5, tag='fill lattice')
+    b.place(631.4, 123.3, tag='fill lattice', green=False)
+    b.place(99.2, 316.2, tag='fill lattice')
+    # ---- fill brick run
+    b.line(120.6, 198.6, 102.3, 169.9, t=20.0, tag='fill brick run')
+    b.line(612.1, 305.1, 630.4, 276.4, t=20.0, tag='fill brick run')
+    b.line(188.9, 155.4, 170.7, 126.7, t=20.0, tag='fill brick run')
+    b.line(679.4, 198.6, 697.7, 169.9, t=20.0, tag='fill brick run')
+    # ---- fill peg
+    b.place(410.0, 355.0, tag='fill peg')
+    b.place(270.0, 375.0, tag='fill peg')
+    b.place(680.0, 295.0, tag='fill peg')
+    b.place(400.0, 215.0, tag='fill peg')
+    b.place(680.0, 125.0, tag='fill peg', green=False)
+    b.place(120.0, 125.0, tag='fill peg', green=False)
+    b.place(120.0, 275.0, tag='fill peg')
+    b.place(610.0, 235.0, tag='fill peg')
+    b.place(370.0, 335.0, tag='fill peg')
+    b.place(570.0, 275.0, tag='fill peg')
+    b.place(560.0, 155.0, tag='fill peg')
+    b.place(240.0, 155.0, tag='fill peg')
+    b.place(170.0, 195.0, tag='fill peg')
+    b.place(190.0, 235.0, tag='fill peg')
+    b.place(440.0, 325.0, tag='fill peg')
+    b.place(630.0, 195.0, tag='fill peg')
+    b.place(470.0, 245.0, tag='fill peg')
+    b.place(690.0, 255.0, tag='fill peg')
+    b.place(590.0, 125.0, tag='fill peg')
+    b.place(390.0, 395.0, tag='fill peg')
+    b.place(290.0, 325.0, tag='fill peg')
+    b.place(650.0, 155.0, tag='fill peg')
+    b.place(570.0, 315.0, tag='fill peg')
+    b.place(220.0, 125.0, tag='fill peg')
+    b.place(140.0, 155.0, tag='fill peg')
+    b.place(440.0, 225.0, tag='fill peg')
+    b.place(210.0, 265.0, tag='fill peg')
+    b.place(110.0, 235.0, tag='fill peg')
+    b.place(400.0, 455.0, tag='fill peg')
+
     b.greens_in_reach()
+    return b.candidates(exclude=EXCLUDE)
+
+
+# ---- tuning (written by `mfl.py tune`; held out 5.5/48, tuning seeds 5.7/48, band 5.10-6.30)
+TUNING = {
+    "blue": [[99.0, 491.9], [379.6, 495.1], [303.1, 201.4], [330.2, 176.5], [470.7, 164.2], [501.7, 184.0], [526.6, 211.1], [213.4, 194.3], [259.3, 115.6], [540.7, 115.6], [560.0, 155.0], [240.0, 155.0], [190.0, 235.0], [315.3, 263.4], [328.0, 236.3], [379.6, 197.1], [444.7, 197.8], [495.4, 238.1], [168.0, 290.3], [252.0, 240.4], [252.0, 291.6], [212.0, 328.4], [612.5, 134.0], [601.6, 237.6], [336.9, 389.6], [440.7, 425.1], [621.8, 289.9], [179.8, 141.1]],
+    "orange": [[270.0, 375.0], [440.0, 325.0], [690.0, 255.0], [390.0, 395.0], [570.0, 315.0], [110.0, 235.0]]
+}

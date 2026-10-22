@@ -8,7 +8,7 @@ from . import cache
 from .paths import DOTNET, MFCHECK, TEXDUMP
 
 GREEDY_GAMES = 48
-GREEDY_MIN_WINS = 5          # decision 21: no worse than the weakest shipped level (5 of 48)
+GREEDY_MIN_WINS = 2          # owner's decision, 9 October 2026 ("Follow Peggle, lower the floor"): every level wins at least 2 of 48 (5 before)
 HELD_GAMES = 1728            # the reported ramp: seeds 865-2592, never used for tuning (about +-0.55 per 48)
 RAMP_GAMES = 864             # the difficulty ramp (432 or more: coordinator, round 1; 864 so neighbours separate, GD round 2 G2): the first 48 are the rule's games
 STUCK_MAX_SHARE = 0.05       # level-method.md section 4: the stuck rule fires on fewer than 5% of first shots
@@ -60,10 +60,18 @@ def cheap(play_result, homes):
 
 
 def ensure_built():
+    """Build mfcheck and texdump when missing or older than their sources (for mfcheck, also the engine's: cache.core_sources)."""
     for proj, dll in (("mfcheck", MFCHECK), ("texdump", TEXDUMP)):
-        src = DOTNET / proj / "Program.cs"
-        if not dll.exists() or dll.stat().st_mtime < src.stat().st_mtime:
+        srcs = cache.core_sources() if proj == "mfcheck" else [DOTNET / proj / "Program.cs"]
+        if not dll.exists() or dll.stat().st_mtime < max(f.stat().st_mtime for f in srcs):
             subprocess.run(["dotnet", "build", str(DOTNET / proj), "-c", "Release", "--nologo", "-v", "q"], check=True)
+
+
+def ensure_ready():
+    """The built tools, and every game texture in this worktree (from the shared mirror, else the install)."""
+    ensure_built()
+    from . import shared
+    shared.ensure_textures()
 
 
 def _run(*args, timeout=1800):
@@ -97,6 +105,40 @@ def sweep(path, number, seed=1, step=SWEEP_STEP):
             "oranges_mean": float(m.group(5)), "no_hit": int(n.group(1)), "stuck": int(n.group(2)),
             "stuck_share": round(int(n.group(2)) / angles, 3), "long_flights": int(n.group(3)), "bucket": int(n.group(4)),
             "unreached": [int(v) for v in (u.group(3) or "").split(",") if v.strip()], "pieces": int(u.group(2))}
+
+
+def trace_many(path, number, angles, max_ticks=400, seed=1, chunk=150):
+    """The ball's flight for each aim angle, in order: one mfcheck process per `chunk` angles instead of one per angle.
+    Each is {"angle", "points": [[x, y], ...], "hits": [tick index, ...]} (what `mfcheck trace` prints)."""
+    out = []
+    angles = list(angles)
+    for i in range(0, len(angles), chunk):
+        code, text = _run("trace-many", path, number, seed, max_ticks, *angles[i:i + chunk])
+        if code != 0:
+            raise RuntimeError(text)
+        out += [json.loads(line) for line in text.splitlines() if line.startswith("{")]
+    if len(out) != len(angles):
+        raise RuntimeError(f"trace-many returned {len(out)} flights for {len(angles)} angles")
+    return out
+
+
+def sweep_angles(path, number, seed=1, step=SWEEP_STEP):
+    """The sweep's aims (degrees) that touch nothing and those the stuck rule fires on, as `mfl.py dead` and `stuck`
+    read them: (dead, stuck)."""
+    code, out = _run("sweep", path, number, seed, step)
+    if code != 0:
+        raise RuntimeError(out)
+    dead = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs\s+0 ", out, re.M)]
+    stuck = [float(m.group(1)) for m in re.finditer(r"^\s*(-?[\d.]+)\s+pegs.*STUCK", out, re.M)]
+    return dead, stuck
+
+
+def trace(path, angle, number, ms=3000):
+    """One first shot's flight at `angle` degrees: the ball's centre every step, for `ms` milliseconds at most."""
+    code, out = _run("trace", path, angle, number, 1, ms)
+    if code != 0:
+        raise RuntimeError(out)
+    return json.loads(out)["points"]
 
 
 def play(path, number, games=RAMP_GAMES, first=0, oranges=None):

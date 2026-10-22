@@ -28,6 +28,10 @@ LANTERNS = [(246, 372), (612, 362)]
 WAKE = [(232, 440), (176, 452), (112, 462)]
 WEST_COAST = [(0, 318), (52, 312), (110, 318), (170, 328), (214, 336)]
 EAST_COAST = [(560, 336), (600, 326), (660, 316), (724, 310), (800, 314)]
+# the Twin Lamps, a constellation high in the east (stars, then the lines drawn between them), and Vesper, the evening star
+TWINS = [(500, 70), (610, 108), (700, 76), (660, 176), (548, 176)]
+TWIN_LINES = [(0, 1), (1, 2), (1, 3), (1, 4)]
+VESPER = (190, 250)
 
 
 def _sails():
@@ -56,6 +60,8 @@ FEATURES = {
     "wake": {"points": [list(p) for p in WAKE]},
     "west coast": {"points": [list(p) for p in WEST_COAST]},
     "east coast": {"points": [list(p) for p in EAST_COAST]},
+    "twins": [list(p) for p in TWINS],
+    "vesper": [list(VESPER)],
     # the whole ship, sails and hull, as one envelope (the dress keeps its colour off it)
     "ship": {"points": [[236, 400], [262, 206], [330, 176], [470, 150], [560, 236], [662, 372], [600, 402], [576, 428],
                         [530, 448], [420, 454], [300, 450], [260, 434]]},
@@ -92,6 +98,17 @@ def paint(S=1):
                   length=(12, 24), width=(1.6, 3.0), jitter=0.02, hue_jitter=0.004, seed=61)
     px = RL.stars(sky, S, 650, 63, (0, 0, W, (HORIZON - 6) * S),
                   avoid=lambda x, y: float(np.clip((math.hypot(x / S - mx, y / S - my) - 60) / 160, 0, 1)), bright=0.45)
+    # ---- the Twin Lamps: five bright stars joined by faint lines, and Vesper with its four rays
+    for (i, j) in TWIN_LINES:
+        px = screen(px, hexc("#8E96D8") * (_line(X, Y, S, TWINS[i], TWINS[j], 0.8) * 0.30)[..., None])
+    for (sx, sy) in TWINS:
+        px = screen(px, hexc("#DDE2FF") * (np.exp(-(((X - sx) ** 2 + (Y - sy) ** 2) / 5.0)) * 0.55
+                                          + np.exp(-(((X - sx) ** 2 + (Y - sy) ** 2) / 90.0)) * 0.10)[..., None])
+    vx, vy = VESPER
+    for (a, b) in (((vx - 20, vy), (vx + 20, vy)), ((vx, vy - 20), (vx, vy + 20))):
+        px = screen(px, hexc("#FFE6C0") * (_line(X, Y, S, a, b, 0.9) * 0.22)[..., None])
+    px = screen(px, hexc("#FFE6C0") * (np.exp(-(((X - vx) ** 2 + (Y - vy) ** 2) / 7.0)) * 0.75
+                                      + np.exp(-(((X - vx) ** 2 + (Y - vy) ** 2) / 160.0)) * 0.14)[..., None])
     px, _ = RL.moon_emissive(px, S, mx, my, mr, seed=9)
     # ---- the sea: long swells, darker toward the viewer, the moon's light broken on them beneath the moon
     depth = np.clip((Y - HORIZON) / (600 - HORIZON), 0, 1)

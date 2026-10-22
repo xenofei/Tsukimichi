@@ -510,19 +510,20 @@ public sealed partial class MoonfallWindow
     /// A danger pill held to confirm (the owner's rule for Restart and Leave): a lighter fill sweeps it from the left as it
     /// is held, with the mouse or the keyboard's or gamepad's activate key; true on the frame the hold completes.
     /// </summary>
-    private bool HoldButton(in MenuPen m, string id, double x0, double y0, double x1, double y1, string label, float labelSize, ref MoonfallHold hold)
+    private bool HoldButton(in MenuPen m, string id, double x0, double y0, double x1, double y1, string label, float labelSize, ref MoonfallHold hold, bool instant = false)
     {
         var v = m.V;
         var min = v.Map(x0, y0);
         var max = v.Map(x1, y1);
         ImGui.SetCursorScreenPos(min);
-        ImGui.InvisibleButton(id, Vector2.Max(max - min, Vector2.One));
+        var pressed = ImGui.InvisibleButton(id, Vector2.Max(max - min, Vector2.One));
         var held = ImGui.IsItemActive();
         var hovered = ImGui.IsItemHovered();
         var nav = ImGui.GetIO().NavVisible && ImGui.IsItemFocused();
         EntryGlow(m, x0, y0, x1, y1, nav, hovered, MoonfallColor.Hex("#FF9AB8"));
         Pill(m.C, x0, y0, x1, y1, uint.MaxValue, MoonfallChromePart.PillDanger);
-        var done = hold.Update(held, ImGui.GetIO().DeltaTime);
+        // Developer mode: remove after all 115 Moonfall levels ship. An instant button is done by one press, with no hold.
+        var done = hold.Update(held, ImGui.GetIO().DeltaTime) || (instant && pressed);
         var t = hold.Progress;
         if (t > 0)
         {

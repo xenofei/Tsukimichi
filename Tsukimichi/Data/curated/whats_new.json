@@ -3,6 +3,27 @@
   "note": "The plain What's new notes, one entry per release since 1.14.0, newest first: the popup after an update, Settings > Advanced > What's new and Dalamud's installer listing (tools/make_pluginmaster.py) read them. Written for players: 3 to 5 points, each a short lead and one plain sentence, no class names, settings paths only when the player needs them, no lists of fixes. CHANGELOG.md stays the technical record. Add the new release's entry before tagging it; the tests fail when the csproj version has none.",
   "releases": [
     {
+      "version": "1.24.0",
+      "date": "2026-10-22",
+      "name": "Moonfall, three stages",
+      "points": [
+        { "lead": "Stage three.", "text": "Five new levels join The Moon Road, so it now runs through 15 levels, each drawn over a painting of its own." },
+        { "lead": "Stages one and two, remade.", "text": "The first ten levels have new layouts over the same paintings, with fresh Ace targets to chase." },
+        { "lead": "Your progress is kept.", "text": "Completions, best scores and Aces carry over to the remade levels." },
+        { "lead": "Still a test build.", "text": "More of the road returns as each stage is remade, and levels may still change." }
+      ]
+    },
+    {
+      "version": "1.23.1",
+      "date": "2026-10-22",
+      "name": "Back on patch",
+      "points": [
+        { "lead": "Hooks are back.", "text": "The item tooltip panel, the item and NPC menu entries and the server info bar entry work again on the latest game patch." },
+        { "lead": "Tested on the new patch.", "text": "Tsukimichi had paused those extras for safety since the patch; they now run as before." },
+        { "lead": "Nothing else changes.", "text": "Your quest journal, Moonlit and Moonfall are as you left them." }
+      ]
+    },
+    {
       "version": "1.23.0",
       "date": "2026-10-06",
       "name": "Moonfall preview",

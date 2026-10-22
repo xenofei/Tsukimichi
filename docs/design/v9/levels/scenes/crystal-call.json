@@ -27,13 +27,13 @@
    "floor": 0.04,
    "regions": [
     {
-     "hex": "#30C490",
-     "chroma": 0.22,
+     "hex": "#36C46A",
+     "chroma": 0.28,
      "mask": [["poly", "crystal", 14]]
     },
     {
-     "hex": "#30C490",
-     "chroma": 0.22,
+     "hex": "#36C46A",
+     "chroma": 0.28,
      "mask": [["near", "milky way", 85, 160], ["y", 520, 480]]
     }
    ],

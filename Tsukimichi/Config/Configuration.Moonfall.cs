@@ -33,4 +33,8 @@ public sealed partial class Configuration
     /// Off (Plain). Reduce motion, Tsukimichi's own setting, still means still whatever this is.
     /// </summary>
     public Flair MoonfallDecoration { get; set; } = Flair.Full;
+
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>Moonfall's hidden developer mode (<c>/tsukimichi moonfall dev</c>); never shown in Settings.</summary>
+    public bool MoonfallDevMode { get; set; }
 }

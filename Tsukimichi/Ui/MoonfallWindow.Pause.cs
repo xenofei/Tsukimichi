@@ -110,13 +110,18 @@ public sealed partial class MoonfallWindow
             pause.TryResume();
         }
 
-        if (HoldButton(m, "##mfRestart", x0 + pad, y0 + top, x1 - pad, y0 + top + bh, Strings.MoonfallRestartLevel, small ? 20 : 28, ref pauseHolds.Restart))
+        // Developer mode: remove after all 115 Moonfall levels ship. Restart is one press, with no hold and no hint.
+        if (HoldButton(m, "##mfRestart", x0 + pad, y0 + top, x1 - pad, y0 + top + bh, Strings.MoonfallRestartLevel, small ? 20 : 28, ref pauseHolds.Restart, instant: devMode))
         {
             Restart();
             return;
         }
 
-        MenuText(m, MoonfallFace.Axis, small ? 12.5f : 14, cx, y0 + top + bh + (small ? 14 : 18), small ? Strings.MoonfallHoldToRestartShort : Strings.MoonfallHoldToRestart, DangerInk, Anchor.Centre, edge: 0f);
+        if (!devMode)
+        {
+            MenuText(m, MoonfallFace.Axis, small ? 12.5f : 14, cx, y0 + top + bh + (small ? 14 : 18), small ? Strings.MoonfallHoldToRestartShort : Strings.MoonfallHoldToRestart, DangerInk, Anchor.Centre, edge: 0f);
+        }
+
         var ly = y0 + top + step;
         if (HoldButton(m, "##mfLeave", x0 + pad, ly, x1 - pad, ly + bh, LeaveLabel(), small ? 20 : 28, ref pauseHolds.Leave))
         {

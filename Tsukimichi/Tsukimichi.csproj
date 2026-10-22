@@ -1,7 +1,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
 
   <PropertyGroup>
-    <Version>1.23.0.0</Version>
+    <Version>1.24.0.0</Version>
     <Author>Michiru Tsukikage</Author>
     <Name>Tsukimichi</Name>
     <Punchline>Walk the moon's path: every quest, every requirement, every unique reward.</Punchline>
@@ -21,7 +21,7 @@ Local only: no network code.</Description>
       until a release bumps this. Set it with tools/set-tested-version.ps1 on patch day (CONTRIBUTING.md); the release
       workflow refuses a tag whose value is empty.
     -->
-    <TsukimichiTestedGameVersion>2026.09.15.0000.0000</TsukimichiTestedGameVersion>
+    <TsukimichiTestedGameVersion>2026.10.06.0000.0000</TsukimichiTestedGameVersion>
   </PropertyGroup>
 
   <ItemGroup>

@@ -114,6 +114,40 @@ switch (args[0])
         return 0;
     }
 
+    case "trace-many":
+    {
+        // trace-many <file> <level> <seed> <maxTicks> <angle>...: `trace` for many aims in one process, one JSON line per
+        // angle: {"angle":a,"points":[[x,y],...],"hits":[...]} (the same fields as `trace`, in the order given).
+        var level = Load(args[1]);
+        var number = int.Parse(args[2], inv);
+        var seed = ulong.Parse(args[3], inv);
+        var max = int.Parse(args[4], inv);
+        foreach (var a in args.Skip(5))
+        {
+            var g = new MoonfallGame(level, number, seed);
+            g.Shoot(double.Parse(a, inv));
+            var pts = new List<string> { $"[{g.BallX.ToString("0.##", inv)},{g.BallY.ToString("0.##", inv)}]" };
+            var hits = new List<int>();
+            for (var i = 0; i < max && g.Phase == MoonfallPhase.Flying; i++)
+            {
+                g.Tick();
+                while (g.TryReadEvent(out var e))
+                {
+                    if (e.Kind == MoonfallEventKind.PegHit)
+                    {
+                        hits.Add(pts.Count);
+                    }
+                }
+
+                pts.Add($"[{g.BallX.ToString("0.##", inv)},{g.BallY.ToString("0.##", inv)}]");
+            }
+
+            Console.WriteLine("{\"angle\":" + a + ",\"points\":[" + string.Join(",", pts) + "],\"hits\":[" + string.Join(",", hits) + "]}");
+        }
+
+        return 0;
+    }
+
     case "trace":
     {
         // trace <file> <angle> [level] [seed] [maxTicks]: the ball's flight from the muzzle, one point per game tick,
@@ -223,7 +257,7 @@ static (List<int> Hits, int Stuck, bool Caught, long Ticks, int Walls) Fly(Moonf
             switch (e.Kind)
             {
                 case MoonfallEventKind.PegHit: hits.Add(e.Peg); break;
-                case MoonfallEventKind.StuckClear: stuck++; break;
+                case MoonfallEventKind.StuckClear: stuck += (int)e.Value; break;
                 case MoonfallEventKind.BucketCatch: caught = true; break;
                 case MoonfallEventKind.WallBounce: walls++; break;
             }
@@ -313,7 +347,7 @@ void Play(MoonfallLevel level, int games, int number, int first = 0, int oranges
 
             var best = 0.0;
             var bestScore = double.MinValue;
-            for (var a = -84.0; a <= 84.0; a += 2.0)
+            for (var a = MoonfallPlayability.TrialFrom; a <= MoonfallPlayability.TrialTo; a += MoonfallPlayability.TrialStep)
             {
                 trial.CopyFrom(g);
                 var (hits, stuck, caught, _, _) = Fly(trial, a);
@@ -351,7 +385,7 @@ void Play(MoonfallLevel level, int games, int number, int first = 0, int oranges
         var g = new MoonfallGame(level, number, (ulong)(gi + 101));
         for (var k = 0; k < 60 && g.Phase == MoonfallPhase.Aiming; k++)
         {
-            Fly(g, (rng.NextDouble() * 170) - 85);
+            Fly(g, ((rng.NextDouble() * 2) - 1) * MoonfallRules.AimLimitDegrees);
         }
 
         wins += g.Phase == MoonfallPhase.Won ? 1 : 0;

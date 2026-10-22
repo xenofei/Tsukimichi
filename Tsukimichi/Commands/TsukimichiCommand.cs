@@ -106,6 +106,10 @@ public sealed class TsukimichiCommand : IDisposable
     /// </summary>
     public Action? ToggleMoonfall { get; set; }
 
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>Invoked for the hidden <c>/tsukimichi moonfall dev</c>: toggles Moonfall's developer mode and prints one chat line. Not in help or autocomplete.</summary>
+    public Action? ToggleMoonfallDev { get; set; }
+
     /// <summary>
     /// Invoked for <c>/tsukimichi report [quest name]</c> with the rest of the line (empty for the selected quest):
     /// copies the quest's diagnostic block to the clipboard. Falls back to a search for the text.
@@ -497,6 +501,11 @@ public sealed class TsukimichiCommand : IDisposable
                 if (CommandLine.RunsMoonfall(parsed) && ToggleMoonfall is { } toggleMoonfall)
                 {
                     toggleMoonfall();
+                }
+                // Developer mode: remove after all 115 Moonfall levels ship.
+                else if (CommandLine.RunsMoonfallDev(parsed) && ToggleMoonfallDev is { } toggleMoonfallDev)
+                {
+                    toggleMoonfallDev();
                 }
                 else
                 {

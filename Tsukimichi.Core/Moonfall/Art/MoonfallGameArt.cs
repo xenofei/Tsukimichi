@@ -209,6 +209,47 @@ public sealed class MoonfallGameArt<T> : IDisposable
     public bool SceneSettled => sceneState is MoonfallSceneState.NoRecipe or MoonfallSceneState.Failed
         || (sceneState == MoonfallSceneState.Ready && sceneBuild is null && sceneUploads is null && string.Equals(sceneReadyKey, sceneKey, StringComparison.Ordinal));
 
+    private int running;
+
+    /// <summary>
+    /// The reads and builds started off the framework thread and not finished yet (the host's own uploads aside). A
+    /// build takes as long as the machine is busy, so a caller waiting for the art waits while this is above zero, never
+    /// for a set time; at zero every one has finished, and the next frame lands it or starts what follows.
+    /// </summary>
+    public int Running => Volatile.Read(ref running);
+
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<long, string> runningWork = new();
+    private long workIds;
+
+    /// <summary>What <see cref="Running"/> counts, by name ("chrome", "scene &lt;recipe&gt;@&lt;tier&gt;", "thumbnail &lt;level&gt;", ...), sorted: for a wait that gives up to say what never finished.</summary>
+    public IReadOnlyList<string> RunningWork()
+    {
+        var names = runningWork.Values.ToList();
+        names.Sort(StringComparer.Ordinal);
+        return names;
+    }
+
+    /// <summary>Runs <paramref name="work"/> on the thread pool, counted in <see cref="Running"/> (as <paramref name="name"/>) until its task has completed.</summary>
+    private Task<TResult> Background<TResult>(string name, Func<Task<TResult>> work)
+    {
+        var id = Interlocked.Increment(ref workIds);
+        runningWork[id] = name;
+        Interlocked.Increment(ref running);
+        var task = Task.Run(work);
+
+        // A continuation runs once the task is complete, so Running never reaches zero while one is still to finish.
+        _ = task.ContinueWith(
+            finished =>
+            {
+                runningWork.TryRemove(id, out _);
+                Interlocked.Decrement(ref running);
+            },
+            CancellationToken.None,
+            TaskContinuationOptions.ExecuteSynchronously,
+            TaskScheduler.Default);
+        return task;
+    }
+
     /// <summary>Frames a backdrop is kept on the GPU after its screen last asked for it (spec-rich2.md §6: released on leaving it).</summary>
     public const int BackdropKeepFrames = 30;
 
@@ -406,7 +447,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
         // A scene already built this session (for play, or ahead of it) is scaled down rather than built again.
         var cached = CachedScene($"{recipe.Name}@1") ?? CachedScene($"{recipe.Name}@2");
-        return Task.Run(async () =>
+        return Background("thumbnail " + level.Id, async () =>
         {
             var layers = cached?.Layers ?? await BuildScene(recipe, level, 1, false).ConfigureAwait(false);
             if (layers is null)
@@ -454,7 +495,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         backdropBuilds.TryGetValue(which, out var build) && build.IsCompleted && (!build.IsCompletedSuccessfully || build.Result is null);
 
     /// <summary>Reads and grades a backdrop off the framework thread (its own method: the asking path captures nothing, so a frame allocates nothing).</summary>
-    private Task<MoonfallRgba?> BuildBackdrop(MoonfallBackdrop which) => Task.Run(async () =>
+    private Task<MoonfallRgba?> BuildBackdrop(MoonfallBackdrop which) => Background("backdrop " + which, async () =>
     {
         var painting = await host.ReadGameTexture(MoonfallBackdrops.PathOf(which)).ConfigureAwait(false);
         return painting is null ? null : MoonfallBackdrops.Build(which, painting);
@@ -746,7 +787,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
         return null;
     }
 
-    private Task<MoonfallRgba?> BuildCard(MoonfallCard companion) => Task.Run(async () =>
+    private Task<MoonfallRgba?> BuildCard(MoonfallCard companion) => Background("card " + companion.CardPath, async () =>
     {
         var card = await host.ReadGameTexture(companion.CardPath).ConfigureAwait(false);
         if (card is null || card.Width != MoonfallCards.CardWidth || card.Height != MoonfallCards.CardHeight || card.A is null)
@@ -805,7 +846,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
 
     private void Chromes()
     {
-        chromeBuild ??= Task.Run(async () =>
+        chromeBuild ??= Background("chrome", async () =>
         {
             var textures = new Dictionary<string, MoonfallImage>(StringComparer.Ordinal);
             foreach (var (path, _, _) in MoonfallChromeArt.Textures)
@@ -1044,7 +1085,7 @@ public sealed class MoonfallGameArt<T> : IDisposable
     }
 
     /// <summary>Reads the painting (the game's, else the fallback picture) and builds the scene, off the framework thread.</summary>
-    private Task<MoonfallSceneLayers?> BuildScene(MoonfallSceneRecipe recipe, MoonfallLevel level, int tier, bool check) => Task.Run(async () =>
+    private Task<MoonfallSceneLayers?> BuildScene(MoonfallSceneRecipe recipe, MoonfallLevel level, int tier, bool check) => Background($"scene {recipe.Name}@{tier}", async () =>
     {
         MoonfallImage? painting;
         var fallback = false;

@@ -216,6 +216,14 @@ public sealed class MoonfallLevelLoaderTests
         Assert.Contains(campaigns.Base.Levels, l => l.Pegs.Any(p => p.Mover.Kind != MoverKind.None));
     }
 
+    [Fact]
+    public void Only_the_released_stages_are_loaded_though_later_level_files_exist()
+    {
+        var ids = MoonfallCampaigns.LoadBuiltIn().Base.Levels.Select(static l => l.Id).ToList();
+        Assert.Equal(Enumerable.Range(1, MoonfallStages.ShippedBaseLevels).Select(static n => $"base-{n:00}"), ids);
+        Assert.Equal(0, MoonfallStages.ShippedBaseLevels % MoonfallCharacters.LevelsPerStage);
+    }
+
     // ---- Version 2: the background scene ----
 
     /// <summary><see cref="Level"/> at <paramref name="version"/> with <paramref name="scene"/> (raw JSON) as its scene.</summary>

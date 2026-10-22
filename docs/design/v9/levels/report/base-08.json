@@ -10,28 +10,2308 @@
  "checks": {
   "preflight": {
    "problems": [],
-   "pieces": 78,
-   "pegs": 68,
-   "bricks": 10,
+   "pieces": 96,
+   "pegs": 74,
+   "bricks": 22,
    "movers": 8,
-   "orange_candidates": 28,
-   "never_green": 12,
+   "orange_candidates": 58,
+   "never_green": 31,
    "skipped_while_tracing": [
-    [
-     [
-      394,
-      343
-     ],
-     "galleon hull",
-     "7.5 from the peg at (369, 339)"
-    ],
     [
      [
       392,
       252
      ],
      "masthead",
-     "4.4 from the peg at (372, 262)"
+     "2.4 from the peg at (372, 262)"
+    ],
+    [
+     [
+      196,
+      196
+     ],
+     "brick",
+     "-12.5 from a brick"
+    ],
+    [
+     [
+      196,
+      196
+     ],
+     "brick",
+     "-1.2 from a brick"
+    ],
+    [
+     [
+      196,
+      196
+     ],
+     "brick",
+     "wall pinch 3.1"
+    ],
+    [
+     [
+      352,
+      292
+     ],
+     "brick",
+     "-10.0 from the peg at (372, 262)"
+    ],
+    [
+     [
+      338,
+      262
+     ],
+     "brick",
+     "12.3 from the peg at (372, 262)"
+    ],
+    [
+     [
+      428,
+      262
+     ],
+     "brick",
+     "1.5 from a brick"
+    ],
+    [
+     [
+      516,
+      452
+     ],
+     "brick",
+     "10.9 from the peg at (614, 404)"
+    ],
+    [
+     [
+      482,
+      471
+     ],
+     "brick",
+     "-20.0 from a brick"
+    ],
+    [
+     [
+      640,
+      384
+     ],
+     "brick",
+     "3.6 from the peg at (614, 404)"
+    ],
+    [
+     [
+      636,
+      420
+     ],
+     "brick",
+     "7.2 from the peg at (614, 404)"
+    ],
+    [
+     [
+      218,
+      408
+     ],
+     "brick",
+     "13.5 from a brick"
+    ],
+    [
+     [
+      326,
+      470
+     ],
+     "brick",
+     "-2.3 from a brick"
+    ],
+    [
+     [
+      114,
+      508
+     ],
+     "brick",
+     "4.1 from a brick"
+    ],
+    [
+     [
+      128,
+      170
+     ],
+     "brick",
+     "-16.1 from the peg at (155, 147)"
+    ],
+    [
+     [
+      132,
+      170
+     ],
+     "brick",
+     "-14.5 from the peg at (155, 147)"
+    ],
+    [
+     [
+      136,
+      170
+     ],
+     "brick",
+     "14.9 from the peg at (196, 132)"
+    ],
+    [
+     [
+      128,
+      178
+     ],
+     "brick",
+     "-16.9 from the peg at (155, 147)"
+    ],
+    [
+     [
+      132,
+      178
+     ],
+     "brick",
+     "-19.2 from the peg at (155, 147)"
+    ],
+    [
+     [
+      136,
+      178
+     ],
+     "brick",
+     "-18.3 from the peg at (155, 147)"
+    ],
+    [
+     [
+      128,
+      186
+     ],
+     "brick",
+     "13.8 from the peg at (133, 185)"
+    ],
+    [
+     [
+      132,
+      186
+     ],
+     "brick",
+     "-12.7 from the peg at (155, 147)"
+    ],
+    [
+     [
+      136,
+      186
+     ],
+     "brick",
+     "15.1 from the peg at (133, 185)"
+    ],
+    [
+     [
+      128,
+      194
+     ],
+     "brick",
+     "7.6 from the peg at (133, 185)"
+    ],
+    [
+     [
+      132,
+      194
+     ],
+     "brick",
+     "8.8 from the peg at (133, 185)"
+    ],
+    [
+     [
+      136,
+      194
+     ],
+     "brick",
+     "8.4 from the peg at (133, 185)"
+    ],
+    [
+     [
+      128,
+      202
+     ],
+     "brick",
+     "0.2 from the peg at (133, 185)"
+    ],
+    [
+     [
+      132,
+      202
+     ],
+     "brick",
+     "0.9 from the peg at (133, 185)"
+    ],
+    [
+     [
+      136,
+      202
+     ],
+     "brick",
+     "0.6 from the peg at (133, 185)"
+    ],
+    [
+     [
+      128,
+      210
+     ],
+     "brick",
+     "-7.6 from the peg at (133, 185)"
+    ],
+    [
+     [
+      132,
+      210
+     ],
+     "brick",
+     "-7.1 from the peg at (133, 185)"
+    ],
+    [
+     [
+      136,
+      210
+     ],
+     "brick",
+     "-7.3 from the peg at (133, 185)"
+    ],
+    [
+     [
+      128,
+      218
+     ],
+     "brick",
+     "-15.4 from the peg at (133, 185)"
+    ],
+    [
+     [
+      132,
+      218
+     ],
+     "brick",
+     "-15.1 from the peg at (133, 185)"
+    ],
+    [
+     [
+      136,
+      218
+     ],
+     "brick",
+     "-15.2 from the peg at (133, 185)"
+    ],
+    [
+     [
+      128,
+      226
+     ],
+     "brick",
+     "12.2 from the peg at (141, 228)"
+    ],
+    [
+     [
+      132,
+      226
+     ],
+     "brick",
+     "14.2 from the peg at (141, 228)"
+    ],
+    [
+     [
+      136,
+      226
+     ],
+     "brick",
+     "-16.7 from the peg at (133, 185)"
+    ],
+    [
+     [
+      128,
+      234
+     ],
+     "brick",
+     "5.3 from the peg at (141, 228)"
+    ],
+    [
+     [
+      132,
+      234
+     ],
+     "brick",
+     "7.7 from the peg at (141, 228)"
+    ],
+    [
+     [
+      136,
+      234
+     ],
+     "brick",
+     "10.4 from the peg at (141, 228)"
+    ],
+    [
+     [
+      128,
+      242
+     ],
+     "brick",
+     "-0.8 from the peg at (141, 228)"
+    ],
+    [
+     [
+      132,
+      242
+     ],
+     "brick",
+     "1.6 from the peg at (141, 228)"
+    ],
+    [
+     [
+      136,
+      242
+     ],
+     "brick",
+     "3.3 from the peg at (141, 228)"
+    ],
+    [
+     [
+      128,
+      250
+     ],
+     "brick",
+     "-7.3 from the peg at (141, 228)"
+    ],
+    [
+     [
+      132,
+      250
+     ],
+     "brick",
+     "-5.6 from the peg at (141, 228)"
+    ],
+    [
+     [
+      136,
+      250
+     ],
+     "brick",
+     "14.8 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      258
+     ],
+     "brick",
+     "11.5 from the peg at (174, 256)"
+    ],
+    [
+     [
+      132,
+      258
+     ],
+     "brick",
+     "9.2 from the peg at (174, 256)"
+    ],
+    [
+     [
+      136,
+      258
+     ],
+     "brick",
+     "7.4 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      266
+     ],
+     "brick",
+     "5.6 from the peg at (174, 256)"
+    ],
+    [
+     [
+      132,
+      266
+     ],
+     "brick",
+     "2.8 from the peg at (174, 256)"
+    ],
+    [
+     [
+      136,
+      266
+     ],
+     "brick",
+     "0.3 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      274
+     ],
+     "brick",
+     "1.2 from the peg at (174, 256)"
+    ],
+    [
+     [
+      132,
+      274
+     ],
+     "brick",
+     "-2.3 from the peg at (174, 256)"
+    ],
+    [
+     [
+      136,
+      274
+     ],
+     "brick",
+     "-5.6 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      282
+     ],
+     "brick",
+     "-0.7 from the peg at (174, 256)"
+    ],
+    [
+     [
+      132,
+      282
+     ],
+     "brick",
+     "-4.7 from the peg at (174, 256)"
+    ],
+    [
+     [
+      136,
+      282
+     ],
+     "brick",
+     "-8.7 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      290
+     ],
+     "brick",
+     "0.5 from the peg at (174, 256)"
+    ],
+    [
+     [
+      132,
+      290
+     ],
+     "brick",
+     "-3.2 from the peg at (174, 256)"
+    ],
+    [
+     [
+      136,
+      290
+     ],
+     "brick",
+     "-6.8 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      298
+     ],
+     "brick",
+     "4.4 from the peg at (174, 256)"
+    ],
+    [
+     [
+      132,
+      298
+     ],
+     "brick",
+     "1.4 from the peg at (174, 256)"
+    ],
+    [
+     [
+      136,
+      298
+     ],
+     "brick",
+     "-1.3 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      306
+     ],
+     "brick",
+     "9.9 from the peg at (174, 256)"
+    ],
+    [
+     [
+      132,
+      306
+     ],
+     "brick",
+     "7.3 from the peg at (174, 256)"
+    ],
+    [
+     [
+      136,
+      306
+     ],
+     "brick",
+     "4.8 from the peg at (174, 256)"
+    ],
+    [
+     [
+      128,
+      378
+     ],
+     "brick",
+     "0.0 from the peg at (128, 320)"
+    ],
+    [
+     [
+      132,
+      378
+     ],
+     "brick",
+     "0.2 from the peg at (128, 320)"
+    ],
+    [
+     [
+      136,
+      378
+     ],
+     "brick",
+     "0.6 from the peg at (128, 320)"
+    ],
+    [
+     [
+      128,
+      386
+     ],
+     "brick",
+     "8.0 from the peg at (128, 320)"
+    ],
+    [
+     [
+      132,
+      386
+     ],
+     "brick",
+     "8.1 from the peg at (128, 320)"
+    ],
+    [
+     [
+      136,
+      386
+     ],
+     "brick",
+     "8.5 from the peg at (128, 320)"
+    ],
+    [
+     [
+      128,
+      458
+     ],
+     "brick",
+     "0.0 from the peg at (128, 400)"
+    ],
+    [
+     [
+      132,
+      458
+     ],
+     "brick",
+     "0.2 from the peg at (128, 400)"
+    ],
+    [
+     [
+      136,
+      458
+     ],
+     "brick",
+     "0.6 from the peg at (128, 400)"
+    ],
+    [
+     [
+      672,
+      234
+     ],
+     "brick",
+     "0.0 from the peg at (672, 176)"
+    ],
+    [
+     [
+      676,
+      234
+     ],
+     "brick",
+     "wall pinch 12.4"
+    ],
+    [
+     [
+      668,
+      234
+     ],
+     "brick",
+     "0.1 from the peg at (672, 176)"
+    ],
+    [
+     [
+      672,
+      242
+     ],
+     "brick",
+     "8.0 from the peg at (672, 176)"
+    ],
+    [
+     [
+      676,
+      242
+     ],
+     "brick",
+     "wall pinch 12.4"
+    ],
+    [
+     [
+      668,
+      242
+     ],
+     "brick",
+     "8.1 from the peg at (672, 176)"
+    ],
+    [
+     [
+      672,
+      314
+     ],
+     "brick",
+     "0.0 from the peg at (672, 256)"
+    ],
+    [
+     [
+      676,
+      314
+     ],
+     "brick",
+     "wall pinch 12.4"
+    ],
+    [
+     [
+      668,
+      314
+     ],
+     "brick",
+     "0.1 from the peg at (672, 256)"
+    ],
+    [
+     [
+      672,
+      322
+     ],
+     "brick",
+     "8.0 from the peg at (672, 256)"
+    ],
+    [
+     [
+      676,
+      322
+     ],
+     "brick",
+     "wall pinch 12.4"
+    ],
+    [
+     [
+      668,
+      322
+     ],
+     "brick",
+     "8.1 from the peg at (672, 256)"
+    ],
+    [
+     [
+      672,
+      336
+     ],
+     "tide pool",
+     "-16.0 from the peg at (676, 336)"
+    ],
+    [
+     [
+      672,
+      394
+     ],
+     "brick",
+     "0.1 from the peg at (676, 336)"
+    ],
+    [
+     [
+      676,
+      394
+     ],
+     "brick",
+     "wall pinch 12.4"
+    ],
+    [
+     [
+      668,
+      394
+     ],
+     "brick",
+     "0.6 from the peg at (676, 336)"
+    ],
+    [
+     [
+      672,
+      402
+     ],
+     "brick",
+     "8.1 from the peg at (676, 336)"
+    ],
+    [
+     [
+      676,
+      402
+     ],
+     "brick",
+     "wall pinch 12.4"
+    ],
+    [
+     [
+      668,
+      402
+     ],
+     "brick",
+     "8.5 from the peg at (676, 336)"
+    ],
+    [
+     [
+      380,
+      195
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      443,
+      456
+     ],
+     "brick",
+     "2.5 from a brick"
+    ],
+    [
+     [
+      425,
+      375
+     ],
+     "brick",
+     "15.3 from a brick"
+    ],
+    [
+     [
+      308,
+      276
+     ],
+     "brick",
+     "15.4 from the peg at (251, 228)"
+    ],
+    [
+     [
+      632,
+      258
+     ],
+     "brick",
+     "12.0 from the peg at (672, 256)"
+    ],
+    [
+     [
+      389,
+      195
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      434,
+      429
+     ],
+     "brick",
+     "16.4 from a brick"
+    ],
+    [
+     [
+      254,
+      267
+     ],
+     "brick",
+     "-18.7 from the peg at (251, 228)"
+    ],
+    [
+     [
+      362,
+      213
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      308,
+      285
+     ],
+     "brick",
+     "-9.2 from the peg at (335, 242)"
+    ],
+    [
+     [
+      263,
+      276
+     ],
+     "brick",
+     "-10.6 from the peg at (251, 228)"
+    ],
+    [
+     [
+      209,
+      312
+     ],
+     "brick",
+     "-3.4 from the peg at (218, 256)"
+    ],
+    [
+     [
+      470,
+      420
+     ],
+     "brick",
+     "10.1 from the peg at (614, 404)"
+    ],
+    [
+     [
+      398,
+      222
+     ],
+     "brick",
+     "-11.3 from a brick"
+    ],
+    [
+     [
+      191,
+      303
+     ],
+     "brick",
+     "-5.9 from the peg at (218, 256)"
+    ],
+    [
+     [
+      425,
+      366
+     ],
+     "brick",
+     "6.4 from a brick"
+    ],
+    [
+     [
+      569,
+      411
+     ],
+     "brick",
+     "10.5 from the peg at (614, 404)"
+    ],
+    [
+     [
+      452,
+      285
+     ],
+     "brick",
+     "-8.0 from the peg at (452, 233)"
+    ],
+    [
+     [
+      191,
+      294
+     ],
+     "brick",
+     "-13.5 from the peg at (218, 256)"
+    ],
+    [
+     [
+      290,
+      258
+     ],
+     "brick",
+     "-7.1 from the peg at (251, 228)"
+    ],
+    [
+     [
+      200,
+      294
+     ],
+     "brick",
+     "-17.9 from the peg at (218, 256)"
+    ],
+    [
+     [
+      407,
+      231
+     ],
+     "brick",
+     "-19.0 from a brick"
+    ],
+    [
+     [
+      299,
+      258
+     ],
+     "brick",
+     "1.9 from the peg at (251, 228)"
+    ],
+    [
+     [
+      227,
+      303
+     ],
+     "brick",
+     "-12.2 from the peg at (218, 256)"
+    ],
+    [
+     [
+      290,
+      267
+     ],
+     "brick",
+     "-4.6 from the peg at (251, 228)"
+    ],
+    [
+     [
+      470,
+      429
+     ],
+     "brick",
+     "11.2 from the peg at (614, 404)"
+    ],
+    [
+     [
+      227,
+      294
+     ],
+     "brick",
+     "10.4 from the peg at (251, 228)"
+    ],
+    [
+     [
+      461,
+      429
+     ],
+     "brick",
+     "11.5 from the peg at (614, 404)"
+    ],
+    [
+     [
+      308,
+      294
+     ],
+     "brick",
+     "-1.4 from the peg at (335, 242)"
+    ],
+    [
+     [
+      641,
+      339
+     ],
+     "brick",
+     "9.2 from the peg at (676, 336)"
+    ],
+    [
+     [
+      182,
+      312
+     ],
+     "brick",
+     "6.4 from the peg at (218, 256)"
+    ],
+    [
+     [
+      605,
+      321
+     ],
+     "brick",
+     "-2.1 from the peg at (569, 305)"
+    ],
+    [
+     [
+      218,
+      312
+     ],
+     "brick",
+     "-4.1 from the peg at (218, 256)"
+    ],
+    [
+     [
+      605,
+      330
+     ],
+     "brick",
+     "-8.3 from the peg at (569, 305)"
+    ],
+    [
+     [
+      200,
+      465
+     ],
+     "brick",
+     "-7.2 from a brick"
+    ],
+    [
+     [
+      218,
+      303
+     ],
+     "brick",
+     "-13.1 from the peg at (218, 256)"
+    ],
+    [
+     [
+      695,
+      456
+     ],
+     "brick",
+     "wall pinch 11.9"
+    ],
+    [
+     [
+      110,
+      447
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      398,
+      231
+     ],
+     "brick",
+     "-17.4 from a brick"
+    ],
+    [
+     [
+      182,
+      168
+     ],
+     "brick",
+     "-18.6 from the peg at (196, 132)"
+    ],
+    [
+     [
+      470,
+      267
+     ],
+     "brick",
+     "-18.4 from the peg at (452, 233)"
+    ],
+    [
+     [
+      200,
+      438
+     ],
+     "brick",
+     "13.0 from a brick"
+    ],
+    [
+     [
+      119,
+      447
+     ],
+     "brick",
+     "wall pinch 7.8"
+    ],
+    [
+     [
+      200,
+      312
+     ],
+     "brick",
+     "-1.3 from the peg at (218, 256)"
+    ],
+    [
+     [
+      209,
+      447
+     ],
+     "brick",
+     "10.4 from a brick"
+    ],
+    [
+     [
+      416,
+      375
+     ],
+     "brick",
+     "15.0 from a brick"
+    ],
+    [
+     [
+      695,
+      465
+     ],
+     "brick",
+     "wall pinch 11.9"
+    ],
+    [
+     [
+      551,
+      411
+     ],
+     "brick",
+     "6.2 from the peg at (614, 404)"
+    ],
+    [
+     [
+      614,
+      330
+     ],
+     "brick",
+     "0.1 from the peg at (569, 305)"
+    ],
+    [
+     [
+      191,
+      285
+     ],
+     "brick",
+     "-17.9 from the peg at (218, 256)"
+    ],
+    [
+     [
+      407,
+      393
+     ],
+     "brick",
+     "8.7 from a brick"
+    ],
+    [
+     [
+      434,
+      411
+     ],
+     "brick",
+     "-3.9 from the peg at (470, 368)"
+    ],
+    [
+     [
+      443,
+      438
+     ],
+     "brick",
+     "15.0 from the peg at (470, 368)"
+    ],
+    [
+     [
+      551,
+      393
+     ],
+     "brick",
+     "5.9 from the peg at (614, 404)"
+    ],
+    [
+     [
+      452,
+      267
+     ],
+     "brick",
+     "-14.0 from the peg at (452, 233)"
+    ],
+    [
+     [
+      209,
+      456
+     ],
+     "brick",
+     "4.8 from a brick"
+    ],
+    [
+     [
+      191,
+      465
+     ],
+     "brick",
+     "-15.1 from a brick"
+    ],
+    [
+     [
+      245,
+      357
+     ],
+     "brick",
+     "-9.2 from the peg at (281, 323)"
+    ],
+    [
+     [
+      200,
+      303
+     ],
+     "brick",
+     "-9.8 from the peg at (218, 256)"
+    ],
+    [
+     [
+      425,
+      402
+     ],
+     "brick",
+     "-0.4 from the peg at (470, 368)"
+    ],
+    [
+     [
+      425,
+      465
+     ],
+     "brick",
+     "-17.4 from a brick"
+    ],
+    [
+     [
+      218,
+      438
+     ],
+     "brick",
+     "-5.1 from a brick"
+    ],
+    [
+     [
+      461,
+      402
+     ],
+     "brick",
+     "-15.2 from the peg at (470, 368)"
+    ],
+    [
+     [
+      380,
+      303
+     ],
+     "brick",
+     "-18.2 from the peg at (372, 262)"
+    ],
+    [
+     [
+      227,
+      321
+     ],
+     "brick",
+     "5.5 from the peg at (218, 256)"
+    ],
+    [
+     [
+      200,
+      285
+     ],
+     "brick",
+     "-14.0 from the peg at (218, 256)"
+    ],
+    [
+     [
+      470,
+      276
+     ],
+     "brick",
+     "-13.4 from the peg at (452, 233)"
+    ],
+    [
+     [
+      479,
+      429
+     ],
+     "brick",
+     "5.9 from the peg at (614, 404)"
+    ],
+    [
+     [
+      416,
+      231
+     ],
+     "brick",
+     "14.2 from the peg at (452, 233)"
+    ],
+    [
+     [
+      182,
+      321
+     ],
+     "brick",
+     "14.2 from the peg at (218, 256)"
+    ],
+    [
+     [
+      209,
+      438
+     ],
+     "brick",
+     "17.3 from a brick"
+    ],
+    [
+     [
+      452,
+      420
+     ],
+     "brick",
+     "-5.0 from the peg at (470, 368)"
+    ],
+    [
+     [
+      434,
+      384
+     ],
+     "brick",
+     "-2.1 from the peg at (470, 368)"
+    ],
+    [
+     [
+      236,
+      348
+     ],
+     "brick",
+     "0.1 from the peg at (281, 323)"
+    ],
+    [
+     [
+      470,
+      411
+     ],
+     "brick",
+     "9.9 from the peg at (614, 404)"
+    ],
+    [
+     [
+      371,
+      294
+     ],
+     "brick",
+     "-12.0 from the peg at (372, 262)"
+    ],
+    [
+     [
+      173,
+      330
+     ],
+     "brick",
+     "13.9 from the peg at (174, 256)"
+    ],
+    [
+     [
+      407,
+      384
+     ],
+     "brick",
+     "1.3 from a brick"
+    ],
+    [
+     [
+      371,
+      375
+     ],
+     "brick",
+     "8.7 from a brick"
+    ],
+    [
+     [
+      245,
+      339
+     ],
+     "brick",
+     "-2.1 from the peg at (281, 323)"
+    ],
+    [
+     [
+      443,
+      393
+     ],
+     "brick",
+     "-14.2 from the peg at (470, 368)"
+    ],
+    [
+     [
+      299,
+      168
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      686,
+      447
+     ],
+     "brick",
+     "wall pinch 12.2"
+    ],
+    [
+     [
+      326,
+      150
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      488,
+      150
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      686,
+      456
+     ],
+     "brick",
+     "wall pinch 12.2"
+    ],
+    [
+     [
+      434,
+      366
+     ],
+     "brick",
+     "14.2 from the peg at (470, 368)"
+    ],
+    [
+     [
+      290,
+      240
+     ],
+     "brick",
+     "3.2 from the peg at (259, 185)"
+    ],
+    [
+     [
+      461,
+      438
+     ],
+     "brick",
+     "8.5 from the peg at (614, 404)"
+    ],
+    [
+     [
+      560,
+      393
+     ],
+     "brick",
+     "10.0 from the peg at (614, 404)"
+    ],
+    [
+     [
+      443,
+      402
+     ],
+     "brick",
+     "-16.6 from the peg at (470, 368)"
+    ],
+    [
+     [
+      560,
+      222
+     ],
+     "brick",
+     "5.8 from the peg at (596, 215)"
+    ],
+    [
+     [
+      371,
+      384
+     ],
+     "brick",
+     "1.3 from a brick"
+    ],
+    [
+     [
+      227,
+      312
+     ],
+     "brick",
+     "-3.3 from the peg at (218, 256)"
+    ],
+    [
+     [
+      443,
+      465
+     ],
+     "brick",
+     "0.6 from a brick"
+    ],
+    [
+     [
+      209,
+      465
+     ],
+     "brick",
+     "1.6 from a brick"
+    ],
+    [
+     [
+      443,
+      429
+     ],
+     "brick",
+     "6.7 from the peg at (470, 368)"
+    ],
+    [
+     [
+      110,
+      438
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      434,
+      456
+     ],
+     "brick",
+     "-5.3 from a brick"
+    ],
+    [
+     [
+      479,
+      258
+     ],
+     "brick",
+     "-14.2 from the peg at (452, 233)"
+    ],
+    [
+     [
+      443,
+      447
+     ],
+     "brick",
+     "7.3 from a brick"
+    ],
+    [
+     [
+      218,
+      321
+     ],
+     "brick",
+     "4.9 from the peg at (218, 256)"
+    ],
+    [
+     [
+      209,
+      294
+     ],
+     "brick",
+     "-18.8 from the peg at (218, 256)"
+    ],
+    [
+     [
+      218,
+      465
+     ],
+     "brick",
+     "10.5 from a brick"
+    ],
+    [
+     [
+      623,
+      339
+     ],
+     "brick",
+     "8.5 from the peg at (569, 305)"
+    ],
+    [
+     [
+      434,
+      465
+     ],
+     "brick",
+     "-8.4 from a brick"
+    ],
+    [
+     [
+      299,
+      240
+     ],
+     "brick",
+     "8.1 from the peg at (259, 185)"
+    ],
+    [
+     [
+      434,
+      438
+     ],
+     "brick",
+     "8.7 from a brick"
+    ],
+    [
+     [
+      452,
+      429
+     ],
+     "brick",
+     "3.6 from the peg at (470, 368)"
+    ],
+    [
+     [
+      443,
+      411
+     ],
+     "brick",
+     "-9.2 from the peg at (470, 368)"
+    ],
+    [
+     [
+      380,
+      384
+     ],
+     "brick",
+     "7.3 from a brick"
+    ],
+    [
+     [
+      236,
+      339
+     ],
+     "brick",
+     "4.2 from the peg at (281, 323)"
+    ],
+    [
+     [
+      461,
+      276
+     ],
+     "brick",
+     "-16.0 from the peg at (452, 233)"
+    ],
+    [
+     [
+      461,
+      411
+     ],
+     "brick",
+     "11.8 from the peg at (614, 404)"
+    ],
+    [
+     [
+      434,
+      447
+     ],
+     "brick",
+     "1.3 from a brick"
+    ],
+    [
+     [
+      434,
+      402
+     ],
+     "brick",
+     "-9.2 from the peg at (470, 368)"
+    ],
+    [
+     [
+      578,
+      411
+     ],
+     "brick",
+     "5.8 from the peg at (614, 404)"
+    ],
+    [
+     [
+      479,
+      402
+     ],
+     "brick",
+     "6.0 from the peg at (614, 404)"
+    ],
+    [
+     [
+      236,
+      366
+     ],
+     "brick",
+     "2.9 from the peg at (281, 323)"
+    ],
+    [
+     [
+      605,
+      312
+     ],
+     "brick",
+     "5.8 from the peg at (569, 305)"
+    ],
+    [
+     [
+      479,
+      276
+     ],
+     "brick",
+     "-9.2 from the peg at (452, 233)"
+    ],
+    [
+     [
+      227,
+      330
+     ],
+     "brick",
+     "14.5 from the peg at (218, 256)"
+    ],
+    [
+     [
+      452,
+      438
+     ],
+     "brick",
+     "12.3 from the peg at (470, 368)"
+    ],
+    [
+     [
+      443,
+      420
+     ],
+     "brick",
+     "-1.4 from the peg at (470, 368)"
+    ],
+    [
+     [
+      632,
+      339
+     ],
+     "brick",
+     "13.1 from the peg at (676, 336)"
+    ],
+    [
+     [
+      578,
+      402
+     ],
+     "brick",
+     "6.6 from the peg at (614, 404)"
+    ],
+    [
+     [
+      461,
+      420
+     ],
+     "brick",
+     "11.0 from the peg at (614, 404)"
+    ],
+    [
+     [
+      470,
+      402
+     ],
+     "brick",
+     "10.6 from the peg at (614, 404)"
+    ],
+    [
+     [
+      560,
+      402
+     ],
+     "brick",
+     "10.9 from the peg at (614, 404)"
+    ],
+    [
+     [
+      461,
+      285
+     ],
+     "brick",
+     "-7.2 from the peg at (452, 233)"
+    ],
+    [
+     [
+      335,
+      159
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      614,
+      321
+     ],
+     "brick",
+     "4.2 from the peg at (569, 305)"
+    ],
+    [
+     [
+      245,
+      330
+     ],
+     "brick",
+     "5.8 from the peg at (281, 323)"
+    ],
+    [
+     [
+      434,
+      375
+     ],
+     "brick",
+     "5.8 from the peg at (470, 368)"
+    ],
+    [
+     [
+      434,
+      420
+     ],
+     "brick",
+     "3.3 from the peg at (470, 368)"
+    ],
+    [
+     [
+      236,
+      330
+     ],
+     "brick",
+     "10.5 from the peg at (281, 323)"
+    ],
+    [
+     [
+      236,
+      357
+     ],
+     "brick",
+     "-0.4 from the peg at (281, 323)"
+    ],
+    [
+     [
+      578,
+      393
+     ],
+     "brick",
+     "8.2 from the peg at (614, 404)"
+    ],
+    [
+     [
+      200,
+      447
+     ],
+     "brick",
+     "4.9 from a brick"
+    ],
+    [
+     [
+      551,
+      402
+     ],
+     "brick",
+     "6.2 from the peg at (614, 404)"
+    ],
+    [
+     [
+      218,
+      294
+     ],
+     "brick",
+     "14.0 from the peg at (251, 228)"
+    ],
+    [
+     [
+      326,
+      159
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      569,
+      402
+     ],
+     "brick",
+     "10.5 from the peg at (614, 404)"
+    ],
+    [
+     [
+      461,
+      267
+     ],
+     "brick",
+     "-15.1 from the peg at (452, 233)"
+    ],
+    [
+     [
+      569,
+      393
+     ],
+     "brick",
+     "8.1 from the peg at (614, 404)"
+    ],
+    [
+     [
+      209,
+      303
+     ],
+     "brick",
+     "-12.2 from the peg at (218, 256)"
+    ],
+    [
+     [
+      434,
+      393
+     ],
+     "brick",
+     "-8.3 from the peg at (470, 368)"
+    ],
+    [
+     [
+      398,
+      384
+     ],
+     "brick",
+     "7.3 from a brick"
+    ],
+    [
+     [
+      245,
+      321
+     ],
+     "brick",
+     "10.3 from the peg at (218, 256)"
+    ],
+    [
+     [
+      470,
+      285
+     ],
+     "brick",
+     "-5.0 from the peg at (452, 233)"
+    ],
+    [
+     [
+      245,
+      366
+     ],
+     "brick",
+     "-3.9 from the peg at (281, 323)"
+    ],
+    [
+     [
+      605,
+      303
+     ],
+     "brick",
+     "14.2 from the peg at (569, 305)"
+    ],
+    [
+     [
+      119,
+      438
+     ],
+     "brick",
+     "wall pinch 7.8"
+    ],
+    [
+     [
+      479,
+      420
+     ],
+     "brick",
+     "5.4 from the peg at (614, 404)"
+    ],
+    [
+     [
+      245,
+      348
+     ],
+     "brick",
+     "-8.3 from the peg at (281, 323)"
+    ],
+    [
+     [
+      380,
+      294
+     ],
+     "brick",
+     "-13.0 from the peg at (372, 262)"
+    ],
+    [
+     [
+      425,
+      393
+     ],
+     "brick",
+     "0.1 from the peg at (470, 368)"
+    ],
+    [
+     [
+      623,
+      330
+     ],
+     "brick",
+     "8.8 from the peg at (569, 305)"
+    ],
+    [
+     [
+      209,
+      168
+     ],
+     "brick",
+     "-18.3 from the peg at (196, 132)"
+    ],
+    [
+     [
+      470,
+      150
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      173,
+      321
+     ],
+     "brick",
+     "4.9 from the peg at (174, 256)"
+    ],
+    [
+     [
+      191,
+      456
+     ],
+     "brick",
+     "-6.9 from a brick"
+    ],
+    [
+     [
+      245,
+      375
+     ],
+     "brick",
+     "3.3 from the peg at (281, 323)"
+    ],
+    [
+     [
+      191,
+      312
+     ],
+     "brick",
+     "2.1 from the peg at (218, 256)"
+    ],
+    [
+     [
+      452,
+      411
+     ],
+     "brick",
+     "-13.3 from the peg at (470, 368)"
+    ],
+    [
+     [
+      452,
+      402
+     ],
+     "brick",
+     "-18.3 from the peg at (470, 368)"
+    ],
+    [
+     [
+      560,
+      411
+     ],
+     "brick",
+     "11.2 from the peg at (614, 404)"
+    ],
+    [
+     [
+      452,
+      447
+     ],
+     "brick",
+     "14.6 from a brick"
+    ],
+    [
+     [
+      686,
+      465
+     ],
+     "brick",
+     "wall pinch 12.2"
+    ],
+    [
+     [
+      488,
+      258
+     ],
+     "brick",
+     "-8.3 from the peg at (452, 233)"
+    ],
+    [
+     [
+      164,
+      321
+     ],
+     "brick",
+     "5.7 from the peg at (174, 256)"
+    ],
+    [
+     [
+      416,
+      393
+     ],
+     "brick",
+     "8.8 from the peg at (470, 368)"
+    ],
+    [
+     [
+      479,
+      411
+     ],
+     "brick",
+     "5.4 from the peg at (614, 404)"
+    ],
+    [
+     [
+      452,
+      276
+     ],
+     "brick",
+     "-17.0 from the peg at (452, 233)"
+    ],
+    [
+     [
+      200,
+      456
+     ],
+     "brick",
+     "-2.4 from a brick"
+    ],
+    [
+     [
+      110,
+      456
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      695,
+      447
+     ],
+     "brick",
+     "wall pinch 11.9"
+    ],
+    [
+     [
+      236,
+      321
+     ],
+     "brick",
+     "7.4 from the peg at (218, 256)"
+    ],
+    [
+     [
+      425,
+      456
+     ],
+     "brick",
+     "-11.3 from a brick"
+    ],
+    [
+     [
+      416,
+      384
+     ],
+     "brick",
+     "11.9 from the peg at (470, 368)"
+    ],
+    [
+     [
+      479,
+      150
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      407,
+      465
+     ],
+     "brick",
+     "14.2 from the peg at (371, 467)"
+    ],
+    [
+     [
+      416,
+      465
+     ],
+     "brick",
+     "-19.9 from a brick"
+    ],
+    [
+     [
+      479,
+      267
+     ],
+     "brick",
+     "-16.4 from the peg at (452, 233)"
+    ],
+    [
+     [
+      317,
+      159
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      110,
+      429
+     ],
+     "brick",
+     "off the board (walls, launcher's swing or bucket)"
+    ],
+    [
+     [
+      425,
+      384
+     ],
+     "brick",
+     "4.2 from the peg at (470, 368)"
+    ],
+    [
+     [
+      389,
+      384
+     ],
+     "brick",
+     "14.6 from a brick"
+    ],
+    [
+     [
+      536,
+      134
+     ],
+     "bird",
+     "8.8 from the peg at (512, 118)"
+    ],
+    [
+     [
+      558,
+      156
+     ],
+     "bird",
+     "8.5 from a brick"
+    ],
+    [
+     [
+      584,
+      170
+     ],
+     "bird",
+     "-15.4 from a brick"
     ],
     [
      [
@@ -39,15 +2319,39 @@
       176
      ],
      "bird",
-     "12.7 from the peg at (584, 170)"
+     "-19.5 from a brick"
     ],
     [
      [
-      530,
-      198
+      636,
+      194
      ],
      "bird",
-     "12.8 from the peg at (506, 186)"
+     "8.6 from a brick"
+    ],
+    [
+     [
+      664,
+      210
+     ],
+     "bird",
+     "-17.2 from a brick"
+    ],
+    [
+     [
+      506,
+      186
+     ],
+     "bird",
+     "11.7 from a brick"
+    ],
+    [
+     [
+      526,
+      266
+     ],
+     "bird",
+     "10.6 from the peg at (520, 236)"
     ],
     [
      [
@@ -55,39 +2359,63 @@
       302
      ],
      "bird",
-     "8.4 from the peg at (512, 292)"
+     "2.4 from the peg at (512, 292)"
     ],
     [
      [
-      330,
-      470
+      500,
+      326
+     ],
+     "bird",
+     "-10.0 from a brick"
+    ],
+    [
+     [
+      150,
+      466
      ],
      "wreck",
-     "-8.1 from the peg at (326, 462)"
+     "-17.4 from a brick"
     ],
     [
      [
-      90,
-      470
+      188,
+      384
      ],
      "wreck",
-     "wall pinch 6.5"
+     "-17.4 from a brick"
     ],
     [
      [
-      335,
-      477
+      218,
+      400
      ],
-     "current",
-     "0.3 from the peg at (326, 462)"
+     "wreck",
+     "11.0 from a brick"
     ],
     [
      [
-      307,
-      460
+      252,
+      452
      ],
-     "current",
-     "7.7 from the peg at (300, 484)"
+     "wreck",
+     "-17.4 from a brick"
+    ],
+    [
+     [
+      300,
+      484
+     ],
+     "wreck",
+     "-17.4 from a brick"
+    ],
+    [
+     [
+      326,
+      462
+     ],
+     "wreck",
+     "-4.8 from a brick"
     ],
     [
      [
@@ -103,136 +2431,302 @@
       382
      ],
      "islet",
-     "-7.8 from the peg at (640, 384)"
+     "-4.8 from a brick"
+    ],
+    [
+     [
+      250,
+      343
+     ],
+     "drift",
+     "mover: 12.0 from the peg at (281, 323)"
+    ],
+    [
+     [
+      477,
+      280
+     ],
+     "drift",
+     "mover: 13.9 from the peg at (512, 292)"
+    ],
+    [
+     [
+      169,
+      181
+     ],
+     "drift",
+     "mover: 11.7 from the peg at (196, 202)"
+    ],
+    [
+     [
+      224,
+      313
+     ],
+     "drift",
+     "mover: 13.9 from the peg at (250, 343)"
+    ],
+    [
+     [
+      301,
+      247
+     ],
+     "drift",
+     "mover: 11.2 from the peg at (335, 242)"
+    ],
+    [
+     [
+      224,
+      181
+     ],
+     "drift",
+     "mover: 12.0 from the peg at (259, 185)"
     ]
+   ],
+   "brick_share": 0.229,
+   "candidate_share": 0.604,
+   "lower_third_share": 0.052,
+   "warnings": [
+    "brick share 23% (guidance 30% to 45% where the subject allows)"
    ]
   },
   "loader": {
    "ok": true,
    "output": [
-    "OK   base-08.json  id=base-08 \"The Kraken's Sea\"  pieces=78 (round 68, bricks 10, movers 8)  mayBeOrange=28",
-    "     still round pegs 60: closest surfaces 14.0 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
-    "     rows used y 118..510"
+    "OK   base-08.json  id=base-08 \"The Kraken's Sea\"  pieces=96 (round 74, bricks 22, movers 8)  mayBeOrange=58",
+    "     still round pegs 66: closest surfaces 14.1 px; cradling gaps (0.5 to 11.8 px, side by side) 0; wall pinches 0",
+    "     rows used y 118..500"
    ]
   },
   "sweep": {
-   "angles": 681,
-   "pegs_median": 11,
-   "pegs_mean": 10.7,
-   "pegs_max": 22,
-   "oranges_mean": 3.67,
+   "angles": 777,
+   "pegs_median": 14,
+   "pegs_mean": 14.1,
+   "pegs_max": 25,
+   "oranges_mean": 3.24,
    "no_hit": 0,
-   "stuck": 6,
-   "stuck_share": 0.009,
-   "long_flights": 0,
-   "bucket": 133,
+   "stuck": 9,
+   "stuck_share": 0.012,
+   "long_flights": 1,
+   "bucket": 132,
    "unreached": [],
-   "pieces": 78
+   "pieces": 96
   },
   "reach": {
    "rounds": 1,
    "never": []
   },
   "play": {
-   "greedy_won": 26,
+   "greedy_won": 10,
    "games": 48,
    "oranges_left_when_lost": [
-    9,
     1,
+    4,
+    3,
+    4,
+    4,
+    1,
+    6,
+    4,
+    4,
+    6,
+    2,
+    2,
+    4,
+    2,
+    6,
+    2,
     2,
     1,
+    4,
+    9,
     2,
     1,
     2,
     1,
     5,
-    1,
-    1,
-    2,
-    2,
-    1,
-    1,
-    1,
     3,
-    6,
+    5,
+    4,
+    1,
     2,
+    2,
+    2,
+    6,
     4,
-    4,
-    5
+    7,
+    1,
+    1,
+    3
    ],
    "ramp_games": 1728,
-   "ramp_won": 892,
-   "ramp_per_48": 24.8,
-   "shots_mean": 13.8,
-   "stuck_fires": 64,
-   "random_won": 1,
-   "random_oranges_mean": 19.2,
-   "low_left_share": 0.074,
-   "lost_with_low_orange": 0.182,
+   "ramp_won": 379,
+   "ramp_per_48": 10.5,
+   "shots_mean": 12.2,
+   "stuck_fires": 20,
+   "random_won": 0,
+   "random_oranges_mean": 18.9,
+   "low_left_share": 0.127,
+   "lost_with_low_orange": 0.337,
    "holdouts": [
     {
-     "piece": 36,
+     "piece": 52,
+     "at": [
+      565,
+      489
+     ],
+     "share_of_lost_games": 0.18
+    },
+    {
+     "piece": 19,
      "at": [
       676,
       336
      ],
-     "share_of_lost_games": 0.22
+     "share_of_lost_games": 0.11
     },
     {
-     "piece": 65,
+     "piece": 40,
      "at": [
-      700,
-      420
+      372,
+      374
      ],
-     "share_of_lost_games": 0.19
+     "share_of_lost_games": 0.11
     },
     {
-     "piece": 26,
+     "piece": 23,
+     "at": [
+      672,
+      256
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 68,
+     "at": [
+      224,
+      412
+     ],
+     "share_of_lost_games": 0.11
+    },
+    {
+     "piece": 22,
+     "at": [
+      672,
+      176
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 46,
+     "at": [
+      232,
+      374
+     ],
+     "share_of_lost_games": 0.1
+    },
+    {
+     "piece": 20,
+     "at": [
+      128,
+      320
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 33,
+     "at": [
+      371,
+      340
+     ],
+     "share_of_lost_games": 0.09
+    },
+    {
+     "piece": 18,
+     "at": [
+      599,
+      369
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 16,
+     "at": [
+      529,
+      369
+     ],
+     "share_of_lost_games": 0.08
+    },
+    {
+     "piece": 17,
      "at": [
       564,
-      446
+      354
      ],
-     "share_of_lost_games": 0.18
-    },
-    {
-     "piece": 54,
-     "at": [
-      331,
-      418
-     ],
-     "share_of_lost_games": 0.18
+     "share_of_lost_games": 0.08
     },
     {
      "piece": 30,
      "at": [
-      564,
-      362
+      470,
+      368
      ],
-     "share_of_lost_games": 0.15
+     "share_of_lost_games": 0.08
     },
     {
-     "piece": 61,
+     "piece": 27,
      "at": [
-      600,
-      300
+      596,
+      215
      ],
-     "share_of_lost_games": 0.13
+     "share_of_lost_games": 0.07
     },
     {
-     "piece": 38,
+     "piece": 31,
      "at": [
-      188,
-      384
+      281,
+      323
      ],
-     "share_of_lost_games": 0.12
+     "share_of_lost_games": 0.07
     },
     {
-     "piece": 55,
+     "piece": 62,
      "at": [
-      430,
-      420
+      169,
+      324
      ],
-     "share_of_lost_games": 0.12
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 72,
+     "at": [
+      424,
+      405
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 45,
+     "at": [
+      407,
+      374
+     ],
+     "share_of_lost_games": 0.07
+    },
+    {
+     "piece": 8,
+     "at": [
+      155,
+      147
+     ],
+     "share_of_lost_games": 0.06
+    },
+    {
+     "piece": 51,
+     "at": [
+      103,
+      203
+     ],
+     "share_of_lost_games": 0.06
     },
     {
      "piece": 7,
@@ -240,31 +2734,23 @@
       133,
       185
      ],
-     "share_of_lost_games": 0.11
+     "share_of_lost_games": 0.06
     },
     {
-     "piece": 63,
+     "piece": 44,
      "at": [
-      160,
-      370
+      250,
+      343
      ],
-     "share_of_lost_games": 0.11
+     "share_of_lost_games": 0.06
     },
     {
-     "piece": 53,
+     "piece": 65,
      "at": [
-      300,
-      400
+      532,
+      324
      ],
-     "share_of_lost_games": 0.09
-    },
-    {
-     "piece": 23,
-     "at": [
-      500,
-      326
-     ],
-     "share_of_lost_games": 0.09
+     "share_of_lost_games": 0.05
     },
     {
      "piece": 6,
@@ -272,74 +2758,42 @@
       141,
       228
      ],
-     "share_of_lost_games": 0.09
+     "share_of_lost_games": 0.05
     },
     {
-     "piece": 39,
+     "piece": 26,
      "at": [
-      218,
-      400
-     ],
-     "share_of_lost_games": 0.09
-    },
-    {
-     "piece": 20,
-     "at": [
-      520,
-      236
-     ],
-     "share_of_lost_games": 0.08
-    },
-    {
-     "piece": 21,
-     "at": [
-      526,
-      266
-     ],
-     "share_of_lost_games": 0.07
-    },
-    {
-     "piece": 22,
-     "at": [
-      512,
-      292
-     ],
-     "share_of_lost_games": 0.07
-    },
-    {
-     "piece": 5,
-     "at": [
-      174,
-      256
-     ],
-     "share_of_lost_games": 0.06
-    },
-    {
-     "piece": 57,
-     "at": [
-      240,
-      300
+      569,
+      305
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 4,
+     "piece": 34,
      "at": [
-      218,
-      256
+      405,
+      338
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 19,
+     "piece": 53,
      "at": [
-      506,
-      186
+      609,
+      335
      ],
      "share_of_lost_games": 0.05
     },
     {
-     "piece": 10,
+     "piece": 55,
+     "at": [
+      169,
+      181
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 32,
      "at": [
       344,
       318
@@ -347,12 +2801,172 @@
      "share_of_lost_games": 0.04
     },
     {
-     "piece": 12,
+     "piece": 57,
+     "at": [
+      378,
+      302
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 9,
+     "at": [
+      196,
+      202
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 60,
+     "at": [
+      554,
+      225
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 56,
+     "at": [
+      191,
+      291
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 5,
+     "at": [
+      174,
+      256
+     ],
+     "share_of_lost_games": 0.04
+    },
+    {
+     "piece": 61,
+     "at": [
+      224,
+      313
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 84,
+     "at": [
+      128,
+      356
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 85,
+     "at": [
+      672,
+      132
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 47,
+     "at": [
+      582,
+      126
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 0,
+     "at": [
+      196,
+      132
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 50,
+     "at": [
+      477,
+      280
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 88,
+     "at": [
+      672,
+      372
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 38,
+     "at": [
+      512,
+      292
+     ],
+     "share_of_lost_games": 0.03
+    },
+    {
+     "piece": 86,
+     "at": [
+      672,
+      212
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 10,
      "at": [
       372,
       262
      ],
-     "share_of_lost_games": 0.03
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 87,
+     "at": [
+      672,
+      292
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 70,
+     "at": [
+      224,
+      181
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 36,
+     "at": [
+      530,
+      198
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 83,
+     "at": [
+      128,
+      276
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 4,
+     "at": [
+      218,
+      256
+     ],
+     "share_of_lost_games": 0.02
+    },
+    {
+     "piece": 41,
+     "at": [
+      547,
+      126
+     ],
+     "share_of_lost_games": 0.02
     },
     {
      "piece": 3,
@@ -360,15 +2974,31 @@
       251,
       228
      ],
-     "share_of_lost_games": 0.02
+     "share_of_lost_games": 0.01
     },
     {
-     "piece": 2,
+     "piece": 64,
      "at": [
-      259,
-      185
+      301,
+      247
      ],
-     "share_of_lost_games": 0.02
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 37,
+     "at": [
+      520,
+      236
+     ],
+     "share_of_lost_games": 0.01
+    },
+    {
+     "piece": 63,
+     "at": [
+      521,
+      159
+     ],
+     "share_of_lost_games": 0.01
     },
     {
      "piece": 1,
@@ -379,20 +3009,28 @@
      "share_of_lost_games": 0.01
     },
     {
-     "piece": 9,
+     "piece": 2,
      "at": [
-      196,
-      202
+      259,
+      185
      ],
-     "share_of_lost_games": 0.01
+     "share_of_lost_games": 0.0
     },
     {
-     "piece": 59,
+     "piece": 35,
      "at": [
-      360,
-      230
+      512,
+      118
      ],
-     "share_of_lost_games": 0.01
+     "share_of_lost_games": 0.0
+    },
+    {
+     "piece": 49,
+     "at": [
+      488,
+      148
+     ],
+     "share_of_lost_games": 0.0
     }
    ],
    "ramp_first_seed": 865
@@ -403,10 +3041,10 @@
   },
   "framecheck": {
    "report": {
-    "cover_pct": 1.96,
+    "cover_pct": 1.95,
     "middle_pct": 0.0,
     "in_swing_px": 0,
-    "min_clearance": 11.26,
+    "min_clearance": 7.39,
     "longest_rim_run": 0.0,
     "longest_rim_at": null,
     "straight_run": null,
@@ -414,15 +3052,15 @@
     "lights_too_close": [],
     "lights_per_band_max": 1,
     "lights_nearest": 99,
-    "darkened_min_clearance": 16.51,
-    "elements_dropped_for_clearance": 0
+    "darkened_min_clearance": 7.39,
+    "elements_dropped_for_clearance": 9
    },
    "fails": []
   },
   "colours": {
    "seed": 1,
    "counts": {
-    "blue": 50,
+    "blue": 68,
     "green": 2,
     "orange": 25,
     "purple": 1
@@ -432,161 +3070,165 @@
    "report": {
     "faces": {
      "1x": {
-      "blue": 0.681,
-      "orange": 0.614,
-      "green": 0.706,
-      "purple": 0.563
+      "blue": 0.69,
+      "orange": 0.616,
+      "green": 0.719,
+      "purple": 0.595
      },
      "0.8x": {
-      "blue": 0.673,
-      "orange": 0.606,
-      "green": 0.704,
-      "purple": 0.556
+      "blue": 0.679,
+      "orange": 0.609,
+      "green": 0.711,
+      "purple": 0.584
      }
     },
     "worst_case": {
      "blue 1x": {
-      "worst": 0.412,
+      "worst": 0.423,
       "at": [
        196,
        132
       ],
-      "undressed": 0.431,
-      "drop": 0.019
+      "undressed": 0.44,
+      "drop": 0.017
      },
      "orange 1x": {
-      "worst": 0.348,
+      "worst": 0.35,
       "at": [
        196,
-       202
+       132
       ],
-      "undressed": 0.365,
+      "undressed": 0.367,
       "drop": 0.017
      },
      "green 1x": {
-      "worst": 0.453,
+      "worst": 0.479,
       "at": [
-       300,
-       140
+       169,
+       181
       ],
-      "undressed": 0.457,
-      "drop": 0.004
-     },
-     "purple 1x": {
-      "worst": 0.294,
-      "at": [
-       196,
-       132
-      ],
-      "undressed": 0.313,
-      "drop": 0.019
-     },
-     "blue 0.8x": {
-      "worst": 0.404,
-      "at": [
-       196,
-       132
-      ],
-      "undressed": 0.424,
-      "drop": 0.02
-     },
-     "orange 0.8x": {
-      "worst": 0.348,
-      "at": [
-       196,
-       202
-      ],
-      "undressed": 0.363,
+      "undressed": 0.494,
       "drop": 0.015
      },
-     "green 0.8x": {
-      "worst": 0.45,
-      "at": [
-       300,
-       140
-      ],
-      "undressed": 0.454,
-      "drop": 0.004
-     },
-     "purple 0.8x": {
-      "worst": 0.287,
+     "purple 1x": {
+      "worst": 0.329,
       "at": [
        196,
        132
       ],
-      "undressed": 0.307,
-      "drop": 0.02
+      "undressed": 0.346,
+      "drop": 0.017
+     },
+     "blue 0.8x": {
+      "worst": 0.413,
+      "at": [
+       196,
+       132
+      ],
+      "undressed": 0.43,
+      "drop": 0.017
+     },
+     "orange 0.8x": {
+      "worst": 0.343,
+      "at": [
+       196,
+       132
+      ],
+      "undressed": 0.36,
+      "drop": 0.017
+     },
+     "green 0.8x": {
+      "worst": 0.472,
+      "at": [
+       169,
+       181
+      ],
+      "undressed": 0.485,
+      "drop": 0.013
+     },
+     "purple 0.8x": {
+      "worst": 0.318,
+      "at": [
+       196,
+       132
+      ],
+      "undressed": 0.335,
+      "drop": 0.017
      }
     },
-    "worst_margin": 0.287,
-    "largest_drop": 0.02,
+    "worst_margin": 0.318,
+    "largest_drop": 0.017,
     "bricks_min_margin": [
-     0.505,
-     "blue"
+     0.359,
+     "orange"
     ],
-    "protan_orange_p10": 0.116,
-    "protan_places": 112,
+    "protan_orange_p10": 0.117,
+    "protan_places": 232,
     "protan_worst_at": [
-     133,
-     185
+     196,
+     132
     ],
-    "protan_min": 0.109,
+    "protan_min": 0.115,
     "jewels": {
-     "coloured_px_pct": 98.4,
-     "mean_chroma": 0.066,
-     "second_at_walls_x": 0.69,
+     "coloured_px_pct": 96.4,
+     "mean_chroma": 0.06,
+     "second_at_walls_x": 0.2,
      "second_at_walls_worst_window": [
-      1.52,
-      241
+      0.29,
+      91
      ],
-     "first_jewel_hue": 247,
-     "first_share": 0.733,
-     "second_jewel_hue": 171,
-     "second_share": 0.266,
-     "apart_deg": 77,
+     "first_jewel_hue": 245,
+     "first_share": 0.813,
+     "second_jewel_hue": 162,
+     "second_share": 0.185,
+     "apart_deg": 83,
      "bins_pct": [
       0.0,
       0.0,
       0.0,
-      0.0,
+      0.2,
       0.3,
-      17.4,
-      9.0,
-      21.9,
-      47.0,
-      4.3,
-      0.1,
+      15.2,
+      3.0,
+      25.0,
+      54.1,
+      2.2,
+      0.0,
       0.0
      ]
     },
-    "ghost_median": 0.037,
-    "ghost_worst": [
-     0.036746423691511154,
-     [
-      300,
-      140
-     ]
-    ],
-    "ghost_isolated_pegs": 1,
+    "ghost_median": null,
+    "ghost_worst": null,
+    "ghost_isolated_pegs": 0,
     "print": {
      "median": 0.0,
-     "p90": 0.0163,
+     "p90": 0.0114,
      "worst": [
-      0.0314,
+      0.045,
       [
-       558,
-       156
+       512,
+       118
       ]
      ],
-     "samples": 68,
+     "samples": 41,
      "mode": "pegs",
-     "hue_median": 0.0087
+     "hue_median": 0.0
     }
    },
    "fails": []
   }
  },
  "fails": [],
- "seconds": 78.2,
+ "problems": [],
+ "seconds": 24.2,
+ "locked": {
+  "held_out": 11.6,
+  "band": [
+   5.13,
+   7.33
+  ],
+  "how": "stage mr2",
+  "when": "2026-10-21 20:39"
+ },
  "verdict": "PASS"
 }

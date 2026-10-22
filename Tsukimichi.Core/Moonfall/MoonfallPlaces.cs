@@ -141,6 +141,16 @@ public static class MoonfallPlaces
         ["harbour-lights"] = new(ARealmReborn, "Limsa Lominsa Lower Decks"),
         ["limsa-bridge-arches"] = new(ARealmReborn, "Limsa Lominsa Lower Decks"),
         ["vylbrand-lighthouses"] = new(ARealmReborn, "Western La Noscea"),
+
+        // The Moon Road's stage 6, The Silent Stars (charter section 2), is set nowhere, so every scene is (charter 1.4):
+        // 6-1, 6-2, 6-4 and 6-5 are our own paintings of the heavens (the armillary, the Twelve's wheel, a meteor shower,
+        // the Moon Gate), and 6-3 reads Eorzea's world map as a chart, as airship-road. All five fall back to
+        // moon-road-night.
+        ["armillary"] = MoonfallPlace.Nowhere,
+        ["wheel-of-the-twelve"] = MoonfallPlace.Nowhere,
+        ["seers-chart"] = MoonfallPlace.Nowhere,
+        ["meteor-shower"] = MoonfallPlace.Nowhere,
+        ["moongate"] = MoonfallPlace.Nowhere,
     };
 
     /// <summary>

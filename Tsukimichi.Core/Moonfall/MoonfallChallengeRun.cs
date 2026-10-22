@@ -25,6 +25,10 @@ public sealed class MoonfallChallengeRun
     private readonly MoonfallCampaigns campaigns;
     private readonly ulong seed;
 
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>The run was started in developer mode (<see cref="MoonfallModes.UnlockAll"/>): its end is never recorded.</summary>
+    public bool Developer { get; init; }
+
     /// <param name="challenge">The challenge.</param>
     /// <param name="campaigns">The shipped levels; every level the challenge names must be one (<see cref="MoonfallChallenges.Playable"/>).</param>
     /// <param name="companion">

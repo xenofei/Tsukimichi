@@ -262,6 +262,8 @@ public sealed partial class MoonfallWindow : Window
             EnteredScreen();
         }
 
+        // Developer mode: remove after all 115 Moonfall levels ship.
+        DrawDevBar();
         switch (flow.Current)
         {
             case MoonfallScreen.Play when game is { } g:
@@ -383,6 +385,46 @@ public sealed partial class MoonfallWindow : Window
     /// </summary>
     internal bool ArtSettledForRender => gameArt is null
         || ((gameArt.ChromeTexture is not null || gameArt.Chrome is { FrameReady: false }) && art?.Atlas is not null && (flow.Current != MoonfallScreen.Play || gameArt.SceneSettled) && MenuArtSettled);
+
+    /// <summary>The game art's reads and builds still running (<see cref="MoonfallGameArt{T}.Running"/>); the renderer waits them out too.</summary>
+    internal int ArtRunningForRender => gameArt?.Running ?? 0;
+
+    /// <summary>What the art still waits on, for a render that gives up: each part not yet settled and the work still running.</summary>
+    internal string ArtPendingForRender()
+    {
+        if (gameArt is null)
+        {
+            return "nothing";
+        }
+
+        var parts = new List<string>();
+        if (gameArt.ChromeTexture is null && gameArt.Chrome is not { FrameReady: false })
+        {
+            parts.Add("the chrome");
+        }
+
+        if (art?.Atlas is null)
+        {
+            parts.Add("the atlas");
+        }
+
+        if (flow.Current == MoonfallScreen.Play && !gameArt.SceneSettled)
+        {
+            parts.Add($"the scene ({gameArt.SceneState})");
+        }
+
+        if (!MenuArtSettled)
+        {
+            parts.Add($"the menus' art ({menuArtPending} pending, {gameArt.ThumbsPending} thumbnails)");
+        }
+
+        if (gameArt.RunningWork() is { Count: > 0 } running)
+        {
+            parts.Add("running: " + string.Join(", ", running));
+        }
+
+        return parts.Count == 0 ? "nothing" : string.Join("; ", parts);
+    }
 
     /// <summary>A style shot's ribbon, as the event would place it.</summary>
     internal void RibbonForRender(string title, string value)

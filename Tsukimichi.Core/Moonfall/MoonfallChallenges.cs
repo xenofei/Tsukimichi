@@ -382,7 +382,10 @@ public static class MoonfallChallenges
         return Playable(challenge, campaigns) ? MoonfallChallengeState.Open : MoonfallChallengeState.Unavailable;
     }
 
-    /// <summary>The level number a challenge plays a level at: its place in Adventure, and at least 3, so greens (and the companion's power) are on the board.</summary>
+    /// <summary>
+    /// The level number a challenge plays a level at: its place in Adventure, and at least 4, so greens (and the
+    /// companion's power) and the purple peg are on the board (<see cref="MoonfallRules.FirstPurpleLevel"/>).
+    /// </summary>
     public static int LevelNumber(string levelId) =>
-        Math.Max(MoonfallRules.FirstGreenLevel, MoonfallStages.TryPlace(levelId, out var place) ? place.Number : MoonfallRules.FirstGreenLevel);
+        Math.Max(MoonfallRules.FirstPurpleLevel, MoonfallStages.TryPlace(levelId, out var place) ? place.Number : MoonfallRules.FirstPurpleLevel);
 }

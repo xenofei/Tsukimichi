@@ -18,7 +18,7 @@
  "grain": 0.008,
  "palette": {
   "bands": [[0, "#3048C8"], [600, "#2438A0"]],
-  "chroma": 1.5,
+  "chroma": 1.65,
   "floor": 0.05,
   "keep": 0.3,
   "keepHigh": 0.75,
@@ -27,12 +27,8 @@
   "regions": [
    {
     "hue": "#4FAF71",
-    "chroma": 0.11,
+    "chroma": 0.14,
     "where": [
-     {
-      "lum": [0.16, 0.24],
-      "blur": 4
-     },
      {
       "x": [75, 135]
      },
@@ -40,7 +36,7 @@
       "x": [725, 665]
      },
      {
-      "near": [44, 12],
+      "near": [60, 26],
       "blur": 40.0,
       "invert": true,
       "scale": 0.6
@@ -50,7 +46,7 @@
   ],
   "where": [
    {
-    "near": [44, 12],
+    "near": [60, 26],
     "blur": 40.0,
     "invert": true,
     "scale": 0.5

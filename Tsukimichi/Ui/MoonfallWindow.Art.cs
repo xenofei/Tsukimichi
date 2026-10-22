@@ -569,7 +569,7 @@ public sealed partial class MoonfallWindow
         const double px = MoonfallRules.LauncherX, py = MoonfallRules.LauncherY;
         Put(p, atlas[MoonfallSprite.LauncherYoke], px, py, 1f, uint.MaxValue);
         Put(p, atlas[MoonfallSprite.LauncherGauge], px, py, 1f, uint.MaxValue);
-        var fill = g.Phase is MoonfallPhase.Flying or MoonfallPhase.Clearing ? MoonfallArtMath.GaugeShare(g.ShotScore, MoonfallRules.FreeBallThresholds) : 0f;
+        var fill = g.Phase is MoonfallPhase.Flying or MoonfallPhase.Clearing ? MoonfallArtMath.GaugeShare(g.PegScore, MoonfallRules.FreeBallThresholds) : 0f;
         if (fill > 0f)
         {
             ArtGaugeFill(p, fill);

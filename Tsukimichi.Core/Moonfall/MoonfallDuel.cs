@@ -44,6 +44,10 @@ public sealed class MoonfallDuel : IMoonfallShooter
     private readonly ScoreCounter[] counters = new ScoreCounter[2];
     private readonly MoonfallCompanion[] companions = new MoonfallCompanion[2];
 
+    // Developer mode: remove after all 115 Moonfall levels ship.
+    /// <summary>The duel was started in developer mode (<see cref="MoonfallModes.UnlockAll"/>): its end is never recorded.</summary>
+    public bool Developer { get; init; }
+
     private bool turnOpen;
     private int shooter;
     private long turnScore;
@@ -84,7 +88,7 @@ public sealed class MoonfallDuel : IMoonfallShooter
         balls[OpponentSide] = ballsPerSide;
         Game = new MoonfallGame(
             level,
-            Math.Max(levelNumber, MoonfallRules.FirstGreenLevel),
+            Math.Max(levelNumber, MoonfallRules.FirstPurpleLevel),
             seed,
             2 * ballsPerSide,
             PowerOf(player),
@@ -118,6 +122,9 @@ public sealed class MoonfallDuel : IMoonfallShooter
 
     /// <summary>The last finished turn, or null before any.</summary>
     public MoonfallDuelTurn? LastTurn { get; private set; }
+
+    /// <summary>How many turns have closed (two identical turns in a row are still two).</summary>
+    public int TurnsClosed { get; private set; }
 
     /// <summary>How it ended, from the player's side; <see cref="MoonfallDuelOutcome.Undecided"/> while it is played.</summary>
     public MoonfallDuelOutcome Outcome { get; private set; }
@@ -203,6 +210,7 @@ public sealed class MoonfallDuel : IMoonfallShooter
         scores[shooter] += kept;
         counters[shooter].SetTarget(scores[shooter], MoonfallRules.CountUpHoldTicks);
         LastTurn = new MoonfallDuelTurn(shooter, scored, kept, oranges, free);
+        TurnsClosed++;
 
         if (Game.Phase is MoonfallPhase.Won or MoonfallPhase.Lost)
         {
