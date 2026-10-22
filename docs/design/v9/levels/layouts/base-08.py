@@ -172,9 +172,11 @@ def build(b):
     sea = [p for p, (_k, t) in pegs_t if t in ('open sea', 'tide pool')]
     birds = [p for p, (_k, t) in pegs_t if t == 'bird']
     lows = [p for p in sea if p["y"] >= 399]
-    keep = [min([p for p in lows if p["x"] < 400], key=lambda p: (p["x"] - 300) ** 2 + (p["y"] - 430) ** 2), min([p for p in lows if p["x"] >= 400], key=lambda p: (p["x"] - 520) ** 2 + (p["y"] - 430) ** 2)]
+    keep = []
+    for tx in (250, 410, 570):
+        keep.append(min([p for p in lows if p not in keep and 220 < p["x"] < 590], key=lambda p: (p["x"] - tx) ** 2 + (p["y"] - 430) ** 2))
     left = [p for p, _t in pegs_t if p["y"] >= 399 and p not in keep] + sorted([p for p in sea if p["y"] < 399], key=lambda p: (p["x"] - 400) ** 2 + (p["y"] - 230) ** 2)[:2]
-    return b.candidates(exclude=[(p["x"], p["y"]) for p in left], exclude_tags=("current", "wreck", "wreck mast", "islet", "mermaid"))
+    return b.candidates(exclude=[(p["x"], p["y"]) for p in left], exclude_tags=("current", "wreck", "wreck mast", "islet", "mermaid", "swell mark", "kraken crown", "galleon sail"))
 
 
 TARGET = 108
@@ -184,7 +186,4 @@ SWELL = [(120, 260), (210, 330), (290, 310), (420, 280), (460, 350), (350, 380),
 
 
 # ---- tuning (written by `mfl.py tune`; held out None/48, tuning seeds 10.7/48, band 5.13-7.33; NOT in band: stuck)
-TUNING = {
-    "blue": [[259.0, 184.9], [512.0, 118.0], [520.0, 236.0], [488.0, 148.0], [301.0, 247.0], [129.0, 276.0], [471.0, 326.0], [282.0, 281.0]],
-    "orange": [[378.0, 302.0], [194.0, 374.0]]
-}
+TUNING = {}
