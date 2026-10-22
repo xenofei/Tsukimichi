@@ -5,48 +5,92 @@ straight at the rising moon between two rows of stone beacons, and each lantern 
 two rows' beams fan outward like a crown of light round the lane, and a guide-string of small lights hangs between the
 beacons of each row.
 
-Technique: the moons ride the beams. Each beam is a dotted line of moons from just above its lantern to where the
-painted beam fades; the nearest lantern on each side wears a ring of moons and the farther ones a single moon on the
-lantern (never green: they are the lights themselves). The guide-strings are dotted between the lanterns, the billows'
-silver-lined crests in front carry short humps of brick, concave down, and a few stars stand in the night above the
-beams' tips. The oranges ride the beams (and the two far lanterns, and a star either side), never the low rings.
+Technique: the pieces ride the beams. The nearest two beams of each row, bright and steep, run in brick from clear of
+their lantern to a moon where the painted beam fades; the far beams are dotted moons. The nearest lantern of each row
+wears a ring of moons and the farther ones a single moon on the lantern (never green: they are the lights
+themselves). The guide-strings between the near lanterns hang in brick, the billows' silver-lined crests across the
+cloud sea at the lane's foot carry humps of brick (concave down, a few with a moon on the lining), the moon at the
+lane's end wears a ring of moons, and stars stand in the night above the beams' tips. Refit to the Peggle-match rules
+(9 October 2026): pegs r 10, bricks t 20, every piece a candidate but the crests and what no first flight reaches.
 """
+import math
+
 LEVEL = dict(id="base-12", name="Above the Cloud Sea", stage=3, number=12, scene="cloudsea-beacons",
              subject="the airship lane's beacons over a moonlit sea of clouds",
              technique="light and shadow (pegs on the beacons' beams)")
 
-# per beam: the start along it (clear of the lantern's ring) and the spacing
-BEAMS = {"L1": (68, 36), "L2": (34, 36), "L3": (34, 34), "L4": (34, 32),
-         "R1": (68, 36), "R2": (34, 36), "R3": (34, 34), "R4": (34, 32)}
-# the guide-strings between the lanterns of a row: (name, start, end trim)
-STRINGS = [("L1-L2", 40, 30), ("L2-L3", 30, 30), ("L3-L4", 30, 30), ("R1-R2", 40, 30), ("R2-R3", 30, 30),
-           ("R3-R4", 30, 30)]
-# the billows' silver-lined crests: (cx, cy, R, start, sweep)
-CRESTS = [(330, 488, 34, 225, 90), (470, 500, 34, 225, 90), (196, 520, 30, 230, 80), (604, 520, 30, 230, 80),
-          (400, 452, 30, 230, 80), (352, 404, 26, 230, 80), (448, 404, 26, 230, 80)]
-# stars above the beams' tips
-STARS = [(130, 136), (190, 110), (250, 96), (300, 150), (500, 150), (550, 96), (610, 110), (670, 136)]
-# the orange candidates, the left half (the right mirrors it): the beams' moons, the far lanterns and a star
-CANDIDATES = [(118, 224), (124, 295), (133, 403), (195, 214), (212, 284), (228, 355), (251, 203), (278, 266),
-              (291, 297), (312, 233), (331, 261), (350, 289), (300, 150), (304, 329), (352, 404)]
+# the lanterns: the nearest of each row wears a ring of moons (radius, count), the far ones a single moon
+RINGS = {"L1": (35, 6), "R1": (35, 6)}
+# the nearest two beams of each row, bright and steep, run in brick from clear of the lantern to a moon where the beam
+# fades: (name, trim at the lantern, trim at the tip, brick length)
+BRICK_BEAMS = [("L1", 76, 36, 30), ("R1", 76, 36, 30), ("L2", 40, 36, 30), ("R2", 40, 36, 30)]
+# the other beams, dotted moons from clear of the lantern to where the painted beam fades: (name, start, spacing)
+BEAMS = [("L3", 36, 35), ("L4", 36, 35), ("R3", 36, 35), ("R4", 36, 35)]
+# the guide-strings slung between the lanterns of a row run in brick (the cable): (name, trim at the near lantern,
+# trim at the far one, brick length)
+STRINGS = [("L1-L2", 92, 22, 26), ("L2-L3", 40, 30, 26), ("R1-R2", 92, 22, 26), ("R2-R3", 40, 30, 26)]
+# the beacons' dark towers under their lanterns, the left row (the right mirrors it): (x, y top, y bottom)
+TOWERS = []
+# the billows' silver-lined crests, the left half and the axis (the right mirrors x < 400): (cx, cy, R, start, sweep)
+CRESTS = [(350, 372, 22, 230, 80), (400, 420, 26, 230, 80), (286, 434, 26, 230, 80), (354, 462, 28, 230, 80),
+          (400, 504, 26, 230, 80), (290, 500, 28, 230, 80)]
+# the crests that carry a moon on their silver lining, above the apex (the lower one a little aside, clear of the crest
+# above it): (apex x, apex y, dx, dy)
+GLINTS = [(400, 420, 0, -36), (354, 462, -8, -38)]
+# moonlit tops of the billows under the near strings, the left half: pegs
+TOPS = [(205, 500), (245, 478)]
+# the moon at the lane's end wears a halo of moons 58 from its centre, so every piece keeps 18 from the painted disc
+# (r 30), as the runtime needs to keep the Fever moon (MoonfallSceneBuilder.MoonKeep). The halo opens where the
+# launcher swings above and where the far beams' first moons and lanterns stand beside and below: (angle in degrees,
+# clockwise from 3 o'clock), the left half mirrored
+MOON_HALO = (58, [-135, -170, 90])
+# stars above the beams' tips, the left half
+STARS = [(130, 136), (190, 110), (250, 96), (300, 150), (160, 70), (230, 150), (100, 90), (290, 60), (215, 60)]
+
+
+def mirror(x):
+    return 800 - x
 
 
 def build(b):
     heads = b.features["beacons"]["heads"]
     for name, (x, y, s) in heads.items():
-        if s > 0.8:
-            b.stop(x, y, R=34, n=6, r=9, oranges=(), tag="lantern")
+        if name in RINGS:
+            (R, n) = RINGS[name]
+            b.stop(x, y, R=R, n=n, oranges=(), tag="lantern")
         else:
-            b.place(x, y, r=9, green=False, tag="lantern")
-    for name, (start, sp) in BEAMS.items():
-        b.trace(f"beam {name}", spacing=sp, r=9, start=start, tag="beam")
-    for (name, start, trim) in STRINGS:
-        b.trace(f"string {name}", spacing=34, r=8, start=start, end_trim=trim, tag="string")
+            b.place(x, y, green=False, tag="lantern")
+    for (name, t0, t1, L) in BRICK_BEAMS:
+        b.bricks_along(f"beam {name}", length=L, gap=2.5, trim0=t0, trim1=t1, tag="beam")
+        (x, y) = b.features[f"beam {name}"]["points"][-1]
+        b.place(x, y, tag="beam tip")
+    for (name, start, sp) in BEAMS:
+        b.trace(f"beam {name}", spacing=sp, start=start, tag="beam")
+    for (name, t0, t1, L) in STRINGS:
+        b.bricks_along(f"string {name}", length=L, gap=2.5, trim0=t0, trim1=t1, tag="string")
+    for (x, y0, y1) in TOWERS:
+        for xx in {x, mirror(x)}:
+            b.line(xx, y0, xx, y1, tag="tower", green=False)
     for (cx, cy, R, a0, sw) in CRESTS:
-        b.arc(cx, cy + R, R, a0, sw, t=10, tag="crest")
+        for xx in {cx, mirror(cx)}:
+            b.arc(xx, cy + R, R, a0, sw, tag="crest")
+    for (cx, cy, dx, dy) in GLINTS:
+        for xx in {cx + dx, mirror(cx + dx)}:
+            b.place(xx, cy + dy, tag="glint" if cy + dy < 400 else "low glint")
+    for (x, y) in TOPS:
+        b.place(x, y, tag="billow")
+        b.place(mirror(x), y, tag="billow")
+    (mx, my, _mr) = b.features["moon"]
+    (R, angles) = MOON_HALO
+    for a in angles:
+        (x, y) = (mx + R * math.cos(math.radians(a)), my + R * math.sin(math.radians(a)))
+        for xx in {round(x, 1), round(mirror(x), 1)}:
+            b.place(xx, y, green=True, tag="halo" if y < my - 30 else "moon")
     for (x, y) in STARS:
-        b.place(x, y, r=8, tag="star")
-    for (x, y) in CANDIDATES:
-        b.key(x, y, orange=True, within=6)
-        b.key(800 - x, y, orange=True, within=6)
+        b.place(x, y, tag="star")
+        b.place(mirror(x), y, tag="star")
     b.greens_in_reach()
+    # never orange: the billow tops low by the near lanterns, the low glints and the moon's halo beside and below it
+    # (the sure greens on the lane); the halo's upper pair may be
+    b.candidates(exclude_tags=["billow", "moon", "low glint"])
+
