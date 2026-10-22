@@ -42,8 +42,15 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
    - FS 1 ships the two Fan Kit wallpapers with a "© SQUARE ENIX" notice in `THIRD-PARTY-NOTICES.txt`;
    - point `challenges.json` ch-04 at `base-37` when it ships.
 
-## The new per-stage workflow script still has to be written
-`docs/team/workflows/moonfall-refit-v2.js` is the old multi-stage run with three reviewers and verification rounds. It is **retired**; read it only for its integrate and fixer prompts. The replacement handles one stage per run, with one combined reviewer and no verification round. It reads its starting state from the repo, so it needs no `given`/`salvage` arguments.
+## The per-stage workflow
+- **Script:** `docs/team/workflows/moonfall-stage.js` runs one stage per launch:
+  1. time-boxed authors, or none when `authored: true`;
+  2. integrate;
+  3. one combined reviewer with a structured findings list;
+  4. record, and append the Minors to `docs/design/v9/levels/minor-list.md`;
+  5. per-level fixers only for levels with Blockers or Majors, then a stage fixer.
+- **Args:** `worktree`, `branch`, `key`, `levels`, `codes`, `later` (the not-yet-refitted levels whose tests may fail), `authored`, `mergedNote`, `salvage`, `authorModel`.
+- **Retired:** `moonfall-refit-v2.js`.
 
 ## Where the refit stands
 - **MR 1 (base-01..05):** approved (refit rounds 1–3; records in `docs/design/v9/levels/supervisor/*-mr1-refit-round-*.md`).
@@ -78,6 +85,6 @@ Moonfall, plan v9 (`docs/feature-plan-v9.md`): a Peggle-like game inside Tsukimi
 `pwsh tools/gate.ps1`. The raw commands are the fallback, in `docs/team/agent-brief-common.md`. For levels: `py -3 tools/moonfall-levels/mfl.py selftest`, `stage <key>` and `convert --all --check`.
 
 ## Do not
-- Never push, tag or release without asking the owner. This includes test drops.
+- Never push, tag or release without asking the owner. This includes test drops. Ask through the "Waiting for your OK" section of the Moonfall Workflow Brief (an `approvals/<id>` doc), not in chat (owner, 22 October).
 - Never resume a stalled agent whose context is large; start a fresh one from a handoff.
 - Never read whole transcripts; use the monitor and `save_report.py`.
