@@ -22,12 +22,15 @@
     "Punchline": "Walk the moon's path: every quest, every requirement, every unique reward.",
     "AcceptsFeedback": true,
     "DownloadLinkInstall": "https://github.com/xenofei/Tsukimichi/releases/download/v1.23.1/latest.zip",
-    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.23.1/latest.zip",
+    "DownloadLinkTesting": "https://github.com/xenofei/Tsukimichi/releases/download/v1.24.0-rc1/latest.zip",
     "DownloadLinkUpdate": "https://github.com/xenofei/Tsukimichi/releases/download/v1.23.1/latest.zip",
     "LastUpdate": 1792688576,
     "DownloadCount": 0,
     "IsHide": false,
     "IsTestingExclusive": false,
-    "Changelog": "Back on patch\n\n• Hooks are back. The item tooltip panel, the item and NPC menu entries and the server info bar entry work again on the latest game patch.\n• Tested on the new patch. Tsukimichi had paused those extras for safety since the patch; they now run as before.\n• Nothing else changes. Your quest journal, Moonlit and Moonfall are as you left them."
+    "Changelog": "Back on patch\n\n• Hooks are back. The item tooltip panel, the item and NPC menu entries and the server info bar entry work again on the latest game patch.\n• Tested on the new patch. Tsukimichi had paused those extras for safety since the patch; they now run as before.\n• Nothing else changes. Your quest journal, Moonlit and Moonfall are as you left them.",
+    "TestingAssemblyVersion": "1.24.0.1",
+    "TestingDalamudApiLevel": 15,
+    "TestingChangelog": "Test build v1.24.0-rc1 (version 1.24.0.1)\n\nMoonfall, three stages\n\n• Stage three. Five new levels join The Moon Road, so it now runs through 15 levels, each drawn over a painting of its own.\n• Stages one and two, remade. The first ten levels have new layouts over the same paintings, with fresh Ace targets to chase.\n• Your progress is kept. Completions, best scores and Aces carry over to the remade levels.\n• Still a test build. More of the road returns as each stage is remade, and levels may still change."
   }
 ]
